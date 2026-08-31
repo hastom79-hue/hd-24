@@ -6,122 +6,85 @@
 <title>HDPS KPI 자동화 웹도구</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --primary:#4f39f6; --primary-dark:#3823d6; --primary-light:#eef0ff;
-    --teal:#0d9488; --teal-light:#e6f7f5;
-    --amber:#ea580c; --amber-light:#fff1e8;
-    --rose:#e11d48; --rose-light:#fde8ec;
-    --ink:#0f172a; --muted:#64748b;
-    --bg:#f4f5fb; --surface:#ffffff; --line:#e6e8f2;
+    --ink:#1a2531; --muted:#66707d;
+    --line:#dde1e6; --bg:#f5f6f8; --surface:#ffffff;
+    --accent:#2f5d8a; --accent-dark:#234968;
+    --ok:#1f6f4a; --ok-bg:#e7f3ec;
+    --miss:#a13a2a; --miss-bg:#fbeeeb;
+    --amber:#a0670c;
   }
   * { box-sizing:border-box; }
-  body { font-family:"Inter","Pretendard","Malgun Gothic",sans-serif; background:var(--bg); margin:0; color:var(--ink); font-size:14.5px; }
-  .mono,.num { font-family:"JetBrains Mono",Consolas,monospace; font-variant-numeric:tabular-nums; }
+  body { font-family:"Pretendard","Malgun Gothic",-apple-system,sans-serif; background:var(--bg); margin:0; color:var(--ink); font-size:14px; }
+  .mono,.num { font-family:"SFMono-Regular",Consolas,"Roboto Mono",monospace; font-variant-numeric:tabular-nums; }
 
-  header {
-    background: linear-gradient(120deg, var(--primary) 0%, #7c3aed 100%);
-    color:#fff; padding:30px 32px 34px;
-  }
-  header .eyebrow { font-size:12.5px; font-weight:700; color:#d9d3ff; margin-bottom:6px; }
-  header h1 { margin:0; font-size:24px; font-weight:800; letter-spacing:-0.015em; }
-  header p { margin:7px 0 0; font-size:13.5px; color:#e2ddff; }
+  header { background:var(--accent-dark); color:#fff; padding:22px 28px; }
+  header h1 { margin:0; font-size:19px; font-weight:700; }
+  header p { margin:5px 0 0; font-size:12.5px; color:#c3d3e0; }
 
-  main { max-width:1000px; margin:-16px auto 60px; padding:0 20px; position:relative; }
+  main { max-width:960px; margin:28px auto 60px; padding:0 16px; }
 
-  section.panel {
-    background:var(--surface); border:1px solid var(--line); border-radius:16px;
-    padding:24px 26px; margin-bottom:18px;
-    box-shadow:0 1px 2px rgba(15,23,42,.04), 0 8px 24px -12px rgba(79,57,246,.10);
-  }
-  section.panel > h2 {
-    font-size:15px; margin:0 0 18px; color:var(--ink); font-weight:700;
-    display:flex; align-items:center; gap:9px;
-  }
-  section.panel > h2 .chip {
-    width:28px; height:28px; border-radius:9px; display:flex; align-items:center; justify-content:center;
-    background:var(--primary-light); font-size:14px; flex:none;
-  }
+  section.panel { background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:22px 24px; margin-bottom:16px; }
+  section.panel > h2 { font-size:13.5px; margin:0 0 16px; padding-bottom:10px; border-bottom:1px solid var(--line); color:var(--ink); font-weight:700; }
 
-  .field-row { display:grid; grid-template-columns:110px 1fr; gap:12px 16px; align-items:center; margin-bottom:13px; }
-  .field-row label { font-size:13.5px; font-weight:600; color:#374151; }
-  select, input[type=file] {
-    font-size:13.5px; padding:9px 12px; border:1.5px solid var(--line); border-radius:10px;
-    background:#fbfbfe; color:var(--ink); width:100%;
-  }
-  select:focus, input[type=file]:focus { outline:2px solid var(--primary); outline-offset:1px; }
-  select { max-width:190px; }
+  .field-row { display:grid; grid-template-columns:100px 1fr; gap:12px 14px; align-items:center; margin-bottom:12px; }
+  .field-row label { font-size:13px; font-weight:600; color:#3c4c58; }
+  select, input[type=file] { font-size:13.5px; padding:8px 10px; border:1px solid #c2c8ce; border-radius:4px; background:#fbfbfc; color:var(--ink); width:100%; }
+  select { max-width:180px; }
 
-  .hint { font-size:12.5px; color:var(--muted); margin-top:12px; line-height:1.6; }
+  .hint { font-size:12px; color:var(--muted); margin-top:10px; line-height:1.55; }
 
-  .actions { display:flex; gap:12px; flex-wrap:wrap; margin-top:2px; }
-  button {
-    background:var(--primary); color:#fff; border:none; padding:12px 20px; border-radius:11px;
-    font-size:14px; font-weight:700; cursor:pointer; transition:transform .12s, box-shadow .12s, background .12s;
-    box-shadow:0 6px 16px -6px rgba(79,57,246,.55);
-  }
-  button:hover:not(:disabled) { background:var(--primary-dark); transform:translateY(-1px); }
-  button:disabled { background:#d6d9e6; color:#9aa0b4; box-shadow:none; cursor:not-allowed; }
-  button.ghost { background:#fff; color:var(--primary); border:1.5px solid var(--primary); box-shadow:none; }
-  button.ghost:hover:not(:disabled) { background:var(--primary-light); transform:none; }
+  .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:4px; }
+  button { background:var(--accent); color:#fff; border:none; padding:10px 16px; border-radius:4px; font-size:13.5px; font-weight:600; cursor:pointer; }
+  button:hover:not(:disabled) { background:var(--accent-dark); }
+  button:disabled { background:#c3cbd0; cursor:not-allowed; }
+  button.ghost { background:#fff; color:var(--accent); border:1px solid var(--accent); }
+  button.ghost:hover:not(:disabled) { background:#eef2f6; }
 
-  #log {
-    font-family:"JetBrains Mono",Consolas,monospace; font-size:12px; line-height:1.7;
-    background:#14152b; color:#c7d2fe; padding:16px 18px; border-radius:12px;
-    max-height:280px; overflow-y:auto; white-space:pre-wrap;
-  }
+  #log { font-family:Consolas,monospace; font-size:12px; line-height:1.65; background:#1c2530; color:#c9d3db; padding:14px 16px; border-radius:4px; max-height:280px; overflow-y:auto; white-space:pre-wrap; }
 
-  .month-strip { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
-  .month-strip .m {
-    flex:1; min-width:100px; padding:12px 10px; text-align:center; cursor:pointer;
-    background:#fafaff; border:1.5px solid var(--line); border-radius:12px; transition:.12s;
-  }
-  .month-strip .m:hover { border-color:var(--primary); }
-  .month-strip .m.active { background:var(--primary); border-color:var(--primary); color:#fff; }
-  .month-strip .m .mlabel { font-size:12.5px; font-weight:800; }
-  .month-strip .m .mnum { font-size:11.5px; margin-top:4px; color:var(--muted); }
-  .month-strip .m.active .mnum { color:#e2ddff; }
-  .month-strip .m .mnum .miss-n { color:var(--rose); font-weight:700; }
-  .month-strip .m.active .mnum .miss-n { color:#ffd0da; }
+  .month-strip { display:flex; border:1px solid var(--line); border-radius:4px; overflow:hidden; margin-bottom:18px; }
+  .month-strip .m { flex:1; padding:10px 6px; text-align:center; border-right:1px solid var(--line); cursor:pointer; background:#fafbfc; }
+  .month-strip .m:last-child { border-right:none; }
+  .month-strip .m.active { background:var(--accent-dark); color:#fff; }
+  .month-strip .m .mlabel { font-size:11.5px; font-weight:700; }
+  .month-strip .m .mnum { font-size:12px; margin-top:3px; color:var(--muted); }
+  .month-strip .m.active .mnum { color:#c3d3e0; }
+  .month-strip .m .mnum .miss-n { color:var(--miss); font-weight:700; }
+  .month-strip .m.active .mnum .miss-n { color:#f4b6a8; }
 
-  table.results { width:100%; border-collapse:separate; border-spacing:0; font-size:13.5px; table-layout:fixed; }
-  table.results col.c-row { width:56px; } table.results col.c-dir { width:70px; }
-  table.results col.c-num { width:82px; } table.results col.c-res { width:82px; }
-  table.results thead th {
-    text-align:left; font-size:11.5px; font-weight:700; color:var(--muted); text-transform:none;
-    padding:9px 12px; border-bottom:2px solid var(--line); white-space:nowrap;
-  }
+  table.results { width:100%; border-collapse:collapse; font-size:13.5px; table-layout:fixed; }
+  table.results col.c-row { width:52px; } table.results col.c-dir { width:68px; }
+  table.results col.c-num { width:80px; } table.results col.c-res { width:76px; }
+  table.results thead th { text-align:left; font-size:11.5px; font-weight:700; color:var(--muted); padding:8px 10px; border-bottom:2px solid var(--accent); white-space:nowrap; }
   table.results thead th.num { text-align:right; }
-  table.results tbody td { padding:12px; border-bottom:1px solid #f0f1f7; vertical-align:middle; line-height:1.55; }
+  table.results tbody td { padding:10px; border-bottom:1px solid #ecf0f2; vertical-align:middle; line-height:1.5; }
   table.results tbody td.num { text-align:right; }
-  table.results tbody tr.miss { background:var(--rose-light); }
-  table.results tbody tr.miss td:first-child { border-left:4px solid var(--rose); }
-  table.results tbody tr.ok td:first-child { border-left:4px solid transparent; }
-  table.results tbody tr.ok:hover { background:#f8f9ff; }
+  table.results tbody tr.miss { border-left:4px solid var(--miss); background:var(--miss-bg); }
+  table.results tbody tr.ok { border-left:4px solid transparent; }
+  table.results tbody tr.ok:hover { background:#f5f8f9; }
 
-  .pill { display:inline-block; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; }
-  .pill.ok { background:var(--teal-light); color:var(--teal); }
-  .pill.miss { background:var(--rose-light); color:var(--rose); border:1.5px solid #f8c9d3; }
+  .pill { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:700; }
+  .pill.ok { background:var(--ok-bg); color:var(--ok); }
+  .pill.miss { background:var(--miss-bg); color:var(--miss); border:1px solid #eecdc5; }
 
-  .tag { display:inline-block; font-size:11px; font-weight:700; padding:3px 9px; border-radius:7px; margin-top:5px; margin-right:4px; }
-  .tag-streak { background:var(--rose); color:#fff; }
+  .tag { display:inline-block; font-size:11px; font-weight:700; padding:1px 7px; border-radius:3px; margin-top:3px; margin-right:4px; }
+  .tag-streak { background:var(--miss); color:#fff; }
   .tag-down { background:var(--amber); color:#fff; }
 
-  .note { font-size:12.5px; color:var(--muted); margin:12px 0 0; padding:10px 12px; background:var(--amber-light); border-radius:9px; border:1px solid #fbd9bd; }
+  .note { font-size:12px; color:var(--muted); margin:10px 0 0; }
 </style>
 </head>
 <body>
 <header>
-  <div class="eyebrow">HD KPI OPS</div>
   <h1>HDPS KPI 자동화 웹도구</h1>
   <p>인도 · 브라질 KPI 실적 반영 / 목표대비 판정 &amp; 최근 추세 — 행 밀림 자동 보정</p>
 </header>
 
 <main>
   <section class="panel">
-    <h2><span class="chip">📁</span>사업장 · 파일</h2>
+    <h2>사업장 · 파일</h2>
     <div class="field-row"><label>사업장</label>
       <select id="plantSelect"><option value="india">인도</option><option value="brazil">브라질</option></select>
     </div>
@@ -131,7 +94,7 @@
   </section>
 
   <section class="panel">
-    <h2><span class="chip">⚡</span>실행</h2>
+    <h2>실행</h2>
     <div class="actions">
       <button id="btnReflect" disabled>실적 반영 → 총괄파일 다운로드</button>
       <button id="btnJudge" class="ghost" disabled>목표대비 판정 · 추세 보기</button>
@@ -140,7 +103,7 @@
   </section>
 
   <section class="panel" id="resultCard" style="display:none;">
-    <h2><span class="chip">📊</span>판정 결과</h2>
+    <h2>판정 결과</h2>
     <div class="month-strip" id="monthStrip"></div>
     <p class="note" id="trendNote" style="display:none;">🔴 연속 미달성 · 📉 최근 3개월 악화 추세 — KPI 옆 배지로 표시됩니다. 정렬은 "연속 미달성 개월수"가 큰 순서입니다.</p>
     <table class="results" id="resultTable">
@@ -151,7 +114,7 @@
   </section>
 
   <section class="panel">
-    <h2><span class="chip">🖥</span>실행 로그</h2>
+    <h2>실행 로그</h2>
     <div id="log">대기 중...</div>
   </section>
 </main>
