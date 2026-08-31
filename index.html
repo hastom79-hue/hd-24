@@ -135,7 +135,7 @@
         <button id="btnMailWatch" class="ghost">🔴📉 주의 대상만 메일 초안</button>
         <button id="btnMailAll" class="ghost">이번 달 전체 지표 메일 초안</button>
       </div>
-      <p class="hint">버튼을 누르면 Outlook 등 기본 메일 앱에 제목·본문이 채워진 초안이 뜝니다. 자동으로 발송되지 않으니 확인 후 직접 [보내기]를 눌러주세요. 이메일 주소는 이 브라우저에만 저장됩니다.</p>
+      <p class="hint">버튼을 누르면 ① 상세 내역이 담긴 엑셀 파일이 먼저 자동 다운로드되고, ② 이어서 Outlook 등 기본 메일 앱에 제목·본문이 채워진 초안이 뜝니다. 다운로드된 엑셀을 메일 창에 끌어다 놓으신 후 확인하고 [보내기]를 눌러주세요 (mailto 방식은 브라우저에서 파일을 자동 첨부할 수 없어 이 방식으로 처리됩니다). 이메일 주소는 이 브라우저에만 저장됩니다.</p>
     </div>
 
     <div class="result-cols">
@@ -179,9 +179,9 @@
 
 <script>
 const PLANT_CONFIG = {
-  india: { label:'인도', mappingFile:'mapping_india.json', srcSheet:'Final With HQ Suggestion', masterSheet:'인도법인 KPI(26년 보고용)', srcMonthStartCol:15, hasSource:true },
-  brazil:{ label:'브라질', mappingFile:'mapping_brazil.json', srcSheet:'HCEB KPIs', masterSheet:'브라질법인 KPI(26년 보고용)', srcMonthStartCol:18, hasSource:true },
-  ulsan: { label:'울산', mappingFile:'mapping_ulsan.json', masterSheet:'울산캠퍼스 KPI(26년 보고용)', masterTargetCol:28, masterMonthStartCol:30, hasSource:false },
+  india: { label:'인도', labelEn:'India', mappingFile:'mapping_india.json', srcSheet:'Final With HQ Suggestion', masterSheet:'인도법인 KPI(26년 보고용)', srcMonthStartCol:15, hasSource:true },
+  brazil:{ label:'브라질', labelEn:'Brazil', mappingFile:'mapping_brazil.json', srcSheet:'HCEB KPIs', masterSheet:'브라질법인 KPI(26년 보고용)', srcMonthStartCol:18, hasSource:true },
+  ulsan: { label:'울산', labelEn:'Ulsan', mappingFile:'mapping_ulsan.json', masterSheet:'울산캠퍼스 KPI(26년 보고용)', masterTargetCol:28, masterMonthStartCol:30, hasSource:false },
 };
 const SRC_MONTH_HEADER_ROW = 11;
 const MASTER_MONTH_START_COL = 27;
@@ -498,6 +498,7 @@ function dirLabel(direction){
   return direction;
 }
 function kpiLabel(r){ return currentLang==='ko' ? r.kpi : (r.kpiEn || r.kpi); }
+function plantLabel(){ return currentLang==='ko' ? cfg().label : (cfg().labelEn || cfg().label); }
 
 document.getElementById('btnLangKo').addEventListener('click', () => setLang('ko'));
 document.getElementById('btnLangEn').addEventListener('click', () => setLang('en'));
@@ -611,7 +612,7 @@ function buildMailBody(items, scopeLabelKo, scopeLabelEn, showStatus){
   lines.push(en ? 'Hello,' : '안녕하세요,');
   lines.push('');
   lines.push(en
-    ? `Please review the following KPIs for ${cfg().label} (${scopeLabel}).`
+    ? `Please review the following KPIs for ${plantLabel()} (${scopeLabel}).`
     : cfg().label + ' 사업장의 아래 지표(' + scopeLabel + ')에 대해 확인 부탁드립니다.');
   lines.push('');
 
@@ -666,15 +667,46 @@ function buildMailBody(items, scopeLabelKo, scopeLabelEn, showStatus){
   return lines.join('\n');
 }
 
+// 메일 첨부용 엑셀 리포트 생성 (mailto는 파일을 자동첨부할 수 없어, 별도 다운로드 후 사용자가 직접 끌어넣도록 함)
+function downloadMailExcel(items, scopeLabelKo){
+  const en = currentLang==='en';
+  const header = en
+    ? ['Row','KPI (KR)','KPI (EN)','Direction','Month','Target','Actual','Result','Consecutive Miss(mo)','Trend']
+    : ['총괄행','KPI(국문)','KPI(영문)','방향','월','목표','실적','판정','연속미달성(개월)','추세'];
+  const rows = [header];
+  for (const r of items){
+    rows.push([
+      r.masterRow, r.kpi, r.kpiEn||'', r.direction, monthLabel(r.month),
+      round(r.target), round(r.actual),
+      r.achieved ? (en?'Achieved':'달성') : (en?'Not Achieved':'미달성'),
+      r.streak, r.trend==='down' ? (en?'Worsening':'악화') : (r.trend==='up' ? (en?'Improving':'개선') : (en?'Flat':'유지')),
+    ]);
+  }
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:8},{wch:34},{wch:34},{wch:14},{wch:8},{wch:10},{wch:10},{wch:10},{wch:12},{wch:10}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'KPI');
+  const fname = `HDPS_KPI_${plantLabel()}_${monthLabel(selectedMonth)}_${scopeLabelKo.replace(/[^\w가-힣]/g,'')}.xlsx`;
+  XLSX.writeFile(wb, fname);
+  return fname;
+}
+
 function openMailDraft(items, scopeLabelKo, scopeLabelEn, showStatus){
   const en = currentLang==='en';
   if (!items.length){ alert(en ? 'No KPIs match this condition.' : '해당 조건의 지표가 없습니다.'); return; }
   const to = mailToInput.value.trim();
   if (!to){ alert(en ? 'Please enter the recipient email first.' : '담당자 이메일을 먼저 입력해주세요.'); mailToInput.focus(); return; }
+
+  const fname = downloadMailExcel(items, scopeLabelKo);
+  log((en?'Excel downloaded for attaching: ':'첨부용 엑셀 다운로드: ') + fname);
+
   const subject = en
-    ? `[HDPS KPI ${showStatus?'Status':'Alert'}] ${cfg().label} - ${monthLabel(selectedMonth)} (${items.length} items)`
+    ? `[HDPS KPI ${showStatus?'Status':'Alert'}] ${plantLabel()} - ${monthLabel(selectedMonth)} (${items.length} items)`
     : `[HDPS KPI ${showStatus?'현황':'미달성 알림'}] ${cfg().label} 사업장 - ${selectedMonth}월 기준 ${items.length}건`;
   let body = buildMailBody(items, scopeLabelKo, scopeLabelEn, showStatus);
+  body = (en
+    ? `[Attachment: "${fname}" was just downloaded — please drag it into this email before sending]\n\n`
+    : `[첨부파일: "${fname}" 방금 다운로드됨 — 이 메일 창에 끌어다 놓은 후 발송해주세요]\n\n`) + body;
   const MAX = 1800;
   if (body.length > MAX){
     body = body.slice(0, MAX) + (en ? '\n\n... (truncated, please see the web table for the full list)' : '\n\n... (항목이 많아 이후 내용은 생략됨, 웹페이지 표를 참고해주세요)');
