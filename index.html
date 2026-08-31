@@ -160,7 +160,7 @@
       <div class="result-col">
         <div class="col-head"><h3 class="miss-h">미달성</h3><span class="col-count" id="missCount"></span></div>
         <table class="results" id="missTable">
-          <colgroup><col style="width:40px"><col><col style="width:56px"><col style="width:110px"></colgroup>
+          <colgroup><col style="width:40px"><col><col style="width:56px"><col style="width:126px"></colgroup>
           <thead><tr><th>행</th><th>KPI / 최근추세</th><th>방향</th><th>목표 대비 실적</th></tr></thead>
           <tbody></tbody>
         </table>
@@ -168,7 +168,7 @@
       <div class="result-col">
         <div class="col-head"><h3 class="ok-h">달성</h3><span class="col-count" id="okCount"></span></div>
         <table class="results" id="okTable">
-          <colgroup><col style="width:40px"><col><col style="width:56px"><col style="width:110px"></colgroup>
+          <colgroup><col style="width:40px"><col><col style="width:56px"><col style="width:126px"></colgroup>
           <thead><tr><th>행</th><th>KPI</th><th>방향</th><th>목표 대비 실적</th></tr></thead>
           <tbody></tbody>
         </table>
@@ -457,7 +457,7 @@ document.getElementById('btnJudge').addEventListener('click', () => {
           if (target===null || actual===null) continue;
           hist.push(makeHistEntry(mo, target, actual, m.direction));
         }
-        if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, kpiEn:m.kpiEn||m.kpiKr, direction:m.direction, months:hist};
+        if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, kpiEn:m.kpiEn||m.kpiKr, direction:m.direction, unit:m.unit||"", months:hist};
       }
     } else {
       // 울산: 별도 원본파일 없음. 총괄파일 안의 (연간 고정)목표와 월별 실적을 그대로 사용
@@ -472,7 +472,7 @@ document.getElementById('btnJudge').addEventListener('click', () => {
           if (actual===null) continue;
           hist.push(makeHistEntry(mo, target, actual, m.direction));
         }
-        if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, kpiEn:m.kpiEn||m.kpiKr, direction:m.direction, months:hist};
+        if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, kpiEn:m.kpiEn||m.kpiKr, direction:m.direction, unit:m.unit||"", months:hist};
       }
       log('⚠ 울산은 월별 목표가 아닌 연간 고정목표로 판정합니다 (원본파일이 없어 인도/브라질과 정확도가 다를 수 있음)');
     }
@@ -491,7 +491,7 @@ document.getElementById('btnJudge').addEventListener('click', () => {
           if (last < first*0.97) trend='down';
           else if (last > first*1.03) trend='up';
         }
-        results.push({month:cur.month, masterRow:Number(masterRow), kpi:info.kpi, kpiEn:info.kpiEn, direction:info.direction,
+        results.push({month:cur.month, masterRow:Number(masterRow), kpi:info.kpi, kpiEn:info.kpiEn, direction:info.direction, unit:info.unit,
                        target:cur.target, actual:cur.actual, achieved:cur.achieved, streak, trend});
       }
     }
@@ -522,17 +522,18 @@ function dirLabelWithArrow(direction){
 function kpiLabel(r){ return currentLang==='ko' ? r.kpi : (r.kpiEn || r.kpi); }
 function plantLabel(){ return currentLang==='ko' ? cfg().label : (cfg().labelEn || cfg().label); }
 
-// 목표 대비 실적을 작은 막대그래프로 시각화
-function miniBar(target, actual, achieved){
+// 목표 대비 실적을 작은 막대그래프로 시각화 (단위 표시 포함)
+function miniBar(target, actual, achieved, unit){
   const t = Math.abs(target), a = Math.abs(actual);
   const max = Math.max(t, a, 1e-9) * 1.08; // 여유 8%
   const tPct = Math.min(100, (t/max)*100);
   const aPct = Math.min(100, (a/max)*100);
   const cls = achieved ? 'ok' : 'miss';
+  const u = unit ? (unit==='%' ? unit : ' '+unit) : '';
   return `<div class="mini-bar">
     <div class="bar-track"><div class="bar-fill target" style="width:${tPct}%"></div></div>
     <div class="bar-track"><div class="bar-fill actual ${cls}" style="width:${aPct}%"></div></div>
-    <div class="bar-nums"><span>${round(target)}</span><span>${round(actual)}</span></div>
+    <div class="bar-nums"><span>${round(target)}${u}</span><span>${round(actual)}${u}</span></div>
   </div>`;
 }
 
@@ -611,7 +612,7 @@ function renderTable(){
     tr.innerHTML = `<td class="num mono">${r.masterRow}</td>
       <td>${kpiLabel(r)}${badges}</td>
       <td>${dirLabelWithArrow(r.direction)}</td>
-      <td>${miniBar(r.target, r.actual, r.achieved)}</td>`;
+      <td>${miniBar(r.target, r.actual, r.achieved, r.unit)}</td>`;
     missBody.appendChild(tr);
   }
 
@@ -623,7 +624,7 @@ function renderTable(){
     tr.innerHTML = `<td class="num mono">${r.masterRow}</td>
       <td>${kpiLabel(r)}</td>
       <td>${dirLabelWithArrow(r.direction)}</td>
-      <td>${miniBar(r.target, r.actual, r.achieved)}</td>`;
+      <td>${miniBar(r.target, r.actual, r.achieved, r.unit)}</td>`;
     okBody.appendChild(tr);
   }
 }

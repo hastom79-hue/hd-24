@@ -7,7 +7,8 @@
   "masterRow": 10,
   "kpiKr": "SQDC 목표달성팀 수(또는 비율)",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 14,
@@ -17,7 +18,8 @@
   "masterRow": 11,
   "kpiKr": "\"Cost\" KPI 달성율 → COPQ 및 OT KPI 달성률 (%)",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 20,
@@ -27,7 +29,8 @@
   "masterRow": 13,
   "kpiKr": "대당 비가동 MH",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "MH/대"
  },
  {
   "labelRow": 22,
@@ -37,7 +40,8 @@
   "masterRow": 14,
   "kpiKr": "생산이슈 재발율",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 24,
@@ -47,7 +51,8 @@
   "masterRow": 15,
   "kpiKr": "생산지시 준수율(완제품 입고계획 준수율)",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 26,
@@ -57,7 +62,8 @@
   "masterRow": 17,
   "kpiKr": "대당 펜딩이슈 조치 리드타임",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "일"
  },
  {
   "labelRow": 28,
@@ -67,7 +73,8 @@
   "masterRow": 22,
   "kpiKr": "공정 순환율",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 30,
@@ -77,7 +84,8 @@
   "masterRow": 19,
   "kpiKr": "개인별 3공정 달성율",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 32,
@@ -87,7 +95,8 @@
   "masterRow": 20,
   "kpiKr": "공정별 3인 달성율",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 34,
@@ -97,7 +106,8 @@
   "masterRow": 25,
   "kpiKr": "IQ(초기품질)",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "DPTU"
  },
  {
   "labelRow": 36,
@@ -107,7 +117,8 @@
   "masterRow": 26,
   "kpiKr": "WQ(내구품질)",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "DPTU"
  },
  {
   "labelRow": 42,
@@ -117,7 +128,8 @@
   "masterRow": 27,
   "kpiKr": "라인 품질(전체)비가동손실MH",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "MH/대"
  },
  {
   "labelRow": 44,
@@ -127,7 +139,8 @@
   "masterRow": 24,
   "kpiKr": "QIR 개선율",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 46,
@@ -137,7 +150,8 @@
   "masterRow": 35,
   "kpiKr": "부품 공정불량율(또는 라인품질비가동(부품))",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "PPM"
  },
  {
   "labelRow": 48,
@@ -147,7 +161,8 @@
   "masterRow": 37,
   "kpiKr": "완제품 시운전 불량율",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "DPTU"
  },
  {
   "labelRow": 58,
@@ -157,7 +172,8 @@
   "masterRow": 36,
   "kpiKr": "라인품질비가동(부품)손실",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "MH/대"
  },
  {
   "labelRow": 60,
@@ -167,7 +183,8 @@
   "masterRow": 38,
   "kpiKr": "완제품 입고검사 불량율",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "DPTU"
  },
  {
   "labelRow": 62,
@@ -177,7 +194,8 @@
   "masterRow": 32,
   "kpiKr": "Fool Proof 적용률(연간 계획 대비 전체)",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 64,
@@ -187,7 +205,8 @@
   "masterRow": 29,
   "kpiKr": "IQ200(생산귀책)",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 68,
@@ -197,7 +216,8 @@
   "masterRow": 30,
   "kpiKr": "공정 불량율(생산귀책) (Basic Quality, Leakage, FDI, NDT, ISA)",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 70,
@@ -207,7 +227,8 @@
   "masterRow": 31,
   "kpiKr": "직행율(* 무결함으로 후공정 진행하는 비율)",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 72,
@@ -217,7 +238,8 @@
   "masterRow": 53,
   "kpiKr": "PDCA 진행률",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 74,
@@ -227,7 +249,8 @@
   "masterRow": 52,
   "kpiKr": "중요 문제 발굴 사례 (협력사 및 사내)",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "건/년"
  },
  {
   "labelRow": 76,
@@ -237,7 +260,8 @@
   "masterRow": 48,
   "kpiKr": "문제해결기법 활용인력",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "명/년"
  },
  {
   "labelRow": 78,
@@ -247,7 +271,8 @@
   "masterRow": 49,
   "kpiKr": "문제해결기법 코칭인력",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "명/년"
  },
  {
   "labelRow": 80,
@@ -257,7 +282,8 @@
   "masterRow": 54,
   "kpiKr": "자율개선활동 참여도",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 82,
@@ -267,7 +293,8 @@
   "masterRow": 56,
   "kpiKr": "소그룹활동 수평전개건수",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "건/년"
  },
  {
   "labelRow": 84,
@@ -277,7 +304,8 @@
   "masterRow": 55,
   "kpiKr": "인당 소그룹 개선건수",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "인/건"
  },
  {
   "labelRow": 86,
@@ -287,7 +315,8 @@
   "masterRow": 57,
   "kpiKr": "VTB 개선완료율",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 88,
@@ -297,7 +326,8 @@
   "masterRow": 58,
   "kpiKr": "VTB 평균 개선 리드타임",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "일"
  },
  {
   "labelRow": 90,
@@ -307,7 +337,8 @@
   "masterRow": 45,
   "kpiKr": "가치시간 비율(가치 흐름 효율, VSE)",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 96,
@@ -317,7 +348,8 @@
   "masterRow": 43,
   "kpiKr": "부품재고 회전율",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "rev"
  },
  {
   "labelRow": 98,
@@ -327,7 +359,8 @@
   "masterRow": 44,
   "kpiKr": "출하 리드타임",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "일"
  },
  {
   "labelRow": 104,
@@ -337,7 +370,8 @@
   "masterRow": 63,
   "kpiKr": "표준화 건수 → 5S 고도화 개선사례 건수로 관리",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "건/년"
  },
  {
   "labelRow": 106,
@@ -347,7 +381,8 @@
   "masterRow": 61,
   "kpiKr": "불합리 개선건수 (또는 개선율)",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 108,
@@ -357,7 +392,8 @@
   "masterRow": 60,
   "kpiKr": "5S Audit 점수",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "점"
  },
  {
   "labelRow": 110,
@@ -367,7 +403,8 @@
   "masterRow": 68,
   "kpiKr": "자주보전 적용 신규 설비 대수 (ABC 등급)",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 112,
@@ -377,7 +414,8 @@
   "masterRow": 65,
   "kpiKr": "MTTR(평균 고장시간)",
   "scale": 1,
-  "valueFormat": "시간serial"
+  "valueFormat": "시간serial",
+  "unit": "HH:MM"
  },
  {
   "labelRow": 114,
@@ -387,7 +425,8 @@
   "masterRow": 66,
   "kpiKr": "MTBF(평균 고장간격)",
   "scale": 1,
-  "valueFormat": "시간serial"
+  "valueFormat": "시간serial",
+  "unit": "HH:MM"
  },
  {
   "labelRow": 116,
@@ -397,7 +436,8 @@
   "masterRow": 67,
   "kpiKr": "MTTD(초기고장 대응시간)",
   "scale": 1,
-  "valueFormat": "시간serial"
+  "valueFormat": "시간serial",
+  "unit": "HH:MM"
  },
  {
   "labelRow": 118,
@@ -407,7 +447,8 @@
   "masterRow": 64,
   "kpiKr": "설비 비가동손실MH",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "MH/대"
  },
  {
   "labelRow": 120,
@@ -417,7 +458,8 @@
   "masterRow": 70,
   "kpiKr": "표준문서 기준 CTQ 준수율(전체영역)",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 122,
@@ -427,7 +469,8 @@
   "masterRow": 72,
   "kpiKr": "표준작업문서의 최신화 비율 (표준문서의 개정관리에 대한 지표)",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 126,
@@ -437,7 +480,8 @@
   "masterRow": 71,
   "kpiKr": "표준 미준수 재발율",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 128,
@@ -447,7 +491,8 @@
   "masterRow": 69,
   "kpiKr": "표준작업 준수율",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 130,
@@ -457,7 +502,8 @@
   "masterRow": 73,
   "kpiKr": "중요품질지표 (누락, 누유/누수, 미조임, 오조립)",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "DPTU"
  },
  {
   "labelRow": 132,
@@ -467,7 +513,8 @@
   "masterRow": 80,
   "kpiKr": "RCCP 준수율(M+1변동율)",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 134,
@@ -477,7 +524,8 @@
   "masterRow": 79,
   "kpiKr": "MPS 준수율(Mix변동율, W+3)",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 136,
@@ -487,7 +535,8 @@
   "masterRow": 86,
   "kpiKr": "오더확보율(주문배정율)- W+3 Order Intake Fulfillment (W+4 - Rolling Plan), Domestic + Export Production Plan",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 140,
@@ -497,7 +546,8 @@
   "masterRow": 87,
   "kpiKr": "내자재 입고 준수율",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 142,
@@ -507,7 +557,8 @@
   "masterRow": 89,
   "kpiKr": "월간 생산계획 준수율(Export)",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 144,
@@ -517,7 +568,8 @@
   "masterRow": 88,
   "kpiKr": "옵션플래닝 정확도",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 146,
@@ -527,7 +579,8 @@
   "masterRow": 83,
   "kpiKr": "생산계획 달성율(입고계획 준수율)",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 148,
@@ -537,7 +590,8 @@
   "masterRow": 99,
   "kpiKr": "미투입 & 오투입 자재공급 개선사례",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "건/년"
  },
  {
   "labelRow": 156,
@@ -547,7 +601,8 @@
   "masterRow": 90,
   "kpiKr": "대당 비가동 손실MH(사내 PPIC 이상)",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "MH/대"
  },
  {
   "labelRow": 158,
@@ -567,7 +622,8 @@
   "masterRow": 93,
   "kpiKr": "DIO(재고회전일수, Days)",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "일"
  },
  {
   "labelRow": 162,
@@ -577,7 +633,8 @@
   "masterRow": 95,
   "kpiKr": "재고일치율",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 164,
@@ -587,7 +644,8 @@
   "masterRow": 96,
   "kpiKr": "장기재고금액",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "INR"
  },
  {
   "labelRow": 166,
@@ -597,7 +655,8 @@
   "masterRow": 108,
   "kpiKr": "생산라인별 표준재공 준수율(제관)",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 168,
@@ -607,7 +666,8 @@
   "masterRow": 109,
   "kpiKr": "생산라인별 표준재공 준수율(L/Out~Test)",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 174,
@@ -617,7 +677,8 @@
   "masterRow": 107,
   "kpiKr": "생산라인별 제조 리드타임 →Cutting to FDI out",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "일"
  },
  {
   "labelRow": 176,
@@ -627,7 +688,8 @@
   "masterRow": 110,
   "kpiKr": "생산라인별 순서생산 준수율",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 178,
@@ -647,7 +709,8 @@
   "masterRow": 115,
   "kpiKr": "비계획 VS 계획 O/T 비율",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 184,
@@ -657,7 +720,8 @@
   "masterRow": 117,
   "kpiKr": "표준작업표를 활용한 비부가가치작업 개선사례",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "건/년"
  },
  {
   "labelRow": 186,
@@ -667,7 +731,8 @@
   "masterRow": 112,
   "kpiKr": "대당 투입MH (제관)",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "MH/대"
  },
  {
   "labelRow": 188,
@@ -677,7 +742,8 @@
   "masterRow": 111,
   "kpiKr": "대당 투입MH (조립)",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "MH/대"
  },
  {
   "labelRow": 190,
@@ -687,7 +753,8 @@
   "masterRow": 113,
   "kpiKr": "라인 편성효율(병목공정 기준, 공정설계이슈)",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 192,
@@ -697,7 +764,8 @@
   "masterRow": 116,
   "kpiKr": "대당 O/T MH",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "MH/대"
  },
  {
   "labelRow": 194,
@@ -707,7 +775,8 @@
   "masterRow": 101,
   "kpiKr": "표준재공 준수율",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 206,
@@ -717,7 +786,8 @@
   "masterRow": 6,
   "kpiKr": "불안전한 행동/위험 발굴건수",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "건/년"
  },
  {
   "labelRow": 208,
@@ -727,7 +797,8 @@
   "masterRow": 7,
   "kpiKr": "자발적 위험요인 개선 완료율 → HIRA & EARA 리스크 감소건수로 관리",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "건/년"
  },
  {
   "labelRow": 214,
@@ -737,7 +808,8 @@
   "masterRow": 5,
   "kpiKr": "EHS 리더십 점검 개선완료율",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 216,
@@ -747,7 +819,8 @@
   "masterRow": 8,
   "kpiKr": "LTIR(근로손실 사고율)",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "건"
  },
  {
   "labelRow": 218,
@@ -757,6 +830,7 @@
   "masterRow": 9,
   "kpiKr": "중대사고 재해건수 → 사고발생건수로 관리 (First Aid, Property Damage, Reportable occurrences)",
   "scale": 1,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "건/년"
  }
 ]
