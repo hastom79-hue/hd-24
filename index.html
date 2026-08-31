@@ -46,7 +46,22 @@
   #log { font-family:Consolas,monospace; font-size:12px; line-height:1.65; background:#1c2530; color:#c9d3db; padding:14px 16px; border-radius:4px; max-height:280px; overflow-y:auto; white-space:pre-wrap; }
 
   .month-strip { display:flex; border:1px solid var(--line); border-radius:4px; overflow:hidden; margin-bottom:18px; }
-  .month-strip .m { flex:1; padding:10px 6px; text-align:center; border-right:1px solid var(--line); cursor:pointer; background:#fafbfc; }
+  .month-strip .m { flex:1; padding:10px 6px; text-align:center; border-right:1px solid var(--line); cursor:pointer; background:#fafbfc; transition:background .18s ease, color .18s ease, transform .1s ease; }
+  .month-strip .m:active { transform:scale(0.97); }
+  @keyframes rowFadeIn { from { opacity:0; transform:translateY(-3px); } to { opacity:1; transform:translateY(0); } }
+  table.results tbody tr { animation: rowFadeIn .22s ease both; }
+
+  .dir-arrow { font-weight:800; margin-right:3px; }
+  .dir-arrow.up { color:var(--ok); }
+  .dir-arrow.down { color:var(--miss); }
+
+  .mini-bar { display:flex; flex-direction:column; gap:3px; min-width:70px; }
+  .mini-bar .bar-track { position:relative; height:6px; background:#eceff2; border-radius:3px; overflow:hidden; }
+  .mini-bar .bar-fill { position:absolute; left:0; top:0; height:100%; border-radius:3px; transition:width .25s ease; }
+  .mini-bar .bar-fill.target { background:#b7bfc7; }
+  .mini-bar .bar-fill.actual.ok { background:var(--ok); }
+  .mini-bar .bar-fill.actual.miss { background:var(--miss); }
+  .mini-bar .bar-nums { font-size:10.5px; color:var(--muted); display:flex; justify-content:space-between; font-family:"SFMono-Regular",Consolas,monospace; }
   .month-strip .m:last-child { border-right:none; }
   .month-strip .m.active { background:var(--accent-dark); color:#fff; }
   .month-strip .m .mlabel { font-size:11.5px; font-weight:700; }
@@ -145,16 +160,16 @@
       <div class="result-col">
         <div class="col-head"><h3 class="miss-h">미달성</h3><span class="col-count" id="missCount"></span></div>
         <table class="results" id="missTable">
-          <colgroup><col style="width:44px"><col><col style="width:58px"><col style="width:78px"><col style="width:78px"></colgroup>
-          <thead><tr><th>행</th><th>KPI / 최근추세</th><th>방향</th><th class="num">목표</th><th class="num">실적</th></tr></thead>
+          <colgroup><col style="width:40px"><col><col style="width:56px"><col style="width:110px"></colgroup>
+          <thead><tr><th>행</th><th>KPI / 최근추세</th><th>방향</th><th>목표 대비 실적</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
       <div class="result-col">
         <div class="col-head"><h3 class="ok-h">달성</h3><span class="col-count" id="okCount"></span></div>
         <table class="results" id="okTable">
-          <colgroup><col style="width:44px"><col><col style="width:58px"><col style="width:78px"><col style="width:78px"></colgroup>
-          <thead><tr><th>행</th><th>KPI</th><th>방향</th><th class="num">목표</th><th class="num">실적</th></tr></thead>
+          <colgroup><col style="width:40px"><col><col style="width:56px"><col style="width:110px"></colgroup>
+          <thead><tr><th>행</th><th>KPI</th><th>방향</th><th>목표 대비 실적</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -500,8 +515,26 @@ function dirLabel(direction){
   if (direction==='하향') return 'Lower is better';
   return direction;
 }
+function dirLabelWithArrow(direction){
+  const arrow = direction==='상향' ? '<span class="dir-arrow up">↑</span>' : (direction==='하향' ? '<span class="dir-arrow down">↓</span>' : '');
+  return arrow + dirLabel(direction);
+}
 function kpiLabel(r){ return currentLang==='ko' ? r.kpi : (r.kpiEn || r.kpi); }
 function plantLabel(){ return currentLang==='ko' ? cfg().label : (cfg().labelEn || cfg().label); }
+
+// 목표 대비 실적을 작은 막대그래프로 시각화
+function miniBar(target, actual, achieved){
+  const t = Math.abs(target), a = Math.abs(actual);
+  const max = Math.max(t, a, 1e-9) * 1.08; // 여유 8%
+  const tPct = Math.min(100, (t/max)*100);
+  const aPct = Math.min(100, (a/max)*100);
+  const cls = achieved ? 'ok' : 'miss';
+  return `<div class="mini-bar">
+    <div class="bar-track"><div class="bar-fill target" style="width:${tPct}%"></div></div>
+    <div class="bar-track"><div class="bar-fill actual ${cls}" style="width:${aPct}%"></div></div>
+    <div class="bar-nums"><span>${round(target)}</span><span>${round(actual)}</span></div>
+  </div>`;
+}
 
 document.getElementById('btnLangKo').addEventListener('click', () => setLang('ko'));
 document.getElementById('btnLangEn').addEventListener('click', () => setLang('en'));
@@ -554,13 +587,11 @@ function renderTable(){
   document.querySelectorAll('#missTable thead th')[0].textContent = currentLang==='ko' ? '행' : 'Row';
   document.querySelectorAll('#missTable thead th')[1].textContent = currentLang==='ko' ? 'KPI / 최근추세' : 'KPI / Recent Trend';
   document.querySelectorAll('#missTable thead th')[2].textContent = currentLang==='ko' ? '방향' : 'Direction';
-  document.querySelectorAll('#missTable thead th')[3].textContent = currentLang==='ko' ? '목표' : 'Target';
-  document.querySelectorAll('#missTable thead th')[4].textContent = currentLang==='ko' ? '실적' : 'Actual';
+  document.querySelectorAll('#missTable thead th')[3].textContent = currentLang==='ko' ? '목표 대비 실적' : 'Target vs Actual';
   document.querySelectorAll('#okTable thead th')[0].textContent = currentLang==='ko' ? '행' : 'Row';
   document.querySelectorAll('#okTable thead th')[1].textContent = currentLang==='ko' ? 'KPI' : 'KPI';
   document.querySelectorAll('#okTable thead th')[2].textContent = currentLang==='ko' ? '방향' : 'Direction';
-  document.querySelectorAll('#okTable thead th')[3].textContent = currentLang==='ko' ? '목표' : 'Target';
-  document.querySelectorAll('#okTable thead th')[4].textContent = currentLang==='ko' ? '실적' : 'Actual';
+  document.querySelectorAll('#okTable thead th')[3].textContent = currentLang==='ko' ? '목표 대비 실적' : 'Target vs Actual';
 
   document.getElementById('trendNote').style.display = missRows.some(r=>r.streak>=2||r.trend==='down') ? 'block' : 'none';
   document.getElementById('trendNote').textContent = currentLang==='ko'
@@ -579,8 +610,8 @@ function renderTable(){
     if (r.trend==='down') badges += currentLang==='ko' ? `<br><span class="tag tag-down">📉 최근 악화</span>` : `<br><span class="tag tag-down">📉 Recent decline</span>`;
     tr.innerHTML = `<td class="num mono">${r.masterRow}</td>
       <td>${kpiLabel(r)}${badges}</td>
-      <td>${dirLabel(r.direction)}</td>
-      <td class="num mono">${round(r.target)}</td><td class="num mono">${round(r.actual)}</td>`;
+      <td>${dirLabelWithArrow(r.direction)}</td>
+      <td>${miniBar(r.target, r.actual, r.achieved)}</td>`;
     missBody.appendChild(tr);
   }
 
@@ -591,8 +622,8 @@ function renderTable(){
     tr.className = 'ok';
     tr.innerHTML = `<td class="num mono">${r.masterRow}</td>
       <td>${kpiLabel(r)}</td>
-      <td>${dirLabel(r.direction)}</td>
-      <td class="num mono">${round(r.target)}</td><td class="num mono">${round(r.actual)}</td>`;
+      <td>${dirLabelWithArrow(r.direction)}</td>
+      <td>${miniBar(r.target, r.actual, r.achieved)}</td>`;
     okBody.appendChild(tr);
   }
 }
