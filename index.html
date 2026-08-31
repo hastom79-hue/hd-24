@@ -805,13 +805,13 @@ async function buildMailExcelFile(items, scopeLabelKo, scopeLabelEn){
   const en = currentLang==='en';
   const scopeLabel = en ? scopeLabelEn : scopeLabelKo;
   const header = en
-    ? ['Row','KPI (KR)','KPI (EN)','Direction','Month','Target','Actual','Result','Consecutive Miss(mo)','Trend']
-    : ['총괄행','KPI(국문)','KPI(영문)','방향','월','목표','실적','판정','연속미달성(개월)','추세'];
+    ? ['Row','KPI (KR)','KPI (EN)','Direction','Month','Target','Actual','Result','Consecutive Miss(mo)','Trend','Reason for Not Achieving','Countermeasure / Due Date']
+    : ['총괄행','KPI(국문)','KPI(영문)','방향','월','목표','실적','판정','연속미달성(개월)','추세','미달성 사유','만회대책 / 완료예정일'];
 
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet('KPI');
   ws.columns = [
-    {width:9},{width:36},{width:36},{width:14},{width:8},{width:10},{width:10},{width:13},{width:12},{width:10}
+    {width:9},{width:36},{width:36},{width:14},{width:8},{width:10},{width:10},{width:13},{width:12},{width:10},{width:30},{width:30}
   ];
 
   const headerRow = ws.addRow(header);
@@ -821,18 +821,20 @@ async function buildMailExcelFile(items, scopeLabelKo, scopeLabelEn){
     c.alignment = {vertical:'middle', horizontal:'center', wrapText:true};
     c.border = {bottom:{style:'thin', color:{argb:'FFB9C4CB'}}};
   });
-  ws.views = [{state:'frozen', ySplit:1}];
+  ws.views = [{state:'frozen', ySplit:1, xSplit:2}];
 
   const MISS_FILL = 'FFFBEBE7', OK_FILL = 'FFE7F3EC';
   const MISS_FONT = 'FF9A3324', OK_FONT = 'FF1E6B47';
+  const INPUT_FILL = 'FFFFFF00'; // 입력란 강조(노랑)
   const THIN = {style:'thin', color:{argb:'FFE4E7EA'}};
+  const INPUT_BORDER = {style:'thin', color:{argb:'FFC9A800'}};
 
   for (const r of items){
     const resultText = r.achieved ? (en?'Achieved':'달성') : (en?'Not Achieved':'미달성');
     const trendText = r.trend==='down' ? (en?'Worsening':'악화') : (r.trend==='up' ? (en?'Improving':'개선') : (en?'Flat':'유지'));
     const row = ws.addRow([
       r.masterRow, r.kpi, r.kpiEn||'', r.direction, monthLabel(r.month),
-      round(r.target), round(r.actual), resultText, r.streak, trendText,
+      round(r.target), round(r.actual), resultText, r.streak, trendText, '', '',
     ]);
     const fill = r.achieved ? OK_FILL : MISS_FILL;
     const fontColor = r.achieved ? OK_FONT : MISS_FONT;
@@ -845,6 +847,14 @@ async function buildMailExcelFile(items, scopeLabelKo, scopeLabelEn){
     row.getCell(6).alignment = {horizontal:'right'};
     row.getCell(7).alignment = {horizontal:'right'};
     row.getCell(9).alignment = {horizontal:'center'};
+    // 미달성 행만 사유/만회대책 칸을 입력용(노랑)으로 강조
+    if (!r.achieved){
+      [11,12].forEach(ci => {
+        const cell = row.getCell(ci);
+        cell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:INPUT_FILL}};
+        cell.border = {top:INPUT_BORDER, bottom:INPUT_BORDER, left:INPUT_BORDER, right:INPUT_BORDER};
+      });
+    }
   }
   ws.autoFilter = { from:{row:1,column:1}, to:{row:1,column:header.length} };
 
