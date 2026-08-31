@@ -798,7 +798,8 @@ function buildMailBody(items, scopeLabelKo, scopeLabelEn, showStatus){
 }
 
 // 메일 첨부용 엑셀 리포트 생성 (mailto는 파일을 자동첨부할 수 없어, 별도 다운로드 후 사용자가 직접 끌어넣도록 함)
-function downloadMailExcel(items, scopeLabelKo, scopeLabelEn){
+// 엑셀 워크북 생성 (다운로드는 별도 - Web Share 시 File 객체로도 재사용)
+function buildMailExcelFile(items, scopeLabelKo, scopeLabelEn){
   const en = currentLang==='en';
   const scopeLabel = en ? scopeLabelEn : scopeLabelKo;
   const header = en
@@ -819,22 +820,44 @@ function downloadMailExcel(items, scopeLabelKo, scopeLabelEn){
   XLSX.utils.book_append_sheet(wb, ws, 'KPI');
   const scopeForName = scopeLabel.replace(/[^\w가-힣]/g,'');
   const fname = `HDPS_KPI_${plantLabel()}_${monthLabel(selectedMonth)}_${scopeForName}.xlsx`;
+  const buf = XLSX.write(wb, {type:'array', bookType:'xlsx'});
+  const file = new File([buf], fname, {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  return {file, fname, wb};
+}
+function downloadMailExcel(items, scopeLabelKo, scopeLabelEn){
+  const {wb, fname} = buildMailExcelFile(items, scopeLabelKo, scopeLabelEn);
   XLSX.writeFile(wb, fname);
   return fname;
 }
 
-function openMailDraft(items, scopeLabelKo, scopeLabelEn, showStatus){
+async function openMailDraft(items, scopeLabelKo, scopeLabelEn, showStatus){
   const en = currentLang==='en';
   if (!items.length){ alert(en ? 'No KPIs match this condition.' : '해당 조건의 지표가 없습니다.'); return; }
   const to = mailToInput.value.trim();
   if (!to){ alert(en ? 'Please enter the recipient email first.' : '담당자 이메일을 먼저 입력해주세요.'); mailToInput.focus(); return; }
 
-  const fname = downloadMailExcel(items, scopeLabelKo, scopeLabelEn);
-  log((en?'Excel downloaded for attaching: ':'첨부용 엑셀 다운로드: ') + fname);
-
   const subject = en
     ? `[HDPS KPI ${showStatus?'Status':'Alert'}] ${plantLabel()} - ${monthLabel(selectedMonth)} (${items.length} items)`
     : `[HDPS KPI ${showStatus?'현황':'미달성 알림'}] ${cfg().label} 사업장 - ${selectedMonth}월 기준 ${items.length}건`;
+
+  // ① 이 브라우저/기기가 "파일 포함 공유"를 지원하면 먼저 시도 (일부 환경에서 실제로 첨부까지 자동으로 됨)
+  const {file, fname} = buildMailExcelFile(items, scopeLabelKo, scopeLabelEn);
+  if (navigator.canShare && navigator.canShare({files:[file]})) {
+    try {
+      const shareBody = buildMailBody(items, scopeLabelKo, scopeLabelEn, showStatus);
+      await navigator.share({files:[file], title:subject, text:shareBody});
+      log((en?'Shared with file attached via system share sheet: ':'공유하기(파일 포함)로 전달: ') + fname);
+      return; // 공유 성공 시 mailto 단계는 건너뜀
+    } catch(err) {
+      if (err && err.name === 'AbortError') { log(en?'Share cancelled by user.':'공유가 취소됐습니다.'); return; }
+      log((en?'Share failed, falling back to download+mailto: ':'공유 실패, 다운로드+메일 방식으로 전환: ') + (err&&err.message||err));
+      // 아래로 계속 진행 (기존 방식 fallback)
+    }
+  }
+
+  // ② 공유하기 미지원/실패 시: 기존 방식 (다운로드 + mailto)
+  XLSX.writeFile(buildMailExcelFile(items, scopeLabelKo, scopeLabelEn).wb, fname);
+  log((en?'Excel downloaded for attaching: ':'첨부용 엑셀 다운로드: ') + fname);
   let body = buildMailBody(items, scopeLabelKo, scopeLabelEn, showStatus);
   body = (en
     ? `[Attachment: "${fname}" was just downloaded — please drag it into this email before sending]\n\n`
