@@ -6,6 +6,7 @@
 <title>HDPS KPI 관리시스템</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <style>
   :root {
     --ink:#1a2531; --muted:#66707d;
@@ -799,35 +800,66 @@ function buildMailBody(items, scopeLabelKo, scopeLabelEn, showStatus){
 
 // 메일 첨부용 엑셀 리포트 생성 (mailto는 파일을 자동첨부할 수 없어, 별도 다운로드 후 사용자가 직접 끌어넣도록 함)
 // 엑셀 워크북 생성 (다운로드는 별도 - Web Share 시 File 객체로도 재사용)
-function buildMailExcelFile(items, scopeLabelKo, scopeLabelEn){
+// ExcelJS로 서식(헤더 색, 미달성/달성 행 음영, 테두리, 고정행) 포함한 첨부용 엑셀 생성
+async function buildMailExcelFile(items, scopeLabelKo, scopeLabelEn){
   const en = currentLang==='en';
   const scopeLabel = en ? scopeLabelEn : scopeLabelKo;
   const header = en
     ? ['Row','KPI (KR)','KPI (EN)','Direction','Month','Target','Actual','Result','Consecutive Miss(mo)','Trend']
     : ['총괄행','KPI(국문)','KPI(영문)','방향','월','목표','실적','판정','연속미달성(개월)','추세'];
-  const rows = [header];
+
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('KPI');
+  ws.columns = [
+    {width:9},{width:36},{width:36},{width:14},{width:8},{width:10},{width:10},{width:13},{width:12},{width:10}
+  ];
+
+  const headerRow = ws.addRow(header);
+  headerRow.eachCell(c => {
+    c.font = {bold:true, color:{argb:'FFFFFFFF'}};
+    c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FF2B4A63'}};
+    c.alignment = {vertical:'middle', horizontal:'center', wrapText:true};
+    c.border = {bottom:{style:'thin', color:{argb:'FFB9C4CB'}}};
+  });
+  ws.views = [{state:'frozen', ySplit:1}];
+
+  const MISS_FILL = 'FFFBEBE7', OK_FILL = 'FFE7F3EC';
+  const MISS_FONT = 'FF9A3324', OK_FONT = 'FF1E6B47';
+  const THIN = {style:'thin', color:{argb:'FFE4E7EA'}};
+
   for (const r of items){
-    rows.push([
+    const resultText = r.achieved ? (en?'Achieved':'달성') : (en?'Not Achieved':'미달성');
+    const trendText = r.trend==='down' ? (en?'Worsening':'악화') : (r.trend==='up' ? (en?'Improving':'개선') : (en?'Flat':'유지'));
+    const row = ws.addRow([
       r.masterRow, r.kpi, r.kpiEn||'', r.direction, monthLabel(r.month),
-      round(r.target), round(r.actual),
-      r.achieved ? (en?'Achieved':'달성') : (en?'Not Achieved':'미달성'),
-      r.streak, r.trend==='down' ? (en?'Worsening':'악화') : (r.trend==='up' ? (en?'Improving':'개선') : (en?'Flat':'유지')),
+      round(r.target), round(r.actual), resultText, r.streak, trendText,
     ]);
+    const fill = r.achieved ? OK_FILL : MISS_FILL;
+    const fontColor = r.achieved ? OK_FONT : MISS_FONT;
+    row.eachCell(c => {
+      c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:fill}};
+      c.border = {top:THIN, bottom:THIN, left:THIN, right:THIN};
+      c.alignment = {vertical:'middle', wrapText:true};
+    });
+    row.getCell(8).font = {bold:true, color:{argb:fontColor}}; // 판정 칸 강조
+    row.getCell(6).alignment = {horizontal:'right'};
+    row.getCell(7).alignment = {horizontal:'right'};
+    row.getCell(9).alignment = {horizontal:'center'};
   }
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = [{wch:8},{wch:34},{wch:34},{wch:14},{wch:8},{wch:10},{wch:10},{wch:10},{wch:12},{wch:10}];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'KPI');
+  ws.autoFilter = { from:{row:1,column:1}, to:{row:1,column:header.length} };
+
   const scopeForName = scopeLabel.replace(/[^\w가-힣]/g,'');
   const fname = `HDPS_KPI_${plantLabel()}_${monthLabel(selectedMonth)}_${scopeForName}.xlsx`;
-  const buf = XLSX.write(wb, {type:'array', bookType:'xlsx'});
+  const buf = await wb.xlsx.writeBuffer();
   const file = new File([buf], fname, {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-  return {file, fname, wb};
+  return {file, fname, buf};
 }
-function downloadMailExcel(items, scopeLabelKo, scopeLabelEn){
-  const {wb, fname} = buildMailExcelFile(items, scopeLabelKo, scopeLabelEn);
-  XLSX.writeFile(wb, fname);
-  return fname;
+function downloadFile(file){
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a');
+  a.href = url; a.download = file.name;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 30000);
 }
 
 async function openMailDraft(items, scopeLabelKo, scopeLabelEn, showStatus){
@@ -840,23 +872,23 @@ async function openMailDraft(items, scopeLabelKo, scopeLabelEn, showStatus){
     ? `[HDPS KPI ${showStatus?'Status':'Alert'}] ${plantLabel()} - ${monthLabel(selectedMonth)} (${items.length} items)`
     : `[HDPS KPI ${showStatus?'현황':'미달성 알림'}] ${cfg().label} 사업장 - ${selectedMonth}월 기준 ${items.length}건`;
 
-  // ① 이 브라우저/기기가 "파일 포함 공유"를 지원하면 먼저 시도 (일부 환경에서 실제로 첨부까지 자동으로 됨)
-  const {file, fname} = buildMailExcelFile(items, scopeLabelKo, scopeLabelEn);
+  const {file, fname} = await buildMailExcelFile(items, scopeLabelKo, scopeLabelEn);
+
+  // ① "파일 포함 공유"를 지원하면 먼저 시도 (일부 환경에서 실제로 첨부까지 자동으로 됨)
   if (navigator.canShare && navigator.canShare({files:[file]})) {
     try {
       const shareBody = buildMailBody(items, scopeLabelKo, scopeLabelEn, showStatus);
       await navigator.share({files:[file], title:subject, text:shareBody});
       log((en?'Shared with file attached via system share sheet: ':'공유하기(파일 포함)로 전달: ') + fname);
-      return; // 공유 성공 시 mailto 단계는 건너뜀
+      return;
     } catch(err) {
       if (err && err.name === 'AbortError') { log(en?'Share cancelled by user.':'공유가 취소됐습니다.'); return; }
       log((en?'Share failed, falling back to download+mailto: ':'공유 실패, 다운로드+메일 방식으로 전환: ') + (err&&err.message||err));
-      // 아래로 계속 진행 (기존 방식 fallback)
     }
   }
 
-  // ② 공유하기 미지원/실패 시: 기존 방식 (다운로드 + mailto)
-  XLSX.writeFile(buildMailExcelFile(items, scopeLabelKo, scopeLabelEn).wb, fname);
+  // ② 공유하기 미지원/실패 시: 다운로드 + mailto
+  downloadFile(file);
   log((en?'Excel downloaded for attaching: ':'첨부용 엑셀 다운로드: ') + fname);
   let body = buildMailBody(items, scopeLabelKo, scopeLabelEn, showStatus);
   body = (en
