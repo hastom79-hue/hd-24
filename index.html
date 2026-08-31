@@ -73,10 +73,16 @@
   .tag-streak { background:var(--miss); color:#fff; }
   .tag-down { background:var(--amber); color:#fff; }
 
-  .filter-tabs { display:flex; gap:8px; margin-bottom:14px; }
-  .filter-tabs button.filt { background:#fff; color:var(--ink); border:1px solid var(--line); padding:7px 14px; border-radius:20px; font-size:12.5px; font-weight:600; box-shadow:none; }
-  .filter-tabs button.filt:hover { background:#f0f2f5; }
-  .filter-tabs button.filt.active { background:var(--accent-dark); color:#fff; border-color:var(--accent-dark); }
+  .result-cols { display:flex; gap:20px; align-items:flex-start; }
+  .result-col { flex:1 1 0; min-width:0; }
+  @media (max-width: 900px) { .result-cols { flex-direction:column; } }
+  .col-head { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:10px; }
+  .col-head h3 { margin:0; font-size:14px; font-weight:700; }
+  .col-head h3.miss-h { color:var(--miss); }
+  .col-head h3.ok-h { color:var(--ok); }
+  .col-count { font-size:12px; color:var(--muted); font-weight:600; }
+  table.results { table-layout:auto; }
+  table.results td, table.results th { overflow-wrap:anywhere; word-break:keep-all; }
 
   .note { font-size:12px; color:var(--muted); margin:10px 0 0; }
 </style>
@@ -122,16 +128,24 @@
       <p class="hint">버튼을 누르면 Outlook 등 기본 메일 앱에 제목·본문이 채워진 초안이 뜝니다. 자동으로 발송되지 않으니 확인 후 직접 [보내기]를 눌러주세요. 이메일 주소는 이 브라우저에만 저장됩니다.</p>
     </div>
 
-    <div class="filter-tabs" id="filterTabs">
-      <button type="button" class="filt active" data-f="all">전체</button>
-      <button type="button" class="filt" data-f="miss">미달성만</button>
-      <button type="button" class="filt" data-f="ok">달성만</button>
+    <div class="result-cols">
+      <div class="result-col">
+        <div class="col-head"><h3 class="miss-h">미달성</h3><span class="col-count" id="missCount"></span></div>
+        <table class="results" id="missTable">
+          <colgroup><col style="width:44px"><col><col style="width:56px"><col style="width:64px"><col style="width:64px"></colgroup>
+          <thead><tr><th>행</th><th>KPI / 최근추세</th><th>방향</th><th class="num">목표</th><th class="num">실적</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="result-col">
+        <div class="col-head"><h3 class="ok-h">달성</h3><span class="col-count" id="okCount"></span></div>
+        <table class="results" id="okTable">
+          <colgroup><col style="width:44px"><col><col style="width:56px"><col style="width:64px"><col style="width:64px"></colgroup>
+          <thead><tr><th>행</th><th>KPI</th><th>방향</th><th class="num">목표</th><th class="num">실적</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
-    <table class="results" id="resultTable">
-      <colgroup><col class="c-row"><col><col class="c-dir"><col class="c-num"><col class="c-num"><col class="c-res"></colgroup>
-      <thead><tr><th>총괄행</th><th>KPI / 최근추세</th><th>방향</th><th class="num">목표</th><th class="num">실적</th><th>판정</th></tr></thead>
-      <tbody></tbody>
-    </table>
   </section>
 
   <section class="panel">
@@ -451,37 +465,40 @@ function renderResults(results){
 function updateStripActive(){
   document.querySelectorAll('#monthStrip .m').forEach(el => el.classList.toggle('active', Number(el.dataset.month)===selectedMonth));
 }
-let currentFilter = 'all';
-document.getElementById('filterTabs').addEventListener('click', (e) => {
-  const btn = e.target.closest('button.filt');
-  if (!btn) return;
-  currentFilter = btn.dataset.f;
-  document.querySelectorAll('#filterTabs .filt').forEach(b => b.classList.toggle('active', b===btn));
-  renderTable();
-});
-
 function renderTable(){
-  const tbody = document.querySelector('#resultTable tbody');
-  tbody.innerHTML = '';
-  let rows = allResults.filter(r=>r.month===selectedMonth);
-  if (currentFilter==='miss') rows = rows.filter(r=>!r.achieved);
-  else if (currentFilter==='ok') rows = rows.filter(r=>r.achieved);
-  rows = rows.sort((a,b)=> (b.streak-a.streak) || (a.achieved-b.achieved) || a.masterRow-b.masterRow);
+  const rows = allResults.filter(r=>r.month===selectedMonth);
+  const missRows = rows.filter(r=>!r.achieved).sort((a,b)=> (b.streak-a.streak) || a.masterRow-b.masterRow);
+  const okRows = rows.filter(r=>r.achieved).sort((a,b)=> a.masterRow-b.masterRow);
 
-  document.getElementById('trendNote').style.display = rows.some(r=>!r.achieved && (r.streak>=2||r.trend==='down')) ? 'block' : 'none';
+  document.getElementById('trendNote').style.display = missRows.some(r=>r.streak>=2||r.trend==='down') ? 'block' : 'none';
+  document.getElementById('missCount').textContent = missRows.length + '건';
+  document.getElementById('okCount').textContent = okRows.length + '건';
 
-  for (const r of rows){
+  const missBody = document.querySelector('#missTable tbody');
+  missBody.innerHTML = '';
+  for (const r of missRows){
     const tr = document.createElement('tr');
-    tr.className = r.achieved ? 'ok' : 'miss';
+    tr.className = 'miss';
     let badges = '';
-    if (!r.achieved && r.streak>=2) badges += ` <span class="tag tag-streak">🔴 ${r.streak}개월 연속 미달성</span>`;
-    if (!r.achieved && r.trend==='down') badges += ` <span class="tag tag-down">📉 최근 악화</span>`;
+    if (r.streak>=2) badges += `<br><span class="tag tag-streak">🔴 ${r.streak}개월 연속 미달성</span>`;
+    if (r.trend==='down') badges += `<br><span class="tag tag-down">📉 최근 악화</span>`;
     tr.innerHTML = `<td class="num mono">${r.masterRow}</td>
-      <td>${r.kpi}${badges ? '<br>'+badges : ''}</td>
+      <td>${r.kpi}${badges}</td>
       <td>${r.direction}</td>
-      <td class="num mono">${round(r.target)}</td><td class="num mono">${round(r.actual)}</td>
-      <td><span class="pill ${r.achieved?'ok':'miss'}">${r.achieved?'달성':'미달성'}</span></td>`;
-    tbody.appendChild(tr);
+      <td class="num mono">${round(r.target)}</td><td class="num mono">${round(r.actual)}</td>`;
+    missBody.appendChild(tr);
+  }
+
+  const okBody = document.querySelector('#okTable tbody');
+  okBody.innerHTML = '';
+  for (const r of okRows){
+    const tr = document.createElement('tr');
+    tr.className = 'ok';
+    tr.innerHTML = `<td class="num mono">${r.masterRow}</td>
+      <td>${r.kpi}</td>
+      <td>${r.direction}</td>
+      <td class="num mono">${round(r.target)}</td><td class="num mono">${round(r.actual)}</td>`;
+    okBody.appendChild(tr);
   }
 }
 function round(v){ return Math.round(v*10000)/10000; }
