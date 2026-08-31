@@ -138,6 +138,19 @@
     <h2>실행 로그</h2>
     <div id="log">대기 중...</div>
   </section>
+
+  <section class="panel">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+      <h2 style="margin:0; padding:0; border:none;">실행 이력</h2>
+      <button type="button" id="btnClearHistory" class="ghost" style="padding:6px 12px; font-size:12px;">이력 지우기</button>
+    </div>
+    <p class="hint" style="margin-top:0;">이 브라우저에 저장됩니다 (다른 기기/브라우저에서는 안 보입니다). 실적 반영·판정을 실행할 때마다 자동으로 한 줄씩 쌓입니다.</p>
+    <table class="results" id="historyTable">
+      <colgroup><col style="width:150px"><col style="width:60px"><col style="width:90px"><col><col style="width:80px"></colgroup>
+      <thead><tr><th>일시</th><th>사업장</th><th>작업</th><th>파일</th><th>결과</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
 </main>
 
 <script>
@@ -352,6 +365,7 @@ document.getElementById('btnReflect').addEventListener('click', async () => {
     a.click();
     setTimeout(()=>URL.revokeObjectURL(a.href), 30000);
     log('=== 완료: ' + a.download + ' ===');
+    addHistory({action:'실적 반영', srcName:(document.getElementById('srcFile').files[0]||{}).name||'', masterName:masterFileName, result:applied+'셀 반영'});
   } catch (err) {
     log('오류: ' + err.message);
     console.error(err);
@@ -406,6 +420,8 @@ document.getElementById('btnJudge').addEventListener('click', () => {
     }
     renderResults(results);
     log('판정 완료: 총 ' + results.length + '건 (연속미달성/추세 포함)');
+    const missTotal = results.filter(r=>!r.achieved).length;
+    addHistory({action:'판정', srcName:(document.getElementById('srcFile').files[0]||{}).name||'', masterName:masterFileName, result:results.length+'건 중 미달성 '+missTotal+'건'});
   } catch (err) {
     log('오류: ' + err.message);
     console.error(err);
@@ -560,6 +576,48 @@ document.getElementById('btnMailAll').addEventListener('click', () => {
   const items = allResults.filter(r => r.month===selectedMonth);
   openMailDraft(items, '이번 달 전체 지표(달성+미달성)', true);
 });
+
+// ---------- 실행 이력 (브라우저에 저장, 다시 열어도 유지됨) ----------
+const HISTORY_KEY = 'hdps_history_v1';
+function loadHistory(){
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
+  catch(e){ return []; }
+}
+function saveHistory(list){ localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); }
+function addHistory(entry){
+  const list = loadHistory();
+  list.unshift({
+    time: new Date().toLocaleString('ko-KR'),
+    plant: cfg().label,
+    action: entry.action,
+    files: [entry.srcName, entry.masterName].filter(Boolean).join(' / '),
+    result: entry.result,
+  });
+  saveHistory(list.slice(0, 200)); // 최대 200건까지만 보관
+  renderHistory();
+}
+function renderHistory(){
+  const tbody = document.querySelector('#historyTable tbody');
+  const list = loadHistory();
+  tbody.innerHTML = '';
+  if (!list.length){
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--muted); padding:16px;">아직 실행 이력이 없습니다.</td></tr>';
+    return;
+  }
+  for (const h of list){
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="mono" style="font-size:12px;">${h.time}</td><td>${h.plant}</td><td>${h.action}</td>
+      <td style="font-size:12.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${h.files}">${h.files}</td>
+      <td style="font-size:12.5px;">${h.result}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+document.getElementById('btnClearHistory').addEventListener('click', () => {
+  if (!confirm('저장된 실행 이력을 모두 지울까요?')) return;
+  saveHistory([]);
+  renderHistory();
+});
+renderHistory();
 </script>
 </body>
 </html>
