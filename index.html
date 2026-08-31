@@ -23,7 +23,7 @@
   header h1 { margin:0; font-size:19px; font-weight:700; }
   header p { margin:5px 0 0; font-size:12.5px; color:#c3d3e0; }
 
-  main { max-width:960px; margin:28px auto 60px; padding:0 16px; }
+  main { max-width:1240px; margin:28px auto 60px; padding:0 20px; }
 
   section.panel { background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:22px 24px; margin-bottom:16px; }
   section.panel > h2 { font-size:13.5px; margin:0 0 16px; padding-bottom:10px; border-bottom:1px solid var(--line); color:var(--ink); font-weight:700; }
@@ -73,6 +73,20 @@
   .tag-streak { background:var(--miss); color:#fff; }
   .tag-down { background:var(--amber); color:#fff; }
 
+  .result-grid { display:grid; grid-template-columns: 1.4fr 1fr; gap:20px; align-items:start; }
+  @media (max-width: 860px) { .result-grid { grid-template-columns: 1fr; } }
+  .col-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .col-head h3 { margin:0; font-size:13.5px; font-weight:700; }
+  .col-head h3.miss-h { color:var(--miss); }
+  .col-head h3.ok-h { color:var(--ok); }
+  .col-count { font-size:12px; color:var(--muted); font-weight:600; }
+
+  .ok-list { list-style:none; margin:0; padding:0; max-height:640px; overflow-y:auto; border:1px solid var(--line); border-radius:6px; }
+  .ok-list li { padding:9px 12px; border-bottom:1px solid #f0f1f7; font-size:13px; display:flex; justify-content:space-between; gap:10px; }
+  .ok-list li:last-child { border-bottom:none; }
+  .ok-list li .ok-kpi { color:var(--ink); }
+  .ok-list li .ok-vals { color:var(--muted); font-family:"SFMono-Regular",Consolas,monospace; font-size:12px; white-space:nowrap; }
+
   .note { font-size:12px; color:var(--muted); margin:10px 0 0; }
 </style>
 </head>
@@ -117,11 +131,20 @@
       <p class="hint">버튼을 누르면 Outlook 등 기본 메일 앱에 제목·본문이 채워진 초안이 뜝니다. 자동으로 발송되지 않으니 확인 후 직접 [보내기]를 눌러주세요. 이메일 주소는 이 브라우저에만 저장됩니다.</p>
     </div>
 
-    <table class="results" id="resultTable">
-      <colgroup><col class="c-row"><col><col class="c-dir"><col class="c-num"><col class="c-num"><col class="c-res"></colgroup>
-      <thead><tr><th>총괄행</th><th>KPI / 최근추세</th><th>방향</th><th class="num">목표</th><th class="num">실적</th><th>판정</th></tr></thead>
-      <tbody></tbody>
-    </table>
+    <div class="result-grid">
+      <div>
+        <div class="col-head"><h3 class="miss-h">미달성</h3><span class="col-count" id="missCount"></span></div>
+        <table class="results" id="missTable">
+          <colgroup><col class="c-row"><col><col class="c-dir"><col class="c-num"><col class="c-num"></colgroup>
+          <thead><tr><th>총괄행</th><th>KPI / 최근추세</th><th>방향</th><th class="num">목표</th><th class="num">실적</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div>
+        <div class="col-head"><h3 class="ok-h">달성</h3><span class="col-count" id="okCount"></span></div>
+        <ul class="ok-list" id="okList"></ul>
+      </div>
+    </div>
   </section>
 
   <section class="panel">
@@ -426,23 +449,35 @@ function updateStripActive(){
   document.querySelectorAll('#monthStrip .m').forEach(el => el.classList.toggle('active', Number(el.dataset.month)===selectedMonth));
 }
 function renderTable(){
-  const tbody = document.querySelector('#resultTable tbody');
-  tbody.innerHTML = '';
-  const rows = allResults.filter(r=>r.month===selectedMonth)
-    .sort((a,b)=> (b.streak-a.streak) || (a.achieved-b.achieved) || a.masterRow-b.masterRow);
-  document.getElementById('trendNote').style.display = rows.some(r=>r.streak>=2||r.trend==='down') ? 'block' : 'none';
-  for (const r of rows){
+  const rows = allResults.filter(r=>r.month===selectedMonth);
+  const missRows = rows.filter(r=>!r.achieved).sort((a,b)=> (b.streak-a.streak) || a.masterRow-b.masterRow);
+  const okRows = rows.filter(r=>r.achieved).sort((a,b)=> a.masterRow-b.masterRow);
+
+  document.getElementById('trendNote').style.display = missRows.some(r=>r.streak>=2||r.trend==='down') ? 'block' : 'none';
+  document.getElementById('missCount').textContent = missRows.length + '건';
+  document.getElementById('okCount').textContent = okRows.length + '건';
+
+  const missBody = document.querySelector('#missTable tbody');
+  missBody.innerHTML = '';
+  for (const r of missRows){
     const tr = document.createElement('tr');
-    tr.className = r.achieved ? 'ok' : 'miss';
+    tr.className = 'miss';
     let badges = '';
     if (r.streak>=2) badges += ` <span class="tag tag-streak">🔴 ${r.streak}개월 연속 미달성</span>`;
     if (r.trend==='down') badges += ` <span class="tag tag-down">📉 최근 악화</span>`;
     tr.innerHTML = `<td class="num mono">${r.masterRow}</td>
       <td>${r.kpi}${badges ? '<br>'+badges : ''}</td>
       <td>${r.direction}</td>
-      <td class="num mono">${round(r.target)}</td><td class="num mono">${round(r.actual)}</td>
-      <td><span class="pill ${r.achieved?'ok':'miss'}">${r.achieved?'달성':'미달성'}</span></td>`;
-    tbody.appendChild(tr);
+      <td class="num mono">${round(r.target)}</td><td class="num mono">${round(r.actual)}</td>`;
+    missBody.appendChild(tr);
+  }
+
+  const okList = document.getElementById('okList');
+  okList.innerHTML = '';
+  for (const r of okRows){
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="ok-kpi">${r.kpi}</span><span class="ok-vals">${round(r.target)} → ${round(r.actual)}</span>`;
+    okList.appendChild(li);
   }
 }
 function round(v){ return Math.round(v*10000)/10000; }
