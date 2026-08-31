@@ -7,56 +7,418 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
-:root{--ink:#12202e;--steel:#2b4a63;--dark:#1b3245;--line:#d8dee3;--bg:#eef1f3;--ok:#1e6b47;--miss:#9a3324}
-*{box-sizing:border-box}body{font-family:"Pretendard","Malgun Gothic",sans-serif;background:var(--bg);margin:0;color:var(--ink);font-size:14px}header{background:var(--dark);color:#fff;padding:22px 28px;border-bottom:3px solid var(--steel)}header h1{margin:0;font-size:19px}header p{margin:5px 0 0;color:#b7c7d2;font-size:12.5px}main{max-width:980px;margin:28px auto 60px;padding:0 16px}.panel{background:#fff;border:1px solid var(--line);border-radius:5px;padding:22px 24px;margin-bottom:16px}.panel h2{font-size:13px;margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line);color:var(--dark)}.field-row{display:grid;grid-template-columns:100px 1fr;gap:12px;align-items:center;margin-bottom:12px}.field-row label{font-weight:700;color:#3c4c58}select,input[type=file]{width:100%;padding:8px 10px;border:1px solid #b9c4cb;border-radius:3px;background:#fbfcfd}select{max-width:180px}.hint{font-size:12px;color:#6b7a84;line-height:1.55}.actions{display:flex;gap:10px;flex-wrap:wrap}button{background:var(--steel);color:#fff;border:0;border-radius:3px;padding:10px 16px;font-weight:700;cursor:pointer}button.ghost{background:#fff;color:var(--steel);border:1px solid var(--steel)}button:disabled{background:#c3cbd0;color:#fff;cursor:not-allowed}#log{font-family:Consolas,monospace;font-size:12px;line-height:1.65;background:#0f1b26;color:#cfe0ea;padding:14px 16px;border-radius:3px;max-height:280px;overflow:auto;white-space:pre-wrap}.month-strip{display:flex;border:1px solid var(--line);border-radius:3px;overflow:hidden;margin-bottom:18px}.month-strip .m{flex:1;padding:10px 6px;text-align:center;border-right:1px solid var(--line);cursor:pointer;background:#fafbfc}.month-strip .m:last-child{border-right:0}.month-strip .m.active{background:var(--dark);color:#fff}table{width:100%;border-collapse:collapse;table-layout:fixed}th,td{padding:8px 10px;border-bottom:1px solid #e8edf0;text-align:left;overflow:hidden;text-overflow:ellipsis}th{font-size:11.5px;color:#55666f;border-bottom:2px solid var(--steel)}td.num,th.num{text-align:right;font-family:Consolas,monospace}.miss{background:#fbebe7}.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11.5px;font-weight:700}.pill.ok{background:#e4f2ea;color:var(--ok)}.pill.miss{background:#fbebe7;color:var(--miss);border:1px solid #eecdc5}
+  :root {
+    --ink:#12202e; --steel:#2b4a63; --steel-dark:#1b3245; --line:#d8dee3;
+    --bg:#eef1f3; --panel:#ffffff; --ok:#1e6b47; --ok-bg:#e4f2ea;
+    --miss:#9a3324; --miss-bg:#fbebe7; --amber:#a5680a;
+  }
+  * { box-sizing: border-box; }
+  body { font-family:"Pretendard","Malgun Gothic",-apple-system,sans-serif; background:var(--bg); margin:0; color:var(--ink); font-size:14px; }
+  .mono,.num { font-family:"SFMono-Regular",Consolas,"Roboto Mono",monospace; font-variant-numeric:tabular-nums; }
+  header { background:var(--steel-dark); color:#fff; padding:22px 28px; border-bottom:3px solid var(--steel); }
+  header h1 { margin:0; font-size:19px; font-weight:700; }
+  header p { margin:5px 0 0; font-size:12.5px; color:#a9bccb; }
+  main { max-width:980px; margin:28px auto 60px; padding:0 16px; }
+  section.panel { background:var(--panel); border:1px solid var(--line); border-radius:5px; padding:22px 24px; margin-bottom:16px; }
+  section.panel > h2 { font-size:13px; margin:0 0 16px; padding-bottom:10px; border-bottom:1px solid var(--line); color:var(--steel-dark); font-weight:700; }
+  .field-row { display:grid; grid-template-columns:100px 1fr; gap:12px 14px; align-items:center; margin-bottom:12px; }
+  .field-row label { font-size:13px; font-weight:700; color:#3c4c58; }
+  select, input[type=file] { font-size:13.5px; padding:8px 10px; border:1px solid #b9c4cb; border-radius:3px; background:#fbfcfd; color:var(--ink); width:100%; }
+  select { max-width:180px; }
+  .hint { font-size:12px; color:#6b7a84; margin-top:10px; line-height:1.55; }
+  .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:4px; }
+  button { background:var(--steel); color:#fff; border:none; padding:10px 16px; border-radius:3px; font-size:13.5px; font-weight:700; cursor:pointer; transition:background .15s; }
+  button:hover:not(:disabled) { background:var(--steel-dark); }
+  button:disabled { background:#c3cbd0; cursor:not-allowed; }
+  button.ghost { background:#fff; color:var(--steel); border:1px solid var(--steel); }
+  button.ghost:hover:not(:disabled) { background:#eaf0f4; }
+  #log { font-family:Consolas,monospace; font-size:12px; line-height:1.65; background:#0f1b26; color:#cfe0ea; padding:14px 16px; border-radius:3px; max-height:280px; overflow-y:auto; white-space:pre-wrap; }
+  .month-strip { display:flex; border:1px solid var(--line); border-radius:3px; overflow:hidden; margin-bottom:18px; }
+  .month-strip .m { flex:1; padding:10px 6px; text-align:center; border-right:1px solid var(--line); cursor:pointer; background:#fafbfc; }
+  .month-strip .m:last-child { border-right:none; }
+  .month-strip .m.active { background:var(--steel-dark); color:#fff; }
+  .month-strip .m .mlabel { font-size:11.5px; font-weight:700; }
+  .month-strip .m .mnum { font-size:12px; margin-top:3px; }
+  .month-strip .m .mnum .miss-n { color:var(--miss); font-weight:700; }
+  .month-strip .m.active .mnum .miss-n { color:#ffb3a0; }
+  table.results { width:100%; border-collapse:collapse; font-size:13.5px; table-layout:fixed; }
+  table.results col.c-row { width:52px; } table.results col.c-dir { width:68px; }
+  table.results col.c-num { width:80px; } table.results col.c-res { width:76px; }
+  table.results thead th { text-align:left; font-size:11.5px; font-weight:700; color:#55666f; padding:8px 10px; border-bottom:2px solid var(--steel); white-space:nowrap; }
+  table.results thead th.num { text-align:right; }
+  table.results tbody td { padding:10px 10px; border-bottom:1px solid #ecf0f2; vertical-align:middle; line-height:1.5; }
+  table.results tbody td.num { text-align:right; }
+  table.results tbody tr.miss { border-left:4px solid var(--miss); background:var(--miss-bg); }
+  table.results tbody tr.ok { border-left:4px solid transparent; }
+  table.results tbody tr.ok:hover { background:#f5f8f9; }
+  .pill { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:700; }
+  .pill.ok { background:var(--ok-bg); color:var(--ok); }
+  .pill.miss { background:var(--miss-bg); color:var(--miss); border:1px solid #eecdc5; }
+  .tag { display:inline-block; font-size:11px; font-weight:700; padding:1px 7px; border-radius:3px; margin-top:3px; }
+  .tag-streak { background:#7a1f12; color:#fff; }
+  .tag-down { background:var(--amber); color:#fff; }
+  .note { font-size:12px; color:#6b7a84; margin:10px 0 0; }
 </style>
 </head>
 <body>
-<header><h1>HDPS KPI 자동화 웹도구</h1><p>인도 · 브라질 KPI 실적 반영 / 목표대비 판정 — 행 밀림 자동 보정 버전</p></header>
+<header>
+  <h1>HDPS KPI 자동화 웹도구</h1>
+  <p>인도 · 브라질 KPI 실적 반영 / 목표대비 판정 &amp; 최근 추세 — 행 밀림 자동 보정</p>
+</header>
+
 <main>
-<section class="panel"><h2>사업장 · 파일</h2>
-<div class="field-row"><label>사업장</label><select id="plantSelect"><option value="india">인도</option><option value="brazil">브라질</option></select></div>
-<div class="field-row"><label id="srcLabel">인도 원본 KPI</label><input type="file" id="srcFile" accept=".xlsx,.xlsm"></div>
-<div class="field-row"><label>총괄파일</label><input type="file" id="masterFile" accept=".xlsx,.xlsm"></div>
-<p class="hint">KPI명으로 실제 행을 다시 확인한 뒤 반영합니다. 원본 또는 총괄파일에 행이 삽입·삭제되어도 고정 행번호만 믿지 않도록 보강했습니다.</p></section>
-<section class="panel"><h2>실행</h2><div class="actions"><button id="btnReflect" disabled>실적 반영 → 총괄파일 다운로드</button><button id="btnJudge" class="ghost" disabled>목표대비 판정 보기</button></div><p class="hint">다운로드 결과는 업로드한 총괄파일의 확장자(.xlsx / .xlsm)를 그대로 유지합니다.</p></section>
-<section class="panel" id="resultCard" style="display:none"><h2>판정 결과</h2><div class="month-strip" id="monthStrip"></div><table id="resultTable"><colgroup><col style="width:62px"><col><col style="width:70px"><col style="width:85px"><col style="width:85px"><col style="width:78px"></colgroup><thead><tr><th>총괄행</th><th>KPI</th><th>방향</th><th class="num">목표</th><th class="num">실적</th><th>판정</th></tr></thead><tbody></tbody></table></section>
-<section class="panel"><h2>실행 로그</h2><div id="log">대기 중...</div></section>
+  <section class="panel">
+    <h2>사업장 · 파일</h2>
+    <div class="field-row"><label>사업장</label>
+      <select id="plantSelect"><option value="india">인도</option><option value="brazil">브라질</option></select>
+    </div>
+    <div class="field-row"><label id="srcLabel">원본 KPI 파일</label><input type="file" id="srcFile" accept=".xlsx,.xlsm"></div>
+    <div class="field-row"><label>총괄파일</label><input type="file" id="masterFile" accept=".xlsx,.xlsm"></div>
+    <p class="hint">KPI명으로 실제 행을 다시 확인한 뒤 반영합니다. 원본 또는 총괄파일에 행이 삽입·삭제되어도 고정 행번호만 믿지 않도록 자동 보정합니다. 파일은 서버로 전송되지 않고 이 브라우저 안에서만 처리됩니다.</p>
+  </section>
+
+  <section class="panel">
+    <h2>실행</h2>
+    <div class="actions">
+      <button id="btnReflect" disabled>실적 반영 → 총괄파일 다운로드</button>
+      <button id="btnJudge" class="ghost" disabled>목표대비 판정 · 추세 보기</button>
+    </div>
+    <p class="hint">다운로드 결과는 업로드한 총괄파일의 확장자(.xlsx / .xlsm)를 그대로 유지합니다. 판정은 원본파일에 있는 "그 달의 목표"를 그대로 사용합니다 (연간목표 아님).</p>
+  </section>
+
+  <section class="panel" id="resultCard" style="display:none;">
+    <h2>판정 결과</h2>
+    <div class="month-strip" id="monthStrip"></div>
+    <p class="note" id="trendNote" style="display:none;">🔴 연속 미달성 · 📉 최근 3개월 악화 추세 — KPI 옆 배지로 표시됩니다. 정렬은 "연속 미달성 개월수"가 큰 순서입니다.</p>
+    <table class="results" id="resultTable">
+      <colgroup><col class="c-row"><col><col class="c-dir"><col class="c-num"><col class="c-num"><col class="c-res"></colgroup>
+      <thead><tr><th>총괄행</th><th>KPI / 최근추세</th><th>방향</th><th class="num">목표</th><th class="num">실적</th><th>판정</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section class="panel">
+    <h2>실행 로그</h2>
+    <div id="log">대기 중...</div>
+  </section>
 </main>
+
 <script>
-const PLANT_CONFIG={
- india:{label:'인도',mappingFile:'mapping_india.json',srcSheet:'Final With HQ Suggestion',masterSheet:'인도법인 KPI(26년 보고용)',srcMonthStartCol:15},
- brazil:{label:'브라질',mappingFile:'mapping_brazil.json',srcSheet:'HCEB KPIs',masterSheet:'브라질법인 KPI(26년 보고용)',srcMonthStartCol:18}
+const PLANT_CONFIG = {
+  india: { label:'인도', mappingFile:'mapping_india.json', srcSheet:'Final With HQ Suggestion', masterSheet:'인도법인 KPI(26년 보고용)', srcMonthStartCol:15 },
+  brazil:{ label:'브라질', mappingFile:'mapping_brazil.json', srcSheet:'HCEB KPIs', masterSheet:'브라질법인 KPI(26년 보고용)', srcMonthStartCol:18 },
 };
-const SRC_MONTH_HEADER_ROW=11,MASTER_MONTH_START_COL=27;
-let currentPlant='india',mappingData=[],srcWorkbook=null,masterWorkbook=null,masterZip=null,masterFileName='';
-const logEl=document.getElementById('log');
-function log(s){logEl.textContent+='\n'+s;logEl.scrollTop=logEl.scrollHeight}function cfg(){return PLANT_CONFIG[currentPlant]}
-async function loadMapping(){const r=await fetch(cfg().mappingFile+'?v=20260831-2',{cache:'no-store'});mappingData=await r.json();log(cfg().label+' 매핑 로드: '+mappingData.length+'건')}
+const SRC_MONTH_HEADER_ROW = 11;
+const MASTER_MONTH_START_COL = 27;
+
+let currentPlant = 'india';
+let mappingData = [];
+let srcWorkbook = null, masterWorkbook = null, masterZip = null, masterFileName = '';
+
+const logEl = document.getElementById('log');
+function log(msg){ logEl.textContent += '\n' + msg; logEl.scrollTop = logEl.scrollHeight; }
+function cfg(){ return PLANT_CONFIG[currentPlant]; }
+
+async function loadMapping(){
+  const res = await fetch(cfg().mappingFile + '?v=' + Date.now(), {cache:'no-store'});
+  mappingData = await res.json();
+  log(cfg().label + ' 매핑 로드: ' + mappingData.length + '건');
+}
 loadMapping();
-document.getElementById('plantSelect').addEventListener('change',async e=>{currentPlant=e.target.value;document.getElementById('srcLabel').textContent=cfg().label+' 원본 KPI';srcWorkbook=masterWorkbook=masterZip=null;srcFile.value='';masterFile.value='';resultCard.style.display='none';checkReady();await loadMapping()});
-srcFile.addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;const b=await f.arrayBuffer();srcWorkbook=XLSX.read(b,{type:'array',cellDates:true});log('원본 로드: '+f.name);checkReady()});
-masterFile.addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;const b=await f.arrayBuffer();masterFileName=f.name;masterWorkbook=XLSX.read(b,{type:'array',cellDates:true});masterZip=await JSZip.loadAsync(b);log('총괄 로드: '+f.name);checkReady()});
-function checkReady(){const ok=!!(srcWorkbook&&masterWorkbook&&masterZip&&mappingData.length);btnReflect.disabled=!ok;btnJudge.disabled=!ok}
-function getCell(ws,r,c){const x=ws[XLSX.utils.encode_cell({r:r-1,c:c-1})];return x?x.v:null}
-function colLetter(n){let s='';while(n>0){const r=(n-1)%26;s=String.fromCharCode(65+r)+s;n=Math.floor((n-1)/26)}return s}
-function sheetBounds(ws){if(!ws||!ws['!ref'])return{maxR:0,maxC:0};const d=XLSX.utils.decode_range(ws['!ref']);return{maxR:d.e.r+1,maxC:d.e.c+1}}
-function normText(v){return String(v??'').toLowerCase().replace(/\r?\n/g,' ').replace(/["'“”‘’]/g,'').replace(/[→▶▷·•]/g,' ').replace(/[()\[\]{}%:/\\,_-]/g,' ').replace(/\s+/g,' ').trim()}
-function coreText(v){return normText(v).split(/\s+(또는|및|or|and)\s+/)[0].trim()}
-function similarity(a,b){a=normText(a);b=normText(b);if(!a||!b)return 0;if(a===b)return 1;if(a.includes(b)||b.includes(a))return Math.min(a.length,b.length)/Math.max(a.length,b.length);const aw=new Set(a.split(' ').filter(x=>x.length>1)),bw=new Set(b.split(' ').filter(x=>x.length>1));let hit=0;aw.forEach(x=>{if(bw.has(x))hit++});return hit/Math.max(aw.size,bw.size,1)}
-function rowText(ws,row,maxCol=26){let parts=[];for(let c=1;c<=maxCol;c++){const v=getCell(ws,row,c);if(v!==null&&v!=='')parts.push(String(v))}return parts.join(' | ')}
-function findBestRow(ws,expectedRow,label,maxCol=26){const b=sheetBounds(ws);const expected=rowText(ws,expectedRow,maxCol);let best={row:expectedRow,score:Math.max(similarity(expected,label),similarity(expected,coreText(label))),moved:false};if(best.score>=0.62)return best;const start=Math.max(1,expectedRow-20),end=Math.min(b.maxR,expectedRow+20);for(let r=start;r<=end;r++){const t=rowText(ws,r,maxCol);const s=Math.max(similarity(t,label),similarity(t,coreText(label)));if(s>best.score)best={row:r,score:s,moved:r!==expectedRow}}if(best.score<0.62){for(let r=1;r<=b.maxR;r++){const t=rowText(ws,r,maxCol);const s=Math.max(similarity(t,label),similarity(t,coreText(label)));if(s>best.score)best={row:r,score:s,moved:r!==expectedRow}}}return best}
-function monthIndex(v){if(v instanceof Date)return v.getUTCMonth()+1;const s=String(v??'').trim();const en=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];for(let i=0;i<12;i++)if(new RegExp('^'+en[i],'i').test(s))return i+1;const m=s.match(/(?:^|\D)(1[0-2]|[1-9])\s*월/);if(m)return Number(m[1]);return 0}
-function buildMonthCols(ws,startCol,headerRow){const cols={};let ok=true;for(let m=1;m<=12;m++){const c=startCol+m-1;cols[m]=c;const d=monthIndex(getCell(ws,headerRow,c));if(d&&d!==m)ok=false}if(ok)return cols;const b=sheetBounds(ws);for(let r=1;r<=Math.min(25,b.maxR);r++){const found={};for(let c=1;c<=Math.min(80,b.maxC);c++){const mi=monthIndex(getCell(ws,r,c));if(mi&&!found[mi])found[mi]=c}if(Object.keys(found).length>=10){log('월 헤더 자동탐색: '+r+'행');return Object.assign(cols,found)}}log('⚠ 월 헤더 자동탐색 실패 → 기존 기준열 사용');return cols}
-function normalizeValue(v){if(v===null||v===undefined||v==='')return null;if(v instanceof Date){const epoch=new Date(Date.UTC(1899,11,30));return (v-epoch)/86400000*24}if(typeof v==='number')return v;if(typeof v==='string'){const s=v.trim();let m=s.match(/^(\d+):(\d+)(?::(\d+))?$/);if(m)return +m[1]+(+m[2])/60+(+(m[3]||0))/3600;m=s.match(/^([+-]?\d+(?:\.\d+)?)%$/);if(m)return parseFloat(m[1]);const n=Number(s.replace(/,/g,''));return Number.isFinite(n)?n:null}return null}
-function resolveMappings(srcWs,masterWs){let movedSrc=0,movedMaster=0,low=[];const out=mappingData.map(m=>{const sr=findBestRow(srcWs,m.labelRow,m.kpiEn,14);const mr=findBestRow(masterWs,m.masterRow,m.kpiKr,26);const labelRow=sr.score>=0.62?sr.row:m.labelRow;const actualRow=labelRow+(m.actualRow-m.labelRow);const masterRow=mr.score>=0.62?mr.row:m.masterRow;if(labelRow!==m.labelRow)movedSrc++;if(masterRow!==m.masterRow)movedMaster++;if(sr.score<0.62||mr.score<0.62)low.push(m.kpiKr);return{...m,labelRow,actualRow,masterRow,_srcScore:sr.score,_masterScore:mr.score}});log(`행 검증: 원본 자동보정 ${movedSrc}건 / 총괄 자동보정 ${movedMaster}건`);if(low.length)log('⚠ KPI명 확인이 낮아 고정행 유지: '+low.slice(0,8).join(' / ')+(low.length>8?' 외 '+(low.length-8)+'건':''));return out}
-async function findSheetXmlPath(zip,name){const wb=await zip.file('xl/workbook.xml').async('string');const esc=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');const m=wb.match(new RegExp('<sheet name="'+esc+'"[^>]*r:id="(rId\\d+)"'));if(!m)throw new Error('총괄 시트 없음: '+name);const rel=await zip.file('xl/_rels/workbook.xml.rels').async('string');const x=rel.match(new RegExp('Id="'+m[1]+'"[^>]*Target="([^"]+)"'));if(!x)throw new Error('시트 경로 확인 실패');return 'xl/'+x[1].replace(/^\//,'')}
-function fmtVal(v){return Math.abs(v-Math.round(v))<1e-9?String(Math.round(v)):String(Math.round(v*1e8)/1e8)}
-function replaceCell(xml,ref,val){const re=new RegExp('<c r="'+ref+'"([^>]*?)(?:/>|>([\\s\\S]*?)</c>)');const m=re.exec(xml);if(!m)return{xml,ok:false};let attrs=(m[1]||'').replace(/\s+t="[^"]*"/g,'');const cell='<c r="'+ref+'"'+attrs+'><v>'+fmtVal(val)+'</v></c>';return{xml:xml.slice(0,m.index)+cell+xml.slice(m.index+m[0].length),ok:true}}
-btnReflect.addEventListener('click',async()=>{try{log('=== 실적 반영 시작 ===');const srcWs=srcWorkbook.Sheets[cfg().srcSheet],masterWs=masterWorkbook.Sheets[cfg().masterSheet];if(!srcWs)throw new Error('원본 시트 없음: '+cfg().srcSheet);if(!masterWs)throw new Error('총괄 시트 없음: '+cfg().masterSheet);const resolved=resolveMappings(srcWs,masterWs);const srcMonths=buildMonthCols(srcWs,cfg().srcMonthStartCol,SRC_MONTH_HEADER_ROW);const masterMonths=buildMonthCols(masterWs,MASTER_MONTH_START_COL,11);const patches={};for(const m of resolved){for(let mo=1;mo<=12;mo++){const raw=getCell(srcWs,m.actualRow,srcMonths[mo]);let v=normalizeValue(raw);if(v===null)continue;v*=m.scale||1;patches[colLetter(masterMonths[mo]||MASTER_MONTH_START_COL+mo-1)+m.masterRow]=v}}log('반영 후보 셀: '+Object.keys(patches).length+'개');const path=await findSheetXmlPath(masterZip,cfg().masterSheet);let xml=await masterZip.file(path).async('string'),applied=0,missing=[];for(const [ref,v] of Object.entries(patches)){const r=replaceCell(xml,ref,v);xml=r.xml;if(r.ok)applied++;else missing.push(ref)}masterZip.file(path,xml);log('적용 '+applied+'개 / 대상셀 없음 '+missing.length+'개');if(missing.length)log('⚠ 대상셀 없음: '+missing.slice(0,12).join(', '));const blob=await masterZip.generateAsync({type:'blob',compression:'DEFLATE'});const ext=(masterFileName.match(/\.(xlsx|xlsm)$/i)||['','.xlsx'])[1];const base=masterFileName.replace(/\.(xlsx|xlsm)$/i,'');const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=base+'_'+cfg().label+'반영본.'+ext;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),30000);log('=== 완료: '+a.download+' ===')}catch(e){log('오류: '+e.message);console.error(e)}});
-btnJudge.addEventListener('click',()=>{try{log('=== 판정 시작 ===');const srcWs=srcWorkbook.Sheets[cfg().srcSheet],masterWs=masterWorkbook.Sheets[cfg().masterSheet];const resolved=resolveMappings(srcWs,masterWs);const months=buildMonthCols(srcWs,cfg().srcMonthStartCol,SRC_MONTH_HEADER_ROW);const results=[];for(const m of resolved){for(let mo=1;mo<=12;mo++){const target=normalizeValue(getCell(srcWs,m.labelRow,months[mo])),actual=normalizeValue(getCell(srcWs,m.actualRow,months[mo]));if(target===null||actual===null)continue;const achieved=m.direction==='상향'?actual>=target:m.direction==='하향'?actual<=target:Math.abs(actual-target)<1e-6;results.push({month:mo,masterRow:m.masterRow,kpi:m.kpiKr,direction:m.direction,target,actual,achieved})}}renderResults(results);log('판정 완료: '+results.length+'건')}catch(e){log('오류: '+e.message);console.error(e)}});
-let allResults=[],selectedMonth=null;function renderResults(results){resultCard.style.display='block';allResults=results;const ms=[...new Set(results.map(x=>x.month))].sort((a,b)=>a-b);selectedMonth=ms[ms.length-1];monthStrip.innerHTML='';ms.forEach(m=>{const sub=results.filter(x=>x.month===m),miss=sub.filter(x=>!x.achieved).length,d=document.createElement('div');d.className='m'+(m===selectedMonth?' active':'');d.dataset.month=m;d.innerHTML=`<b>${m}월</b><br><small>${sub.length-miss}건 달성 · ${miss}건 미달성</small>`;d.onclick=()=>{selectedMonth=m;renderTable();document.querySelectorAll('#monthStrip .m').forEach(x=>x.classList.toggle('active',+x.dataset.month===m))};monthStrip.appendChild(d)});renderTable()}
-function renderTable(){const tb=document.querySelector('#resultTable tbody');tb.innerHTML='';allResults.filter(x=>x.month===selectedMonth).sort((a,b)=>(a.achieved-b.achieved)||a.masterRow-b.masterRow).forEach(r=>{const tr=document.createElement('tr');if(!r.achieved)tr.className='miss';tr.innerHTML=`<td class="num">${r.masterRow}</td><td>${r.kpi}</td><td>${r.direction}</td><td class="num">${round(r.target)}</td><td class="num">${round(r.actual)}</td><td><span class="pill ${r.achieved?'ok':'miss'}">${r.achieved?'달성':'미달성'}</span></td>`;tb.appendChild(tr)})}function round(v){return Math.round(v*10000)/10000}
+
+document.getElementById('plantSelect').addEventListener('change', async (e) => {
+  currentPlant = e.target.value;
+  document.getElementById('srcLabel').textContent = cfg().label + ' 원본 KPI 파일';
+  srcWorkbook = masterWorkbook = masterZip = null;
+  document.getElementById('srcFile').value = '';
+  document.getElementById('masterFile').value = '';
+  document.getElementById('resultCard').style.display = 'none';
+  checkReady();
+  await loadMapping();
+});
+
+document.getElementById('srcFile').addEventListener('change', async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  const buf = await f.arrayBuffer();
+  srcWorkbook = XLSX.read(buf, {type:'array', cellDates:true});
+  log('원본 로드: ' + f.name);
+  checkReady();
+});
+document.getElementById('masterFile').addEventListener('change', async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  const buf = await f.arrayBuffer();
+  masterFileName = f.name;
+  masterWorkbook = XLSX.read(buf, {type:'array', cellDates:true});
+  masterZip = await JSZip.loadAsync(buf);
+  log('총괄 로드: ' + f.name);
+  checkReady();
+});
+function checkReady(){
+  const ok = !!(srcWorkbook && masterWorkbook && masterZip && mappingData.length);
+  document.getElementById('btnReflect').disabled = !ok;
+  document.getElementById('btnJudge').disabled = !ok;
+}
+
+// ---------- 셀/텍스트 유틸 ----------
+function getCell(ws,r,c){ const x = ws[XLSX.utils.encode_cell({r:r-1,c:c-1})]; return x ? x.v : null; }
+function colLetter(n){ let s=''; while(n>0){ const r=(n-1)%26; s=String.fromCharCode(65+r)+s; n=Math.floor((n-1)/26);} return s; }
+function sheetBounds(ws){ if(!ws || !ws['!ref']) return {maxR:0,maxC:0}; const d=XLSX.utils.decode_range(ws['!ref']); return {maxR:d.e.r+1,maxC:d.e.c+1}; }
+function normText(v){ return String(v??'').toLowerCase().replace(/\r?\n/g,' ').replace(/["'“”‘’]/g,'').replace(/[→▶▷·•]/g,' ').replace(/[()\[\]{}%:/\\,_-]/g,' ').replace(/\s+/g,' ').trim(); }
+function coreText(v){ return normText(v).split(/\s+(또는|및|or|and)\s+/)[0].trim(); }
+function similarity(a,b){
+  a=normText(a); b=normText(b);
+  if(!a||!b) return 0;
+  if(a===b) return 1;
+  if(a.includes(b)||b.includes(a)) return Math.min(a.length,b.length)/Math.max(a.length,b.length);
+  const aw=new Set(a.split(' ').filter(x=>x.length>1)), bw=new Set(b.split(' ').filter(x=>x.length>1));
+  let hit=0; aw.forEach(x=>{ if(bw.has(x)) hit++; });
+  return hit/Math.max(aw.size,bw.size,1);
+}
+function rowText(ws,row,maxCol=26){ let parts=[]; for(let c=1;c<=maxCol;c++){ const v=getCell(ws,row,c); if(v!==null&&v!=='') parts.push(String(v)); } return parts.join(' | '); }
+
+// KPI명 텍스트로 실제 행을 다시 찾는다 (원본/총괄 파일 구조가 조금 바뀌어도 대응)
+function findBestRow(ws, expectedRow, label, maxCol=26){
+  const b = sheetBounds(ws);
+  const expected = rowText(ws, expectedRow, maxCol);
+  let best = { row:expectedRow, score:Math.max(similarity(expected,label), similarity(expected,coreText(label))), moved:false };
+  if (best.score >= 0.62) return best;
+  const start = Math.max(1, expectedRow-20), end = Math.min(b.maxR, expectedRow+20);
+  for (let r=start; r<=end; r++){
+    const t = rowText(ws,r,maxCol);
+    const s = Math.max(similarity(t,label), similarity(t,coreText(label)));
+    if (s>best.score) best = {row:r, score:s, moved:r!==expectedRow};
+  }
+  if (best.score < 0.62){
+    for (let r=1; r<=b.maxR; r++){
+      const t = rowText(ws,r,maxCol);
+      const s = Math.max(similarity(t,label), similarity(t,coreText(label)));
+      if (s>best.score) best = {row:r, score:s, moved:r!==expectedRow};
+    }
+  }
+  return best;
+}
+
+function monthIndex(v){
+  if (v instanceof Date) return v.getUTCMonth()+1;
+  const s = String(v??'').trim();
+  const en = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  for (let i=0;i<12;i++) if (new RegExp('^'+en[i],'i').test(s)) return i+1;
+  const m = s.match(/(?:^|\D)(1[0-2]|[1-9])\s*월/);
+  if (m) return Number(m[1]);
+  return 0;
+}
+function buildMonthCols(ws, startCol, headerRow){
+  const cols = {}; let ok = true;
+  for (let m=1;m<=12;m++){ const c=startCol+m-1; cols[m]=c; const d=monthIndex(getCell(ws,headerRow,c)); if (d && d!==m) ok=false; }
+  if (ok) return cols;
+  const b = sheetBounds(ws);
+  for (let r=1; r<=Math.min(25,b.maxR); r++){
+    const found = {};
+    for (let c=1; c<=Math.min(80,b.maxC); c++){ const mi=monthIndex(getCell(ws,r,c)); if (mi && !found[mi]) found[mi]=c; }
+    if (Object.keys(found).length >= 10){ log('월 헤더 자동탐색: '+r+'행'); return Object.assign(cols,found); }
+  }
+  log('⚠ 월 헤더 자동탐색 실패 → 기존 기준열 사용');
+  return cols;
+}
+function normalizeValue(v){
+  if (v===null||v===undefined||v==='') return null;
+  if (v instanceof Date){ const epoch=new Date(Date.UTC(1899,11,30)); return (v-epoch)/86400000*24; }
+  if (typeof v==='number') return v;
+  if (typeof v==='string'){
+    const s=v.trim();
+    let m=s.match(/^(\d+):(\d+)(?::(\d+))?$/); if(m) return +m[1]+(+m[2])/60+(+(m[3]||0))/3600;
+    m=s.match(/^([+-]?\d+(?:\.\d+)?)%$/); if(m) return parseFloat(m[1]);
+    const n=Number(s.replace(/,/g,'')); return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+// 매핑표의 고정 행번호를, KPI명 텍스트로 실제 위치를 재확인해서 보정된 매핑을 만든다
+function resolveMappings(srcWs, masterWs){
+  let movedSrc=0, movedMaster=0, low=[];
+  const out = mappingData.map(m => {
+    const sr = findBestRow(srcWs, m.labelRow, m.kpiEn, 14);
+    const mr = findBestRow(masterWs, m.masterRow, m.kpiKr, 26);
+    const labelRow = sr.score>=0.62 ? sr.row : m.labelRow;
+    const actualRow = labelRow + (m.actualRow - m.labelRow);
+    const masterRow = mr.score>=0.62 ? mr.row : m.masterRow;
+    if (labelRow!==m.labelRow) movedSrc++;
+    if (masterRow!==m.masterRow) movedMaster++;
+    if (sr.score<0.62 || mr.score<0.62) low.push(m.kpiKr);
+    return {...m, labelRow, actualRow, masterRow, _srcScore:sr.score, _masterScore:mr.score};
+  });
+  log(`행 검증: 원본 자동보정 ${movedSrc}건 / 총괄 자동보정 ${movedMaster}건`);
+  if (low.length) log('⚠ KPI명 확인이 낮아 고정행 유지: ' + low.slice(0,8).join(' / ') + (low.length>8 ? ' 외 '+(low.length-8)+'건' : ''));
+  return out;
+}
+
+// ---------- 안전 XML 패치 (반영) ----------
+async function findSheetXmlPath(zip, name){
+  const wb = await zip.file('xl/workbook.xml').async('string');
+  const esc = name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const m = wb.match(new RegExp('<sheet name="'+esc+'"[^>]*r:id="(rId\\d+)"'));
+  if (!m) throw new Error('총괄 시트 없음: '+name);
+  const rel = await zip.file('xl/_rels/workbook.xml.rels').async('string');
+  const x = rel.match(new RegExp('Id="'+m[1]+'"[^>]*Target="([^"]+)"'));
+  if (!x) throw new Error('시트 경로 확인 실패');
+  return 'xl/'+x[1].replace(/^\//,'');
+}
+function fmtVal(v){ return Math.abs(v-Math.round(v))<1e-9 ? String(Math.round(v)) : String(Math.round(v*1e8)/1e8); }
+function replaceCell(xml, ref, val){
+  const re = new RegExp('<c r="'+ref+'"([^>]*?)(?:/>|>([\\s\\S]*?)</c>)');
+  const m = re.exec(xml);
+  if (!m) return {xml, ok:false};
+  let attrs = (m[1]||'').replace(/\s+t="[^"]*"/g,'');
+  const cell = '<c r="'+ref+'"'+attrs+'><v>'+fmtVal(val)+'</v></c>';
+  return {xml: xml.slice(0,m.index)+cell+xml.slice(m.index+m[0].length), ok:true};
+}
+
+document.getElementById('btnReflect').addEventListener('click', async () => {
+  try {
+    log('=== 실적 반영 시작 ===');
+    const srcWs = srcWorkbook.Sheets[cfg().srcSheet], masterWs = masterWorkbook.Sheets[cfg().masterSheet];
+    if (!srcWs) throw new Error('원본 시트 없음: '+cfg().srcSheet);
+    if (!masterWs) throw new Error('총괄 시트 없음: '+cfg().masterSheet);
+    const resolved = resolveMappings(srcWs, masterWs);
+    const srcMonths = buildMonthCols(srcWs, cfg().srcMonthStartCol, SRC_MONTH_HEADER_ROW);
+    const masterMonths = buildMonthCols(masterWs, MASTER_MONTH_START_COL, 4);
+
+    const patches = {};
+    for (const m of resolved){
+      for (let mo=1; mo<=12; mo++){
+        const raw = getCell(srcWs, m.actualRow, srcMonths[mo]);
+        let v = normalizeValue(raw);
+        if (v===null) continue;
+        v *= (m.scale || 1);
+        patches[colLetter(masterMonths[mo] || MASTER_MONTH_START_COL+mo-1) + m.masterRow] = v;
+      }
+    }
+    log('반영 후보 셀: ' + Object.keys(patches).length + '개');
+
+    const path = await findSheetXmlPath(masterZip, cfg().masterSheet);
+    let xml = await masterZip.file(path).async('string'), applied=0, missing=[];
+    for (const [ref,v] of Object.entries(patches)){
+      const r = replaceCell(xml, ref, v);
+      xml = r.xml;
+      if (r.ok) applied++; else missing.push(ref);
+    }
+    masterZip.file(path, xml);
+    log('적용 ' + applied + '개 / 대상셀 없음 ' + missing.length + '개');
+    if (missing.length) log('⚠ 대상셀 없음: ' + missing.slice(0,12).join(', '));
+
+    const blob = await masterZip.generateAsync({type:'blob', compression:'DEFLATE'});
+    const ext = (masterFileName.match(/\.(xlsx|xlsm)$/i) || ['','.xlsx'])[1];
+    const base = masterFileName.replace(/\.(xlsx|xlsm)$/i,'');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = base + '_' + cfg().label + '반영본.' + ext;
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 30000);
+    log('=== 완료: ' + a.download + ' ===');
+  } catch (err) {
+    log('오류: ' + err.message);
+    console.error(err);
+  }
+});
+
+// ---------- 판정 + 최근 추세 ----------
+document.getElementById('btnJudge').addEventListener('click', () => {
+  try {
+    log('=== 판정 시작 ===');
+    const srcWs = srcWorkbook.Sheets[cfg().srcSheet], masterWs = masterWorkbook.Sheets[cfg().masterSheet];
+    const resolved = resolveMappings(srcWs, masterWs);
+    const months = buildMonthCols(srcWs, cfg().srcMonthStartCol, SRC_MONTH_HEADER_ROW);
+
+    const byRow = {};
+    for (const m of resolved){
+      const hist = [];
+      for (let mo=1; mo<=12; mo++){
+        const target = normalizeValue(getCell(srcWs, m.labelRow, months[mo]));
+        const actual = normalizeValue(getCell(srcWs, m.actualRow, months[mo]));
+        if (target===null || actual===null) continue;
+        let achieved;
+        if (m.direction==='상향') achieved = actual >= target;
+        else if (m.direction==='하향') achieved = actual <= target;
+        else achieved = Math.abs(actual-target) < 1e-6;
+        let ratio;
+        if (target===0) ratio = achieved ? 1 : 0;
+        else if (m.direction==='하향') ratio = target / (actual===0 ? 1e-9 : actual);
+        else ratio = actual / target;
+        hist.push({month:mo, target, actual, achieved, ratio});
+      }
+      if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, direction:m.direction, months:hist};
+    }
+
+    const results = [];
+    for (const masterRow in byRow){
+      const info = byRow[masterRow], hist = info.months;
+      for (let i=0;i<hist.length;i++){
+        const cur = hist[i];
+        let streak = 0;
+        for (let j=i;j>=0;j--){ if (!hist[j].achieved) streak++; else break; }
+        const recent = hist.slice(Math.max(0,i-2), i+1);
+        let trend = 'flat';
+        if (recent.length>=2){
+          const first=recent[0].ratio, last=recent[recent.length-1].ratio;
+          if (last < first*0.97) trend='down';
+          else if (last > first*1.03) trend='up';
+        }
+        results.push({month:cur.month, masterRow:Number(masterRow), kpi:info.kpi, direction:info.direction,
+                       target:cur.target, actual:cur.actual, achieved:cur.achieved, streak, trend});
+      }
+    }
+    renderResults(results);
+    log('판정 완료: 총 ' + results.length + '건 (연속미달성/추세 포함)');
+  } catch (err) {
+    log('오류: ' + err.message);
+    console.error(err);
+  }
+});
+
+let allResults = [], selectedMonth = null;
+function renderResults(results){
+  document.getElementById('resultCard').style.display = 'block';
+  allResults = results;
+  const months = [...new Set(results.map(r=>r.month))].sort((a,b)=>a-b);
+  selectedMonth = months[months.length-1];
+  const strip = document.getElementById('monthStrip');
+  strip.innerHTML = '';
+  months.forEach(mo => {
+    const sub = results.filter(r=>r.month===mo);
+    const ok = sub.filter(r=>r.achieved).length, miss = sub.length-ok;
+    const div = document.createElement('div');
+    div.className = 'm' + (mo===selectedMonth ? ' active' : '');
+    div.dataset.month = mo;
+    div.innerHTML = `<div class="mlabel">${mo}월</div><div class="mnum">${ok}건 달성 · <span class="miss-n">${miss}건 미달성</span></div>`;
+    div.addEventListener('click', () => { selectedMonth=mo; renderTable(); updateStripActive(); });
+    strip.appendChild(div);
+  });
+  renderTable();
+}
+function updateStripActive(){
+  document.querySelectorAll('#monthStrip .m').forEach(el => el.classList.toggle('active', Number(el.dataset.month)===selectedMonth));
+}
+function renderTable(){
+  const tbody = document.querySelector('#resultTable tbody');
+  tbody.innerHTML = '';
+  const rows = allResults.filter(r=>r.month===selectedMonth)
+    .sort((a,b)=> (b.streak-a.streak) || (a.achieved-b.achieved) || a.masterRow-b.masterRow);
+  document.getElementById('trendNote').style.display = rows.some(r=>r.streak>=2||r.trend==='down') ? 'block' : 'none';
+  for (const r of rows){
+    const tr = document.createElement('tr');
+    tr.className = r.achieved ? 'ok' : 'miss';
+    let badges = '';
+    if (r.streak>=2) badges += ` <span class="tag tag-streak">🔴 ${r.streak}개월 연속 미달성</span>`;
+    if (r.trend==='down') badges += ` <span class="tag tag-down">📉 최근 악화</span>`;
+    tr.innerHTML = `<td class="num mono">${r.masterRow}</td>
+      <td>${r.kpi}${badges ? '<br>'+badges : ''}</td>
+      <td>${r.direction}</td>
+      <td class="num mono">${round(r.target)}</td><td class="num mono">${round(r.actual)}</td>
+      <td><span class="pill ${r.achieved?'ok':'miss'}">${r.achieved?'달성':'미달성'}</span></td>`;
+    tbody.appendChild(tr);
+  }
+}
+function round(v){ return Math.round(v*10000)/10000; }
 </script>
 </body>
 </html>
