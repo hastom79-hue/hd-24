@@ -111,6 +111,15 @@
       <thead><tr><th>총괄행</th><th>KPI / 최근추세</th><th>방향</th><th class="num">목표</th><th class="num">실적</th><th>판정</th></tr></thead>
       <tbody></tbody>
     </table>
+
+    <div style="margin-top:18px; padding-top:16px; border-top:1px solid var(--line);">
+      <div class="field-row"><label>담당자 이메일</label><input type="email" id="mailTo" placeholder="hemant.kadam@hd.com"></div>
+      <div class="actions">
+        <button id="btnMailMonth" class="ghost">이번 달 미달성만 메일 초안</button>
+        <button id="btnMailWatch" class="ghost">🔴📉 주의 대상만 메일 초안</button>
+      </div>
+      <p class="hint">버튼을 누르면 Outlook 등 기본 메일 앱에 제목·본문이 채워진 초안이 뜝니다. 자동으로 발송되지 않으니 확인 후 직접 [보내기]를 눌러주세요. 이메일 주소는 이 브라우저에만 저장됩니다.</p>
+    </div>
   </section>
 
   <section class="panel">
@@ -435,6 +444,65 @@ function renderTable(){
   }
 }
 function round(v){ return Math.round(v*10000)/10000; }
+
+// ---------- 메일 초안 (mailto) ----------
+const mailToInput = document.getElementById('mailTo');
+mailToInput.value = localStorage.getItem('hdps_mail_to_' + currentPlant) || '';
+mailToInput.addEventListener('change', () => {
+  localStorage.setItem('hdps_mail_to_' + currentPlant, mailToInput.value.trim());
+});
+document.getElementById('plantSelect').addEventListener('change', () => {
+  mailToInput.value = localStorage.getItem('hdps_mail_to_' + currentPlant) || '';
+});
+
+function buildMailBody(items, scopeLabel){
+  const lines = [];
+  lines.push('안녕하세요,');
+  lines.push('');
+  lines.push(cfg().label + ' 사업장의 아래 지표(' + scopeLabel + ')에 대해 사유 및 만회대책 회신 요청드립니다.');
+  lines.push('');
+  let n = 1;
+  for (const r of items){
+    let tagText = '';
+    if (r.streak>=2) tagText += ` [${r.streak}개월 연속 미달성]`;
+    if (r.trend==='down') tagText += ' [최근 악화 추세]';
+    lines.push(`${n}. ${r.kpi}${tagText}`);
+    lines.push(`   - ${r.month}월 목표: ${round(r.target)} / 실적: ${round(r.actual)} / 방향: ${r.direction}`);
+    n++;
+  }
+  lines.push('');
+  lines.push('각 항목별로 아래 내용 회신 부탁드립니다.');
+  lines.push('1) 미달성 사유');
+  lines.push('2) 만회대책 및 완료 예정일');
+  lines.push('');
+  lines.push('감사합니다.');
+  return lines.join('\n');
+}
+
+function openMailDraft(items, scopeLabel){
+  if (!items.length){ alert('해당 조건의 미달성 지표가 없습니다.'); return; }
+  const to = mailToInput.value.trim();
+  if (!to){ alert('담당자 이메일을 먼저 입력해주세요.'); mailToInput.focus(); return; }
+  const subject = `[HDPS KPI 미달성 알림] ${cfg().label} 사업장 - ${selectedMonth}월 기준 ${items.length}건`;
+  let body = buildMailBody(items, scopeLabel);
+  // mailto 링크는 브라우저별로 대략 2000자 안팎에서 잘릴 수 있어 안전하게 제한
+  const MAX = 1800;
+  if (body.length > MAX){
+    body = body.slice(0, MAX) + '\n\n... (항목이 많아 이후 내용은 생략됨, 웹페이지 표를 참고해주세요)';
+  }
+  const url = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.location.href = url;
+  log('메일 초안 생성: ' + items.length + '건 (' + scopeLabel + ')');
+}
+
+document.getElementById('btnMailMonth').addEventListener('click', () => {
+  const items = allResults.filter(r => r.month===selectedMonth && !r.achieved);
+  openMailDraft(items, '이번 달 미달성 전체');
+});
+document.getElementById('btnMailWatch').addEventListener('click', () => {
+  const items = allResults.filter(r => r.month===selectedMonth && (r.streak>=2 || r.trend==='down'));
+  openMailDraft(items, '연속 미달성 또는 최근 악화 추세');
+});
 </script>
 </body>
 </html>
