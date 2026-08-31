@@ -170,7 +170,7 @@
       <h2 style="margin:0; padding:0; border:none;">실행 이력</h2>
       <button type="button" id="btnClearHistory" class="ghost" style="padding:6px 12px; font-size:12px;">이력 지우기</button>
     </div>
-    <p class="hint" style="margin-top:0;">이 브라우저에 저장됩니다 (다른 기기/브라우저에서는 안 보입니다). 실적 반영·판정을 실행할 때마다 자동으로 한 줄씩 쌓입니다.</p>
+    <p class="hint" style="margin-top:0;">이 브라우저에 저장됩니다 (다른 기기/브라우저에서는 안 보입니다). 실적 반영·판정을 실행할 때마다 자동으로 한 줄씩 쌓입니다. <b>"판정" 이력은 더블클릭하면 파일 재업로드 없이 그때 결과를 바로 다시 볼 수 있어요</b> (최근 50건까지).</p>
     <table class="results" id="historyTable">
       <colgroup><col style="width:150px"><col style="width:60px"><col style="width:90px"><col><col style="width:80px"></colgroup>
       <thead><tr><th>일시</th><th>사업장</th><th>작업</th><th>파일</th><th>결과</th></tr></thead>
@@ -404,7 +404,7 @@ document.getElementById('btnReflect').addEventListener('click', async () => {
     a.click();
     setTimeout(()=>URL.revokeObjectURL(a.href), 30000);
     log('=== 완료: ' + a.download + ' ===');
-    addHistory({action:'실적 반영', srcName:(document.getElementById('srcFile').files[0]||{}).name||'', masterName:masterFileName, result:applied+'셀 반영'});
+    addHistory({action:'실적 반영', plantKey:currentPlant, srcName:(document.getElementById('srcFile').files[0]||{}).name||'', masterName:masterFileName, result:applied+'셀 반영'});
   } catch (err) {
     log('오류: ' + err.message);
     console.error(err);
@@ -482,7 +482,7 @@ document.getElementById('btnJudge').addEventListener('click', () => {
     renderResults(results);
     log('판정 완료: 총 ' + results.length + '건 (연속미달성/추세 포함)');
     const missTotal = results.filter(r=>!r.achieved).length;
-    addHistory({action:'판정', srcName:(document.getElementById('srcFile').files[0]||{}).name||'', masterName:masterFileName, result:results.length+'건 중 미달성 '+missTotal+'건'});
+    addHistory({action:'판정', plantKey:currentPlant, srcName:(document.getElementById('srcFile').files[0]||{}).name||'', masterName:masterFileName, result:results.length+'건 중 미달성 '+missTotal+'건', resultsData:results});
   } catch (err) {
     log('오류: ' + err.message);
     console.error(err);
@@ -744,14 +744,31 @@ function loadHistory(){
 function saveHistory(list){ localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); }
 function addHistory(entry){
   const list = loadHistory();
-  list.unshift({
+  const item = {
     time: new Date().toLocaleString('ko-KR'),
     plant: cfg().label,
+    plantKey: entry.plantKey || currentPlant,
     action: entry.action,
     files: [entry.srcName, entry.masterName].filter(Boolean).join(' / '),
     result: entry.result,
-  });
-  saveHistory(list.slice(0, 200)); // 최대 200건까지만 보관
+  };
+  if (entry.resultsData) item.resultsData = entry.resultsData; // 판정 이력만 결과 데이터 보관 (재조회용)
+  list.unshift(item);
+  // localStorage 용량 보호: 결과 데이터가 있는 항목은 최근 50건, 나머지(반영 이력 등)는 최근 200건까지만
+  let kept = [], dataCount = 0;
+  for (const h of list){
+    if (h.resultsData){
+      if (dataCount >= 50) { const {resultsData, ...rest} = h; kept.push(rest); continue; }
+      dataCount++;
+    }
+    kept.push(h);
+    if (kept.length >= 200) break;
+  }
+  try { saveHistory(kept); }
+  catch(e){ // 용량 초과 시 결과데이터 없는 버전으로 강등 후 재시도
+    const stripped = kept.map(h => { const {resultsData, ...rest} = h; return rest; });
+    saveHistory(stripped);
+  }
   renderHistory();
 }
 function renderHistory(){
@@ -762,13 +779,28 @@ function renderHistory(){
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--muted); padding:16px;">아직 실행 이력이 없습니다.</td></tr>';
     return;
   }
-  for (const h of list){
+  list.forEach((h, idx) => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="mono" style="font-size:12px;">${h.time}</td><td>${h.plant}</td><td>${h.action}</td>
+    const canReplay = h.action==='판정' && h.resultsData;
+    if (canReplay){ tr.style.cursor = 'pointer'; tr.title = '더블클릭하면 그때 결과를 다시 볼 수 있어요'; }
+    tr.innerHTML = `<td class="mono" style="font-size:12px;">${h.time}</td><td>${h.plant}</td><td>${h.action}${canReplay?' <span style="color:var(--accent); font-size:11px;">(더블클릭 재조회)</span>':''}</td>
       <td style="font-size:12.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${h.files}">${h.files}</td>
       <td style="font-size:12.5px;">${h.result}</td>`;
+    if (canReplay){
+      tr.addEventListener('dblclick', () => {
+        if (h.plantKey && h.plantKey !== currentPlant){
+          currentPlant = h.plantKey;
+          document.getElementById('plantSelect').value = currentPlant;
+          document.getElementById('srcLabel').textContent = cfg().label + ' 원본 KPI 파일';
+          applyPlantUI();
+        }
+        renderResults(h.resultsData);
+        log('=== 이력에서 재조회: ' + h.time + ' (' + h.plant + ') ===');
+        document.getElementById('resultCard').scrollIntoView && document.getElementById('resultCard').scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    }
     tbody.appendChild(tr);
-  }
+  });
 }
 document.getElementById('btnClearHistory').addEventListener('click', () => {
   if (!confirm('저장된 실행 이력을 모두 지울까요?')) return;
