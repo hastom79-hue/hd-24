@@ -106,13 +106,8 @@
     <h2>판정 결과</h2>
     <div class="month-strip" id="monthStrip"></div>
     <p class="note" id="trendNote" style="display:none;">🔴 연속 미달성 · 📉 최근 3개월 악화 추세 — KPI 옆 배지로 표시됩니다. 정렬은 "연속 미달성 개월수"가 큰 순서입니다.</p>
-    <table class="results" id="resultTable">
-      <colgroup><col class="c-row"><col><col class="c-dir"><col class="c-num"><col class="c-num"><col class="c-res"></colgroup>
-      <thead><tr><th>총괄행</th><th>KPI / 최근추세</th><th>방향</th><th class="num">목표</th><th class="num">실적</th><th>판정</th></tr></thead>
-      <tbody></tbody>
-    </table>
 
-    <div style="margin-top:18px; padding-top:16px; border-top:1px solid var(--line);">
+    <div style="margin:16px 0 20px; padding:16px; background:#f5f8fb; border:1px solid var(--line); border-radius:6px;">
       <div class="field-row"><label>담당자 이메일</label><input type="email" id="mailTo" placeholder="hemant.kadam@hd.com"></div>
       <div class="actions">
         <button id="btnMailMonth" class="ghost">이번 달 미달성만 메일 초안</button>
@@ -121,6 +116,12 @@
       </div>
       <p class="hint">버튼을 누르면 Outlook 등 기본 메일 앱에 제목·본문이 채워진 초안이 뜝니다. 자동으로 발송되지 않으니 확인 후 직접 [보내기]를 눌러주세요. 이메일 주소는 이 브라우저에만 저장됩니다.</p>
     </div>
+
+    <table class="results" id="resultTable">
+      <colgroup><col class="c-row"><col><col class="c-dir"><col class="c-num"><col class="c-num"><col class="c-res"></colgroup>
+      <thead><tr><th>총괄행</th><th>KPI / 최근추세</th><th>방향</th><th class="num">목표</th><th class="num">실적</th><th>판정</th></tr></thead>
+      <tbody></tbody>
+    </table>
   </section>
 
   <section class="panel">
