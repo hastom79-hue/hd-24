@@ -7,95 +7,214 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
-  :root { --blue:#1F4E78; --green:#2e7d32; --red:#c62828; --bg:#f7f8fa; }
-  body { font-family: -apple-system, "Malgun Gothic", sans-serif; background:var(--bg); margin:0; padding:0; color:#222; }
-  header { background:var(--blue); color:#fff; padding:20px 24px; }
-  header h1 { margin:0; font-size:20px; }
-  header p { margin:4px 0 0; font-size:13px; opacity:0.85; }
-  main { max-width:900px; margin:24px auto; padding:0 16px; }
-  .card { background:#fff; border-radius:10px; padding:20px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
-  .card h2 { font-size:16px; margin:0 0 12px; color:var(--blue); }
-  .step { display:flex; gap:10px; align-items:flex-start; margin-bottom:14px; }
-  .step .num { flex:0 0 26px; height:26px; border-radius:50%; background:var(--blue); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:bold; }
-  .step .body { flex:1; }
-  .step label { display:block; font-size:14px; margin-bottom:6px; font-weight:600; }
-  input[type=file] { width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; background:#fafafa; }
-  select { padding:8px; border:1px solid #ccc; border-radius:6px; }
-  button { background:var(--blue); color:#fff; border:none; padding:10px 18px; border-radius:6px; font-size:14px; cursor:pointer; }
-  button:disabled { background:#aaa; cursor:not-allowed; }
-  button.secondary { background:#666; }
-  .btnrow { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
-  #log { font-family: "Consolas", monospace; font-size:12.5px; background:#0f172a; color:#e2e8f0; padding:14px; border-radius:8px; max-height:260px; overflow-y:auto; white-space:pre-wrap; }
-  table { width:100%; border-collapse:collapse; font-size:13px; margin-top:10px; }
-  th,td { border:1px solid #e0e0e0; padding:6px 8px; text-align:left; }
-  th { background:#eef1f6; }
-  tr.miss td { background:#fdecea; }
-  tr.ok td { background:#eaf6ec; }
-  .badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:12px; font-weight:600; }
-  .badge.ok { background:#c6e0b4; color:#2e5225; }
-  .badge.miss { background:#f8cbad; color:#8a2e0f; }
-  .summary { display:flex; gap:16px; margin-top:6px; flex-wrap:wrap; }
-  .summary .box { background:#eef1f6; border-radius:8px; padding:10px 16px; text-align:center; min-width:90px; }
-  .summary .box .n { font-size:22px; font-weight:700; color:var(--blue); }
-  .summary .box .l { font-size:12px; color:#555; }
-  .note { font-size:12.5px; color:#888; margin-top:6px; }
+  :root {
+    --ink:#12202e;        /* 본문 텍스트 */
+    --steel:#2b4a63;      /* 주 강조색 (짙은 스틸블루) */
+    --steel-dark:#1b3245;
+    --line:#d8dee3;       /* 테두리 */
+    --bg:#eef1f3;         /* 페이지 배경 */
+    --panel:#ffffff;
+    --ok:#1e6b47;         /* 달성 텍스트 */
+    --ok-bg:#e4f2ea;
+    --miss:#9a3324;       /* 미달성 텍스트 */
+    --miss-bg:#fbebe7;
+    --amber:#a5680a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Pretendard", "Malgun Gothic", -apple-system, sans-serif;
+    background: var(--bg);
+    margin: 0;
+    color: var(--ink);
+    font-size: 14px;
+  }
+  code, .mono, .num { font-family: "SFMono-Regular", Consolas, "Roboto Mono", monospace; font-variant-numeric: tabular-nums; }
+
+  header {
+    background: var(--steel-dark);
+    color: #fff;
+    padding: 22px 28px;
+    border-bottom: 3px solid var(--steel);
+  }
+  header h1 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
+  header p { margin: 5px 0 0; font-size: 12.5px; color: #a9bccb; }
+
+  main { max-width: 960px; margin: 28px auto 60px; padding: 0 16px; }
+
+  section.panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+  }
+  section.panel > h2 {
+    font-size: 13px;
+    text-transform: none;
+    margin: 0 0 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+    color: var(--steel-dark);
+    font-weight: 700;
+  }
+
+  .field-row { display: grid; grid-template-columns: 90px 1fr; gap: 12px 14px; align-items: center; margin-bottom: 12px; }
+  .field-row label { font-size: 13px; font-weight: 600; color: #3c4c58; }
+  select, input[type=file] {
+    font-size: 13.5px;
+    padding: 7px 10px;
+    border: 1px solid #b9c4cb;
+    border-radius: 3px;
+    background: #fbfcfd;
+    color: var(--ink);
+    width: 100%;
+  }
+  select { max-width: 160px; }
+
+  .hint { font-size: 12px; color: #6b7a84; margin-top: 10px; line-height: 1.5; }
+
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+  button {
+    background: var(--steel);
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 3px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  button:hover:not(:disabled) { background: var(--steel-dark); }
+  button:disabled { background: #c3cbd0; cursor: not-allowed; }
+  button.ghost { background: transparent; color: var(--steel); border: 1px solid var(--steel); }
+  button.ghost:hover:not(:disabled) { background: #eaf0f4; }
+
+  /* 로그 */
+  #log {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.65;
+    background: #0f1b26;
+    color: #cfe0ea;
+    padding: 14px 16px;
+    border-radius: 3px;
+    max-height: 240px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+  }
+
+  /* 판정 결과 */
+  .month-strip {
+    display: flex;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 18px;
+  }
+  .month-strip .m {
+    flex: 1;
+    padding: 10px 6px;
+    text-align: center;
+    border-right: 1px solid var(--line);
+    cursor: pointer;
+    background: #fafbfc;
+  }
+  .month-strip .m:last-child { border-right: none; }
+  .month-strip .m.active { background: var(--steel-dark); color: #fff; }
+  .month-strip .m .mlabel { font-size: 11.5px; font-weight: 700; letter-spacing: 0.02em; }
+  .month-strip .m .mnum { font-size: 12px; margin-top: 3px; }
+  .month-strip .m .mnum .miss-n { color: #d98b7c; font-weight: 700; }
+  .month-strip .m.active .mnum .miss-n { color: #ffb3a0; }
+  .month-strip .m:not(.active) .mnum .miss-n { color: var(--miss); }
+
+  table.results { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+  table.results col.c-row { width: 52px; }
+  table.results col.c-kpi { width: auto; }
+  table.results col.c-dir { width: 68px; }
+  table.results col.c-num { width: 76px; }
+  table.results col.c-res { width: 70px; }
+  table.results thead th {
+    text-align: left;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #55666f;
+    padding: 8px 10px;
+    border-bottom: 2px solid var(--steel);
+    white-space: nowrap;
+  }
+  table.results thead th.num { text-align: right; }
+  table.results tbody td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #ecf0f2;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  table.results tbody td.num { text-align: right; }
+  table.results tbody tr.miss { border-left: 3px solid var(--miss); background: var(--miss-bg); }
+  table.results tbody tr.ok { border-left: 3px solid transparent; }
+  table.results tbody tr.ok:hover { background: #f5f8f9; }
+
+  .pill { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11.5px; font-weight: 700; }
+  .pill.ok { background: var(--ok-bg); color: var(--ok); }
+  .pill.miss { background: var(--miss-bg); color: var(--miss); border: 1px solid #eecdc5; }
+
+  .note { font-size: 12px; color: #6b7a84; margin: 10px 0 0; }
 </style>
 </head>
 <body>
 <header>
   <h1>HDPS KPI 자동화 웹도구</h1>
-  <p>엑셀 매크로 없이, 브라우저에서 바로 실적 반영 &amp; 목표대비 판정 (인도 사업장)</p>
+  <p>엑셀 매크로 없이, 브라우저에서 실적 반영 &amp; 목표대비 판정</p>
 </header>
 
 <main>
-  <div class="card">
-    <h2>① 사업장 선택 &amp; 파일 업로드</h2>
-    <div class="step">
-      <div class="num">0</div>
-      <div class="body">
-        <label>사업장</label>
-        <select id="plantSelect">
-          <option value="india">인도</option>
-          <option value="brazil">브라질</option>
-        </select>
-      </div>
+  <section class="panel">
+    <h2>사업장 · 파일</h2>
+    <div class="field-row">
+      <label>사업장</label>
+      <select id="plantSelect">
+        <option value="india">인도</option>
+        <option value="brazil">브라질</option>
+      </select>
     </div>
-    <div class="step">
-      <div class="num">1</div>
-      <div class="body">
-        <label id="srcLabel">원본 KPI 파일 (xlsx)</label>
-        <input type="file" id="srcFile" accept=".xlsx,.xlsm">
-      </div>
+    <div class="field-row">
+      <label id="srcLabel">원본파일</label>
+      <input type="file" id="srcFile" accept=".xlsx,.xlsm">
     </div>
-    <div class="step">
-      <div class="num">2</div>
-      <div class="body">
-        <label>총괄파일 (공장별 HDPS KPI...xlsx)</label>
-        <input type="file" id="masterFile" accept=".xlsx,.xlsm">
-      </div>
+    <div class="field-row">
+      <label>총괄파일</label>
+      <input type="file" id="masterFile" accept=".xlsx,.xlsm">
     </div>
-    <div class="note">두 파일 다 올리시면 아래 버튼이 활성화됩니다. 파일은 서버로 전송되지 않고, 이 브라우저 안에서만 처리됩니다.</div>
-  </div>
+    <p class="hint">두 파일 다 올리면 아래 버튼이 활성화됩니다. 파일은 서버로 전송되지 않고 이 브라우저 안에서만 처리됩니다.</p>
+  </section>
 
-  <div class="card">
-    <h2>② 실행</h2>
-    <div class="btnrow">
-      <button id="btnReflect" disabled>① 실적 반영 (총괄파일 업데이트)</button>
-      <button id="btnJudge" class="secondary" disabled>② 목표대비 판정 (미달성 추출)</button>
+  <section class="panel">
+    <h2>실행</h2>
+    <div class="actions">
+      <button id="btnReflect" disabled>실적 반영 → 총괄파일 다운로드</button>
+      <button id="btnJudge" class="ghost" disabled>목표대비 판정 보기</button>
     </div>
-    <div class="note">① 먼저 실적 반영 → 다운로드된 파일로 확인 → ② 판정은 원본파일의 "그 달 목표"를 그대로 사용합니다 (연간목표 아님).</div>
-  </div>
+    <p class="hint">실적 반영을 먼저 실행해 다운로드된 파일을 확인한 뒤, 판정은 원본파일에 있는 "그 달의 목표"를 그대로 사용합니다 (연간 목표 아님).</p>
+  </section>
 
-  <div class="card" id="resultCard" style="display:none;">
-    <h2>③ 판정 결과</h2>
-    <div class="summary" id="summaryBox"></div>
-    <table id="resultTable"><thead><tr><th>월</th><th>총괄행</th><th>KPI</th><th>방향</th><th>목표</th><th>실적</th><th>판정</th></tr></thead><tbody></tbody></table>
-  </div>
+  <section class="panel" id="resultCard" style="display:none;">
+    <h2>판정 결과</h2>
+    <div class="month-strip" id="monthStrip"></div>
+    <table class="results" id="resultTable">
+      <colgroup>
+        <col class="c-row"><col class="c-kpi"><col class="c-dir"><col class="c-num"><col class="c-num"><col class="c-res">
+      </colgroup>
+      <thead><tr><th>총괄행</th><th>KPI</th><th>방향</th><th class="num">목표</th><th class="num">실적</th><th>판정</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
 
-  <div class="card">
+  <section class="panel">
     <h2>실행 로그</h2>
     <div id="log">대기 중...</div>
-  </div>
+  </section>
 </main>
 
 <script>
@@ -360,30 +479,54 @@ document.getElementById('btnJudge').addEventListener('click', () => {
   }
 });
 
+let allResults = [];
+let selectedMonth = null;
+
 function renderResults(results) {
   document.getElementById('resultCard').style.display = 'block';
+  allResults = results;
   const months = [...new Set(results.map(r=>r.month))].sort((a,b)=>a-b);
-  let summaryHtml = '';
+  selectedMonth = months[months.length-1]; // 기본으로 가장 최근 월 표시
+
+  const strip = document.getElementById('monthStrip');
+  strip.innerHTML = '';
   months.forEach(mo => {
     const sub = results.filter(r=>r.month===mo);
     const ok = sub.filter(r=>r.achieved).length;
-    summaryHtml += `<div class="box"><div class="n">${mo}월</div><div class="l">판정 ${sub.length} / 달성 ${ok} / 미달성 ${sub.length-ok}</div></div>`;
+    const miss = sub.length - ok;
+    const div = document.createElement('div');
+    div.className = 'm' + (mo===selectedMonth ? ' active' : '');
+    div.dataset.month = mo;
+    div.innerHTML = `<div class="mlabel">${mo}월</div><div class="mnum">${ok}건 달성 · <span class="miss-n">${miss}건 미달성</span></div>`;
+    div.addEventListener('click', () => { selectedMonth = mo; renderTable(); updateStripActive(); });
+    strip.appendChild(div);
   });
-  document.getElementById('summaryBox').innerHTML = summaryHtml;
+  renderTable();
+}
 
+function updateStripActive() {
+  document.querySelectorAll('#monthStrip .m').forEach(el => {
+    el.classList.toggle('active', Number(el.dataset.month) === selectedMonth);
+  });
+}
+
+function renderTable() {
   const tbody = document.querySelector('#resultTable tbody');
   tbody.innerHTML = '';
-  results.sort((a,b)=> a.month-b.month || (a.achieved-b.achieved) || a.masterRow-b.masterRow);
-  for (const r of results) {
+  const rows = allResults
+    .filter(r => r.month === selectedMonth)
+    .sort((a,b)=> (a.achieved-b.achieved) || a.masterRow-b.masterRow);
+  for (const r of rows) {
     const tr = document.createElement('tr');
     tr.className = r.achieved ? 'ok' : 'miss';
-    tr.innerHTML = `<td>${r.month}월</td><td>${r.masterRow}</td><td>${r.kpi}</td><td>${r.direction}</td>
-      <td>${round(r.target)}</td><td>${round(r.actual)}</td>
-      <td><span class="badge ${r.achieved?'ok':'miss'}">${r.achieved?'달성':'미달성'}</span></td>`;
+    tr.innerHTML = `<td class="num mono">${r.masterRow}</td><td>${r.kpi}</td><td>${r.direction}</td>
+      <td class="num mono">${round(r.target)}</td><td class="num mono">${round(r.actual)}</td>
+      <td><span class="pill ${r.achieved?'ok':'miss'}">${r.achieved?'달성':'미달성'}</span></td>`;
     tbody.appendChild(tr);
   }
 }
 function round(v){ return Math.round(v*10000)/10000; }
 </script>
+
 </body>
 </html>
