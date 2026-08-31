@@ -62,8 +62,9 @@
   table.results tbody td { padding:10px; border-bottom:1px solid #ecf0f2; vertical-align:middle; line-height:1.5; }
   table.results tbody td.num { text-align:right; }
   table.results tbody tr.miss { border-left:4px solid var(--miss); background:var(--miss-bg); }
-  table.results tbody tr.ok { border-left:4px solid transparent; }
-  table.results tbody tr.ok:hover { background:#f5f8f9; }
+  table.results tbody tr.ok { border-left:4px solid var(--ok); background:var(--ok-bg); }
+  table.results tbody tr.ok:hover { background:#dcf0e5; }
+  table.results tbody tr.miss:hover { background:#f7dfda; }
 
   .pill { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:700; }
   .pill.ok { background:var(--ok-bg); color:var(--ok); }
@@ -81,7 +82,8 @@
   .col-head h3.miss-h { color:var(--miss); }
   .col-head h3.ok-h { color:var(--ok); }
   .col-count { font-size:12px; color:var(--muted); font-weight:600; }
-  table.results { table-layout:auto; }
+  table.results { table-layout:fixed; }
+  table.results td.num, table.results th.num { white-space:nowrap; }
   table.results td, table.results th { overflow-wrap:anywhere; word-break:keep-all; }
 
   .note { font-size:12px; color:var(--muted); margin:10px 0 0; }
@@ -142,7 +144,7 @@
       <div class="result-col">
         <div class="col-head"><h3 class="miss-h">미달성</h3><span class="col-count" id="missCount"></span></div>
         <table class="results" id="missTable">
-          <colgroup><col style="width:44px"><col><col style="width:56px"><col style="width:64px"><col style="width:64px"></colgroup>
+          <colgroup><col style="width:44px"><col><col style="width:58px"><col style="width:78px"><col style="width:78px"></colgroup>
           <thead><tr><th>행</th><th>KPI / 최근추세</th><th>방향</th><th class="num">목표</th><th class="num">실적</th></tr></thead>
           <tbody></tbody>
         </table>
@@ -150,7 +152,7 @@
       <div class="result-col">
         <div class="col-head"><h3 class="ok-h">달성</h3><span class="col-count" id="okCount"></span></div>
         <table class="results" id="okTable">
-          <colgroup><col style="width:44px"><col><col style="width:56px"><col style="width:64px"><col style="width:64px"></colgroup>
+          <colgroup><col style="width:44px"><col><col style="width:58px"><col style="width:78px"><col style="width:78px"></colgroup>
           <thead><tr><th>행</th><th>KPI</th><th>방향</th><th class="num">목표</th><th class="num">실적</th></tr></thead>
           <tbody></tbody>
         </table>
@@ -593,7 +595,11 @@ function renderTable(){
     okBody.appendChild(tr);
   }
 }
-function round(v){ return Math.round(v*10000)/10000; }
+function round(v){
+  if (typeof v !== 'number' || !isFinite(v)) return v;
+  const r = Math.round(v*1000)/1000; // 소수 3자리까지만
+  return Number.isInteger(r) ? r : parseFloat(r.toFixed(3));
+}
 
 // ---------- 메일 초안 (mailto) ----------
 const mailToInput = document.getElementById('mailTo');
