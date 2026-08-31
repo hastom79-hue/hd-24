@@ -701,8 +701,9 @@ function buildMailBody(items, scopeLabelKo, scopeLabelEn, showStatus){
 }
 
 // 메일 첨부용 엑셀 리포트 생성 (mailto는 파일을 자동첨부할 수 없어, 별도 다운로드 후 사용자가 직접 끌어넣도록 함)
-function downloadMailExcel(items, scopeLabelKo){
+function downloadMailExcel(items, scopeLabelKo, scopeLabelEn){
   const en = currentLang==='en';
+  const scopeLabel = en ? scopeLabelEn : scopeLabelKo;
   const header = en
     ? ['Row','KPI (KR)','KPI (EN)','Direction','Month','Target','Actual','Result','Consecutive Miss(mo)','Trend']
     : ['총괄행','KPI(국문)','KPI(영문)','방향','월','목표','실적','판정','연속미달성(개월)','추세'];
@@ -719,7 +720,8 @@ function downloadMailExcel(items, scopeLabelKo){
   ws['!cols'] = [{wch:8},{wch:34},{wch:34},{wch:14},{wch:8},{wch:10},{wch:10},{wch:10},{wch:12},{wch:10}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'KPI');
-  const fname = `HDPS_KPI_${plantLabel()}_${monthLabel(selectedMonth)}_${scopeLabelKo.replace(/[^\w가-힣]/g,'')}.xlsx`;
+  const scopeForName = scopeLabel.replace(/[^\w가-힣]/g,'');
+  const fname = `HDPS_KPI_${plantLabel()}_${monthLabel(selectedMonth)}_${scopeForName}.xlsx`;
   XLSX.writeFile(wb, fname);
   return fname;
 }
@@ -730,7 +732,7 @@ function openMailDraft(items, scopeLabelKo, scopeLabelEn, showStatus){
   const to = mailToInput.value.trim();
   if (!to){ alert(en ? 'Please enter the recipient email first.' : '담당자 이메일을 먼저 입력해주세요.'); mailToInput.focus(); return; }
 
-  const fname = downloadMailExcel(items, scopeLabelKo);
+  const fname = downloadMailExcel(items, scopeLabelKo, scopeLabelEn);
   log((en?'Excel downloaded for attaching: ':'첨부용 엑셀 다운로드: ') + fname);
 
   const subject = en
@@ -746,7 +748,7 @@ function openMailDraft(items, scopeLabelKo, scopeLabelEn, showStatus){
   }
   const url = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   window.location.href = url;
-  log('메일 초안 생성: ' + items.length + '건 (' + scopeLabelKo + ')');
+  log((en?'Mail draft created: ':'메일 초안 생성: ') + items.length + (en?' item(s) (':'건 (') + (en?scopeLabelEn:scopeLabelKo) + ')');
 }
 
 document.getElementById('btnMailMonth').addEventListener('click', () => {
