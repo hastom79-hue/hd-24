@@ -764,10 +764,22 @@ function addHistory(entry){
     kept.push(h);
     if (kept.length >= 200) break;
   }
-  try { saveHistory(kept); }
-  catch(e){ // 용량 초과 시 결과데이터 없는 버전으로 강등 후 재시도
-    const stripped = kept.map(h => { const {resultsData, ...rest} = h; return rest; });
-    saveHistory(stripped);
+  try {
+    saveHistory(kept);
+    // 실제로 결과데이터까지 잘 저장됐는지 즉시 재확인 (일부 브라우저는 오류 없이 조용히 저장을 무시하기도 함)
+    const check = loadHistory();
+    if (item.resultsData && (!check[0] || !check[0].resultsData)) {
+      log('⚠ 저장은 됐지만 상세 결과 데이터가 누락됐습니다 (브라우저 저장공간 제한일 수 있어요).');
+    }
+  }
+  catch(e){ // 용량 초과 등으로 실패 시 결과데이터 없는 버전으로 강등 후 재시도
+    log('⚠ 이력 저장 중 오류(용량 초과 등): ' + e.message + ' → 상세 결과 없이 요약만 저장합니다.');
+    try {
+      const stripped = kept.map(h => { const {resultsData, ...rest} = h; return rest; });
+      saveHistory(stripped);
+    } catch(e2) {
+      log('⚠ 이력 저장 완전 실패: ' + e2.message);
+    }
   }
   renderHistory();
 }
