@@ -97,11 +97,11 @@
   <section class="panel">
     <h2>사업장 · 파일</h2>
     <div class="field-row"><label>사업장</label>
-      <select id="plantSelect"><option value="india">인도</option><option value="brazil">브라질</option></select>
+      <select id="plantSelect"><option value="india">인도</option><option value="brazil">브라질</option><option value="ulsan">울산</option></select>
     </div>
-    <div class="field-row"><label id="srcLabel">원본 KPI 파일</label><input type="file" id="srcFile" accept=".xlsx,.xlsm"></div>
+    <div class="field-row" id="srcFileRow"><label id="srcLabel">원본 KPI 파일</label><input type="file" id="srcFile" accept=".xlsx,.xlsm"></div>
     <div class="field-row"><label>총괄파일</label><input type="file" id="masterFile" accept=".xlsx,.xlsm"></div>
-    <p class="hint">KPI명으로 실제 행을 다시 확인한 뒤 반영합니다. 원본 또는 총괄파일에 행이 삽입·삭제되어도 고정 행번호만 믿지 않도록 자동 보정합니다. 파일은 서버로 전송되지 않고 이 브라우저 안에서만 처리됩니다.</p>
+    <p class="hint" id="plantHint">KPI명으로 실제 행을 다시 확인한 뒤 반영합니다. 원본 또는 총괄파일에 행이 삽입·삭제되어도 고정 행번호만 믿지 않도록 자동 보정합니다. 파일은 서버로 전송되지 않고 이 브라우저 안에서만 처리됩니다.</p>
   </section>
 
   <section class="panel">
@@ -169,8 +169,9 @@
 
 <script>
 const PLANT_CONFIG = {
-  india: { label:'인도', mappingFile:'mapping_india.json', srcSheet:'Final With HQ Suggestion', masterSheet:'인도법인 KPI(26년 보고용)', srcMonthStartCol:15 },
-  brazil:{ label:'브라질', mappingFile:'mapping_brazil.json', srcSheet:'HCEB KPIs', masterSheet:'브라질법인 KPI(26년 보고용)', srcMonthStartCol:18 },
+  india: { label:'인도', mappingFile:'mapping_india.json', srcSheet:'Final With HQ Suggestion', masterSheet:'인도법인 KPI(26년 보고용)', srcMonthStartCol:15, hasSource:true },
+  brazil:{ label:'브라질', mappingFile:'mapping_brazil.json', srcSheet:'HCEB KPIs', masterSheet:'브라질법인 KPI(26년 보고용)', srcMonthStartCol:18, hasSource:true },
+  ulsan: { label:'울산', mappingFile:'mapping_ulsan.json', masterSheet:'울산캠퍼스 KPI(26년 보고용)', masterTargetCol:28, masterMonthStartCol:30, hasSource:false },
 };
 const SRC_MONTH_HEADER_ROW = 11;
 const MASTER_MONTH_START_COL = 27;
@@ -197,9 +198,20 @@ document.getElementById('plantSelect').addEventListener('change', async (e) => {
   document.getElementById('srcFile').value = '';
   document.getElementById('masterFile').value = '';
   document.getElementById('resultCard').style.display = 'none';
+  applyPlantUI();
   checkReady();
   await loadMapping();
 });
+
+function applyPlantUI(){
+  const has = cfg().hasSource;
+  document.getElementById('srcFileRow').style.display = has ? 'grid' : 'none';
+  document.getElementById('btnReflect').style.display = has ? 'inline-block' : 'none';
+  document.getElementById('plantHint').textContent = has
+    ? 'KPI명으로 실제 행을 다시 확인한 뒤 반영합니다. 원본 또는 총괄파일에 행이 삽입·삭제되어도 고정 행번호만 믿지 않도록 자동 보정합니다. 파일은 서버로 전송되지 않고 이 브라우저 안에서만 처리됩니다.'
+    : '울산은 별도 원본파일 없이 총괄파일 안에서 직접 관리됩니다. 총괄파일만 올리면 목표대비 판정을 볼 수 있어요. (※ 울산은 총괄파일에 연간 고정목표만 있어 월별 목표 대신 이 값을 그대로 사용합니다 — 인도/브라질보다 정확도가 낮을 수 있습니다)';
+}
+applyPlantUI();
 
 document.getElementById('srcFile').addEventListener('change', async (e) => {
   const f = e.target.files[0]; if (!f) return;
@@ -218,8 +230,9 @@ document.getElementById('masterFile').addEventListener('change', async (e) => {
   checkReady();
 });
 function checkReady(){
-  const ok = !!(srcWorkbook && masterWorkbook && masterZip && mappingData.length);
-  document.getElementById('btnReflect').disabled = !ok;
+  const needSrc = cfg().hasSource;
+  const ok = !!((!needSrc || srcWorkbook) && masterWorkbook && masterZip && mappingData.length);
+  document.getElementById('btnReflect').disabled = !(ok && needSrc);
   document.getElementById('btnJudge').disabled = !ok;
 }
 
@@ -387,31 +400,53 @@ document.getElementById('btnReflect').addEventListener('click', async () => {
 });
 
 // ---------- 판정 + 최근 추세 ----------
+function makeHistEntry(month, target, actual, direction){
+  let achieved;
+  if (direction==='상향') achieved = actual >= target;
+  else if (direction==='하향') achieved = actual <= target;
+  else achieved = Math.abs(actual-target) < 1e-6;
+  let ratio;
+  if (target===0) ratio = achieved ? 1 : 0;
+  else if (direction==='하향') ratio = target / (actual===0 ? 1e-9 : actual);
+  else ratio = actual / target;
+  return {month, target, actual, achieved, ratio};
+}
+
 document.getElementById('btnJudge').addEventListener('click', () => {
   try {
     log('=== 판정 시작 ===');
-    const srcWs = srcWorkbook.Sheets[cfg().srcSheet], masterWs = masterWorkbook.Sheets[cfg().masterSheet];
-    const resolved = resolveMappings(srcWs, masterWs);
-    const months = buildMonthCols(srcWs, cfg().srcMonthStartCol, SRC_MONTH_HEADER_ROW);
-
     const byRow = {};
-    for (const m of resolved){
-      const hist = [];
-      for (let mo=1; mo<=12; mo++){
-        const target = normalizeValue(getCell(srcWs, m.labelRow, months[mo]));
-        const actual = normalizeValue(getCell(srcWs, m.actualRow, months[mo]));
-        if (target===null || actual===null) continue;
-        let achieved;
-        if (m.direction==='상향') achieved = actual >= target;
-        else if (m.direction==='하향') achieved = actual <= target;
-        else achieved = Math.abs(actual-target) < 1e-6;
-        let ratio;
-        if (target===0) ratio = achieved ? 1 : 0;
-        else if (m.direction==='하향') ratio = target / (actual===0 ? 1e-9 : actual);
-        else ratio = actual / target;
-        hist.push({month:mo, target, actual, achieved, ratio});
+
+    if (cfg().hasSource) {
+      const srcWs = srcWorkbook.Sheets[cfg().srcSheet], masterWs = masterWorkbook.Sheets[cfg().masterSheet];
+      const resolved = resolveMappings(srcWs, masterWs);
+      const months = buildMonthCols(srcWs, cfg().srcMonthStartCol, SRC_MONTH_HEADER_ROW);
+      for (const m of resolved){
+        const hist = [];
+        for (let mo=1; mo<=12; mo++){
+          const target = normalizeValue(getCell(srcWs, m.labelRow, months[mo]));
+          const actual = normalizeValue(getCell(srcWs, m.actualRow, months[mo]));
+          if (target===null || actual===null) continue;
+          hist.push(makeHistEntry(mo, target, actual, m.direction));
+        }
+        if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, direction:m.direction, months:hist};
       }
-      if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, direction:m.direction, months:hist};
+    } else {
+      // 울산: 별도 원본파일 없음. 총괄파일 안의 (연간 고정)목표와 월별 실적을 그대로 사용
+      const masterWs = masterWorkbook.Sheets[cfg().masterSheet];
+      const targetCol = cfg().masterTargetCol, startCol = cfg().masterMonthStartCol;
+      for (const m of mappingData){
+        const target = normalizeValue(getCell(masterWs, m.masterRow, targetCol));
+        if (target===null) continue;
+        const hist = [];
+        for (let mo=1; mo<=12; mo++){
+          const actual = normalizeValue(getCell(masterWs, m.masterRow, startCol+mo-1));
+          if (actual===null) continue;
+          hist.push(makeHistEntry(mo, target, actual, m.direction));
+        }
+        if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, direction:m.direction, months:hist};
+      }
+      log('⚠ 울산은 월별 목표가 아닌 연간 고정목표로 판정합니다 (원본파일이 없어 인도/브라질과 정확도가 다를 수 있음)');
     }
 
     const results = [];
