@@ -1,0 +1,762 @@
+[
+ {
+  "labelRow": 12,
+  "actualRow": 13,
+  "kpiEn": "Line wise SQDCEI KPIs Achievement Rate",
+  "direction": "상향",
+  "masterRow": 10,
+  "kpiKr": "SQDC 목표달성팀 수(또는 비율)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 14,
+  "actualRow": 15,
+  "kpiEn": "\"Cost\" KPI Achievement Rate",
+  "direction": "상향",
+  "masterRow": 11,
+  "kpiKr": "\"Cost\" KPI 달성율 → COPQ 및 OT KPI 달성률 (%)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 20,
+  "actualRow": 21,
+  "kpiEn": "Man-hours Loss per machine",
+  "direction": "하향",
+  "masterRow": 13,
+  "kpiKr": "대당 비가동 MH",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 22,
+  "actualRow": 23,
+  "kpiEn": "Issue Recurrence Rate",
+  "direction": "하향",
+  "masterRow": 14,
+  "kpiKr": "생산이슈 재발율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 24,
+  "actualRow": 25,
+  "kpiEn": "Production Instruction Compliance Rate  (against FDI out plan)",
+  "direction": "상향",
+  "masterRow": 15,
+  "kpiKr": "생산지시 준수율(완제품 입고계획 준수율)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 26,
+  "actualRow": 27,
+  "kpiEn": "Pending Action Lead Time  (Issues closure time/machine)",
+  "direction": "하향",
+  "masterRow": 17,
+  "kpiKr": "대당 펜딩이슈 조치 리드타임",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 28,
+  "actualRow": 29,
+  "kpiEn": "Job Rotation Rate",
+  "direction": "상향",
+  "masterRow": 22,
+  "kpiKr": "공정 순환율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 30,
+  "actualRow": 31,
+  "kpiEn": "3 process achievement rate per person",
+  "direction": "상향",
+  "masterRow": 19,
+  "kpiKr": "개인별 3공정 달성율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 32,
+  "actualRow": 33,
+  "kpiEn": "3 people achievement rate per process",
+  "direction": "상향",
+  "masterRow": 20,
+  "kpiKr": "공정별 3인 달성율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 34,
+  "actualRow": 35,
+  "kpiEn": "IQ 200 (Initial Quality)",
+  "direction": "하향",
+  "masterRow": 25,
+  "kpiKr": "IQ(초기품질)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 36,
+  "actualRow": 37,
+  "kpiEn": "W.Q. (Warranty Quality)",
+  "direction": "하향",
+  "masterRow": 26,
+  "kpiKr": "WQ(내구품질)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 42,
+  "actualRow": 43,
+  "kpiEn": "Quality (MH Loss ) Line Downtime",
+  "direction": "하향",
+  "masterRow": 27,
+  "kpiKr": "라인 품질(전체)비가동손실MH",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 44,
+  "actualRow": 45,
+  "kpiEn": "QIR (PPR) Improvement Completion Rate (R210E)",
+  "direction": "상향",
+  "masterRow": 24,
+  "kpiKr": "QIR 개선율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 46,
+  "actualRow": 47,
+  "kpiEn": "PPM",
+  "direction": "하향",
+  "masterRow": 35,
+  "kpiKr": "부품 공정불량율(또는 라인품질비가동(부품))",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 48,
+  "actualRow": 49,
+  "kpiEn": "Performance Test Defect Rate",
+  "direction": "하향",
+  "masterRow": 37,
+  "kpiKr": "완제품 시운전 불량율",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 58,
+  "actualRow": 59,
+  "kpiEn": "Quality Line Downtime - Supplier/Part Attribution",
+  "direction": "하향",
+  "masterRow": 36,
+  "kpiKr": "라인품질비가동(부품)손실",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 60,
+  "actualRow": 61,
+  "kpiEn": "(Finished Product) Incoming Inspection Defect Rate (at FDI)",
+  "direction": "하향",
+  "masterRow": 38,
+  "kpiKr": "완제품 입고검사 불량율",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 62,
+  "actualRow": 63,
+  "kpiEn": "Number of F/P Application Rate",
+  "direction": "상향",
+  "masterRow": 32,
+  "kpiKr": "Fool Proof 적용률(연간 계획 대비 전체)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 64,
+  "actualRow": 65,
+  "kpiEn": "IQ 200 Issues with Production responsibility",
+  "direction": "하향",
+  "masterRow": 29,
+  "kpiKr": "IQ200(생산귀책)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 68,
+  "actualRow": 69,
+  "kpiEn": "Process Defect Rate (Basic Quality, Leakage, FDI, NDT, ISA)",
+  "direction": "하향",
+  "masterRow": 30,
+  "kpiKr": "공정 불량율(생산귀책) (Basic Quality, Leakage, FDI, NDT, ISA)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 70,
+  "actualRow": 71,
+  "kpiEn": "Direct Pass Rate",
+  "direction": "상향",
+  "masterRow": 31,
+  "kpiKr": "직행율(* 무결함으로 후공정 진행하는 비율)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 72,
+  "actualRow": 73,
+  "kpiEn": "PDCA Progress Rate",
+  "direction": "상향",
+  "masterRow": 53,
+  "kpiKr": "PDCA 진행률",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 74,
+  "actualRow": 75,
+  "kpiEn": "Important Problem Identification Cases  (Supplier & Inhouse)",
+  "direction": "상향",
+  "masterRow": 52,
+  "kpiKr": "중요 문제 발굴 사례 (협력사 및 사내)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 76,
+  "actualRow": 77,
+  "kpiEn": "Personnel Using Problem-Solving Techniques",
+  "direction": "상향",
+  "masterRow": 48,
+  "kpiKr": "문제해결기법 활용인력",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 78,
+  "actualRow": 79,
+  "kpiEn": "Personnel Coaching Problem-Solving Techniques",
+  "direction": "상향",
+  "masterRow": 49,
+  "kpiKr": "문제해결기법 코칭인력",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 80,
+  "actualRow": 81,
+  "kpiEn": "Improvements Collection Rate (Team & Self)",
+  "direction": "상향",
+  "masterRow": 54,
+  "kpiKr": "자율개선활동 참여도",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 82,
+  "actualRow": 83,
+  "kpiEn": "Horizontal Deployment Application Cases",
+  "direction": "상향",
+  "masterRow": 56,
+  "kpiKr": "소그룹활동 수평전개건수",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 84,
+  "actualRow": 85,
+  "kpiEn": "Small-Group Improvements per Person",
+  "direction": "상향",
+  "masterRow": 55,
+  "kpiKr": "인당 소그룹 개선건수",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 86,
+  "actualRow": 87,
+  "kpiEn": "VTB (/Improvements) Completion Rate  (against suggestions from Suggestion box, 3'G walk, SIP)",
+  "direction": "상향",
+  "masterRow": 57,
+  "kpiKr": "VTB 개선완료율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 88,
+  "actualRow": 89,
+  "kpiEn": "Average VTB Improvement Lead Time",
+  "direction": "하향",
+  "masterRow": 58,
+  "kpiKr": "VTB 평균 개선 리드타임",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 90,
+  "actualRow": 91,
+  "kpiEn": "Value Time Ratio",
+  "direction": "상향",
+  "masterRow": 45,
+  "kpiKr": "가치시간 비율(가치 흐름 효율, VSE)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 96,
+  "actualRow": 97,
+  "kpiEn": "Parts Inventory Turnover",
+  "direction": "상향",
+  "masterRow": 43,
+  "kpiKr": "부품재고 회전율",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 98,
+  "actualRow": 99,
+  "kpiEn": "Shipment Lead Time (Wait Time)",
+  "direction": "하향",
+  "masterRow": 44,
+  "kpiKr": "출하 리드타임",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 104,
+  "actualRow": 105,
+  "kpiEn": "Advance 5'S Application Cases",
+  "direction": "상향",
+  "masterRow": 63,
+  "kpiKr": "표준화 건수 → 5S 고도화 개선사례 건수로 관리",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 106,
+  "actualRow": 107,
+  "kpiEn": "5'S Audit Non-Compliance Closure Rate",
+  "direction": "상향",
+  "masterRow": 61,
+  "kpiKr": "불합리 개선건수 (또는 개선율)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 108,
+  "actualRow": 109,
+  "kpiEn": "5S Audit Score",
+  "direction": "상향",
+  "masterRow": 60,
+  "kpiKr": "5S Audit 점수",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 110,
+  "actualRow": 111,
+  "kpiEn": "Autonomous Maintenance Application Rate",
+  "direction": "상향",
+  "masterRow": 68,
+  "kpiKr": "자주보전 적용 신규 설비 대수 (ABC 등급)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 112,
+  "actualRow": 113,
+  "kpiEn": "MTTR (Mean Time To Repair)",
+  "direction": "하향",
+  "masterRow": 65,
+  "kpiKr": "MTTR(평균 고장시간)",
+  "scale": 1,
+  "valueFormat": "시간serial"
+ },
+ {
+  "labelRow": 114,
+  "actualRow": 115,
+  "kpiEn": "MTBF (Mean Time  Between Failure)",
+  "direction": "상향",
+  "masterRow": 66,
+  "kpiKr": "MTBF(평균 고장간격)",
+  "scale": 1,
+  "valueFormat": "시간serial"
+ },
+ {
+  "labelRow": 116,
+  "actualRow": 117,
+  "kpiEn": "MTTD : Mean Time To Detect",
+  "direction": "하향",
+  "masterRow": 67,
+  "kpiKr": "MTTD(초기고장 대응시간)",
+  "scale": 1,
+  "valueFormat": "시간serial"
+ },
+ {
+  "labelRow": 118,
+  "actualRow": 119,
+  "kpiEn": "Equipment Downtime Loss",
+  "direction": "하향",
+  "masterRow": 64,
+  "kpiKr": "설비 비가동손실MH",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 120,
+  "actualRow": 121,
+  "kpiEn": "CTQ Compliance rate of Standard documents (Entire Area)",
+  "direction": "상향",
+  "masterRow": 70,
+  "kpiKr": "표준문서 기준 CTQ 준수율(전체영역)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 122,
+  "actualRow": 123,
+  "kpiEn": "Standard Document Validation Rate",
+  "direction": "상향",
+  "masterRow": 72,
+  "kpiKr": "표준작업문서의 최신화 비율 (표준문서의 개정관리에 대한 지표)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 126,
+  "actualRow": 127,
+  "kpiEn": "Non-Compliance Recurrence Rate",
+  "direction": "하향",
+  "masterRow": 71,
+  "kpiKr": "표준 미준수 재발율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 128,
+  "actualRow": 129,
+  "kpiEn": "Standard Work Compliance Rate",
+  "direction": "상향",
+  "masterRow": 69,
+  "kpiKr": "표준작업 준수율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 130,
+  "actualRow": 131,
+  "kpiEn": "Critical Quality Indicator (Basic Quality)",
+  "direction": "하향",
+  "masterRow": 73,
+  "kpiKr": "중요품질지표 (누락, 누유/누수, 미조임, 오조립)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 132,
+  "actualRow": 133,
+  "kpiEn": "M+1 Production Volume Variation Rate",
+  "direction": "하향",
+  "masterRow": 80,
+  "kpiKr": "RCCP 준수율(M+1변동율)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 134,
+  "actualRow": 135,
+  "kpiEn": "W+3 Mix Variation Rate",
+  "direction": "하향",
+  "masterRow": 79,
+  "kpiKr": "MPS 준수율(Mix변동율, W+3)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 136,
+  "actualRow": 137,
+  "kpiEn": "Order Intake Fulfillment (W+4 - Rolling Plan)  Domestic + Export Production Plan",
+  "direction": "상향",
+  "masterRow": 86,
+  "kpiKr": "오더확보율(주문배정율)- W+3 Order Intake Fulfillment (W+4 - Rolling Plan), Domestic + Export Production Plan",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 140,
+  "actualRow": 141,
+  "kpiEn": "Inbound Material Delivery Compliance Rate",
+  "direction": "상향",
+  "masterRow": 87,
+  "kpiKr": "내자재 입고 준수율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 142,
+  "actualRow": 143,
+  "kpiEn": "Monthly Shipment Plan Compliance Rate (Export)",
+  "direction": "상향",
+  "masterRow": 89,
+  "kpiKr": "월간 생산계획 준수율(Export)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 144,
+  "actualRow": 145,
+  "kpiEn": "Option Planning Forecast Accuracy",
+  "direction": "상향",
+  "masterRow": 88,
+  "kpiKr": "옵션플래닝 정확도",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 146,
+  "actualRow": 147,
+  "kpiEn": "Production Incoming Plan Compliance Rate",
+  "direction": "상향",
+  "masterRow": 83,
+  "kpiKr": "생산계획 달성율(입고계획 준수율)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 148,
+  "actualRow": 149,
+  "kpiEn": "Mis-Input & Wrong Material Feeding Improvement Cases",
+  "direction": "상향",
+  "masterRow": 99,
+  "kpiKr": "미투입 & 오투입 자재공급 개선사례",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 156,
+  "actualRow": 157,
+  "kpiEn": "Material-Induced Downtime MH",
+  "direction": "하향",
+  "masterRow": 90,
+  "kpiKr": "대당 비가동 손실MH(사내 PPIC 이상)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 158,
+  "actualRow": 159,
+  "kpiEn": "Domestic Incoming Plan Compliance Rate",
+  "direction": "상향",
+  "masterRow": 91,
+  "kpiKr": "내자입고계획 준수율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 160,
+  "actualRow": 161,
+  "kpiEn": "DIO (Days Inventory Outstanding)",
+  "direction": "상향",
+  "masterRow": 93,
+  "kpiKr": "DIO(재고회전일수, Days)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 162,
+  "actualRow": 163,
+  "kpiEn": "Inventory Accuracy Rate",
+  "direction": "상향",
+  "masterRow": 95,
+  "kpiKr": "재고일치율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 164,
+  "actualRow": 165,
+  "kpiEn": "Long-Term Inventory Value (6 month basis)",
+  "direction": "하향",
+  "masterRow": 96,
+  "kpiKr": "장기재고금액",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 166,
+  "actualRow": 167,
+  "kpiEn": "WIP compliance rate (Fabrication)",
+  "direction": "상향",
+  "masterRow": 108,
+  "kpiKr": "생산라인별 표준재공 준수율(제관)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 168,
+  "actualRow": 169,
+  "kpiEn": "WIP compliance rate(Assy Line On- Line-Out )",
+  "direction": "상향",
+  "masterRow": 109,
+  "kpiKr": "생산라인별 표준재공 준수율(L/Out~Test)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 174,
+  "actualRow": 175,
+  "kpiEn": "Lead Time by Production Line (Cutting To Dispatch)",
+  "direction": "하향",
+  "masterRow": 107,
+  "kpiKr": "생산라인별 제조 리드타임 →Cutting to FDI out",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 176,
+  "actualRow": 177,
+  "kpiEn": "Sequence Compliance Rate by Line",
+  "direction": "상향",
+  "masterRow": 110,
+  "kpiKr": "생산라인별 순서생산 준수율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 178,
+  "actualRow": 179,
+  "kpiEn": "Fabrication - Weighted Average ACTUAL LOB Efficiency",
+  "direction": "상향",
+  "masterRow": 114,
+  "kpiKr": "라인 편성효율(T/T기준, 운영효율이슈)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 182,
+  "actualRow": 183,
+  "kpiEn": "Unplan vs. Plan Overtime Rate",
+  "direction": "하향",
+  "masterRow": 115,
+  "kpiKr": "비계획 VS 계획 O/T 비율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 184,
+  "actualRow": 185,
+  "kpiEn": "NVA reduction cases reflecting from SWC & SWCT",
+  "direction": "상향",
+  "masterRow": 117,
+  "kpiKr": "표준작업표를 활용한 비부가가치작업 개선사례",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 186,
+  "actualRow": 187,
+  "kpiEn": "Input MH per machine Fabrication",
+  "direction": "하향",
+  "masterRow": 112,
+  "kpiKr": "대당 투입MH (제관)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 188,
+  "actualRow": 189,
+  "kpiEn": "Input MH per machine Assembly",
+  "direction": "하향",
+  "masterRow": 111,
+  "kpiKr": "대당 투입MH (조립)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 190,
+  "actualRow": 191,
+  "kpiEn": "Balancing Efficiency",
+  "direction": "상향",
+  "masterRow": 113,
+  "kpiKr": "라인 편성효율(병목공정 기준, 공정설계이슈)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 192,
+  "actualRow": 193,
+  "kpiEn": "OT MH per Unit",
+  "direction": "하향",
+  "masterRow": 116,
+  "kpiKr": "대당 O/T MH",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 194,
+  "actualRow": 195,
+  "kpiEn": "Min/Max compliance rate of     input materials by process",
+  "direction": "상향",
+  "masterRow": 101,
+  "kpiKr": "표준재공 준수율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 206,
+  "actualRow": 207,
+  "kpiEn": "Unsafe Act & Condition Identification",
+  "direction": "상향",
+  "masterRow": 6,
+  "kpiKr": "불안전한 행동/위험 발굴건수",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 208,
+  "actualRow": 209,
+  "kpiEn": "HIRA & EARA Risk Reduction Cases",
+  "direction": "상향",
+  "masterRow": 7,
+  "kpiKr": "자발적 위험요인 개선 완료율 → HIRA & EARA 리스크 감소건수로 관리",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 214,
+  "actualRow": 215,
+  "kpiEn": "EHS Leadership Inspection Improvement Completion Rate",
+  "direction": "상향",
+  "masterRow": 5,
+  "kpiKr": "EHS 리더십 점검 개선완료율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 216,
+  "actualRow": 217,
+  "kpiEn": "LTIR (Lost Time Incident Rate)",
+  "direction": "상향",
+  "masterRow": 8,
+  "kpiKr": "LTIR(근로손실 사고율)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 218,
+  "actualRow": 219,
+  "kpiEn": "Incident/Accident Count",
+  "direction": "하향",
+  "masterRow": 9,
+  "kpiKr": "중대사고 재해건수 → 사고발생건수로 관리 (First Aid, Property Damage, Reportable occurrences)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ }
+]

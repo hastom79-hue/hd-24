@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HDPS KPI 자동화 웹도구</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root { --blue:#1F4E78; --green:#2e7d32; --red:#c62828; --bg:#f7f8fa; }
+  body { font-family: -apple-system, "Malgun Gothic", sans-serif; background:var(--bg); margin:0; padding:0; color:#222; }
+  header { background:var(--blue); color:#fff; padding:20px 24px; }
+  header h1 { margin:0; font-size:20px; }
+  header p { margin:4px 0 0; font-size:13px; opacity:0.85; }
+  main { max-width:900px; margin:24px auto; padding:0 16px; }
+  .card { background:#fff; border-radius:10px; padding:20px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+  .card h2 { font-size:16px; margin:0 0 12px; color:var(--blue); }
+  .step { display:flex; gap:10px; align-items:flex-start; margin-bottom:14px; }
+  .step .num { flex:0 0 26px; height:26px; border-radius:50%; background:var(--blue); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:bold; }
+  .step .body { flex:1; }
+  .step label { display:block; font-size:14px; margin-bottom:6px; font-weight:600; }
+  input[type=file] { width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; background:#fafafa; }
+  select { padding:8px; border:1px solid #ccc; border-radius:6px; }
+  button { background:var(--blue); color:#fff; border:none; padding:10px 18px; border-radius:6px; font-size:14px; cursor:pointer; }
+  button:disabled { background:#aaa; cursor:not-allowed; }
+  button.secondary { background:#666; }
+  .btnrow { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
+  #log { font-family: "Consolas", monospace; font-size:12.5px; background:#0f172a; color:#e2e8f0; padding:14px; border-radius:8px; max-height:260px; overflow-y:auto; white-space:pre-wrap; }
+  table { width:100%; border-collapse:collapse; font-size:13px; margin-top:10px; }
+  th,td { border:1px solid #e0e0e0; padding:6px 8px; text-align:left; }
+  th { background:#eef1f6; }
+  tr.miss td { background:#fdecea; }
+  tr.ok td { background:#eaf6ec; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:12px; font-weight:600; }
+  .badge.ok { background:#c6e0b4; color:#2e5225; }
+  .badge.miss { background:#f8cbad; color:#8a2e0f; }
+  .summary { display:flex; gap:16px; margin-top:6px; flex-wrap:wrap; }
+  .summary .box { background:#eef1f6; border-radius:8px; padding:10px 16px; text-align:center; min-width:90px; }
+  .summary .box .n { font-size:22px; font-weight:700; color:var(--blue); }
+  .summary .box .l { font-size:12px; color:#555; }
+  .note { font-size:12.5px; color:#888; margin-top:6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>HDPS KPI 자동화 웹도구</h1>
+  <p>엑셀 매크로 없이, 브라우저에서 바로 실적 반영 &amp; 목표대비 판정 (인도 사업장)</p>
+</header>
+
+<main>
+  <div class="card">
+    <h2>① 사업장 선택 &amp; 파일 업로드</h2>
+    <div class="step">
+      <div class="num">0</div>
+      <div class="body">
+        <label>사업장</label>
+        <select id="plantSelect">
+          <option value="india">인도</option>
+          <option value="brazil">브라질</option>
+        </select>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">1</div>
+      <div class="body">
+        <label id="srcLabel">원본 KPI 파일 (xlsx)</label>
+        <input type="file" id="srcFile" accept=".xlsx,.xlsm">
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">2</div>
+      <div class="body">
+        <label>총괄파일 (공장별 HDPS KPI...xlsx)</label>
+        <input type="file" id="masterFile" accept=".xlsx,.xlsm">
+      </div>
+    </div>
+    <div class="note">두 파일 다 올리시면 아래 버튼이 활성화됩니다. 파일은 서버로 전송되지 않고, 이 브라우저 안에서만 처리됩니다.</div>
+  </div>
+
+  <div class="card">
+    <h2>② 실행</h2>
+    <div class="btnrow">
+      <button id="btnReflect" disabled>① 실적 반영 (총괄파일 업데이트)</button>
+      <button id="btnJudge" class="secondary" disabled>② 목표대비 판정 (미달성 추출)</button>
+    </div>
+    <div class="note">① 먼저 실적 반영 → 다운로드된 파일로 확인 → ② 판정은 원본파일의 "그 달 목표"를 그대로 사용합니다 (연간목표 아님).</div>
+  </div>
+
+  <div class="card" id="resultCard" style="display:none;">
+    <h2>③ 판정 결과</h2>
+    <div class="summary" id="summaryBox"></div>
+    <table id="resultTable"><thead><tr><th>월</th><th>총괄행</th><th>KPI</th><th>방향</th><th>목표</th><th>실적</th><th>판정</th></tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="card">
+    <h2>실행 로그</h2>
+    <div id="log">대기 중...</div>
+  </div>
+</main>
+
+<script>
+const PLANT_CONFIG = {
+  india: {
+    label: '인도',
+    mappingFile: 'mapping_india.json',
+    srcSheet: 'Final With HQ Suggestion',
+    masterSheet: '인도법인 KPI(26년 보고용)',
+    srcMonthStartCol: 15, // O열
+  },
+  brazil: {
+    label: '브라질',
+    mappingFile: 'mapping_brazil.json',
+    srcSheet: 'HCEB KPIs',
+    masterSheet: '브라질법인 KPI(26년 보고용)',
+    srcMonthStartCol: 18, // R열
+  },
+};
+
+let mappingData = null;
+let srcWorkbook = null, srcFileBuf = null;
+let masterZip = null, masterFileBuf = null, masterFileName = null;
+let currentPlant = 'india';
+
+const logEl = document.getElementById('log');
+function log(msg) {
+  logEl.textContent += '\n' + msg;
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+async function loadMapping(plant) {
+  const cfg = PLANT_CONFIG[plant];
+  const res = await fetch(cfg.mappingFile);
+  mappingData = await res.json();
+  log(cfg.label + ' 매핑 데이터 로드 완료: ' + mappingData.length + '건');
+}
+
+document.getElementById('plantSelect').addEventListener('change', async (e) => {
+  currentPlant = e.target.value;
+  const cfg = PLANT_CONFIG[currentPlant];
+  document.getElementById('srcLabel').textContent = cfg.label + ' 원본 KPI 파일 (xlsx)';
+  // 사업장 바꾸면 업로드했던 파일/결과 초기화 (엇갈려 처리되는 것 방지)
+  srcWorkbook = null; masterZip = null;
+  document.getElementById('srcFile').value = '';
+  document.getElementById('masterFile').value = '';
+  document.getElementById('resultCard').style.display = 'none';
+  checkReady();
+  await loadMapping(currentPlant);
+});
+
+loadMapping(currentPlant);
+
+document.getElementById('srcFile').addEventListener('change', async (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  srcFileBuf = await f.arrayBuffer();
+  srcWorkbook = XLSX.read(srcFileBuf, {type:'array', cellDates:true});
+  log('원본파일 로드 완료: ' + f.name + ' / 시트: ' + srcWorkbook.SheetNames.join(', '));
+  checkReady();
+});
+
+document.getElementById('masterFile').addEventListener('change', async (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  masterFileBuf = await f.arrayBuffer();
+  masterFileName = f.name;
+  masterZip = await JSZip.loadAsync(masterFileBuf);
+  log('총괄파일 로드 완료: ' + f.name);
+  checkReady();
+});
+
+function checkReady() {
+  const ready = srcWorkbook && masterZip;
+  document.getElementById('btnReflect').disabled = !ready;
+  document.getElementById('btnJudge').disabled = !ready;
+}
+
+// ---------- 유틸 ----------
+function colLetter(n) {
+  let s = '';
+  while (n > 0) { const r = (n-1) % 26; s = String.fromCharCode(65+r) + s; n = Math.floor((n-1)/26); }
+  return s;
+}
+const SRC_MONTH_HEADER_ROW = 11;
+const MASTER_MONTH_START_COL = 27; // AA열(1월)
+function cfg() { return PLANT_CONFIG[currentPlant]; }
+
+function getCell(ws, r, c) {
+  const addr = XLSX.utils.encode_cell({r: r-1, c: c-1});
+  const cell = ws[addr];
+  if (!cell) return null;
+  return cell.v;
+}
+
+function monthIndexFromHeader(v) {
+  if (v instanceof Date) return v.getMonth()+1;
+  if (typeof v === 'string') {
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    for (let i=0;i<12;i++) if (v.indexOf(months[i])===0) return i+1;
+  }
+  return 0;
+}
+
+function buildSrcMonthCols(ws) {
+  const startCol = cfg().srcMonthStartCol;
+  const cols = {};
+  for (let c=startCol; c<=startCol+15; c++) {
+    const v = getCell(ws, SRC_MONTH_HEADER_ROW, c);
+    const mi = monthIndexFromHeader(v);
+    if (mi>=1 && mi<=12) cols[mi]=c;
+    if ((v===null || v==='') && c>startCol+3) break;
+  }
+  return cols;
+}
+
+// 엑셀 시간(0~1 소수)·타임델타·퍼센트문자열 등을 숫자로 정규화
+function normalizeValue(v, valueFormat) {
+  if (v===null || v===undefined || v==='') return null;
+  if (v instanceof Date) {
+    // 시간/기간으로 저장된 셀: 1899-12-30 기준 날짜 직렬값의 소수부 * 24 = 시간(시)
+    const epoch = new Date(Date.UTC(1899,11,30));
+    const days = (v - epoch) / 86400000;
+    return days * 24;
+  }
+  if (typeof v === 'string') {
+    let s = v.trim();
+    const timeMatch = s.match(/^(\d+):(\d+)$/);
+    if (timeMatch) return parseInt(timeMatch[1]) + parseInt(timeMatch[2])/60;
+    const pctMatch = s.match(/^([+-]?\d+(\.\d+)?)%$/);
+    if (pctMatch) return parseFloat(pctMatch[1]);
+    if (!isNaN(parseFloat(s)) && isFinite(s)) return parseFloat(s);
+    return null;
+  }
+  if (typeof v === 'number') return v;
+  return null;
+}
+
+// ---------- ① 실적 반영 (안전 XML 패치 방식, 원본 파일의 다른 부분은 전혀 건드리지 않음) ----------
+async function findSheetXmlPath(zip, sheetDisplayName) {
+  const wbXml = await zip.file('xl/workbook.xml').async('string');
+  const re = /<sheet name="([^"]+)"[^>]*r:id="(rId\d+)"/g;
+  let m, rid=null;
+  while ((m = re.exec(wbXml))) { if (m[1]===sheetDisplayName) { rid = m[2]; break; } }
+  if (!rid) throw new Error('시트를 찾을 수 없습니다: ' + sheetDisplayName);
+  const relsXml = await zip.file('xl/_rels/workbook.xml.rels').async('string');
+  const re2 = new RegExp('Id="' + rid + '"[^>]*Target="([^"]+)"');
+  const m2 = relsXml.match(re2);
+  if (!m2) throw new Error('rels에서 경로를 못 찾음: ' + rid);
+  return 'xl/' + m2[1];
+}
+
+function fmtVal(v) {
+  if (typeof v === 'number') {
+    if (Math.abs(v - Math.round(v)) < 1e-9) return String(Math.round(v));
+    return String(Math.round(v*1e6)/1e6);
+  }
+  return String(v);
+}
+
+document.getElementById('btnReflect').addEventListener('click', async () => {
+  try {
+    log('=== 실적 반영 시작 ===');
+    const srcWs = srcWorkbook.Sheets[cfg().srcSheet];
+    if (!srcWs) throw new Error('원본파일에 "' + cfg().srcSheet + '" 시트가 없습니다.');
+    const srcMonthCols = buildSrcMonthCols(srcWs);
+    log('월 컬럼 인식: ' + JSON.stringify(srcMonthCols));
+
+    const patches = {}; // ref -> value
+    let count = 0;
+    for (const m of mappingData) {
+      for (let mi=1; mi<=12; mi++) {
+        const c = srcMonthCols[mi];
+        if (!c) continue;
+        const raw = getCell(srcWs, m.actualRow, c);
+        if (raw===null || raw==='') continue;
+        let val = normalizeValue(raw, m.valueFormat);
+        if (val===null) continue;
+        val = val * (m.scale || 1);
+        const targetCol = MASTER_MONTH_START_COL + (mi-1);
+        const ref = colLetter(targetCol) + m.masterRow;
+        patches[ref] = val;
+        count++;
+      }
+    }
+    log('반영할 셀: ' + count + '개');
+
+    const sheetPath = await findSheetXmlPath(masterZip, cfg().masterSheet);
+    let sheetXml = await masterZip.file(sheetPath).async('string');
+
+    let applied=0, missing=[];
+    for (const ref in patches) {
+      const val = patches[ref];
+      const re = new RegExp('<c r="' + ref + '"([^>]*?)(/>|>(.*?)</c>)');
+      const m = re.exec(sheetXml);
+      if (!m) { missing.push(ref); continue; }
+      let attrs = m[1].replace(/\s+t="[^"]*"/,'');
+      const newCell = '<c r="' + ref + '"' + attrs + '><v>' + fmtVal(val) + '</v></c>';
+      sheetXml = sheetXml.slice(0, m.index) + newCell + sheetXml.slice(m.index + m[0].length);
+      applied++;
+    }
+    log('적용: ' + applied + '개 / 실패(셀 못찾음): ' + missing.length);
+    if (missing.length) log('실패 목록: ' + missing.slice(0,10).join(', '));
+
+    masterZip.file(sheetPath, sheetXml);
+    const outBlob = await masterZip.generateAsync({type:'blob', compression:'DEFLATE'});
+    const url = URL.createObjectURL(outBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = masterFileName.replace(/\.xlsx$/i, '') + '_' + cfg().label + '반영본.xlsx';
+    a.click();
+    log('=== 완료: 다운로드된 파일을 확인하세요 ===');
+  } catch (err) {
+    log('오류: ' + err.message);
+    console.error(err);
+  }
+});
+
+// ---------- ② 목표대비 판정 (원본파일의 그 달 목표 사용) ----------
+document.getElementById('btnJudge').addEventListener('click', () => {
+  try {
+    log('=== 판정 시작 ===');
+    const srcWs = srcWorkbook.Sheets[cfg().srcSheet];
+    const srcMonthCols = buildSrcMonthCols(srcWs);
+
+    const results = [];
+    for (const m of mappingData) {
+      for (let mi=1; mi<=12; mi++) {
+        const c = srcMonthCols[mi];
+        if (!c) continue;
+        const rawTarget = getCell(srcWs, m.labelRow, c);
+        const rawActual = getCell(srcWs, m.actualRow, c);
+        const target = normalizeValue(rawTarget);
+        const actual = normalizeValue(rawActual);
+        if (target===null || actual===null) continue;
+        let achieved;
+        if (m.direction==='상향') achieved = actual >= target;
+        else if (m.direction==='하향') achieved = actual <= target;
+        else achieved = Math.abs(actual-target) < 1e-6;
+        results.push({month:mi, masterRow:m.masterRow, kpi:m.kpiKr, direction:m.direction, target, actual, achieved});
+      }
+    }
+    renderResults(results);
+    log('판정 완료: 총 ' + results.length + '건');
+  } catch (err) {
+    log('오류: ' + err.message);
+    console.error(err);
+  }
+});
+
+function renderResults(results) {
+  document.getElementById('resultCard').style.display = 'block';
+  const months = [...new Set(results.map(r=>r.month))].sort((a,b)=>a-b);
+  let summaryHtml = '';
+  months.forEach(mo => {
+    const sub = results.filter(r=>r.month===mo);
+    const ok = sub.filter(r=>r.achieved).length;
+    summaryHtml += `<div class="box"><div class="n">${mo}월</div><div class="l">판정 ${sub.length} / 달성 ${ok} / 미달성 ${sub.length-ok}</div></div>`;
+  });
+  document.getElementById('summaryBox').innerHTML = summaryHtml;
+
+  const tbody = document.querySelector('#resultTable tbody');
+  tbody.innerHTML = '';
+  results.sort((a,b)=> a.month-b.month || (a.achieved-b.achieved) || a.masterRow-b.masterRow);
+  for (const r of results) {
+    const tr = document.createElement('tr');
+    tr.className = r.achieved ? 'ok' : 'miss';
+    tr.innerHTML = `<td>${r.month}월</td><td>${r.masterRow}</td><td>${r.kpi}</td><td>${r.direction}</td>
+      <td>${round(r.target)}</td><td>${round(r.actual)}</td>
+      <td><span class="badge ${r.achieved?'ok':'miss'}">${r.achieved?'달성':'미달성'}</span></td>`;
+    tbody.appendChild(tr);
+  }
+}
+function round(v){ return Math.round(v*10000)/10000; }
+</script>
+</body>
+</html>

@@ -1,0 +1,752 @@
+[
+ {
+  "labelRow": 12,
+  "actualRow": 13,
+  "kpiEn": "Production Team SQDC Achievement Rate",
+  "direction": "상향",
+  "masterRow": 9,
+  "kpiKr": "SQDC 목표달성팀 수(또는 비율)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 14,
+  "actualRow": 15,
+  "kpiEn": "Non-Operating MH per Unit",
+  "direction": "하향",
+  "masterRow": 11,
+  "kpiKr": "대당 비가동 MH",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 16,
+  "actualRow": 17,
+  "kpiEn": "Production Issue Recurrence Rate",
+  "direction": "하향",
+  "masterRow": 12,
+  "kpiKr": "생산이슈 재발율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 18,
+  "actualRow": 19,
+  "kpiEn": "Production Instruction Compliance Rate",
+  "direction": "상향",
+  "masterRow": 13,
+  "kpiKr": "생산지시 준수율(완제품 입고계획 준수율)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 20,
+  "actualRow": 21,
+  "kpiEn": "Pending Action Lead Time  (Issues closure time/machine)",
+  "direction": "하향",
+  "masterRow": 14,
+  "kpiKr": "미결조치 리드타임",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 22,
+  "actualRow": 23,
+  "kpiEn": "3 process achievement rate per person (Assembly)",
+  "direction": "상향",
+  "masterRow": 16,
+  "kpiKr": "개인별 3공정 달성율(조립)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 24,
+  "actualRow": 25,
+  "kpiEn": "3 process achievement rate per person (Final Painting)",
+  "direction": "상향",
+  "masterRow": 17,
+  "kpiKr": "개인별 3공정 달성율(완성도장)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 26,
+  "actualRow": 27,
+  "kpiEn": "3 process achievement rate per person (Performance)",
+  "direction": "상향",
+  "masterRow": 18,
+  "kpiKr": "개인별 3공정 달성율(시운전)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 28,
+  "actualRow": 29,
+  "kpiEn": "3 process achievement rate per person (Cutting)",
+  "direction": "상향",
+  "masterRow": 19,
+  "kpiKr": "개인별 3공정 달성율(절단)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 30,
+  "actualRow": 31,
+  "kpiEn": "3 process achievement rate per person (Fabrication)",
+  "direction": "상향",
+  "masterRow": 20,
+  "kpiKr": "개인별 3공정 달성율(제관)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 32,
+  "actualRow": 33,
+  "kpiEn": "3 process achievement rate per person (Parts Painting)",
+  "direction": "상향",
+  "masterRow": 21,
+  "kpiKr": "개인별 3공정 달성율(부품도장)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 34,
+  "actualRow": 35,
+  "kpiEn": "3 people achievement rate per process (Assembly)",
+  "direction": "상향",
+  "masterRow": 22,
+  "kpiKr": "공정별 3공정 달성율(조립)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 36,
+  "actualRow": 37,
+  "kpiEn": "3 people achievement rate per process (Final Painting)",
+  "direction": "상향",
+  "masterRow": 23,
+  "kpiKr": "공정별 3인 달성율(완성도장)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 38,
+  "actualRow": 39,
+  "kpiEn": "3 people achievement rate per process (Performance)",
+  "direction": "상향",
+  "masterRow": 24,
+  "kpiKr": "공정별 3인 달성율(시운전)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 40,
+  "actualRow": 41,
+  "kpiEn": "3 people achievement rate per process (Cutting)",
+  "direction": "상향",
+  "masterRow": 25,
+  "kpiKr": "공정별 3인 달성율(절단)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 42,
+  "actualRow": 43,
+  "kpiEn": "3 people achievement rate per process (Fabrication)",
+  "direction": "상향",
+  "masterRow": 26,
+  "kpiKr": "공정별 3인 달성율(제관)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 44,
+  "actualRow": 45,
+  "kpiEn": "3 people achievement rate per process (Parts Painting)",
+  "direction": "상향",
+  "masterRow": 27,
+  "kpiKr": "공정별 3인 달성율(부품도장)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 46,
+  "actualRow": 47,
+  "kpiEn": "IQ 200 (Initial Quality)",
+  "direction": "하향",
+  "masterRow": 30,
+  "kpiKr": "IQ(초기품질)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 48,
+  "actualRow": 49,
+  "kpiEn": "W.Q. (Warranty Quality)",
+  "direction": "하향",
+  "masterRow": 31,
+  "kpiKr": "WQ(내구품질)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 50,
+  "actualRow": 51,
+  "kpiEn": "QIR Improvement Completion Rate",
+  "direction": "상향",
+  "masterRow": 29,
+  "kpiKr": "QIR 개선율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 52,
+  "actualRow": 53,
+  "kpiEn": "Quality Line Downtime",
+  "direction": "하향",
+  "masterRow": 32,
+  "kpiKr": "라인 품질(전체)비가동손실MH",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 54,
+  "actualRow": 55,
+  "kpiEn": "Process Defect Rate (Parts from Local Supplier)",
+  "direction": "하향",
+  "masterRow": 40,
+  "kpiKr": "부품 공정 불량율",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 56,
+  "actualRow": 57,
+  "kpiEn": "Performance Test Defect Rate (Finished Product)",
+  "direction": "하향",
+  "masterRow": 42,
+  "kpiKr": "완제품 시운전 불량율",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 58,
+  "actualRow": 59,
+  "kpiEn": "(Finished Product) Final Inspection Defect Rate (at FDI)",
+  "direction": "하향",
+  "masterRow": 43,
+  "kpiKr": "완제품 입고검사 불량율",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 60,
+  "actualRow": 61,
+  "kpiEn": "Fool Proof Application Rate",
+  "direction": "상향",
+  "masterRow": 38,
+  "kpiKr": "Fool Proof 적용률(* 사업장별 목표기준)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 66,
+  "actualRow": 67,
+  "kpiEn": "Direct Pass Rate (Performance)",
+  "direction": "상향",
+  "masterRow": 36,
+  "kpiKr": "직행율(* 무결함으로 후공정 진행하는 비율)  - 성능직행률",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 68,
+  "actualRow": 69,
+  "kpiEn": "Direct Pass Rate (FDI)",
+  "direction": "상향",
+  "masterRow": 37,
+  "kpiKr": "직행율(* 무결함으로 후공정 진행하는 비율)  - FDI직행률",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 70,
+  "actualRow": 71,
+  "kpiEn": "Personnel Using Problem-Solving Techniques",
+  "direction": "상향",
+  "masterRow": 53,
+  "kpiKr": "문제해결기법 활용인력",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 72,
+  "actualRow": 73,
+  "kpiEn": "Personnel Coaching Problem-Solving Techniques",
+  "direction": "상향",
+  "masterRow": 54,
+  "kpiKr": "문제해결기법 코칭인력",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 74,
+  "actualRow": 75,
+  "kpiEn": "Autonomous Improvement Activity Participation Rate",
+  "direction": "상향",
+  "masterRow": 57,
+  "kpiKr": "자율개선활동 참여도 → 총 개선제안 건수/총원",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 76,
+  "actualRow": 77,
+  "kpiEn": "Horizontal Deployment Application Cases",
+  "direction": "상향",
+  "masterRow": 59,
+  "kpiKr": "소그룹활동 수평전개건수",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 78,
+  "actualRow": 79,
+  "kpiEn": "Improvements implementation rate",
+  "direction": "상향",
+  "masterRow": 60,
+  "kpiKr": "VTB 개선완료율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 80,
+  "actualRow": 81,
+  "kpiEn": "Average VTB Improvement Lead Time",
+  "direction": "하향",
+  "masterRow": 61,
+  "kpiKr": "VTB 평균 개선 리드타임",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 82,
+  "actualRow": 83,
+  "kpiEn": "Value Time Ratio (Fab --> Machine Stock)",
+  "direction": "상향",
+  "masterRow": 50,
+  "kpiKr": "가치시간 비율(가치 흐름 효율, VSE) → Fab To Machine Stock",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 84,
+  "actualRow": 85,
+  "kpiEn": "Manufacturing Lead Time (Fab Tacking to FDI out)",
+  "direction": "하향",
+  "masterRow": 47,
+  "kpiKr": "제조 리드타임(Fab Tacking to FDI out)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 86,
+  "actualRow": 87,
+  "kpiEn": "Parts Inventory Turnover",
+  "direction": "상향",
+  "masterRow": 48,
+  "kpiKr": "부품재고 회전율",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 88,
+  "actualRow": 89,
+  "kpiEn": "Shipment Lead Time (Wait Time)",
+  "direction": "하향",
+  "masterRow": 49,
+  "kpiKr": "출하 리드타임",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 90,
+  "actualRow": 91,
+  "kpiEn": "5S Improvement Rate",
+  "direction": "상향",
+  "masterRow": 64,
+  "kpiKr": "불합리 개선건수 (또는 개선율)  - 5S Improvement Rate",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 92,
+  "actualRow": 93,
+  "kpiEn": "5S Audit Score",
+  "direction": "상향",
+  "masterRow": 63,
+  "kpiKr": "5S Audit 점수",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 94,
+  "actualRow": 95,
+  "kpiEn": "MTTR (Mean Time To Repair)",
+  "direction": "하향",
+  "masterRow": 68,
+  "kpiKr": "MTTR(평균 고장시간)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 96,
+  "actualRow": 97,
+  "kpiEn": "MTBF (Mean Time  Between Failure)",
+  "direction": "상향",
+  "masterRow": 69,
+  "kpiKr": "MTBF(평균 고장간격)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 98,
+  "actualRow": 99,
+  "kpiEn": "Equipment Downtime Loss (Class A Equipment)",
+  "direction": "하향",
+  "masterRow": 67,
+  "kpiKr": "설비 비가동손실MH  - A급설비 기준",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 100,
+  "actualRow": 101,
+  "kpiEn": "Standards Documents Revision Rate",
+  "direction": "상향",
+  "masterRow": 74,
+  "kpiKr": "표준작업문서의 최신화 비율 (표준문서의 개정관리에 대한 지표)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 102,
+  "actualRow": 103,
+  "kpiEn": "Non-Compliance Recurrence Rate",
+  "direction": "하향",
+  "masterRow": 73,
+  "kpiKr": "표준작업 미준수 재발율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 104,
+  "actualRow": 105,
+  "kpiEn": "Standard Work Compliance Rate",
+  "direction": "상향",
+  "masterRow": 72,
+  "kpiKr": "표준작업 준수율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 106,
+  "actualRow": 107,
+  "kpiEn": "Critical Quality Indicator (Basic Quality - omissions, leaks, under/over-tightening, misassembly, interference /alignment)",
+  "direction": "하향",
+  "masterRow": 75,
+  "kpiKr": "중요품질지표 (누락, 누유/누수, 미조임, 오조립)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 108,
+  "actualRow": 109,
+  "kpiEn": "M+1 Production Volume Variation Rate",
+  "direction": "범위내",
+  "masterRow": 82,
+  "kpiKr": "RCCP 준수율(M+1변동율)",
+  "scale": 1,
+  "valueFormat": "퍼센트텍스트"
+ },
+ {
+  "labelRow": 110,
+  "actualRow": 111,
+  "kpiEn": "W+3 Mix Variation Rate",
+  "direction": "하향",
+  "masterRow": 81,
+  "kpiKr": "MPS 준수율(Mix변동율, W+3)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 112,
+  "actualRow": 113,
+  "kpiEn": "Order Intake (W+3) - Excavator",
+  "direction": "상향",
+  "masterRow": 88,
+  "kpiKr": "오더확보율(주문배정율) - 3주 굴착기",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 114,
+  "actualRow": 115,
+  "kpiEn": "Order Intake (W+3) - Wheel Loader",
+  "direction": "상향",
+  "masterRow": 89,
+  "kpiKr": "오더확보율(주문배정율) - 3주 휠로더",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 116,
+  "actualRow": 117,
+  "kpiEn": "Production Order Change Ratio",
+  "direction": "하향",
+  "masterRow": 83,
+  "kpiKr": "생산오더 변경비율(또는 확정계획준수율)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 118,
+  "actualRow": 119,
+  "kpiEn": "Imported Material Delivery Compliance Rate",
+  "direction": "상향",
+  "masterRow": 86,
+  "kpiKr": "외자재 입고 준수율(또는 외자재 OC 접수율)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 120,
+  "actualRow": 121,
+  "kpiEn": "Monthly Shipment Plan Compliance Rate",
+  "direction": "상향",
+  "masterRow": 92,
+  "kpiKr": "월간 생산계획 준수율  - Monthly Shipment Plan Compliance Rate",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 122,
+  "actualRow": 123,
+  "kpiEn": "Production Incoming Plan Compliance Rate",
+  "direction": "상향",
+  "masterRow": 85,
+  "kpiKr": "생산계획 달성율(입고계획 준수율)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 124,
+  "actualRow": 125,
+  "kpiEn": "Line-side material Min-Max Compliance Rate",
+  "direction": "상향",
+  "masterRow": 98,
+  "kpiKr": "전 공정(Line-side) 투입 자재 감사 평균 준수율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 126,
+  "actualRow": 127,
+  "kpiEn": "Material-Induced Downtime MH",
+  "direction": "하향",
+  "masterRow": 93,
+  "kpiKr": "대당 비가동 손실MH(사내 PPIC 이상)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 128,
+  "actualRow": 129,
+  "kpiEn": "Domestic Incoming Plan Compliance Rate",
+  "direction": "상향",
+  "masterRow": 94,
+  "kpiKr": "내자입고계획 준수율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 130,
+  "actualRow": 131,
+  "kpiEn": "Inventory Accuracy Rate (Cycle Counting)",
+  "direction": "상향",
+  "masterRow": 99,
+  "kpiKr": "재고일치율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 132,
+  "actualRow": 133,
+  "kpiEn": "Long-Term Inventory Value (6 month basis)",
+  "direction": "하향",
+  "masterRow": 100,
+  "kpiKr": "장기재고금액(→6개월 기준으로 관리)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 134,
+  "actualRow": 135,
+  "kpiEn": "WIP compliance rate (Fabrication)",
+  "direction": "상향",
+  "masterRow": 112,
+  "kpiKr": "생산라인별 표준재공 준수율(제관)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 136,
+  "actualRow": 137,
+  "kpiEn": "WIP compliance rate (Assembly)",
+  "direction": "상향",
+  "masterRow": 113,
+  "kpiKr": "생산라인별 표준재공 준수율(조립)",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 138,
+  "actualRow": 139,
+  "kpiEn": "WIP Reduction Cases",
+  "direction": "상향",
+  "masterRow": 114,
+  "kpiKr": "재공 축소 수량",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 140,
+  "actualRow": 141,
+  "kpiEn": "Lead Time by Production Line",
+  "direction": "하향",
+  "masterRow": 111,
+  "kpiKr": "생산라인 제조 리드타임",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 142,
+  "actualRow": 143,
+  "kpiEn": "Sequence Compliance Rate by Line",
+  "direction": "상향",
+  "masterRow": 115,
+  "kpiKr": "생산라인별 순서생산 준수율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 144,
+  "actualRow": 145,
+  "kpiEn": "Input MH per machine Fabrication",
+  "direction": "하향",
+  "masterRow": 118,
+  "kpiKr": "대당 투입MH(제관)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 146,
+  "actualRow": 147,
+  "kpiEn": "Input MH per machine Assembly (Ex)",
+  "direction": "하향",
+  "masterRow": 116,
+  "kpiKr": "대당 투입MH(조립) - 굴착기",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 148,
+  "actualRow": 149,
+  "kpiEn": "Input MH per machine Assembly (WL)",
+  "direction": "하향",
+  "masterRow": 117,
+  "kpiKr": "대당 투입MH(조립) - 휠로더",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 152,
+  "actualRow": 153,
+  "kpiEn": "Balancing Efficiency (Assembly Excavator)",
+  "direction": "상향",
+  "masterRow": 119,
+  "kpiKr": "라인 편성효율(T/T기준, 운영효율이슈)  - 굴착기/조립",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 154,
+  "actualRow": 155,
+  "kpiEn": "Balancing Efficiency (Fabrication Excavator)",
+  "direction": "상향",
+  "masterRow": 120,
+  "kpiKr": "라인 편성효율(병목공정 기준, 공정설계이슈)   - 굴착기/제관",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 156,
+  "actualRow": 157,
+  "kpiEn": "Standard WIP Compliance Rate (Min/Max compliance rate of input materials by process)",
+  "direction": "상향",
+  "masterRow": 104,
+  "kpiKr": "표준재공 준수율 →전 공정 라인사이드 및 재공(WIP) 자재 투입 평균 준수율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 158,
+  "actualRow": 159,
+  "kpiEn": "Line-side material Reduction Cases",
+  "direction": "상향",
+  "masterRow": 108,
+  "kpiKr": "라인사이드 자재 감축 개선 건수(가공, 조립)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 164,
+  "actualRow": 165,
+  "kpiEn": "Voluntary Risk Factor Improvement Completion Rate (ROS)",
+  "direction": "상향",
+  "masterRow": 6,
+  "kpiKr": "자발적 위험요인 개선 완료율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 166,
+  "actualRow": 167,
+  "kpiEn": "EHS Leadership Inspection Improvement Completion Rate",
+  "direction": "상향",
+  "masterRow": 5,
+  "kpiKr": "EHS 리더십 점검 개선완료율",
+  "scale": 100,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 168,
+  "actualRow": 169,
+  "kpiEn": "LTIR (Lost Time Incident Rate)",
+  "direction": "하향",
+  "masterRow": 7,
+  "kpiKr": "LTIR(근로손실 사고율)",
+  "scale": 1,
+  "valueFormat": "숫자"
+ },
+ {
+  "labelRow": 170,
+  "actualRow": 171,
+  "kpiEn": "Serious Accident Count",
+  "direction": "하향",
+  "masterRow": 8,
+  "kpiKr": "중대사고 재해건수",
+  "scale": 1,
+  "valueFormat": "숫자"
+ }
+]
