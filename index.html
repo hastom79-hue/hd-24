@@ -147,9 +147,15 @@
     <p class="note" id="trendNote" style="display:none;">🔴 연속 미달성 · 📉 최근 3개월 악화 추세 — KPI 옆 배지로 표시됩니다. 정렬은 "연속 미달성 개월수"가 큰 순서입니다.</p>
 
     <div style="margin:16px 0 20px; padding:16px; background:#f5f8fb; border:1px solid var(--line); border-radius:6px;">
+      <div class="field-row"><label>담당자</label>
+        <select id="contactSelect" style="max-width:100%;">
+          <option value="">— 직접 입력 —</option>
+        </select>
+      </div>
       <div class="field-row"><label>담당자 이메일</label><input type="email" id="mailTo" placeholder="hemant.kadam@hd.com"></div>
       <div class="field-row"><label>담당자 이름</label><input type="text" id="mailToName" placeholder="Hemant Kadam (미입력 시 생략)"></div>
       <div class="field-row"><label>보내는 사람</label><input type="text" id="mailFromName" placeholder="예: 홍길동 / 글로벌생산전략팀"></div>
+      <p class="hint" style="margin-top:4px;">위 담당자 드롭다운에서 고르면 이메일/이름이 자동 입력됩니다. 새 담당자는 아래 "담당자 관리"에서 등록하세요.</p>
       <div class="actions">
         <button id="btnMailMonth" class="ghost">이번 달 미달성만 메일 초안</button>
         <button id="btnMailWatch" class="ghost">🔴📉 주의 대상만 메일 초안</button>
@@ -176,6 +182,27 @@
         </table>
       </div>
     </div>
+  </section>
+
+  <section class="panel">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+      <h2 style="margin:0; padding:0; border:none;">담당자 관리</h2>
+    </div>
+    <p class="hint" style="margin-top:0;">여기서 등록해두시면, 위쪽 메일 초안 영역의 "담당자" 드롭다운에서 바로 선택할 수 있어요. 이 브라우저에 저장됩니다.</p>
+    <div class="field-row"><label>사업장</label>
+      <select id="contactPlant"><option value="india">인도</option><option value="brazil">브라질</option><option value="ulsan">울산</option></select>
+    </div>
+    <div class="field-row"><label>이름</label><input type="text" id="contactName" placeholder="예: Hemant Kadam"></div>
+    <div class="field-row"><label>이메일</label><input type="email" id="contactEmail" placeholder="예: hemant.kadam@hd.com"></div>
+    <div class="field-row"><label>부서(선택)</label><input type="text" id="contactDept" placeholder="예: 품질팀 (안 적어도 됨)"></div>
+    <div class="actions">
+      <button type="button" id="btnAddContact">담당자 등록</button>
+    </div>
+    <table class="results" id="contactTable" style="margin-top:16px;">
+      <colgroup><col style="width:70px"><col style="width:120px"><col><col style="width:100px"><col style="width:60px"></colgroup>
+      <thead><tr><th>사업장</th><th>이름</th><th>이메일</th><th>부서</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
   </section>
 
   <section class="panel">
@@ -649,7 +676,77 @@ mailFromNameInput.addEventListener('change', () => { localStorage.setItem('hdps_
 document.getElementById('plantSelect').addEventListener('change', () => {
   mailToInput.value = localStorage.getItem('hdps_mail_to_' + currentPlant) || '';
   mailToNameInput.value = localStorage.getItem('hdps_mail_toname_' + currentPlant) || '';
+  renderContactSelect();
+  document.getElementById('contactPlant').value = currentPlant;
+  renderContactTable();
 });
+
+// ---------- 담당자 관리 (통합 기준정보, 브라우저에 저장) ----------
+const CONTACTS_KEY = 'hdps_contacts_v1';
+function loadContacts(){ try { return JSON.parse(localStorage.getItem(CONTACTS_KEY) || '[]'); } catch(e){ return []; } }
+function saveContacts(list){ localStorage.setItem(CONTACTS_KEY, JSON.stringify(list)); }
+
+function renderContactTable(){
+  const tbody = document.querySelector('#contactTable tbody');
+  const list = loadContacts();
+  tbody.innerHTML = '';
+  if (!list.length){
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--muted); padding:14px;">등록된 담당자가 없습니다.</td></tr>';
+    return;
+  }
+  list.forEach((c, idx) => {
+    const tr = document.createElement('tr');
+    const plantName = PLANT_CONFIG[c.plant] ? PLANT_CONFIG[c.plant].label : c.plant;
+    tr.innerHTML = `<td>${plantName}</td><td>${c.name}</td><td>${c.email}</td><td>${c.dept||''}</td>
+      <td><button type="button" class="ghost" style="padding:4px 10px; font-size:12px;" data-idx="${idx}">삭제</button></td>`;
+    tr.querySelector('button').addEventListener('click', () => {
+      const l = loadContacts();
+      l.splice(idx, 1);
+      saveContacts(l);
+      renderContactTable();
+      renderContactSelect();
+    });
+    tbody.appendChild(tr);
+  });
+}
+function renderContactSelect(){
+  const sel = document.getElementById('contactSelect');
+  const list = loadContacts().filter(c => c.plant === currentPlant);
+  sel.innerHTML = '<option value="">— 직접 입력 —</option>';
+  list.forEach((c, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `${c.name} <${c.email}>${c.dept ? ' — '+c.dept : ''}`;
+    sel.appendChild(opt);
+  });
+  sel.onchange = () => {
+    if (sel.value === '') return;
+    const c = list[Number(sel.value)];
+    mailToInput.value = c.email;
+    mailToNameInput.value = c.name;
+    localStorage.setItem('hdps_mail_to_' + currentPlant, c.email);
+    localStorage.setItem('hdps_mail_toname_' + currentPlant, c.name);
+  };
+}
+document.getElementById('btnAddContact').addEventListener('click', () => {
+  const plant = document.getElementById('contactPlant').value;
+  const name = document.getElementById('contactName').value.trim();
+  const email = document.getElementById('contactEmail').value.trim();
+  const dept = document.getElementById('contactDept').value.trim();
+  if (!name || !email){ alert('이름과 이메일은 필수예요.'); return; }
+  const list = loadContacts();
+  list.push({plant, name, email, dept});
+  saveContacts(list);
+  document.getElementById('contactName').value = '';
+  document.getElementById('contactEmail').value = '';
+  document.getElementById('contactDept').value = '';
+  renderContactTable();
+  renderContactSelect();
+  log('담당자 등록: ' + name + ' <' + email + '> (' + (PLANT_CONFIG[plant]?PLANT_CONFIG[plant].label:plant) + ')');
+});
+document.getElementById('contactPlant').value = currentPlant;
+renderContactTable();
+renderContactSelect();
 
 function buildMailBody(items, scopeLabelKo, scopeLabelEn, showStatus){
   const en = currentLang==='en';
