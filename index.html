@@ -201,13 +201,27 @@ function monthIndexFromHeader(v) {
 }
 
 function buildSrcMonthCols(ws) {
+  // 헤더 텍스트를 해석하는 대신, 검증된 고정 컬럼 위치를 그대로 사용합니다.
+  // (원본파일은 항상 월별 데이터가 시작컬럼부터 12개 연속 컬럼에 1~12월 순서로 있음)
   const startCol = cfg().srcMonthStartCol;
   const cols = {};
-  for (let c=startCol; c<=startCol+15; c++) {
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  let warnings = [];
+  for (let mi=1; mi<=12; mi++) {
+    const c = startCol + (mi-1);
+    cols[mi] = c;
+    // 안전검증: 그 위치의 헤더가 실제로 해당 월과 맞는지 확인 (틀리면 경고만, 진행은 그대로)
     const v = getCell(ws, SRC_MONTH_HEADER_ROW, c);
-    const mi = monthIndexFromHeader(v);
-    if (mi>=1 && mi<=12) cols[mi]=c;
-    if ((v===null || v==='') && c>startCol+3) break;
+    const detected = monthIndexFromHeader(v);
+    if (detected !== 0 && detected !== mi) {
+      warnings.push(`${mi}월로 예상한 위치(컬럼 ${c})의 헤더가 "${v}"로 되어있어 실제로는 ${detected}월처럼 보입니다.`);
+    }
+  }
+  if (warnings.length) {
+    log('⚠ 헤더 위치 검증 경고 (그래도 고정위치 기준으로 계속 진행합니다):');
+    warnings.forEach(w => log('   ' + w));
+  } else {
+    log('헤더 위치 검증: 1~12월 컬럼 위치 모두 정상 확인');
   }
   return cols;
 }
