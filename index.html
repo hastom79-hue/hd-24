@@ -85,6 +85,10 @@
   table.results td, table.results th { overflow-wrap:anywhere; word-break:keep-all; }
 
   .note { font-size:12px; color:var(--muted); margin:10px 0 0; }
+
+  button.filt-lang { background:#fff; color:var(--ink); border:1px solid var(--line); padding:6px 14px; border-radius:20px; font-size:12.5px; font-weight:600; box-shadow:none; }
+  button.filt-lang:hover { background:#f0f2f5; }
+  button.filt-lang.active { background:var(--accent-dark); color:#fff; border-color:var(--accent-dark); }
 </style>
 </head>
 <body>
@@ -114,7 +118,13 @@
   </section>
 
   <section class="panel" id="resultCard" style="display:none;">
-    <h2>판정 결과</h2>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid var(--line);">
+      <h2 style="margin:0; padding:0; border:none;">판정 결과</h2>
+      <div class="actions" style="margin:0;">
+        <button type="button" id="btnLangKo" class="filt-lang active">한글</button>
+        <button type="button" id="btnLangEn" class="filt-lang">English</button>
+      </div>
+    </div>
     <div class="month-strip" id="monthStrip"></div>
     <p class="note" id="trendNote" style="display:none;">🔴 연속 미달성 · 📉 최근 3개월 악화 추세 — KPI 옆 배지로 표시됩니다. 정렬은 "연속 미달성 개월수"가 큰 순서입니다.</p>
 
@@ -429,7 +439,7 @@ document.getElementById('btnJudge').addEventListener('click', () => {
           if (target===null || actual===null) continue;
           hist.push(makeHistEntry(mo, target, actual, m.direction));
         }
-        if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, direction:m.direction, months:hist};
+        if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, kpiEn:m.kpiEn||m.kpiKr, direction:m.direction, months:hist};
       }
     } else {
       // 울산: 별도 원본파일 없음. 총괄파일 안의 (연간 고정)목표와 월별 실적을 그대로 사용
@@ -444,7 +454,7 @@ document.getElementById('btnJudge').addEventListener('click', () => {
           if (actual===null) continue;
           hist.push(makeHistEntry(mo, target, actual, m.direction));
         }
-        if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, direction:m.direction, months:hist};
+        if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, kpiEn:m.kpiEn||m.kpiKr, direction:m.direction, months:hist};
       }
       log('⚠ 울산은 월별 목표가 아닌 연간 고정목표로 판정합니다 (원본파일이 없어 인도/브라질과 정확도가 다를 수 있음)');
     }
@@ -463,7 +473,7 @@ document.getElementById('btnJudge').addEventListener('click', () => {
           if (last < first*0.97) trend='down';
           else if (last > first*1.03) trend='up';
         }
-        results.push({month:cur.month, masterRow:Number(masterRow), kpi:info.kpi, direction:info.direction,
+        results.push({month:cur.month, masterRow:Number(masterRow), kpi:info.kpi, kpiEn:info.kpiEn, direction:info.direction,
                        target:cur.target, actual:cur.actual, achieved:cur.achieved, streak, trend});
       }
     }
@@ -478,24 +488,54 @@ document.getElementById('btnJudge').addEventListener('click', () => {
 });
 
 let allResults = [], selectedMonth = null;
+let currentLang = 'ko';
+const MONTH_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function monthLabel(mo){ return currentLang==='ko' ? (mo+'월') : MONTH_EN[mo-1]; }
+function dirLabel(direction){
+  if (currentLang==='ko') return direction;
+  if (direction==='상향') return 'Higher is better';
+  if (direction==='하향') return 'Lower is better';
+  return direction;
+}
+function kpiLabel(r){ return currentLang==='ko' ? r.kpi : (r.kpiEn || r.kpi); }
+
+document.getElementById('btnLangKo').addEventListener('click', () => setLang('ko'));
+document.getElementById('btnLangEn').addEventListener('click', () => setLang('en'));
+function setLang(lang){
+  currentLang = lang;
+  document.getElementById('btnLangKo').classList.toggle('active', lang==='ko');
+  document.getElementById('btnLangEn').classList.toggle('active', lang==='en');
+  const en = lang==='en';
+  document.getElementById('btnMailMonth').textContent = en ? "Draft email: this month's not-achieved" : '이번 달 미달성만 메일 초안';
+  document.getElementById('btnMailWatch').textContent = en ? '🔴📉 Draft email: watch list' : '🔴📉 주의 대상만 메일 초안';
+  document.getElementById('btnMailAll').textContent = en ? "Draft email: all KPIs this month" : '이번 달 전체 지표 메일 초안';
+  if (allResults.length){ renderMonthStrip(); renderTable(); }
+}
+
 function renderResults(results){
   document.getElementById('resultCard').style.display = 'block';
   allResults = results;
   const months = [...new Set(results.map(r=>r.month))].sort((a,b)=>a-b);
   selectedMonth = months[months.length-1];
+  renderMonthStrip();
+  renderTable();
+}
+function renderMonthStrip(){
+  const months = [...new Set(allResults.map(r=>r.month))].sort((a,b)=>a-b);
   const strip = document.getElementById('monthStrip');
   strip.innerHTML = '';
   months.forEach(mo => {
-    const sub = results.filter(r=>r.month===mo);
+    const sub = allResults.filter(r=>r.month===mo);
     const ok = sub.filter(r=>r.achieved).length, miss = sub.length-ok;
     const div = document.createElement('div');
     div.className = 'm' + (mo===selectedMonth ? ' active' : '');
     div.dataset.month = mo;
-    div.innerHTML = `<div class="mlabel">${mo}월</div><div class="mnum">${ok}건 달성 · <span class="miss-n">${miss}건 미달성</span></div>`;
+    const okTxt = currentLang==='ko' ? ok+'건 달성' : ok+' achieved';
+    const missTxt = currentLang==='ko' ? miss+'건 미달성' : miss+' not achieved';
+    div.innerHTML = `<div class="mlabel">${monthLabel(mo)}</div><div class="mnum">${okTxt} · <span class="miss-n">${missTxt}</span></div>`;
     div.addEventListener('click', () => { selectedMonth=mo; renderTable(); updateStripActive(); });
     strip.appendChild(div);
   });
-  renderTable();
 }
 function updateStripActive(){
   document.querySelectorAll('#monthStrip .m').forEach(el => el.classList.toggle('active', Number(el.dataset.month)===selectedMonth));
@@ -505,9 +545,25 @@ function renderTable(){
   const missRows = rows.filter(r=>!r.achieved).sort((a,b)=> (b.streak-a.streak) || a.masterRow-b.masterRow);
   const okRows = rows.filter(r=>r.achieved).sort((a,b)=> a.masterRow-b.masterRow);
 
+  const missH = document.querySelector('.col-head .miss-h'); if (missH) missH.textContent = currentLang==='ko' ? '미달성' : 'Not Achieved';
+  const okH = document.querySelectorAll('.col-head .ok-h')[0]; if (okH) okH.textContent = currentLang==='ko' ? '달성' : 'Achieved';
+  document.querySelectorAll('#missTable thead th')[0].textContent = currentLang==='ko' ? '행' : 'Row';
+  document.querySelectorAll('#missTable thead th')[1].textContent = currentLang==='ko' ? 'KPI / 최근추세' : 'KPI / Recent Trend';
+  document.querySelectorAll('#missTable thead th')[2].textContent = currentLang==='ko' ? '방향' : 'Direction';
+  document.querySelectorAll('#missTable thead th')[3].textContent = currentLang==='ko' ? '목표' : 'Target';
+  document.querySelectorAll('#missTable thead th')[4].textContent = currentLang==='ko' ? '실적' : 'Actual';
+  document.querySelectorAll('#okTable thead th')[0].textContent = currentLang==='ko' ? '행' : 'Row';
+  document.querySelectorAll('#okTable thead th')[1].textContent = currentLang==='ko' ? 'KPI' : 'KPI';
+  document.querySelectorAll('#okTable thead th')[2].textContent = currentLang==='ko' ? '방향' : 'Direction';
+  document.querySelectorAll('#okTable thead th')[3].textContent = currentLang==='ko' ? '목표' : 'Target';
+  document.querySelectorAll('#okTable thead th')[4].textContent = currentLang==='ko' ? '실적' : 'Actual';
+
   document.getElementById('trendNote').style.display = missRows.some(r=>r.streak>=2||r.trend==='down') ? 'block' : 'none';
-  document.getElementById('missCount').textContent = missRows.length + '건';
-  document.getElementById('okCount').textContent = okRows.length + '건';
+  document.getElementById('trendNote').textContent = currentLang==='ko'
+    ? '🔴 연속 미달성 · 📉 최근 3개월 악화 추세 — KPI 옆 배지로 표시됩니다. 정렬은 "연속 미달성 개월수"가 큰 순서입니다.'
+    : '🔴 Consecutive miss · 📉 Worsening over last 3 months — shown as badges next to each KPI, sorted by longest miss streak first.';
+  document.getElementById('missCount').textContent = missRows.length + (currentLang==='ko' ? '건' : '');
+  document.getElementById('okCount').textContent = okRows.length + (currentLang==='ko' ? '건' : '');
 
   const missBody = document.querySelector('#missTable tbody');
   missBody.innerHTML = '';
@@ -515,11 +571,11 @@ function renderTable(){
     const tr = document.createElement('tr');
     tr.className = 'miss';
     let badges = '';
-    if (r.streak>=2) badges += `<br><span class="tag tag-streak">🔴 ${r.streak}개월 연속 미달성</span>`;
-    if (r.trend==='down') badges += `<br><span class="tag tag-down">📉 최근 악화</span>`;
+    if (r.streak>=2) badges += currentLang==='ko' ? `<br><span class="tag tag-streak">🔴 ${r.streak}개월 연속 미달성</span>` : `<br><span class="tag tag-streak">🔴 ${r.streak}mo consecutive miss</span>`;
+    if (r.trend==='down') badges += currentLang==='ko' ? `<br><span class="tag tag-down">📉 최근 악화</span>` : `<br><span class="tag tag-down">📉 Recent decline</span>`;
     tr.innerHTML = `<td class="num mono">${r.masterRow}</td>
-      <td>${r.kpi}${badges}</td>
-      <td>${r.direction}</td>
+      <td>${kpiLabel(r)}${badges}</td>
+      <td>${dirLabel(r.direction)}</td>
       <td class="num mono">${round(r.target)}</td><td class="num mono">${round(r.actual)}</td>`;
     missBody.appendChild(tr);
   }
@@ -530,8 +586,8 @@ function renderTable(){
     const tr = document.createElement('tr');
     tr.className = 'ok';
     tr.innerHTML = `<td class="num mono">${r.masterRow}</td>
-      <td>${r.kpi}</td>
-      <td>${r.direction}</td>
+      <td>${kpiLabel(r)}</td>
+      <td>${dirLabel(r.direction)}</td>
       <td class="num mono">${round(r.target)}</td><td class="num mono">${round(r.actual)}</td>`;
     okBody.appendChild(tr);
   }
@@ -548,85 +604,97 @@ document.getElementById('plantSelect').addEventListener('change', () => {
   mailToInput.value = localStorage.getItem('hdps_mail_to_' + currentPlant) || '';
 });
 
-function buildMailBody(items, scopeLabel, showStatus){
+function buildMailBody(items, scopeLabelKo, scopeLabelEn, showStatus){
+  const en = currentLang==='en';
+  const scopeLabel = en ? scopeLabelEn : scopeLabelKo;
   const lines = [];
-  lines.push('안녕하세요,');
+  lines.push(en ? 'Hello,' : '안녕하세요,');
   lines.push('');
-  lines.push(cfg().label + ' 사업장의 아래 지표(' + scopeLabel + ')에 대해 확인 부탁드립니다.');
+  lines.push(en
+    ? `Please review the following KPIs for ${cfg().label} (${scopeLabel}).`
+    : cfg().label + ' 사업장의 아래 지표(' + scopeLabel + ')에 대해 확인 부탁드립니다.');
   lines.push('');
 
   if (showStatus) {
-    // "전체" 메일: 미달성은 상세히, 달성은 건수만 요약 (메일 본문 길이 문제 방지)
     const miss = items.filter(r=>!r.achieved);
     const ok = items.filter(r=>r.achieved);
-    lines.push(`총 ${items.length}건 중 달성 ${ok.length}건 / 미달성 ${miss.length}건`);
+    lines.push(en
+      ? `${items.length} total — Achieved ${ok.length} / Not Achieved ${miss.length}`
+      : `총 ${items.length}건 중 달성 ${ok.length}건 / 미달성 ${miss.length}건`);
     lines.push('');
     if (miss.length){
-      lines.push('[미달성 상세]');
+      lines.push(en ? '[Not Achieved - Details]' : '[미달성 상세]');
       let n=1;
       for (const r of miss){
         let tagText = '';
-        if (r.streak>=2) tagText += ` [${r.streak}개월 연속 미달성]`;
-        if (r.trend==='down') tagText += ' [최근 악화 추세]';
-        lines.push(`${n}. ${r.kpi}${tagText}`);
-        lines.push(`   - ${r.month}월 목표: ${round(r.target)} / 실적: ${round(r.actual)} / 방향: ${r.direction}`);
+        if (r.streak>=2) tagText += en ? ` [${r.streak}mo consecutive miss]` : ` [${r.streak}개월 연속 미달성]`;
+        if (r.trend==='down') tagText += en ? ' [Recent decline]' : ' [최근 악화 추세]';
+        lines.push(`${n}. ${kpiLabel(r)}${tagText}`);
+        lines.push(en
+          ? `   - ${monthLabel(r.month)} Target: ${round(r.target)} / Actual: ${round(r.actual)} / Direction: ${dirLabel(r.direction)}`
+          : `   - ${r.month}월 목표: ${round(r.target)} / 실적: ${round(r.actual)} / 방향: ${r.direction}`);
         n++;
       }
       lines.push('');
     }
     if (ok.length){
-      lines.push(`[달성] ${ok.length}건 — 상세는 웹페이지 표를 참고해주세요.`);
+      lines.push(en ? `[Achieved] ${ok.length} items — see the web table for details.` : `[달성] ${ok.length}건 — 상세는 웹페이지 표를 참고해주세요.`);
       lines.push('');
     }
   } else {
     let n = 1;
     for (const r of items){
       let tagText = '';
-      if (r.streak>=2) tagText += ` [${r.streak}개월 연속 미달성]`;
-      if (r.trend==='down') tagText += ' [최근 악화 추세]';
-      lines.push(`${n}. ${r.kpi}${tagText}`);
-      lines.push(`   - ${r.month}월 목표: ${round(r.target)} / 실적: ${round(r.actual)} / 방향: ${r.direction}`);
+      if (r.streak>=2) tagText += en ? ` [${r.streak}mo consecutive miss]` : ` [${r.streak}개월 연속 미달성]`;
+      if (r.trend==='down') tagText += en ? ' [Recent decline]' : ' [최근 악화 추세]';
+      lines.push(`${n}. ${kpiLabel(r)}${tagText}`);
+      lines.push(en
+        ? `   - ${monthLabel(r.month)} Target: ${round(r.target)} / Actual: ${round(r.actual)} / Direction: ${dirLabel(r.direction)}`
+        : `   - ${r.month}월 목표: ${round(r.target)} / 실적: ${round(r.actual)} / 방향: ${r.direction}`);
       n++;
     }
     lines.push('');
   }
 
   if (!showStatus || items.some(r=>!r.achieved)) {
-    lines.push('미달성 항목은 아래 내용 회신 부탁드립니다.');
-    lines.push('1) 미달성 사유');
-    lines.push('2) 만회대책 및 완료 예정일');
+    lines.push(en ? 'For not-achieved items, please reply with:' : '미달성 항목은 아래 내용 회신 부탁드립니다.');
+    lines.push(en ? '1) Reason for not achieving target' : '1) 미달성 사유');
+    lines.push(en ? '2) Countermeasure and expected completion date' : '2) 만회대책 및 완료 예정일');
     lines.push('');
   }
-  lines.push('감사합니다.');
+  lines.push(en ? 'Thank you.' : '감사합니다.');
   return lines.join('\n');
 }
 
-function openMailDraft(items, scopeLabel, showStatus){
-  if (!items.length){ alert('해당 조건의 지표가 없습니다.'); return; }
+function openMailDraft(items, scopeLabelKo, scopeLabelEn, showStatus){
+  const en = currentLang==='en';
+  if (!items.length){ alert(en ? 'No KPIs match this condition.' : '해당 조건의 지표가 없습니다.'); return; }
   const to = mailToInput.value.trim();
-  if (!to){ alert('담당자 이메일을 먼저 입력해주세요.'); mailToInput.focus(); return; }
-  const subject = `[HDPS KPI ${showStatus?'현황':'미달성 알림'}] ${cfg().label} 사업장 - ${selectedMonth}월 기준 ${items.length}건`;
-  let body = buildMailBody(items, scopeLabel, showStatus);
+  if (!to){ alert(en ? 'Please enter the recipient email first.' : '담당자 이메일을 먼저 입력해주세요.'); mailToInput.focus(); return; }
+  const subject = en
+    ? `[HDPS KPI ${showStatus?'Status':'Alert'}] ${cfg().label} - ${monthLabel(selectedMonth)} (${items.length} items)`
+    : `[HDPS KPI ${showStatus?'현황':'미달성 알림'}] ${cfg().label} 사업장 - ${selectedMonth}월 기준 ${items.length}건`;
+  let body = buildMailBody(items, scopeLabelKo, scopeLabelEn, showStatus);
   const MAX = 1800;
   if (body.length > MAX){
-    body = body.slice(0, MAX) + '\n\n... (항목이 많아 이후 내용은 생략됨, 웹페이지 표를 참고해주세요)';
+    body = body.slice(0, MAX) + (en ? '\n\n... (truncated, please see the web table for the full list)' : '\n\n... (항목이 많아 이후 내용은 생략됨, 웹페이지 표를 참고해주세요)');
   }
   const url = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   window.location.href = url;
-  log('메일 초안 생성: ' + items.length + '건 (' + scopeLabel + ')');
+  log('메일 초안 생성: ' + items.length + '건 (' + scopeLabelKo + ')');
 }
 
 document.getElementById('btnMailMonth').addEventListener('click', () => {
   const items = allResults.filter(r => r.month===selectedMonth && !r.achieved);
-  openMailDraft(items, '이번 달 미달성 전체', false);
+  openMailDraft(items, '이번 달 미달성 전체', "this month's not-achieved items", false);
 });
 document.getElementById('btnMailWatch').addEventListener('click', () => {
   const items = allResults.filter(r => r.month===selectedMonth && (r.streak>=2 || r.trend==='down'));
-  openMailDraft(items, '연속 미달성 또는 최근 악화 추세', false);
+  openMailDraft(items, '연속 미달성 또는 최근 악화 추세', 'consecutive-miss / recently worsening items', false);
 });
 document.getElementById('btnMailAll').addEventListener('click', () => {
   const items = allResults.filter(r => r.month===selectedMonth);
-  openMailDraft(items, '이번 달 전체 지표(달성+미달성)', true);
+  openMailDraft(items, '이번 달 전체 지표(달성+미달성)', "this month's full KPI list (achieved + not achieved)", true);
 });
 
 // ---------- 실행 이력 (브라우저에 저장, 다시 열어도 유지됨) ----------
