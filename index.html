@@ -311,7 +311,7 @@ function getCell(ws, r, c) {
 }
 
 function monthIndexFromHeader(v) {
-  if (v instanceof Date) return v.getMonth()+1;
+  if (v instanceof Date) return v.getUTCMonth()+1; // 시간대 반올림으로 인한 오탐 방지 (UTC 기준)
   if (typeof v === 'string') {
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     for (let i=0;i<12;i++) if (v.indexOf(months[i])===0) return i+1;
