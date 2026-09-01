@@ -833,7 +833,7 @@ async function buildMailExcelFile(items, scopeLabelKo, scopeLabelEn){
     const resultText = r.achieved ? (en?'Achieved':'달성') : (en?'Not Achieved':'미달성');
     const trendText = r.trend==='down' ? (en?'Worsening':'악화') : (r.trend==='up' ? (en?'Improving':'개선') : (en?'Flat':'유지'));
     const row = ws.addRow([
-      r.masterRow, r.kpi, r.kpiEn||'', r.direction, monthLabel(r.month),
+      r.masterRow, r.kpi, r.kpiEn||'', dirLabel(r.direction), monthLabel(r.month),
       round(r.target), round(r.actual), resultText, r.streak, trendText, '', '',
     ]);
     const fill = r.achieved ? OK_FILL : MISS_FILL;
