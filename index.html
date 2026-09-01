@@ -17,7 +17,8 @@
     --amber:#a0670c;
   }
   * { box-sizing:border-box; }
-  body { font-family:"Pretendard","Malgun Gothic",-apple-system,sans-serif; background:var(--bg); margin:0; color:var(--ink); font-size:14px; }
+  html { overflow-anchor: none; }
+  body { font-family:"Pretendard","Malgun Gothic",-apple-system,sans-serif; background:var(--bg); margin:0; color:var(--ink); font-size:14px; overflow-anchor: none; }
   .mono,.num { font-family:"SFMono-Regular",Consolas,"Roboto Mono",monospace; font-variant-numeric:tabular-nums; }
 
   header { background:var(--accent-dark); color:#fff; padding:22px 28px; }
@@ -49,8 +50,8 @@
   .month-strip { display:flex; border:1px solid var(--line); border-radius:4px; overflow:hidden; margin-bottom:18px; }
   .month-strip .m { flex:1; padding:10px 6px; text-align:center; border-right:1px solid var(--line); cursor:pointer; background:#fafbfc; transition:background .18s ease, color .18s ease, transform .1s ease; }
   .month-strip .m:active { transform:scale(0.97); }
-  @keyframes rowFadeIn { from { opacity:0; transform:translateY(-3px); } to { opacity:1; transform:translateY(0); } }
-  table.results tbody tr { animation: rowFadeIn .22s ease both; }
+  @keyframes rowFadeIn { from { opacity:0; } to { opacity:1; } }
+  table.results tbody tr { animation: rowFadeIn .18s ease both; }
 
   .dir-arrow { font-weight:800; margin-right:3px; }
   .dir-arrow.up { color:var(--ok); }
@@ -343,16 +344,10 @@ function monthIndex(v){
   return 0;
 }
 function buildMonthCols(ws, startCol, headerRow){
-  const cols = {}; let ok = true;
-  for (let m=1;m<=12;m++){ const c=startCol+m-1; cols[m]=c; const d=monthIndex(getCell(ws,headerRow,c)); if (d && d!==m) ok=false; }
-  if (ok) return cols;
-  const b = sheetBounds(ws);
-  for (let r=1; r<=Math.min(25,b.maxR); r++){
-    const found = {};
-    for (let c=1; c<=Math.min(80,b.maxC); c++){ const mi=monthIndex(getCell(ws,r,c)); if (mi && !found[mi]) found[mi]=c; }
-    if (Object.keys(found).length >= 10){ log('월 헤더 자동탐색: '+r+'행'); return Object.assign(cols,found); }
-  }
-  log('⚠ 월 헤더 자동탐색 실패 → 기존 기준열 사용');
+  // 검증 로직이 브라우저 시간대(특히 UTC+9 등)에 따라 날짜 헤더를 잘못 해석해서
+  // 엉뚱하게 "자동탐색" 모드로 빠지는 문제가 있었음. 검증된 고정 컬럼 위치를 그대로 신뢰합니다.
+  const cols = {};
+  for (let m=1;m<=12;m++){ cols[m] = startCol+m-1; }
   return cols;
 }
 function normalizeValue(v){
