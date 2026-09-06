@@ -1,6 +1,17 @@
 (()=>{
   'use strict';
-  const SAFE_SCORE=0.90, EXACT_SCORE=0.995;
+  const SAFE_SCORE=0.90, EXACT_SCORE=0.995, EPS=1e-9;
+
+  function sourceKpiCol(){
+    if(currentPlant==='india') return 7;   // Final With HQ Suggestion: G열 KPI명
+    if(currentPlant==='brazil') return 6;  // HCEB KPIs: F열 KPI명
+    return 6;
+  }
+  function sourceUnitCol(){
+    if(currentPlant==='india') return 9;   // I열
+    if(currentPlant==='brazil') return 10; // J열
+    return 0;
+  }
 
   function runtimeMappings(){
     const list=[...mappingData];
@@ -63,42 +74,82 @@
   function strictMonthCols(ws,preferredRow,label){
     const info=discoverMonthCols(ws,preferredRow);
     if(info.count!==12||info.duplicates.length)throw new Error(`${label} 월 헤더 검증 실패: ${info.count}/12개월 인식`);
+    const cols=Object.values(info.map);
+    if(new Set(cols).size!==12)throw new Error(`${label} 월 헤더 열 중복 감지`);
     return info;
   }
 
-  function findActualRow(ws,labelRow,m){
-    const b=sheetBounds(ws),expected=labelRow+Math.max(1,(m.actualRow||labelRow+1)-(m.labelRow||labelRow));
-    const candidates=[expected,labelRow+1,expected-1,expected+1,expected-2,expected+2];
-    for(const r of [...new Set(candidates)]){
-      if(r<=labelRow||r>b.maxR)continue;
-      if(normText(getCell(ws,r,6))!=='')continue;
-      return r;
-    }
-    return 0;
+  function unitFamily(v){
+    const s=normText(v||'').replace(/\s+/g,'');
+    if(!s)return '';
+    if(s.includes('%')||s.includes('percent')||s.includes('rate')||s==='비율')return 'pct';
+    if(s.includes('dptu'))return 'dptu';
+    if(s.includes('ppm')||s==='nos.'||s==='nos')return 'ppm';
+    if(s.includes('mh/unit')||s.includes('mh/대')||s.includes('mhperunit'))return 'mh';
+    if(s.includes('day')||s==='일')return 'day';
+    if(s.includes('person')||s==='명')return 'person';
+    if(s.includes('case')||s.includes('건'))return 'case';
+    if(s.includes('turn')||s.includes('rev'))return 'turn';
+    return '';
   }
 
-  window.hd24SafeResolveMappings=function(srcWs,masterWs){
-    const source=runtimeMappings(),rejected=[],out=[],usedMaster=new Set();
+  function validateUnit(ws,labelRow,m){
+    const c=sourceUnitCol(); if(!c||!m.unit)return true;
+    const sf=unitFamily(getCell(ws,labelRow,c)),mf=unitFamily(m.unit);
+    if(!sf||!mf)return true;
+    return sf===mf;
+  }
+
+  function strictActualRow(ws,labelRow,m,srcInfo){
+    const r=labelRow+1,b=sheetBounds(ws),kcol=sourceKpiCol();
+    if(r>b.maxR)return 0;
+    if(normText(getCell(ws,r,kcol))!=='')return 0;
+    let seen=0;
+    for(let mo=1;mo<=12;mo++){
+      const raw=getCell(ws,r,srcInfo.map[mo]);
+      if(raw!==null&&raw!==undefined&&String(raw).trim()!=='')seen++;
+    }
+    return seen?r:0;
+  }
+
+  window.hd24SafeResolveMappings=function(srcWs,masterWs,srcInfo){
+    const source=runtimeMappings(),rejected=[],out=[],usedMaster=new Set(),kcol=sourceKpiCol();
     let movedSrc=0,movedMaster=0;
     for(const m of source){
-      const sr=findStrictInColumn(srcWs,6,m.kpiEn),mr=findStrictInColumn(masterWs,13,m.kpiKr);
+      const sr=findStrictInColumn(srcWs,kcol,m.kpiEn),mr=findStrictInColumn(masterWs,13,m.kpiKr);
       if(sr.ambiguous||mr.ambiguous||sr.score<SAFE_SCORE||mr.score<SAFE_SCORE){
         rejected.push(`${m.kpiKr||m.kpiEn} (원본 ${sr.score.toFixed(2)} / 총괄 ${mr.score.toFixed(2)})`); continue;
       }
-      const actualRow=findActualRow(srcWs,sr.row,m);
-      if(!actualRow){rejected.push(`${m.kpiKr||m.kpiEn} (Actual 행 확인 실패)`);continue;}
+      if(!validateUnit(srcWs,sr.row,m)){
+        rejected.push(`${m.kpiKr||m.kpiEn} (단위 불일치: ${getCell(srcWs,sr.row,sourceUnitCol())} ↔ ${m.unit})`); continue;
+      }
+      const actualRow=strictActualRow(srcWs,sr.row,m,srcInfo);
+      if(!actualRow){rejected.push(`${m.kpiKr||m.kpiEn} (KPI 바로 다음 Actual 행 구조 불일치)`);continue;}
       if(usedMaster.has(mr.row)){rejected.push(`${m.kpiKr||m.kpiEn} (총괄 KPI 행 중복 ${mr.row})`);continue;}
       usedMaster.add(mr.row);
       if(sr.row!==m.labelRow)movedSrc++; if(mr.row!==m.masterRow)movedMaster++;
       out.push({...m,labelRow:sr.row,actualRow,masterRow:mr.row,_srcScore:sr.score,_masterScore:mr.score});
     }
-    log(`안전 매핑 검증: 반영 ${out.length}건 / 제외 ${rejected.length}건 / 원본행 보정 ${movedSrc}건 / 총괄행 보정 ${movedMaster}건`);
-    if(rejected.length)log(`반영 제외: ${rejected.slice(0,12).join(' | ')}${rejected.length>12?' 외 '+(rejected.length-12)+'건':''}`);
-    if(out.length!==source.length||rejected.length)throw new Error(`KPI 전수검증 실패: ${out.length}/${source.length}건만 확인됨. 파일 반영을 중단합니다.`);
+    log(`안전 매핑 검증: ${out.length}/${source.length}건 / 제외 ${rejected.length}건 / 원본행 재탐색 ${movedSrc}건 / 총괄행 재탐색 ${movedMaster}건`);
+    if(rejected.length)log(`반영 차단 원인: ${rejected.slice(0,15).join(' | ')}${rejected.length>15?' 외 '+(rejected.length-15)+'건':''}`);
+    if(out.length!==source.length||rejected.length)throw new Error(`KPI 전수검증 실패: ${out.length}/${source.length}. 총괄파일 생성 중단`);
     return out;
   };
 
+  function sourceHorizon(srcWs,resolved,srcInfo){
+    let horizon=0;
+    for(const m of resolved)for(let mo=1;mo<=12;mo++){
+      const raw=getCell(srcWs,m.actualRow,srcInfo.map[mo]);
+      if(raw===null||raw===undefined||String(raw).trim()==='')continue;
+      if(normalizeValue(raw)!==null)horizon=Math.max(horizon,mo);
+    }
+    return horizon;
+  }
+
+  function almostEqual(a,b){return Math.abs(Number(a)-Number(b))<=EPS*Math.max(1,Math.abs(Number(a)),Math.abs(Number(b)));}
+  function numericCell(v){const n=normalizeValue(v);return n===null?null:n;}
   function colNo(ref){let n=0;for(const ch of ref.match(/^[A-Z]+/)[0])n=n*26+ch.charCodeAt(0)-64;return n;}
+
   function patchCell(xml,ref,val){
     const re=new RegExp('<c r="'+ref+'"([^>]*?)(?:/>|>([\\s\\S]*?)</c>)'),m=re.exec(xml);
     if(m){
@@ -118,57 +169,85 @@
     return {xml:xml.slice(0,rm.index)+newRow+xml.slice(rm.index+rm[0].length),ok:true};
   }
 
-  function sourceHorizon(srcWs,resolved,srcInfo){
-    let horizon=0;
-    for(const m of resolved)for(let mo=1;mo<=12;mo++){
-      const raw=getCell(srcWs,m.actualRow,srcInfo.map[mo]);
-      if(raw===null||raw===undefined||String(raw).trim()==='')continue;
-      if(normalizeValue(raw)!==null)horizon=Math.max(horizon,mo);
-    }
-    return horizon;
+  function xmlNumeric(xml,ref){
+    const re=new RegExp('<c r="'+ref+'"[^>]*>([\\s\\S]*?)</c>'),m=re.exec(xml);
+    if(!m)return null;
+    const vm=m[1].match(/<v>([^<]+)<\/v>/); if(!vm)return null;
+    const n=Number(vm[1]); return Number.isFinite(n)?n:null;
   }
 
   async function safeReflect(ev){
     try{
       if(!cfg().hasSource)return;
       ev.preventDefault();ev.stopImmediatePropagation();
-      log('=== 안전 실적 반영 시작 ===');
+      log('=== 안전 실적 반영 v8 시작 ===');
       const srcWs=srcWorkbook.Sheets[cfg().srcSheet],masterWs=masterWorkbook.Sheets[cfg().masterSheet];
-      if(!srcWs)throw new Error('원본 시트 없음: '+cfg().srcSheet); if(!masterWs)throw new Error('총괄 시트 없음: '+cfg().masterSheet);
-      const srcInfo=strictMonthCols(srcWs,typeof SRC_MONTH_HEADER_ROW!=='undefined'?SRC_MONTH_HEADER_ROW:null,'원본'),masterInfo=strictMonthCols(masterWs,4,'총괄');
-      const resolved=window.hd24SafeResolveMappings(srcWs,masterWs),horizon=sourceHorizon(srcWs,resolved,srcInfo);
-      if(!horizon)throw new Error('원본 실적 기준월을 확인할 수 없습니다.');
-      log(`월 헤더 검증: 원본 ${srcInfo.row}행 / 총괄 ${masterInfo.row}행 / 원본 최종 실적월 ${horizon}월`);
+      if(!srcWs)throw new Error('원본 시트 없음: '+cfg().srcSheet);
+      if(!masterWs)throw new Error('총괄 시트 없음: '+cfg().masterSheet);
+      const srcInfo=strictMonthCols(srcWs,typeof SRC_MONTH_HEADER_ROW!=='undefined'?SRC_MONTH_HEADER_ROW:null,'원본');
+      const masterInfo=strictMonthCols(masterWs,4,'총괄');
+      const resolved=window.hd24SafeResolveMappings(srcWs,masterWs,srcInfo);
+      const horizon=sourceHorizon(srcWs,resolved,srcInfo);
+      if(!horizon)throw new Error('원본 실적 기준월 확인 실패');
+      log(`구조 검증 완료: KPI열 ${sourceKpiCol()} / 원본 월헤더 ${srcInfo.row}행 / 총괄 월헤더 ${masterInfo.row}행 / 기준월 ${horizon}월`);
 
-      const patches={}; let skippedBlank=0,skippedText=0;
+      const patches={},historyMismatch=[]; let currentWrites=0,backfills=0,blankPreserved=0,textPreserved=0,sameHistory=0;
       for(const m of resolved){
         for(let mo=1;mo<=horizon;mo++){
           const raw=getCell(srcWs,m.actualRow,srcInfo.map[mo]);
-          if(raw===null||raw===undefined||String(raw).trim()===''){skippedBlank++;continue;}
-          const v=normalizeValue(raw); if(v===null){skippedText++;continue;}
-          const ref=colLetter(masterInfo.map[mo])+m.masterRow;
+          if(raw===null||raw===undefined||String(raw).trim()===''){blankPreserved++;continue;}
+          const nv=normalizeValue(raw); if(nv===null){textPreserved++;continue;}
+          const expected=nv*(m.scale||1),mcol=masterInfo.map[mo],ref=colLetter(mcol)+m.masterRow;
+          const cur=numericCell(getCell(masterWs,m.masterRow,mcol));
+          if(mo<horizon && cur!==null){
+            if(almostEqual(cur,expected)){sameHistory++;continue;}
+            historyMismatch.push(`${m.kpiKr} ${mo}월: 총괄 ${cur} / 원본 ${expected}`); continue;
+          }
           if(Object.prototype.hasOwnProperty.call(patches,ref))throw new Error('중복 KPI×월 대상 감지: '+ref);
-          patches[ref]=v*(m.scale||1);
+          patches[ref]=expected;
+          if(mo===horizon)currentWrites++; else backfills++;
         }
       }
-      log(`반영 후보 ${Object.keys(patches).length}셀 / 원본 공란 보존 ${skippedBlank} / 비수치 보존 ${skippedText} / 미래월 삭제 0셀`);
+      if(historyMismatch.length){
+        log(`과거월 값 불일치 ${historyMismatch.length}건 감지 — 기존 총괄값을 자동 덮어쓰지 않습니다.`);
+        log(historyMismatch.slice(0,15).join(' | ')+(historyMismatch.length>15?' 외 '+(historyMismatch.length-15)+'건':''));
+        throw new Error('과거월 데이터 불일치 감지. 자동반영을 차단했습니다. 매핑/기준 확인 필요');
+      }
+      log(`반영 사전검증: 당월 ${currentWrites}셀 / 과거 공란 백필 ${backfills}셀 / 과거 동일 ${sameHistory}셀 / 공란 보존 ${blankPreserved} / 비수치 보존 ${textPreserved}`);
 
-      const path=await findSheetXmlPath(masterZip,cfg().masterSheet); let xml=await masterZip.file(path).async('string'),applied=0,missing=[];
-      for(const [ref,v] of Object.entries(patches)){const r=patchCell(xml,ref,v);xml=r.xml;if(r.ok)applied++;else missing.push(ref);}
+      const path=await findSheetXmlPath(masterZip,cfg().masterSheet);
+      let xml=await masterZip.file(path).async('string'),applied=0,missing=[];
+      for(const [ref,v] of Object.entries(patches)){
+        const r=patchCell(xml,ref,v); xml=r.xml; if(r.ok)applied++; else missing.push(ref);
+      }
       if(missing.length)throw new Error('총괄 셀 생성/수정 실패: '+missing.slice(0,12).join(', '));
-      masterZip.file(path,xml); log(`적용 ${applied}셀 / 다른 사업장·미래월 삭제 0셀 / 오류 0셀`);
+
+      const verifyFail=[];
+      for(const [ref,v] of Object.entries(patches)){
+        const got=xmlNumeric(xml,ref);
+        if(got===null||!almostEqual(got,v))verifyFail.push(`${ref}: ${got} != ${v}`);
+      }
+      if(verifyFail.length)throw new Error('반영 후 셀 재검증 실패: '+verifyFail.slice(0,12).join(', '));
+      if(applied!==Object.keys(patches).length)throw new Error(`반영 건수 불일치: ${applied}/${Object.keys(patches).length}`);
+
+      masterZip.file(path,xml);
+      log(`반영 후 재검증 PASS: ${applied}셀 / 타 사업장 0셀 / 미래월 0셀 / 과거 기존값 덮어쓰기 0셀`);
 
       const blob=await masterZip.generateAsync({type:'blob',compression:'DEFLATE'}),ext=(masterFileName.match(/\.(xlsx|xlsm)$/i)||['','.xlsx'])[1],base=masterFileName.replace(/\.(xlsx|xlsm)$/i,'');
-      const a=document.createElement('a'); a.href=URL.createObjectURL(blob);a.download=base+'_'+cfg().label+'안전반영본.'+ext;a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),30000);
-      log('=== 완료: '+a.download+' ==='); addHistory({action:'실적 반영',plantKey:currentPlant,srcName:(document.getElementById('srcFile').files[0]||{}).name||'',masterName:masterFileName,result:applied+'셀 안전반영'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob);a.download=base+'_'+cfg().label+'검증반영본.'+ext;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),30000);
+      log('=== 완료: '+a.download+' ===');
+      addHistory({action:'실적 반영',plantKey:currentPlant,srcName:(document.getElementById('srcFile').files[0]||{}).name||'',masterName:masterFileName,result:`${applied}셀 검증반영 / 기준월 ${horizon}월`});
     }catch(err){log('오류: '+err.message);console.error(err);}
   }
 
   try{
-    resolveMappings=window.hd24SafeResolveMappings;
+    resolveMappings=(srcWs,masterWs)=>{
+      const srcInfo=strictMonthCols(srcWs,typeof SRC_MONTH_HEADER_ROW!=='undefined'?SRC_MONTH_HEADER_ROW:null,'원본');
+      return window.hd24SafeResolveMappings(srcWs,masterWs,srcInfo);
+    };
     buildMonthCols=(ws,startCol,headerRow)=>strictMonthCols(ws,headerRow,'월').map;
     replaceCell=(xml,ref,val)=>patchCell(xml,ref,val);
     const btn=document.getElementById('btnReflect'); if(btn)btn.addEventListener('click',safeReflect,true);
-    log('안전 매핑 보호모드 v7 활성화');
+    log('안전 매핑 보호모드 v8 활성화');
   }catch(e){console.error('HD24 safe mapping guard install failed',e);}
 })();
