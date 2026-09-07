@@ -1,0 +1,102 @@
+name: Remove unsafe reflect fallback
+on:
+  push:
+    branches: ["fix/remove-unsafe-reflect"]
+permissions:
+  contents: write
+jobs:
+  harden:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/remove-unsafe-reflect
+      - name: Remove legacy reflect path and gate button on safeReady
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          idx=Path('index.html')
+          s=idx.read_text(encoding='utf-8')
+          start="document.getElementById('btnReflect').addEventListener('click', async () => {"
+          next_marker="document.getElementById('btnJudge').addEventListener('click', () => {"
+          a=s.find(start)
+          b=s.find(next_marker)
+          if a<0 or b<0 or b<=a:
+              raise SystemExit(f'legacy reflect block anchors not found: {a=} {b=}')
+          legacy=s[a:b]
+          if "=== 실적 반영 시작 ===" not in legacy:
+              raise SystemExit('unexpected legacy reflect block')
+          s=s[:a]+"// Legacy reflect path removed: safe-kpi-mapping.js is the only execution path.\n\n"+s[b:]
+
+          # Gate every direct reflect-button enable assignment with safeReady.
+          # Handles both common updateButtons forms.
+          s=s.replace("document.getElementById('btnReflect').disabled = !(srcWorkbook && masterWorkbook);",
+                      "document.getElementById('btnReflect').disabled = !(window.hd24SafeReflectReady && srcWorkbook && masterWorkbook);")
+          s=s.replace("btnReflect.disabled = !(srcWorkbook && masterWorkbook);",
+                      "btnReflect.disabled = !(window.hd24SafeReflectReady && srcWorkbook && masterWorkbook);")
+          s=s.replace("document.getElementById('btnReflect').disabled = !(masterWorkbook && (!cfg().hasSource || srcWorkbook));",
+                      "document.getElementById('btnReflect').disabled = !(window.hd24SafeReflectReady && masterWorkbook && (!cfg().hasSource || srcWorkbook));")
+          # Add a hard global gate immediately after button declaration if not already present.
+          if 'window.hd24SafeReflectReady = false;' not in s:
+              marker="let srcWorkbook=null, masterWorkbook=null"
+              pos=s.find(marker)
+              if pos>=0:
+                  line_end=s.find('\n',pos)
+                  s=s[:line_end+1]+"window.hd24SafeReflectReady = false;\n"+s[line_end+1:]
+              else:
+                  # Safe fallback: insert before first script logic reference to PLANT_CONFIG.
+                  marker='const PLANT_CONFIG'
+                  pos=s.find(marker)
+                  if pos<0: raise SystemExit('safeReady insertion anchor not found')
+                  s=s[:pos]+"window.hd24SafeReflectReady = false;\n"+s[pos:]
+          # cache bust loader
+          s=s.replace('hd24-ui-v3.js?v=12','hd24-ui-v3.js?v=13')
+          idx.write_text(s,encoding='utf-8')
+
+          safe=Path('safe-kpi-mapping.js')
+          t=safe.read_text(encoding='utf-8')
+          pat=r"(btn\.addEventListener\('click',\s*safeReflect,\s*true\);)"
+          if not re.search(pat,t):
+              raise SystemExit('safeReflect listener install pattern not found')
+          t=re.sub(pat,r"\1window.hd24SafeReflectReady=true;btn.disabled=!(srcWorkbook&&masterWorkbook);btn.dataset.safeReflectReady='1';",t,count=1)
+          safe.write_text(t,encoding='utf-8')
+
+          ui=Path('hd24-ui-v3.js')
+          u=ui.read_text(encoding='utf-8')
+          if 'safe-kpi-mapping.js?v=12' not in u:
+              raise SystemExit('loader v12 anchor not found')
+          u=u.replace("(()=>{const s=document.createElement('script');s.src='./safe-kpi-mapping.js?v=12';s.defer=true;document.head.appendChild(s)})();",
+                      "(()=>{window.hd24SafeReflectReady=false;const b=document.getElementById('btnReflect');if(b)b.disabled=true;const s=document.createElement('script');s.src='./safe-kpi-mapping.js?v=13';s.defer=true;s.onerror=()=>{window.hd24SafeReflectReady=false;const x=document.getElementById('btnReflect');if(x)x.disabled=true;console.error('HD24 safe reflect guard failed to load');};document.head.appendChild(s)})();")
+          ui.write_text(u,encoding='utf-8')
+          PY
+      - name: Static fail-closed assertions
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          idx=Path('index.html').read_text(encoding='utf-8')
+          safe=Path('safe-kpi-mapping.js').read_text(encoding='utf-8')
+          ui=Path('hd24-ui-v3.js').read_text(encoding='utf-8')
+          assert "document.getElementById('btnReflect').addEventListener('click', async () => {" not in idx
+          assert '=== 실적 반영 시작 ===' not in idx
+          assert 'Legacy reflect path removed' in idx
+          assert 'window.hd24SafeReflectReady = false;' in idx
+          assert 'window.hd24SafeReflectReady=true' in safe
+          assert "btn.addEventListener('click',safeReflect,true)" in safe or "btn.addEventListener('click', safeReflect, true)" in safe
+          assert 'safe-kpi-mapping.js?v=13' in ui
+          assert 'hd24-ui-v3.js?v=13' in idx
+          assert 's.onerror=' in ui
+          print('UNSAFE FALLBACK REMOVAL ASSERTIONS PASS')
+          PY
+      - name: Commit hardening
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html safe-kpi-mapping.js hd24-ui-v3.js
+          git diff --cached --quiet && exit 0
+          git commit -m 'fix: remove legacy unsafe reflect fallback [skip ci]'
+          git push origin HEAD:fix/remove-unsafe-reflect
