@@ -1,0 +1,47 @@
+name: Apply future-month horizon hardening
+on:
+  push:
+    branches: ["fix/future-month-horizon"]
+permissions:
+  contents: write
+jobs:
+  harden:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch horizon logic and cache version
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('safe-kpi-mapping.js')
+          s=p.read_text(encoding='utf-8')
+          old="function sourceHorizon(srcWs,resolved,srcInfo){let horizon=0;for(const m of resolved)for(let mo=1;mo<=12;mo++){const raw=getCell(srcWs,m.actualRow,srcInfo.map[mo]);if(raw==null||String(raw).trim()==='')continue;if(normalizeValue(raw)!==null)horizon=Math.max(horizon,mo);}return horizon;}"
+          new="function sourceHorizon(srcWs,resolved,srcInfo){const latest=[];for(const m of resolved){let h=0;for(let mo=1;mo<=12;mo++){const raw=getCell(srcWs,m.actualRow,srcInfo.map[mo]);if(raw==null||String(raw).trim()==='')continue;if(normalizeValue(raw)!==null)h=mo;}if(h)latest.push({kpi:m.kpiKr||m.kpiEn,h});}if(!latest.length)return 0;const counts={};for(const x of latest)counts[x.h]=(counts[x.h]||0)+1;const ranked=Object.entries(counts).map(([m,c])=>({m:Number(m),c})).sort((a,b)=>b.c-a.c||b.m-a.m);const horizon=ranked[0].m;const future=latest.filter(x=>x.h>horizon);if(future.length){log(`미래월 Actual 이상 ${future.length}건 감지: 기준월 ${horizon}월 초과`);log(future.slice(0,15).map(x=>`${x.kpi} ${x.h}월`).join(' | ')+(future.length>15?' 외 '+(future.length-15)+'건':''));throw new Error(`미래월 Actual ${future.length}건 감지. 총괄파일 생성 중단`);}const near=latest.filter(x=>x.h===horizon||x.h===horizon-1).length;if(near/latest.length<0.95)throw new Error(`기준월 분포 이상: ${near}/${latest.length}건만 ${horizon-1}~${horizon}월 범위`);return horizon;}"
+          if old not in s:
+              raise SystemExit('sourceHorizon target not found')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          ui=Path('hd24-ui-v3.js')
+          u=ui.read_text(encoding='utf-8').replace('safe-kpi-mapping.js?v=10','safe-kpi-mapping.js?v=11',1)
+          ui.write_text(u,encoding='utf-8')
+          idx=Path('index.html')
+          h=idx.read_text(encoding='utf-8').replace('hd24-ui-v3.js?v=10','hd24-ui-v3.js?v=11',1)
+          idx.write_text(h,encoding='utf-8')
+      - name: Static fail-closed assertions
+        shell: python
+        run: |
+          from pathlib import Path
+          s=Path('safe-kpi-mapping.js').read_text(encoding='utf-8')
+          assert '미래월 Actual' in s
+          assert 'throw new Error(`미래월 Actual' in s
+          assert 'near/latest.length<0.95' in s
+          assert 'safe-kpi-mapping.js?v=11' in Path('hd24-ui-v3.js').read_text(encoding='utf-8')
+          assert 'hd24-ui-v3.js?v=11' in Path('index.html').read_text(encoding='utf-8')
+      - name: Commit hardening
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add safe-kpi-mapping.js hd24-ui-v3.js index.html
+          git commit -m "fix: fail closed on future-month Actual anomalies [skip ci]"
+          git push
