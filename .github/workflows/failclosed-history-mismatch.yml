@@ -1,0 +1,67 @@
+name: Apply fail-closed history mismatch hardening
+
+on:
+  push:
+    branches:
+      - fix/failclosed-history-mismatch
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/failclosed-history-mismatch
+      - name: Patch runtime guards
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('safe-kpi-mapping.js')
+          s = p.read_text(encoding='utf-8')
+          old = "if(historyMismatch.length){log(`과거월 값 불일치 ${historyMismatch.length}건 — 기존값 보존, 당월 반영 계속`);log(historyMismatch.slice(0,15).join(' | ')+(historyMismatch.length>15?' 외 '+(historyMismatch.length-15)+'건':''));}"
+          new = "if(historyMismatch.length){log(`과거월 값 불일치 ${historyMismatch.length}건 — 안전을 위해 전체 반영 중단`);log(historyMismatch.slice(0,15).join(' | ')+(historyMismatch.length>15?' 외 '+(historyMismatch.length-15)+'건':''));throw new Error(`과거월 원천↔총괄 불일치 ${historyMismatch.length}건 감지. 총괄파일 생성 중단`);}"
+          if old not in s:
+              raise SystemExit('FAIL: expected historyMismatch block not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+
+          p = Path('hd24-ui-v3.js')
+          s = p.read_text(encoding='utf-8')
+          if './safe-kpi-mapping.js?v=9' not in s:
+              raise SystemExit('FAIL: v9 safe loader not found')
+          s = s.replace('./safe-kpi-mapping.js?v=9', './safe-kpi-mapping.js?v=10', 1)
+          p.write_text(s, encoding='utf-8')
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          if './hd24-ui-v3.js?v=3' not in s:
+              raise SystemExit('FAIL: index loader v3 not found')
+          s = s.replace('./hd24-ui-v3.js?v=3', './hd24-ui-v3.js?v=10', 1)
+          p.write_text(s, encoding='utf-8')
+
+          wf = Path('.github/workflows/failclosed-history-mismatch.yml')
+          if wf.exists():
+              wf.unlink()
+          PY
+      - name: Verify patch
+        shell: bash
+        run: |
+          grep -q '안전을 위해 전체 반영 중단' safe-kpi-mapping.js
+          grep -q '원천↔총괄 불일치' safe-kpi-mapping.js
+          ! grep -q '기존값 보존, 당월 반영 계속' safe-kpi-mapping.js
+          grep -q 'safe-kpi-mapping.js?v=10' hd24-ui-v3.js
+          grep -q 'hd24-ui-v3.js?v=10' index.html
+      - name: Commit hardened runtime
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add safe-kpi-mapping.js hd24-ui-v3.js index.html .github/workflows/failclosed-history-mismatch.yml
+          git commit -m 'fix: fail closed on historical KPI mismatches [skip ci]'
+          git push origin HEAD:fix/failclosed-history-mismatch
