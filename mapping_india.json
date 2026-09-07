@@ -612,7 +612,8 @@
   "masterRow": 91,
   "kpiKr": "내자입고계획 준수율",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 160,
@@ -699,7 +700,8 @@
   "masterRow": 114,
   "kpiKr": "라인 편성효율(T/T기준, 운영효율이슈)",
   "scale": 100,
-  "valueFormat": "숫자"
+  "valueFormat": "숫자",
+  "unit": "%"
  },
  {
   "labelRow": 182,
