@@ -293,7 +293,7 @@ document.getElementById('masterFile').addEventListener('change', async (e) => {
 function checkReady(){
   const needSrc = cfg().hasSource;
   const ok = !!((!needSrc || srcWorkbook) && masterWorkbook && masterZip && mappingData.length);
-  document.getElementById('btnReflect').disabled = !(ok && needSrc);
+  document.getElementById('btnReflect').disabled = !(window.hd24SafeReflectReady && ok && needSrc);
   document.getElementById('btnJudge').disabled = !ok;
 }
 
