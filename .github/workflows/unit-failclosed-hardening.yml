@@ -11,24 +11,46 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: fix/unit-failclosed
-      - name: Patch unit classification and validation
+      - name: Normalize mapping units and patch fail-closed validation
         shell: bash
         run: |
           python - <<'PY'
+          import json
           from pathlib import Path
+
+          # Existing India mapping has two rate/efficiency KPIs with missing unit metadata.
+          mp=Path('mapping_india.json')
+          data=json.loads(mp.read_text(encoding='utf-8'))
+          fill={
+            'Domestic Incoming Plan Compliance Rate':'%',
+            'Fabrication - Weighted Average ACTUAL LOB Efficiency':'%'
+          }
+          changed=[]
+          for m in data:
+              if m.get('kpiEn') in fill and not m.get('unit'):
+                  m['unit']=fill[m['kpiEn']]
+                  changed.append(m['kpiEn'])
+          if set(changed)!=set(fill):
+              raise SystemExit(f'mapping unit fill mismatch: {changed}')
+          mp.write_text(json.dumps(data,ensure_ascii=False,indent=1)+'\n',encoding='utf-8')
+
           p=Path('safe-kpi-mapping.js')
           s=p.read_text(encoding='utf-8')
           old="function unitFamily(v){const s=normText(v||'').replace(/\\s+/g,'');if(!s)return '';if(s.includes('%')||s.includes('percent')||s.includes('rate')||s==='비율')return 'pct';if(s.includes('dptu'))return 'dptu';if(s.includes('ppm')||s==='nos.'||s==='nos')return 'ppm';if(s.includes('mh/unit')||s.includes('mh/대')||s.includes('mhperunit'))return 'mh';if(s.includes('day')||s==='일')return 'day';if(s.includes('person')||s==='명')return 'person';if(s.includes('case')||s.includes('건'))return 'case';if(s.includes('turn')||s.includes('rev'))return 'turn';return '';}\nfunction validateUnit(ws,labelRow,m){const c=sourceUnitCol();if(!c||!m.unit)return true;const sf=unitFamily(getCell(ws,labelRow,c)),mf=unitFamily(m.unit);return !sf||!mf||sf===mf;}"
-          new="function unitFamily(v){const s=normText(v||'').replace(/\\s+/g,'');if(!s)return '';if(s.includes('%')||s.includes('percent')||s.includes('rate')||s==='비율')return 'pct';if(s.includes('dptu'))return 'dptu';if(s.includes('ppm'))return 'ppm';if(s==='nos.'||s==='nos'||s.includes('count')||s.includes('qty')||s.includes('quantity')||s==='대분')return 'count';if(s.includes('mh/unit')||s.includes('mh/대')||s.includes('mhperunit'))return 'mh';if(s.includes('day')||s==='일')return 'day';if(s.includes('person')||s==='명'||s.includes('명/년'))return 'person';if(s.includes('case')||s.includes('건'))return 'case';if(s.includes('turn')||s.includes('rev')||s==='회전')return 'turn';if(s.includes('hour')||s==='hr'||s==='hrs')return 'hour';if(s.includes('score')||s==='점')return 'score';if(s.includes('$')||s.includes('usd')||s.includes('krw')||s.includes('inr')||s.includes('brl'))return 'currency';if(s==='인/건'||s.includes('person/case'))return 'person_per_case';return '';}\nfunction validateUnit(ws,labelRow,m){const c=sourceUnitCol();if(!c||!m.unit)return false;const raw=getCell(ws,labelRow,c),sf=unitFamily(raw),mf=unitFamily(m.unit);if(!sf||!mf){log(`단위 미분류 차단: ${m.kpiKr||m.kpiEn} / 원본 ${raw} / 매핑 ${m.unit}`);return false;}return sf===mf;}"
+          new="function unitFamily(v){const s=normText(v||'').replace(/\\s+/g,'');if(!s)return '';if(s.includes('%')||s.includes('percent')||s.includes('rate')||s==='비율')return 'pct';if(s.includes('dptu'))return 'dptu';if(s.includes('ppm'))return 'ppm';if(s.includes('mh/unit')||s.includes('mh/대')||s.includes('mhperunit'))return 'mh';if(s==='인/건'||s.includes('person/case'))return 'person_per_case';if(s==='nos.'||s==='nos'||s.includes('count')||s.includes('qty')||s.includes('quantity')||s.includes('case')||s.includes('건')||s==='대분')return 'count';if(s.includes('day')||s==='일')return 'day';if(s.includes('person')||s==='명'||s.includes('명/년'))return 'person';if(s.includes('turn')||s.includes('rev')||s==='회전')return 'turn';if(s==='hh:mm'||s.includes('hour')||s==='hr'||s==='hrs'||s.includes('minute')||s==='min'||s.includes('분'))return 'time';if(s.includes('score')||s.includes('point')||s==='점')return 'score';if(s.includes('$')||s.includes('usd')||s.includes('krw')||s.includes('inr')||s.includes('brl'))return 'currency';return '';}\nfunction validateUnit(ws,labelRow,m){const c=sourceUnitCol();if(!c||!m.unit)return false;const raw=getCell(ws,labelRow,c),sf=unitFamily(raw),mf=unitFamily(m.unit);if(!sf||!mf){log(`단위 미분류 차단: ${m.kpiKr||m.kpiEn} / 원본 ${raw} / 매핑 ${m.unit}`);return false;}if(sf!==mf){log(`단위 불일치 차단: ${m.kpiKr||m.kpiEn} / 원본 ${raw}(${sf}) / 매핑 ${m.unit}(${mf})`);return false;}return true;}"
           if old not in s:
               raise SystemExit('target unit block not found')
           s=s.replace(old,new,1)
           p.write_text(s,encoding='utf-8')
-          # cache bust
-          ui=Path('hd24-ui-v3.js'); t=ui.read_text(encoding='utf-8').replace('safe-kpi-mapping.js?v=11','safe-kpi-mapping.js?v=12'); ui.write_text(t,encoding='utf-8')
-          idx=Path('index.html'); t=idx.read_text(encoding='utf-8').replace('hd24-ui-v3.js?v=11','hd24-ui-v3.js?v=12'); idx.write_text(t,encoding='utf-8')
+
+          ui=Path('hd24-ui-v3.js')
+          t=ui.read_text(encoding='utf-8').replace('safe-kpi-mapping.js?v=11','safe-kpi-mapping.js?v=12')
+          ui.write_text(t,encoding='utf-8')
+          idx=Path('index.html')
+          t=idx.read_text(encoding='utf-8').replace('hd24-ui-v3.js?v=11','hd24-ui-v3.js?v=12')
+          idx.write_text(t,encoding='utf-8')
           PY
-      - name: Validate mapping unit coverage
+      - name: Validate all mapped unit families
         shell: bash
         run: |
           python - <<'PY'
@@ -40,16 +62,15 @@ jobs:
               if '%' in s or 'percent' in s or 'rate' in s or s=='비율':return 'pct'
               if 'dptu' in s:return 'dptu'
               if 'ppm' in s:return 'ppm'
-              if s in ('nos.','nos','대분') or 'count' in s or 'qty' in s or 'quantity' in s:return 'count'
               if 'mh/unit' in s or 'mh/대' in s or 'mhperunit' in s:return 'mh'
+              if s=='인/건' or 'person/case' in s:return 'person_per_case'
+              if s in ('nos.','nos','대분') or any(x in s for x in ('count','qty','quantity','case','건')):return 'count'
               if 'day' in s or s=='일':return 'day'
               if 'person' in s or s=='명' or '명/년' in s:return 'person'
-              if 'case' in s or '건' in s:return 'case'
               if 'turn' in s or 'rev' in s or s=='회전':return 'turn'
-              if 'hour' in s or s in ('hr','hrs'):return 'hour'
-              if 'score' in s or s=='점':return 'score'
+              if s=='hh:mm' or 'hour' in s or s in ('hr','hrs','min') or 'minute' in s or '분' in s:return 'time'
+              if 'score' in s or 'point' in s or s=='점':return 'score'
               if '$' in s or any(x in s for x in ('usd','krw','inr','brl')):return 'currency'
-              if s=='인/건' or 'person/case' in s:return 'person_per_case'
               return ''
           bad=[]; total=0
           for fn in ['mapping_india.json','mapping_brazil.json']:
@@ -59,12 +80,12 @@ jobs:
                   if not fam(m.get('unit')): bad.append((fn,m.get('kpiEn'),m.get('unit')))
           print('mapping units checked:',total)
           print('unclassified:',len(bad))
-          for x in bad[:30]:print(x)
+          for x in bad[:50]:print(x)
           if bad: raise SystemExit('unclassified mapping units remain')
           js=Path('safe-kpi-mapping.js').read_text(encoding='utf-8')
           assert "return !sf||!mf||sf===mf" not in js
           assert "if(!c||!m.unit)return false" in js
-          assert "s==='nos.'||s==='nos'" in js and "return 'count'" in js
+          assert "return 'count'" in js and "return 'time'" in js
           assert 'safe-kpi-mapping.js?v=12' in Path('hd24-ui-v3.js').read_text(encoding='utf-8')
           assert 'hd24-ui-v3.js?v=12' in Path('index.html').read_text(encoding='utf-8')
           print('FAIL-CLOSED UNIT ASSERTIONS PASS')
@@ -74,7 +95,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add safe-kpi-mapping.js hd24-ui-v3.js index.html
+          git add safe-kpi-mapping.js hd24-ui-v3.js index.html mapping_india.json
           git diff --cached --quiet && exit 0
           git commit -m 'fix: fail closed on unknown or mismatched KPI units [skip ci]'
           git push origin HEAD:fix/unit-failclosed
