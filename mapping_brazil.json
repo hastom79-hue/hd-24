@@ -823,5 +823,16 @@
   "scale": 1,
   "valueFormat": "숫자",
   "unit": "건"
+ },
+ {
+  "labelRow": 150,
+  "actualRow": 151,
+  "kpiEn": "NVA reduction cases reflecting from SWC",
+  "direction": "상향",
+  "masterRow": 122,
+  "kpiKr": "투입 개선 MH\n - 비가치 작업 개선 건수로 관리(자체관리)",
+  "scale": 1,
+  "valueFormat": "숫자",
+  "unit": "건/년"
  }
 ]
