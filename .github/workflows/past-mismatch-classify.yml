@@ -37,8 +37,20 @@ jobs:
             if m: return float(m.group(1))
             try: return float(s)
             except: return None
+          def annotated_num(v):
+            if not isinstance(v,str): return None
+            s=v.strip().replace(',','')
+            m=re.match(r'^([+-]?\d+(?:\.\d+)?)',s)
+            return float(m.group(1)) if m else None
           def eq(a,b,eps=1e-6):
             return abs(a-b)<=eps or abs(a-b)<=eps*max(1,abs(a),abs(b))
+          def display_rounding_equiv(expected,master_raw,mv):
+            if mv is None or not isinstance(master_raw,(int,float)): return False
+            s=str(master_raw)
+            if 'e' in s.lower(): return False
+            decimals=len(s.split('.',1)[1].rstrip('0')) if '.' in s else 0
+            tol=0.5*(10**(-decimals))+1e-9
+            return abs(expected-mv)<=tol
           def classify(plant,maps,src,master):
             out=[]; compared=0; skipped=0
             for x in add_runtime(maps,plant):
@@ -47,28 +59,32 @@ jobs:
                 raw=sr[mo-1] if mo-1<len(sr) else None
                 nv=norm(raw,x.get('valueFormat','숫자'))
                 if nv is None: skipped+=1; continue
-                expected=nv*float(x.get('scale',1))
-                mv=norm(mr[mo-1] if mo-1<len(mr) else None,'숫자')
-                compared+=1
+                expected=nv*float(x.get('scale',1)); master_raw=mr[mo-1] if mo-1<len(mr) else None
+                mv=norm(master_raw,'숫자'); compared+=1
                 if mv is not None and eq(expected,mv): continue
-                cat='genuine'
-                if mv is None: cat='master_blank_or_text'
+                cat='genuine_value_difference'
+                ann=annotated_num(master_raw)
+                if isinstance(master_raw,str) and master_raw.strip()=='-' and eq(expected,0): cat='dash_zero_equivalent'
+                elif ann is not None and eq(expected,ann): cat='annotated_numeric_same'
+                elif isinstance(master_raw,str) and ('미집계' in master_raw or '미반영' in master_raw): cat='status_text_conflict'
+                elif master_raw is None or master_raw=='': cat='master_blank'
+                elif mv is None: cat='other_text_conflict'
                 elif abs(expected)>1e-12 and abs(mv)<=1e-12: cat='master_zero_stale'
-                elif any(eq(round(expected,d),mv,1e-9) or eq(expected,round(mv,d),1e-9) for d in (0,1,2,3)): cat='rounding_only'
+                elif display_rounding_equiv(expected,master_raw,mv): cat='display_rounding_equivalent'
                 elif eq(expected*100,mv) or eq(expected/100,mv): cat='scale_100_pattern'
                 elif eq(abs(expected),abs(mv)) and expected*mv<0: cat='sign_only'
-                out.append({'plant':plant,'month':mo,'kpiEn':x['kpiEn'],'kpiKr':x.get('kpiKr'),'sourceRow':x['actualRow'],'masterRow':x['masterRow'],'raw':raw,'expected':expected,'master':mr[mo-1] if mo-1<len(mr) else None,'category':cat})
-            counts={}
-            for r in out: counts[r['category']]=counts.get(r['category'],0)+1
-            return {'mappedKpis':len(add_runtime(maps,plant)),'comparedNumericCells':compared,'skippedNonNumericSourceCells':skipped,'mismatchCells':len(out),'counts':counts,'mismatches':out}
+                out.append({'plant':plant,'month':mo,'kpiEn':x['kpiEn'],'kpiKr':x.get('kpiKr'),'sourceRow':x['actualRow'],'masterRow':x['masterRow'],'raw':raw,'expected':expected,'master':master_raw,'category':cat})
+            counts={}; kpis={}
+            serious={'genuine_value_difference','master_zero_stale','status_text_conflict','master_blank','other_text_conflict','scale_100_pattern','sign_only'}
+            for r in out:
+              counts[r['category']]=counts.get(r['category'],0)+1
+              if r['category'] in serious: kpis.setdefault(r['kpiEn'],set()).add(r['month'])
+            serious_rows=[r for r in out if r['category'] in serious]
+            return {'mappedKpis':len(add_runtime(maps,plant)),'comparedNumericCells':compared,'skippedNonNumericSourceCells':skipped,'mismatchCells':len(out),'counts':counts,'seriousMismatchCells':len(serious_rows),'seriousKpiCount':len(kpis),'seriousKpis':{k:sorted(v) for k,v in kpis.items()},'mismatches':out}
           report={'india':classify('india',mi,snap['si'],snap['mi']),'brazil':classify('brazil',mb,snap['sb'],snap['mb'])}
-          report['summary']={
-            'totalMappedKpis':report['india']['mappedKpis']+report['brazil']['mappedKpis'],
-            'totalComparedNumericCells':report['india']['comparedNumericCells']+report['brazil']['comparedNumericCells'],
-            'totalMismatchCells':report['india']['mismatchCells']+report['brazil']['mismatchCells']
-          }
+          report['summary']={'totalMappedKpis':report['india']['mappedKpis']+report['brazil']['mappedKpis'],'totalComparedNumericCells':report['india']['comparedNumericCells']+report['brazil']['comparedNumericCells'],'totalMismatchCells':report['india']['mismatchCells']+report['brazil']['mismatchCells'],'totalSeriousMismatchCells':report['india']['seriousMismatchCells']+report['brazil']['seriousMismatchCells'],'totalSeriousKpis':report['india']['seriousKpiCount']+report['brazil']['seriousKpiCount']}
           Path('qa/past_mismatch_report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
-          print(json.dumps({k:{'mapped':report[k]['mappedKpis'],'compared':report[k]['comparedNumericCells'],'mismatch':report[k]['mismatchCells'],'counts':report[k]['counts']} for k in ('india','brazil')},ensure_ascii=False))
+          print(json.dumps({k:{'mapped':report[k]['mappedKpis'],'compared':report[k]['comparedNumericCells'],'mismatch':report[k]['mismatchCells'],'seriousCells':report[k]['seriousMismatchCells'],'seriousKpis':report[k]['seriousKpiCount'],'counts':report[k]['counts']} for k in ('india','brazil')},ensure_ascii=False))
           PY
       - name: Commit report
         run: |
@@ -76,5 +92,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add qa/past_mismatch_report.json
           git diff --cached --quiet && exit 0
-          git commit -m 'test: classify real-file historical KPI mismatches [skip ci]'
+          git commit -m 'test: refine real-file historical mismatch classification [skip ci]'
           git push
