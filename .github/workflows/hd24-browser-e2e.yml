@@ -109,7 +109,6 @@ jobs:
       - name: Browser file-select -> reflect -> download E2E
         run: |
           python - <<'PY'
-          import json
           from pathlib import Path
           from playwright.sync_api import sync_playwright
 
@@ -122,7 +121,9 @@ jobs:
               browser=p.chromium.launch(headless=True)
               page=browser.new_page(accept_downloads=True)
               console_errors=[]
+              downloads=[]
               page.on('console', lambda msg: console_errors.append(msg.text) if msg.type=='error' else None)
+              page.on('download', lambda dl: downloads.append(dl))
               page.goto('http://127.0.0.1:8765/index.html', wait_until='networkidle', timeout=120000)
               page.wait_for_function('window.hd24SafeReflectReady === true', timeout=30000)
               assert page.locator('#btnReflect').is_disabled(), 'Reflect must stay disabled before both files are loaded'
@@ -132,23 +133,31 @@ jobs:
               page.wait_for_function("!document.getElementById('btnReflect').disabled", timeout=30000)
               assert page.locator('#btnReflect').get_attribute('data-safe-reflect-ready')=='1', 'Safe reflect readiness marker missing'
 
-              with page.expect_download(timeout=120000) as dl_info:
-                  page.locator('#btnReflect').click()
-              dl=dl_info.value
+              page.locator('#btnReflect').click()
+              page.wait_for_function("""() => {
+                const t=document.getElementById('log').innerText;
+                return t.includes('반영 후 재검증 PASS') || t.includes('오류:');
+              }""", timeout=30000)
+              log=page.locator('#log').inner_text()
+              print('=== HD24 BROWSER LOG ===')
+              print(log)
+              print('=== END HD24 BROWSER LOG ===')
+              if '오류:' in log and '반영 후 재검증 PASS' not in log:
+                  raise AssertionError('HD24 reflect failed in browser:\n'+log)
+
+              page.wait_for_timeout(1500)
+              assert downloads, 'Reflect reported PASS but no browser download event was emitted'
+              dl=downloads[0]
               target=download_dir/dl.suggested_filename
               dl.save_as(str(target))
-              page.wait_for_function("document.getElementById('log').innerText.includes('반영 후 재검증 PASS')", timeout=30000)
-              log=page.locator('#log').inner_text()
               assert '안전 실적 반영 v15 시작' in log
               assert '반영 후 재검증 PASS' in log
               assert '미래월 0셀' in log
               assert '과거 기존값 덮어쓰기 0셀' in log
               assert target.exists() and target.stat().st_size>0
-              # Ignore expected browser favicon/noise only; application JS must not emit safe-guard failures.
               bad=[x for x in console_errors if 'safe reflect guard failed' in x.lower() or 'safe mapping guard install failed' in x.lower()]
               assert not bad, bad
               (fixture/'download_path.txt').write_text(str(target),encoding='utf-8')
-              print(log)
               print('Downloaded:',target)
               browser.close()
           PY
@@ -169,10 +178,9 @@ jobs:
           exp=float(expected['expectedJuly'])
           bad=[]
           for r in rows:
-              v=ws.cell(r,33).value  # AG = July
+              v=ws.cell(r,33).value
               if v is None or not math.isclose(float(v),exp,rel_tol=1e-9,abs_tol=1e-9):
                   bad.append((r,v))
-              # Aug-Dec AH:AL must remain blank in synthetic master.
               for c in range(34,39):
                   if ws.cell(r,c).value not in (None,''):
                       bad.append((r,c,ws.cell(r,c).value))
