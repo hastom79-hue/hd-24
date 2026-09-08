@@ -7,6 +7,18 @@
     "counts": {
       "master_zero_stale": 6
     },
+    "seriousMismatchCells": 6,
+    "seriousKpiCount": 1,
+    "seriousKpis": {
+      "Manufacturing Lead Time (Fab Tacking to FDI out)": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    },
     "mismatches": [
       {
         "plant": "india",
@@ -86,13 +98,68 @@
     "mappedKpis": 77,
     "comparedNumericCells": 451,
     "skippedNonNumericSourceCells": 11,
-    "mismatchCells": 76,
+    "mismatchCells": 75,
     "counts": {
-      "rounding_only": 32,
-      "genuine": 27,
-      "master_blank_or_text": 15,
-      "scale_100_pattern": 1,
-      "master_zero_stale": 1
+      "display_rounding_equivalent": 35,
+      "genuine_value_difference": 24,
+      "annotated_numeric_same": 8,
+      "dash_zero_equivalent": 3,
+      "master_zero_stale": 1,
+      "status_text_conflict": 3,
+      "other_text_conflict": 1
+    },
+    "seriousMismatchCells": 29,
+    "seriousKpiCount": 10,
+    "seriousKpis": {
+      "Production Instruction Compliance Rate": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "Performance Test Defect Rate (Finished Product)": [
+        4,
+        5
+      ],
+      "Production Order Change Ratio": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "Imported Material Delivery Compliance Rate": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "Monthly Shipment Plan Compliance Rate": [
+        5
+      ],
+      "Production Incoming Plan Compliance Rate": [
+        4,
+        5
+      ],
+      "Long-Term Inventory Value (6 month basis)": [
+        5
+      ],
+      "Sequence Compliance Rate by Line": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "NVA reduction cases reflecting from SWC": [
+        1,
+        2
+      ],
+      "IQ 200 Issues with Production responsibility (Assembly)": [
+        5
+      ]
     },
     "mismatches": [
       {
@@ -105,7 +172,7 @@
         "raw": 0.0319,
         "expected": 3.19,
         "master": 3.2,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -117,7 +184,7 @@
         "raw": 0.0252,
         "expected": 2.52,
         "master": 2.5,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -129,7 +196,7 @@
         "raw": 0.21,
         "expected": 21.0,
         "master": 79,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -141,7 +208,7 @@
         "raw": 0.21,
         "expected": 21.0,
         "master": 63,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -153,7 +220,7 @@
         "raw": 0.43,
         "expected": 43.0,
         "master": 49,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -165,7 +232,7 @@
         "raw": 0.35,
         "expected": 35.0,
         "master": 62,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -177,7 +244,7 @@
         "raw": 0.26,
         "expected": 26.0,
         "master": 74,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -189,7 +256,7 @@
         "raw": 0.445,
         "expected": 44.5,
         "master": 45,
-        "category": "genuine"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -201,7 +268,7 @@
         "raw": 0.445,
         "expected": 44.5,
         "master": 45,
-        "category": "genuine"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -213,7 +280,7 @@
         "raw": 0.823,
         "expected": 82.3,
         "master": 82,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -225,7 +292,7 @@
         "raw": 0.823,
         "expected": 82.3,
         "master": 82,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -237,7 +304,7 @@
         "raw": 0.957,
         "expected": 95.7,
         "master": 96,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -249,7 +316,7 @@
         "raw": 0.888,
         "expected": 88.8,
         "master": 89,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -261,7 +328,7 @@
         "raw": 0.888,
         "expected": 88.8,
         "master": 89,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -273,7 +340,7 @@
         "raw": 269,
         "expected": 269.0,
         "master": 286,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -285,7 +352,7 @@
         "raw": 259,
         "expected": 259.0,
         "master": 217,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -297,7 +364,7 @@
         "raw": 42,
         "expected": 42.0,
         "master": "42\n(누적)",
-        "category": "master_blank_or_text"
+        "category": "annotated_numeric_same"
       },
       {
         "plant": "brazil",
@@ -309,7 +376,7 @@
         "raw": 42,
         "expected": 42.0,
         "master": "42\n(누적)",
-        "category": "master_blank_or_text"
+        "category": "annotated_numeric_same"
       },
       {
         "plant": "brazil",
@@ -321,7 +388,7 @@
         "raw": 42,
         "expected": 42.0,
         "master": "42\n(누적)",
-        "category": "master_blank_or_text"
+        "category": "annotated_numeric_same"
       },
       {
         "plant": "brazil",
@@ -333,7 +400,7 @@
         "raw": 42,
         "expected": 42.0,
         "master": "42\n(누적)",
-        "category": "master_blank_or_text"
+        "category": "annotated_numeric_same"
       },
       {
         "plant": "brazil",
@@ -345,7 +412,7 @@
         "raw": 11,
         "expected": 11.0,
         "master": "11\n(누적)",
-        "category": "master_blank_or_text"
+        "category": "annotated_numeric_same"
       },
       {
         "plant": "brazil",
@@ -357,7 +424,7 @@
         "raw": 11,
         "expected": 11.0,
         "master": "11\n(누적)",
-        "category": "master_blank_or_text"
+        "category": "annotated_numeric_same"
       },
       {
         "plant": "brazil",
@@ -369,7 +436,7 @@
         "raw": 11,
         "expected": 11.0,
         "master": "11\n(누적)",
-        "category": "master_blank_or_text"
+        "category": "annotated_numeric_same"
       },
       {
         "plant": "brazil",
@@ -381,7 +448,7 @@
         "raw": 11,
         "expected": 11.0,
         "master": "11\n(누적)",
-        "category": "master_blank_or_text"
+        "category": "annotated_numeric_same"
       },
       {
         "plant": "brazil",
@@ -393,7 +460,7 @@
         "raw": 0.0464,
         "expected": 0.0464,
         "master": 0.05,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -405,7 +472,7 @@
         "raw": 0.1915,
         "expected": 0.1915,
         "master": 0.19,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -417,7 +484,7 @@
         "raw": 0.1926,
         "expected": 0.1926,
         "master": 0.19,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -429,7 +496,7 @@
         "raw": 0.045,
         "expected": 0.045,
         "master": 0.05,
-        "category": "genuine"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -441,7 +508,7 @@
         "raw": 0,
         "expected": 0.0,
         "master": "-",
-        "category": "master_blank_or_text"
+        "category": "dash_zero_equivalent"
       },
       {
         "plant": "brazil",
@@ -453,7 +520,7 @@
         "raw": 0,
         "expected": 0.0,
         "master": "-",
-        "category": "master_blank_or_text"
+        "category": "dash_zero_equivalent"
       },
       {
         "plant": "brazil",
@@ -465,7 +532,7 @@
         "raw": 0.4583,
         "expected": 45.83,
         "master": 45.8,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -477,7 +544,7 @@
         "raw": 0.2929,
         "expected": 29.29,
         "master": 29.3,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -489,7 +556,7 @@
         "raw": 0.2121,
         "expected": 21.21,
         "master": 21.2,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -501,7 +568,7 @@
         "raw": 0.7895,
         "expected": 78.95,
         "master": 79,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -513,7 +580,7 @@
         "raw": 15.09,
         "expected": 15.09,
         "master": 15.1,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -525,7 +592,7 @@
         "raw": 15.09,
         "expected": 15.09,
         "master": 15.1,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -537,7 +604,7 @@
         "raw": 244.1,
         "expected": 244.1,
         "master": 244,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -549,7 +616,7 @@
         "raw": 0.828,
         "expected": 82.8,
         "master": 83,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -561,7 +628,7 @@
         "raw": 0.972,
         "expected": 97.2,
         "master": 97,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -573,19 +640,7 @@
         "raw": 0.976,
         "expected": 97.6,
         "master": 98,
-        "category": "rounding_only"
-      },
-      {
-        "plant": "brazil",
-        "month": 1,
-        "kpiEn": "M+1 Production Volume Variation Rate",
-        "kpiKr": "RCCP 준수율(M+1변동율)",
-        "sourceRow": 109,
-        "masterRow": 82,
-        "raw": "+8%",
-        "expected": 800.0,
-        "master": 8,
-        "category": "scale_100_pattern"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -597,7 +652,7 @@
         "raw": 0.975,
         "expected": 97.5,
         "master": 98,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -609,7 +664,7 @@
         "raw": 0.9316,
         "expected": 93.16,
         "master": 93,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -621,7 +676,7 @@
         "raw": 0.9286,
         "expected": 92.86,
         "master": 93,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -645,7 +700,7 @@
         "raw": 0.1,
         "expected": 10.0,
         "master": 16,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -657,7 +712,7 @@
         "raw": 0.17,
         "expected": 17.0,
         "master": 15,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -669,7 +724,7 @@
         "raw": 0.25,
         "expected": 25.0,
         "master": 42,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -681,7 +736,7 @@
         "raw": 0.07,
         "expected": 7.000000000000001,
         "master": 2,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -693,7 +748,7 @@
         "raw": 0.94,
         "expected": 94.0,
         "master": 52,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -705,7 +760,7 @@
         "raw": 0.88,
         "expected": 88.0,
         "master": 57,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -717,7 +772,7 @@
         "raw": 0.81,
         "expected": 81.0,
         "master": 57,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -729,7 +784,7 @@
         "raw": 0.84,
         "expected": 84.0,
         "master": "미집계",
-        "category": "master_blank_or_text"
+        "category": "status_text_conflict"
       },
       {
         "plant": "brazil",
@@ -741,7 +796,7 @@
         "raw": 0.8,
         "expected": 80.0,
         "master": "미집계",
-        "category": "master_blank_or_text"
+        "category": "status_text_conflict"
       },
       {
         "plant": "brazil",
@@ -753,7 +808,7 @@
         "raw": 0.84,
         "expected": 84.0,
         "master": 100,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -765,7 +820,7 @@
         "raw": 1,
         "expected": 100.0,
         "master": 92,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -777,7 +832,7 @@
         "raw": 1,
         "expected": 100.0,
         "master": "미집계",
-        "category": "master_blank_or_text"
+        "category": "status_text_conflict"
       },
       {
         "plant": "brazil",
@@ -789,7 +844,7 @@
         "raw": 0.861,
         "expected": 86.1,
         "master": 86,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -801,7 +856,7 @@
         "raw": 0.934,
         "expected": 93.4,
         "master": 93,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -813,7 +868,7 @@
         "raw": 5.927,
         "expected": 5.927,
         "master": 5.93,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -825,7 +880,7 @@
         "raw": 5.627,
         "expected": 5.627,
         "master": 5.42,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -837,7 +892,7 @@
         "raw": 0,
         "expected": 0.0,
         "master": "-",
-        "category": "master_blank_or_text"
+        "category": "dash_zero_equivalent"
       },
       {
         "plant": "brazil",
@@ -849,7 +904,7 @@
         "raw": 0.89,
         "expected": 89.0,
         "master": 100,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -861,7 +916,7 @@
         "raw": 0.9,
         "expected": 90.0,
         "master": 84,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -873,7 +928,7 @@
         "raw": 0.83,
         "expected": 83.0,
         "master": 85,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -885,7 +940,7 @@
         "raw": 0.75,
         "expected": 75.0,
         "master": 58,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -897,7 +952,7 @@
         "raw": 0.93,
         "expected": 93.0,
         "master": 98,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -909,7 +964,7 @@
         "raw": 28.394883720930235,
         "expected": 28.394883720930235,
         "master": 28.4,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -921,7 +976,7 @@
         "raw": 27.987096774193546,
         "expected": 27.987096774193546,
         "master": 28,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -933,7 +988,7 @@
         "raw": 40.14181818181819,
         "expected": 40.14181818181819,
         "master": 40.1,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -945,7 +1000,7 @@
         "raw": 40.432857142857145,
         "expected": 40.432857142857145,
         "master": 40.4,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -957,7 +1012,7 @@
         "raw": 0.4483,
         "expected": 44.83,
         "master": 45,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -969,7 +1024,7 @@
         "raw": 0.8571,
         "expected": 85.71,
         "master": 86,
-        "category": "rounding_only"
+        "category": "display_rounding_equivalent"
       },
       {
         "plant": "brazil",
@@ -981,7 +1036,7 @@
         "raw": 1,
         "expected": 1.0,
         "master": "-",
-        "category": "master_blank_or_text"
+        "category": "other_text_conflict"
       },
       {
         "plant": "brazil",
@@ -993,7 +1048,7 @@
         "raw": 1,
         "expected": 1.0,
         "master": 2,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       },
       {
         "plant": "brazil",
@@ -1005,13 +1060,15 @@
         "raw": 9,
         "expected": 9.0,
         "master": 7,
-        "category": "genuine"
+        "category": "genuine_value_difference"
       }
     ]
   },
   "summary": {
     "totalMappedKpis": 154,
     "totalComparedNumericCells": 899,
-    "totalMismatchCells": 82
+    "totalMismatchCells": 81,
+    "totalSeriousMismatchCells": 35,
+    "totalSeriousKpis": 11
   }
 }
