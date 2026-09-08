@@ -1,0 +1,182 @@
+name: HD24 Browser E2E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'safe-kpi-mapping.js'
+      - 'hd24-ui-v3.js'
+      - 'mapping_india.json'
+      - '.github/workflows/hd24-browser-e2e.yml'
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'safe-kpi-mapping.js'
+      - 'hd24-ui-v3.js'
+      - 'mapping_india.json'
+      - '.github/workflows/hd24-browser-e2e.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install E2E dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install openpyxl playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Generate anonymous India source/master fixtures from production mapping
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from openpyxl import Workbook
+
+          root=Path('.')
+          out=root/'qa'/'e2e-runtime'
+          out.mkdir(parents=True,exist_ok=True)
+          mapping=json.loads((root/'mapping_india.json').read_text(encoding='utf-8'))
+          if not any(str(m.get('kpiEn','')).strip().lower()=='manufacturing lead time (fab tacking to fdi out)'.lower() for m in mapping):
+              mapping.append({
+                  'labelRow':94,'actualRow':95,
+                  'kpiEn':'Manufacturing Lead Time (Fab Tacking to FDI out)',
+                  'direction':'하향','masterRow':42,
+                  'kpiKr':'제조 리드타임(Fab.to Machine Stock)',
+                  'scale':1,'valueFormat':'숫자','unit':'일'
+              })
+
+          months=['Jan-26','Feb-26','Mar-26','Apr-26','May-26','Jun-26','Jul-26','Aug-26','Sep-26','Oct-26','Nov-26','Dec-26']
+
+          src=Workbook()
+          sw=src.active
+          sw.title='Final With HQ Suggestion'
+          for i,h in enumerate(months,start=15): sw.cell(11,i,h)
+          for m in mapping:
+              lr=int(m['labelRow']); ar=lr+1
+              sw.cell(lr,7,m['kpiEn'])
+              sw.cell(lr,9,m.get('unit') or '')
+              scale=float(m.get('scale') or 1)
+              raw=10.0/scale
+              for mo,c in enumerate(range(15,27),start=1):
+                  if mo<=7: sw.cell(ar,c,raw)
+          src.save(out/'india_source.xlsx')
+
+          master=Workbook()
+          mw=master.active
+          mw.title='인도법인 KPI(26년 보고용)'
+          for i,h in enumerate(months,start=27): mw.cell(4,i,h)
+          for m in mapping:
+              r=int(m['masterRow'])
+              mw.cell(r,13,m['kpiKr'])
+              mw.cell(r,26,m.get('unit') or '')
+              for mo,c in enumerate(range(27,39),start=1):
+                  if mo<=6: mw.cell(r,c,10.0)
+          master.save(out/'master.xlsx')
+
+          (out/'expected.json').write_text(json.dumps({
+              'sheet':'인도법인 KPI(26년 보고용)',
+              'rows':sorted({int(m['masterRow']) for m in mapping}),
+              'expectedJuly':10.0,
+              'mappingCount':len(mapping)
+          },ensure_ascii=False,indent=2),encoding='utf-8')
+          print(f'Fixture mappings: {len(mapping)}')
+          PY
+
+      - name: Start local app server
+        run: |
+          python -m http.server 8765 --bind 127.0.0.1 > /tmp/hd24-http.log 2>&1 &
+          echo $! > /tmp/hd24-http.pid
+          for i in {1..20}; do
+            if curl -fsS http://127.0.0.1:8765/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/hd24-http.log
+          exit 1
+
+      - name: Browser file-select -> reflect -> download E2E
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+
+          root=Path('.').resolve()
+          fixture=root/'qa'/'e2e-runtime'
+          download_dir=fixture/'downloads'
+          download_dir.mkdir(exist_ok=True)
+
+          with sync_playwright() as p:
+              browser=p.chromium.launch(headless=True)
+              page=browser.new_page(accept_downloads=True)
+              console_errors=[]
+              page.on('console', lambda msg: console_errors.append(msg.text) if msg.type=='error' else None)
+              page.goto('http://127.0.0.1:8765/index.html', wait_until='networkidle', timeout=120000)
+              page.wait_for_function('window.hd24SafeReflectReady === true', timeout=30000)
+              assert page.locator('#btnReflect').is_disabled(), 'Reflect must stay disabled before both files are loaded'
+
+              page.locator('#srcFile').set_input_files(str(fixture/'india_source.xlsx'))
+              page.locator('#masterFile').set_input_files(str(fixture/'master.xlsx'))
+              page.wait_for_function("!document.getElementById('btnReflect').disabled", timeout=30000)
+              assert page.locator('#btnReflect').get_attribute('data-safe-reflect-ready')=='1', 'Safe reflect readiness marker missing'
+
+              with page.expect_download(timeout=120000) as dl_info:
+                  page.locator('#btnReflect').click()
+              dl=dl_info.value
+              target=download_dir/dl.suggested_filename
+              dl.save_as(str(target))
+              page.wait_for_function("document.getElementById('log').innerText.includes('반영 후 재검증 PASS')", timeout=30000)
+              log=page.locator('#log').inner_text()
+              assert '안전 실적 반영 v15 시작' in log
+              assert '반영 후 재검증 PASS' in log
+              assert '미래월 0셀' in log
+              assert '과거 기존값 덮어쓰기 0셀' in log
+              assert target.exists() and target.stat().st_size>0
+              # Ignore expected browser favicon/noise only; application JS must not emit safe-guard failures.
+              bad=[x for x in console_errors if 'safe reflect guard failed' in x.lower() or 'safe mapping guard install failed' in x.lower()]
+              assert not bad, bad
+              (fixture/'download_path.txt').write_text(str(target),encoding='utf-8')
+              print(log)
+              print('Downloaded:',target)
+              browser.close()
+          PY
+
+      - name: Verify downloaded workbook mutation boundaries
+        run: |
+          python - <<'PY'
+          import json, math
+          from pathlib import Path
+          from openpyxl import load_workbook
+
+          root=Path('qa/e2e-runtime')
+          expected=json.loads((root/'expected.json').read_text(encoding='utf-8'))
+          path=Path((root/'download_path.txt').read_text(encoding='utf-8').strip())
+          wb=load_workbook(path,data_only=False)
+          ws=wb[expected['sheet']]
+          rows=expected['rows']
+          exp=float(expected['expectedJuly'])
+          bad=[]
+          for r in rows:
+              v=ws.cell(r,33).value  # AG = July
+              if v is None or not math.isclose(float(v),exp,rel_tol=1e-9,abs_tol=1e-9):
+                  bad.append((r,v))
+              # Aug-Dec AH:AL must remain blank in synthetic master.
+              for c in range(34,39):
+                  if ws.cell(r,c).value not in (None,''):
+                      bad.append((r,c,ws.cell(r,c).value))
+          if bad:
+              raise SystemExit(f'E2E workbook verification failed: {bad[:20]}')
+          print(f'BROWSER E2E PASS: July verified on {len(rows)} master rows; Aug-Dec untouched')
+          PY
