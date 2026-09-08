@@ -55,6 +55,13 @@ jobs:
           for token in required:
               assert token in safe, f'missing safety invariant: {token}'
 
+          # XLSX sheet relationship lookup must remain producer-independent.
+          assert 'new DOMParser()' in index, 'DOM-based workbook relationship parser missing'
+          assert "getElementsByTagName('Relationship')" in index, 'relationship lookup is not attribute-order independent'
+          assert "relation.getAttribute('Target')" in index, 'relationship target lookup missing'
+          assert "if(!zip.file(path))" in index, 'resolved sheet XML existence gate missing'
+          assert "Id=\"'+m[1]+'\"[^>]*Target" not in index, 'legacy attribute-order-dependent relationship regex reintroduced'
+
           # Current production mapping cardinality and uniqueness.
           assert len(india)==76, f'India static mapping changed unexpectedly: {len(india)}'
           assert len(brazil)==76, f'Brazil static mapping changed unexpectedly: {len(brazil)}'
@@ -76,5 +83,5 @@ jobs:
           assert stale_js not in recovery and stale_css not in recovery, 'stale v3 recovery path reintroduced'
           assert 'ver=m.group(1)' in recovery, 'dynamic recovery version extraction missing'
 
-          print(f'HD24 RUNTIME REGRESSION PASS: runtime=v{ver}, India=76+1 runtime, Brazil=76+1 runtime')
+          print(f'HD24 RUNTIME REGRESSION PASS: runtime=v{ver}, India=76+1 runtime, Brazil=76+1 runtime, sheet-xml=DOM')
           PY
