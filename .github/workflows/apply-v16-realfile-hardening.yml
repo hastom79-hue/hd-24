@@ -1,0 +1,47 @@
+name: Apply v16 real-file hardening
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/v16-realfile-trigger.txt'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Apply v16 patch
+        run: python .github/scripts/patch_v16_realfile.py
+      - name: Static assertions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,re
+          safe=Path('safe-kpi-mapping.js').read_text(encoding='utf-8')
+          ui=Path('hd24-ui-v3.js').read_text(encoding='utf-8')
+          idx=Path('index.html').read_text(encoding='utf-8')
+          brazil=json.loads(Path('mapping_brazil.json').read_text(encoding='utf-8'))
+          assert '안전 실적 반영 v16 시작' in safe
+          assert '총괄 미래월 기존값' in safe
+          assert "name==='ppm'&&sf==='count'&&mf==='ppm'" in safe
+          assert "name==='5s audit score'&&sf==='pct'&&mf==='score'" in safe
+          assert 'safe-kpi-mapping.js?v=16' in ui
+          assert 'hd24-ui-v3.js?v=16' in idx and 'hd24-ui-v3.css?v=16' in idx
+          ltir=[m for m in brazil if m.get('kpiEn')=='LTIR (Lost Time Incident Rate)']
+          assert len(ltir)==1 and ltir[0]['unit']=='%'
+          print('V16 STATIC ASSERTIONS PASS')
+          PY
+      - name: Commit runtime hardening atomically
+        run: |
+          git config user.name 'hastom79-hue'
+          git config user.email 'hastom79@gmail.com'
+          git add safe-kpi-mapping.js mapping_brazil.json hd24-ui-v3.js index.html .github/workflows/hd24-runtime-regression.yml .github/workflows/hd24-browser-e2e.yml .github/workflows/hd24-browser-e2e-brazil.yml
+          if git diff --cached --quiet; then
+            echo 'No changes required'
+            exit 0
+          fi
+          git commit -m 'fix: harden v16 for real-file unit and future-month integrity'
+          git push origin HEAD:main
