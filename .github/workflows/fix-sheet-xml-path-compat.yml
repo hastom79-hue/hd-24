@@ -1,0 +1,68 @@
+name: Fix sheet XML path compatibility
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, 'sheet XML relationship compatibility') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch relationship parser
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old='''async function findSheetXmlPath(zip, name){
+  const wb = await zip.file('xl/workbook.xml').async('string');
+  const esc = name.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\$&');
+  const m = wb.match(new RegExp('<sheet name="'+esc+'"[^>]*r:id="(rId\\\\d+)"'));
+  if (!m) throw new Error('총괄 시트 없음: '+name);
+  const rel = await zip.file('xl/_rels/workbook.xml.rels').async('string');
+  const x = rel.match(new RegExp('Id="'+m[1]+'"[^>]*Target="([^"]+)"'));
+  if (!x) throw new Error('시트 경로 확인 실패');
+  return 'xl/'+x[1].replace(/^\\//,'');
+}'''
+          new='''async function findSheetXmlPath(zip, name){
+  const wbFile=zip.file('xl/workbook.xml'),relFile=zip.file('xl/_rels/workbook.xml.rels');
+  if(!wbFile||!relFile)throw new Error('총괄 XLSX 구조 오류: workbook 관계파일 없음');
+  const wb=await wbFile.async('string'),esc=name.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\$&');
+  const sheetTag=wb.match(new RegExp('<sheet\\\\b(?=[^>]*\\\\bname="'+esc+'")[^>]*>'));
+  if(!sheetTag)throw new Error('총괄 시트 없음: '+name);
+  const rid=(sheetTag[0].match(/\\\\br:id="([^"]+)"/)||[])[1];
+  if(!rid)throw new Error('시트 관계 ID 확인 실패: '+name);
+  const rel=await relFile.async('string');
+  const tags=rel.match(/<Relationship\\\\b[^>]*\\\\/?\\\\s*>/g)||[];
+  const tag=tags.find(t=>new RegExp('\\\\bId="'+rid.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\$&')+'"').test(t));
+  const target=tag&&(tag.match(/\\\\bTarget="([^"]+)"/)||[])[1];
+  if(!target)throw new Error('시트 경로 확인 실패: '+name+' / '+rid);
+  const clean=target.replace(/\\\\\\\\/g,'/').replace(/^\\\\//,'');
+  return clean.startsWith('xl/')?clean:'xl/'+clean.replace(/^\\.\\//,'');
+}'''
+          if old not in s:
+              raise SystemExit('old findSheetXmlPath block not found')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Static compatibility assertions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          assert "const tags=rel.match(/<Relationship" in s
+          assert "tags.find" in s
+          assert "clean.startsWith('xl/')" in s
+          assert "Id=\"'+m[1]+'\"[^>]*Target" not in s
+          print('SHEET XML RELATIONSHIP COMPATIBILITY PASS')
+          PY
+      - name: Commit patch
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "fix: sheet XML relationship compatibility [skip ci]"
+          git push
