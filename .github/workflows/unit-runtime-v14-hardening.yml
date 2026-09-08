@@ -1,7 +1,7 @@
 name: HD24 v14 unit runtime hardening
 on:
   push:
-    branches: ["main"]
+    branches: [main]
 permissions:
   contents: write
 jobs:
@@ -9,74 +9,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Patch actual JS unit normalization and blank-actual structure handling
-        shell: bash
+      - name: Apply patch
+        run: python tools/patch_v14_unit_runtime.py
+      - name: Validate samples
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('safe-kpi-mapping.js')
-          s=p.read_text(encoding='utf-8')
-          a=s.index('function unitFamily(v){')
-          b=s.index('function strictActualRow(', a)
-          old=s[a:b]
-          new=r'''function unitToken(v){return String(v??'').toLowerCase().replace(/\u00a0/g,' ').trim().replace(/\s+/g,'');}
-function unitFamily(v){const s=unitToken(v);if(!s)return '';if(s.includes('%')||s.includes('percent'))return 'pct';if(s.includes('dptu'))return 'dptu';if(s.includes('ppm'))return 'ppm';if(s.includes('mh/unit')||s.includes('mh/대')||s.includes('mhperunit')||s.includes('mhpermachine')||s.includes('mh/mc')||s.includes('mhper'))return 'mh';if(s==='hh:mm'||s==='time'||s==='hr'||s==='hrs'||s==='hrs.'||s==='hour'||s==='hours')return 'time';if(s.includes('day')||s==='일')return 'day';if(s==='인/건'||s.includes('cases/person')||s.includes('case/person')||s.includes('person/case')||s.includes('index'))return 'ratio';if(s==='nos.'||s==='nos'||s.includes('count')||s.includes('qty')||s.includes('quantity')||s.includes('case')||s.includes('건')||s==='대분')return 'count';if(s.includes('person')||s==='명'||s.includes('명/년'))return 'person';if(s.includes('turn')||s.includes('rev')||s==='회전')return 'turn';if(s.includes('score')||s.includes('point')||s==='점')return 'score';if(s.includes('$')||s.includes('usd')||s.includes('krw')||s.includes('inr')||s.includes('brl'))return 'currency';return '';}
-function unitCompatible(sf,mf,m){if(sf===mf)return true;const name=normText((m&&m.kpiEn)||((m&&m.kpiKr)||''));if(mf==='mh'&&sf==='time'&&(name.includes('mh')||name.includes('man hours')||name.includes('man-hours')||name.includes('downtime')||name.includes('non operating')||name.includes('non-operating')))return true;return false;}
-function validateUnit(ws,labelRow,m,masterWs,masterRow){const c=sourceUnitCol(),raw=c?getCell(ws,labelRow,c):null,sf=unitFamily(raw),mf=unitFamily(m.unit),masterRaw=masterWs&&masterRow?getCell(masterWs,masterRow,26):null,tf=unitFamily(masterRaw);if(!mf){log(`매핑 단위 미분류 차단: ${m.kpiKr||m.kpiEn} / ${m.unit}`);return false;}if(!sf){if(tf&&unitCompatible(tf,mf,m)){log(`원본 단위 공란 허용(총괄 교차검증 PASS): ${m.kpiKr||m.kpiEn} / 매핑 ${m.unit} / 총괄 ${masterRaw}`);return true;}log(`원본 단위 미분류 차단: ${m.kpiKr||m.kpiEn} / 원본 ${raw} / 매핑 ${m.unit}`);return false;}if(!unitCompatible(sf,mf,m)){log(`단위 불일치 차단: ${m.kpiKr||m.kpiEn} / 원본 ${raw}(${sf}) / 매핑 ${m.unit}(${mf})`);return false;}if(tf&&!unitCompatible(tf,mf,m)&&!unitCompatible(mf,tf,m)){log(`총괄 단위 불일치 차단: ${m.kpiKr||m.kpiEn} / 총괄 ${masterRaw}(${tf}) / 매핑 ${m.unit}(${mf})`);return false;}return true;}
-'''
-          s=s[:a]+new+s[b:]
-          s=s.replace("if(!validateUnit(srcWs,sr.row,m)){", "if(!validateUnit(srcWs,sr.row,m,masterWs,mr.row)){", 1)
-          # Empty Actual months are not a structural error; only row position/KPI-column occupancy matters.
-          old_actual="function strictActualRow(ws,labelRow,m,srcInfo){const r=labelRow+1,b=sheetBounds(ws),kcol=sourceKpiCol();if(r>b.maxR||normText(getCell(ws,r,kcol))!=='')return 0;let seen=0;for(let mo=1;mo<=12;mo++){const raw=getCell(ws,r,srcInfo.map[mo]);if(raw!=null&&String(raw).trim()!=='')seen++;}return seen?r:0;}"
-          new_actual="function strictActualRow(ws,labelRow,m,srcInfo){const r=labelRow+1,b=sheetBounds(ws),kcol=sourceKpiCol();if(r>b.maxR||normText(getCell(ws,r,kcol))!=='')return 0;return r;}"
-          if old_actual not in s: raise SystemExit('strictActualRow target not found')
-          s=s.replace(old_actual,new_actual,1)
-          s=s.replace('안전 실적 반영 v9 시작','안전 실적 반영 v14 시작')
-          s=s.replace('안전 매핑 보호모드 v9 활성화','안전 매핑 보호모드 v14 활성화')
-          p.write_text(s,encoding='utf-8')
-
-          ui=Path('hd24-ui-v3.js')
-          u=ui.read_text(encoding='utf-8').replace('safe-kpi-mapping.js?v=13','safe-kpi-mapping.js?v=14')
-          ui.write_text(u,encoding='utf-8')
-          idx=Path('index.html')
-          t=idx.read_text(encoding='utf-8').replace('hd24-ui-v3.js?v=13','hd24-ui-v3.js?v=14')
-          idx.write_text(t,encoding='utf-8')
-          PY
-      - name: Validate real JS normalization semantics with Node
-        shell: bash
-        run: |
-          node - <<'NODE'
-          function unitToken(v){return String(v??'').toLowerCase().replace(/\u00a0/g,' ').trim().replace(/\s+/g,'');}
-          function unitFamily(v){const s=unitToken(v);if(!s)return '';if(s.includes('%')||s.includes('percent'))return 'pct';if(s.includes('dptu'))return 'dptu';if(s.includes('ppm'))return 'ppm';if(s.includes('mh/unit')||s.includes('mh/대')||s.includes('mhperunit')||s.includes('mhpermachine')||s.includes('mh/mc')||s.includes('mhper'))return 'mh';if(s==='hh:mm'||s==='time'||s==='hr'||s==='hrs'||s==='hrs.'||s==='hour'||s==='hours')return 'time';if(s.includes('day')||s==='일')return 'day';if(s==='인/건'||s.includes('cases/person')||s.includes('case/person')||s.includes('person/case')||s.includes('index'))return 'ratio';if(s==='nos.'||s==='nos'||s.includes('count')||s.includes('qty')||s.includes('quantity')||s.includes('case')||s.includes('건')||s==='대분')return 'count';if(s.includes('person')||s==='명'||s.includes('명/년'))return 'person';if(s.includes('turn')||s.includes('rev')||s==='회전')return 'turn';if(s.includes('score')||s.includes('point')||s==='점')return 'score';if(s.includes('$')||s.includes('usd')||s.includes('krw')||s.includes('inr')||s.includes('brl'))return 'currency';return '';}
-          const cases={
-            '%':'pct','DPTU':'dptu','PPM':'ppm','MH/대':'mh','MH/Unit ':'mh','MH per unit':'mh','Mh/mc':'mh',
-            'Hrs.':'time','Time':'time','HH:MM':'time','Days':'day','No. of Days':'day','Nos.':'count','cases':'count',
-            'Cases/person':'ratio','인/건':'ratio','Index':'ratio','Persons':'person','Turns':'turn','Points':'score','INR (Cr.)':'currency','$M':'currency'
-          };
-          for(const [raw,expected] of Object.entries(cases)){const got=unitFamily(raw);if(got!==expected)throw new Error(`${raw}: ${got} != ${expected}`);}
-          console.log('UNIT NORMALIZATION SAMPLE MATRIX PASS',Object.keys(cases).length);
-          NODE
-      - name: Static runtime assertions
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          s=Path('safe-kpi-mapping.js').read_text(encoding='utf-8')
-          assert "function unitToken(v)" in s
-          assert "validateUnit(srcWs,sr.row,m,masterWs,mr.row)" in s
-          assert "function strictActualRow(ws,labelRow,m,srcInfo){const r=labelRow+1" in s
-          assert "return seen?r:0" not in s
-          assert '안전 실적 반영 v14 시작' in s
-          assert 'safe-kpi-mapping.js?v=14' in Path('hd24-ui-v3.js').read_text(encoding='utf-8')
-          assert 'hd24-ui-v3.js?v=14' in Path('index.html').read_text(encoding='utf-8')
-          print('V14 STATIC ASSERTIONS PASS')
-          PY
-      - name: Commit v14
-        shell: bash
+          node -e "function f(v){const s=String(v??'').toLowerCase().replace(/\\u00a0/g,' ').trim().replace(/\\s+/g,'');if(!s)return '';if(s.includes('%')||s.includes('percent'))return 'pct';if(s.includes('dptu'))return 'dptu';if(s.includes('ppm'))return 'ppm';if(s.includes('mh/unit')||s.includes('mh/대')||s.includes('mhperunit')||s.includes('mhpermachine')||s.includes('mh/mc')||s.includes('mhper'))return 'mh';if(s==='hh:mm'||s==='time'||s==='hr'||s==='hrs'||s==='hrs.'||s==='hour'||s==='hours')return 'time';if(s.includes('day')||s==='일')return 'day';if(s==='인/건'||s.includes('cases/person')||s.includes('case/person')||s.includes('person/case')||s.includes('index'))return 'ratio';if(s==='nos.'||s==='nos'||s.includes('count')||s.includes('qty')||s.includes('quantity')||s.includes('case')||s.includes('건')||s==='대분')return 'count';if(s.includes('person')||s==='명'||s.includes('명/년'))return 'person';if(s.includes('turn')||s.includes('rev')||s==='회전')return 'turn';if(s.includes('score')||s.includes('point')||s==='점')return 'score';if(s.includes('$')||s.includes('usd')||s.includes('krw')||s.includes('inr')||s.includes('brl'))return 'currency';return '';} const t={'%':'pct','MH/대':'mh','MH/Unit ':'mh','Hrs.':'time','Time':'time','HH:MM':'time','Days':'day','No. of Days':'day','Nos.':'count','cases':'count','Cases/person':'ratio','인/건':'ratio','Index':'ratio','Persons':'person','Turns':'turn','Points':'score','INR (Cr.)':'currency','$M':'currency'}; for(const [k,v] of Object.entries(t)){if(f(k)!==v)throw new Error(k+':'+f(k)+'!='+v)}; console.log('UNIT_SAMPLE_PASS',Object.keys(t).length);"
+      - name: Commit
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add safe-kpi-mapping.js hd24-ui-v3.js index.html
-          git diff --cached --quiet && exit 0
-          git commit -m 'fix: correct runtime unit normalization and allow blank Actual rows [skip ci]'
-          git push origin HEAD:main
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'fix: correct runtime unit normalization and blank Actual handling [skip ci]'
+          git push
