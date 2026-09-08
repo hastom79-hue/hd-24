@@ -40,7 +40,8 @@ jobs:
           s=Path('.github/workflows/apply-approved-ui.yml').read_text(encoding='utf-8')
           assert 'hd24-ui-v3.js?v=3' not in s
           assert 'hd24-ui-v3.css?v=3' not in s
-          assert 'safe-kpi-mapping\\.js\\?v=(\\d+)' in s
+          assert 'safe-kpi-mapping' in s and 'ver=m.group(1)' in s
+          assert 'Cannot determine current HD24 runtime cache version' in s
           print('STALE CACHE REINJECTION GATE PASS')
           PY
       - name: Commit approved UI references
