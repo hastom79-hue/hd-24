@@ -188,3 +188,5 @@ jobs:
               raise SystemExit(f'E2E workbook verification failed: {bad[:20]}')
           print(f'BROWSER E2E PASS: July verified on {len(rows)} master rows; Aug-Dec untouched')
           PY
+
+# compatibility retest trigger: sheet XML relationship parser
