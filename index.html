@@ -386,14 +386,32 @@ function resolveMappings(srcWs, masterWs){
 
 // ---------- 안전 XML 패치 (반영) ----------
 async function findSheetXmlPath(zip, name){
-  const wb = await zip.file('xl/workbook.xml').async('string');
-  const esc = name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-  const m = wb.match(new RegExp('<sheet name="'+esc+'"[^>]*r:id="(rId\\d+)"'));
-  if (!m) throw new Error('총괄 시트 없음: '+name);
-  const rel = await zip.file('xl/_rels/workbook.xml.rels').async('string');
-  const x = rel.match(new RegExp('Id="'+m[1]+'"[^>]*Target="([^"]+)"'));
-  if (!x) throw new Error('시트 경로 확인 실패');
-  return 'xl/'+x[1].replace(/^\//,'');
+  const wbFile=zip.file('xl/workbook.xml'),relFile=zip.file('xl/_rels/workbook.xml.rels');
+  if(!wbFile||!relFile)throw new Error('총괄 XLSX 구조 오류: workbook 관계파일 없음');
+  const parser=new DOMParser();
+  const wbDoc=parser.parseFromString(await wbFile.async('string'),'application/xml');
+  if(wbDoc.getElementsByTagName('parsererror').length)throw new Error('workbook.xml 파싱 실패');
+  const sheet=[...wbDoc.getElementsByTagName('sheet')].find(x=>x.getAttribute('name')===name);
+  if(!sheet)throw new Error('총괄 시트 없음: '+name);
+  const rid=sheet.getAttribute('r:id')||sheet.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id');
+  if(!rid)throw new Error('시트 관계 ID 확인 실패: '+name);
+  const relDoc=parser.parseFromString(await relFile.async('string'),'application/xml');
+  if(relDoc.getElementsByTagName('parsererror').length)throw new Error('workbook 관계 XML 파싱 실패');
+  const relation=[...relDoc.getElementsByTagName('Relationship')].find(x=>x.getAttribute('Id')===rid);
+  const target=relation&&relation.getAttribute('Target');
+  if(!target)throw new Error('시트 경로 확인 실패: '+name+' / '+rid);
+  let clean=target.replace(/\\/g,'/');
+  if(clean.startsWith('/')) clean=clean.replace(/^\/+/, '');
+  else if(!clean.startsWith('xl/')) clean='xl/'+clean;
+  const parts=[];
+  for(const part of clean.split('/')){
+    if(!part||part==='.')continue;
+    if(part==='..')parts.pop();
+    else parts.push(part);
+  }
+  const path=parts.join('/');
+  if(!zip.file(path))throw new Error('시트 XML 파일 없음: '+path);
+  return path;
 }
 function fmtVal(v){ return Math.abs(v-Math.round(v))<1e-9 ? String(Math.round(v)) : String(Math.round(v*1e8)/1e8); }
 function replaceCell(xml, ref, val){
