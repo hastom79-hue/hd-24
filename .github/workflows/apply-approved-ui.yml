@@ -14,16 +14,34 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
+          ui=Path('hd24-ui-v3.js').read_text(encoding='utf-8')
+          m=re.search(r"safe-kpi-mapping\.js\?v=(\d+)",ui)
+          if not m:
+              raise SystemExit('Cannot determine current HD24 runtime cache version from hd24-ui-v3.js')
+          ver=m.group(1)
           changed=False
           if 'hd24-ui-v3.css' not in s:
-              s=s.replace('</head>','<link rel="stylesheet" href="./hd24-ui-v3.css?v=3">\n</head>')
+              s=s.replace('</head>',f'<link rel="stylesheet" href="./hd24-ui-v3.css?v={ver}">\n</head>')
               changed=True
           if 'hd24-ui-v3.js' not in s:
-              s=s.replace('</body>','<script src="./hd24-ui-v3.js?v=3"></script>\n</body>')
+              s=s.replace('</body>',f'<script src="./hd24-ui-v3.js?v={ver}"></script>\n</body>')
               changed=True
-          if changed:p.write_text(s,encoding='utf-8')
+          if changed:
+              p.write_text(s,encoding='utf-8')
+          print(f'Approved UI recovery version: v{ver}; changed={changed}')
+          PY
+      - name: Verify no stale v3 reinjection logic
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('.github/workflows/apply-approved-ui.yml').read_text(encoding='utf-8')
+          assert 'hd24-ui-v3.js?v=3' not in s
+          assert 'hd24-ui-v3.css?v=3' not in s
+          assert 'safe-kpi-mapping\\.js\\?v=(\\d+)' in s
+          print('STALE CACHE REINJECTION GATE PASS')
           PY
       - name: Commit approved UI references
         run: |
