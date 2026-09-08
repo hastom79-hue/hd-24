@@ -1,0 +1,46 @@
+name: Add Brazil NVA mapping
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add and validate mapping
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('mapping_brazil.json')
+          data=json.loads(p.read_text(encoding='utf-8'))
+          name='NVA reduction cases reflecting from SWC'
+          entry={
+            'labelRow':150,'actualRow':151,'kpiEn':name,'direction':'상향',
+            'masterRow':122,'kpiKr':'투입 개선 MH\n - 비가치 작업 개선 건수로 관리(자체관리)',
+            'scale':1,'valueFormat':'숫자','unit':'건/년'
+          }
+          found=[m for m in data if m.get('kpiEn')==name]
+          if not found:
+              data.append(entry)
+          elif found[0] != entry:
+              raise SystemExit('existing NVA mapping conflicts with validated entry')
+          if len(data)!=76:
+              raise SystemExit(f'unexpected Brazil static mapping count: {len(data)}')
+          if len({m['masterRow'] for m in data})!=len(data):
+              raise SystemExit('duplicate Brazil masterRow after NVA add')
+          if len({m['kpiEn'].strip().lower() for m in data})!=len(data):
+              raise SystemExit('duplicate Brazil kpiEn after NVA add')
+          p.write_text(json.dumps(data,ensure_ascii=False,indent=1)+'\n',encoding='utf-8')
+          print('BRAZIL_STATIC_MAPPING_PASS',len(data),'runtime_total_expected',77)
+          PY
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add mapping_brazil.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'fix: map Brazil NVA reduction KPI to master row 122 [skip ci]'
+          git push
