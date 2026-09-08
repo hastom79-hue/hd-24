@@ -512,8 +512,8 @@
   "direction": "범위내",
   "masterRow": 82,
   "kpiKr": "RCCP 준수율(M+1변동율)",
-  "scale": 100,
-  "valueFormat": "숫자",
+  "scale": 1,
+  "valueFormat": "퍼센트텍스트",
   "unit": "%"
  },
  {
