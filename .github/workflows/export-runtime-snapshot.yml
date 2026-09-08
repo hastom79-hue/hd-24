@@ -1,0 +1,20 @@
+name: Export runtime snapshot
+on:
+  push:
+    branches: ['tmp/local-realfile-snapshot']
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage runtime files
+        run: |
+          mkdir -p runtime
+          cp index.html safe-kpi-mapping.js hd24-ui-v3.js hd24-ui-v3.css mapping_india.json mapping_brazil.json mapping_ulsan.json runtime/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hd24-runtime-main-snapshot
+          path: runtime/
+          if-no-files-found: error
