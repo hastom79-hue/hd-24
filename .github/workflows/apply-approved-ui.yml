@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Inject approved UI assets
+      - name: Inject and align approved UI assets
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -22,16 +22,21 @@ jobs:
           if not m:
               raise SystemExit('Cannot determine current HD24 runtime cache version from hd24-ui-v3.js')
           ver=m.group(1)
-          changed=False
+          original=s
           if 'hd24-ui-v3.css' not in s:
               s=s.replace('</head>',f'<link rel="stylesheet" href="./hd24-ui-v3.css?v={ver}">\n</head>')
-              changed=True
+          else:
+              s=re.sub(r'hd24-ui-v3\.css\?v=\d+',f'hd24-ui-v3.css?v={ver}',s)
           if 'hd24-ui-v3.js' not in s:
               s=s.replace('</body>',f'<script src="./hd24-ui-v3.js?v={ver}"></script>\n</body>')
-              changed=True
+          else:
+              s=re.sub(r'hd24-ui-v3\.js\?v=\d+',f'hd24-ui-v3.js?v={ver}',s)
+          changed=s!=original
           if changed:
               p.write_text(s,encoding='utf-8')
-          print(f'Approved UI recovery version: v{ver}; changed={changed}')
+          assert f'hd24-ui-v3.css?v={ver}' in s
+          assert f'hd24-ui-v3.js?v={ver}' in s
+          print(f'Approved UI version alignment: v{ver}; changed={changed}')
           PY
       - name: Verify no stale v3 reinjection logic
         run: |
@@ -44,7 +49,9 @@ jobs:
           assert stale_css not in s
           assert 'safe-kpi-mapping' in s and 'ver=m.group(1)' in s
           assert 'Cannot determine current HD24 runtime cache version' in s
-          print('STALE CACHE REINJECTION GATE PASS')
+          assert "re.sub(r'hd24-ui-v3\\.css\\?v=\\d+'" in s
+          assert "re.sub(r'hd24-ui-v3\\.js\\?v=\\d+'" in s
+          print('STALE CACHE REINJECTION/ALIGNMENT GATE PASS')
           PY
       - name: Commit approved UI references
         run: |
