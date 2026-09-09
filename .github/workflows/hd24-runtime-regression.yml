@@ -20,6 +20,7 @@ jobs:
           index=Path('index.html').read_text(encoding='utf-8')
           ui=Path('hd24-ui-v3.js').read_text(encoding='utf-8')
           safe=Path('safe-kpi-mapping.js').read_text(encoding='utf-8')
+          health=Path('runtime-health.html').read_text(encoding='utf-8')
           india=json.loads(Path('mapping_india.json').read_text(encoding='utf-8'))
           brazil=json.loads(Path('mapping_brazil.json').read_text(encoding='utf-8'))
           recovery=Path('.github/workflows/apply-approved-ui.yml').read_text(encoding='utf-8')
@@ -44,6 +45,18 @@ jobs:
           assert "btn.addEventListener('click',safeReflect,true)" in safe, 'safe capture listener missing'
           assert 'window.hd24SafeReflectReady=true' in safe, 'safe readiness install missing'
           assert "if(btn){btn.addEventListener('click',safeReflect,true);btn.dataset.safeReflectReady='1';window.hd24SafeReflectReady=true;}else{window.hd24SafeReflectReady=false;}" in safe, 'null-safe reflect install guard missing'
+
+          # Required Excel runtime dependencies must be fail-closed with a secondary CDN fallback.
+          assert "['XLSX','https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js']" in ui, 'SheetJS fallback guard missing'
+          assert "['JSZip','https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js']" in ui, 'JSZip fallback guard missing'
+          assert "['ExcelJS','https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js']" in ui, 'ExcelJS fallback guard missing'
+          assert 'await ensureDeps()' in ui, 'dependency verification no longer precedes safe runtime load'
+          assert "throw new Error('필수 라이브러리 로드 실패: '+missing.join(', '))" in ui, 'dependency fail-closed terminal gate missing'
+          assert "if(x)x.disabled=true" in ui, 'reflect button fail-closed disable path missing'
+          assert "primary.XLSX?'cdnjs':'fallback'" in health, 'runtime health is not fallback-aware for XLSX'
+          assert "primary.JSZip?'cdnjs':'fallback'" in health, 'runtime health is not fallback-aware for JSZip'
+          assert "primary.ExcelJS?'cdnjs':'fallback'" in health, 'runtime health is not fallback-aware for ExcelJS'
+          assert "./refresh-runtime.html?from_health=" in health, 'runtime health entry bypasses cache refresh helper'
 
           # Critical safety guards must remain present.
           required=[
@@ -105,5 +118,5 @@ jobs:
           assert "if m.get('kpiEn')==ltir: src_unit='%'" in brazil_e2e, 'Brazil E2E LTIR percent source-unit fixture missing'
           assert "if m.get('kpiEn')==ltir: master_unit='%'" in brazil_e2e, 'Brazil E2E LTIR percent master-unit fixture missing'
 
-          print(f'HD24 RUNTIME REGRESSION PASS: cache=v{cache_ver}, runtime=v{runtime_ver}, India=76+1 runtime, Brazil=76+1 runtime, sheet-xml=DOM')
+          print(f'HD24 RUNTIME REGRESSION PASS: cache=v{cache_ver}, runtime=v{runtime_ver}, India=76+1 runtime, Brazil=76+1 runtime, sheet-xml=DOM, deps=fallback-guarded')
           PY
