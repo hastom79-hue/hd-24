@@ -23,6 +23,8 @@ jobs:
           india=json.loads(Path('mapping_india.json').read_text(encoding='utf-8'))
           brazil=json.loads(Path('mapping_brazil.json').read_text(encoding='utf-8'))
           recovery=Path('.github/workflows/apply-approved-ui.yml').read_text(encoding='utf-8')
+          india_e2e=Path('.github/workflows/hd24-browser-e2e.yml').read_text(encoding='utf-8')
+          brazil_e2e=Path('.github/workflows/hd24-browser-e2e-brazil.yml').read_text(encoding='utf-8')
 
           # Cache/runtime chain: cache-bust revision and semantic runtime version are separate concepts.
           m=re.search(r'safe-kpi-mapping\.js\?v=(\d+)',ui)
@@ -91,6 +93,17 @@ jobs:
           stale_css='hd24-ui-v3.css?v='+'3'
           assert stale_js not in recovery and stale_css not in recovery, 'stale v3 recovery path reintroduced'
           assert 'ver=m.group(1)' in recovery, 'dynamic recovery version extraction missing'
+
+          # Permanent Browser E2E must retain the real-risk fixtures and CSS trigger coverage.
+          for label,text in [('India',india_e2e),('Brazil',brazil_e2e)]:
+              assert "'hd24-ui-v3.css'" in text, f'{label} E2E does not trigger on UI CSS changes'
+              assert 'master_future_contaminated.xlsx' in text, f'{label} E2E future-month negative fixture missing'
+              assert "assert '미래월 Actual'" in text, f'{label} E2E fail-closed future-month assertion missing'
+              assert 'assert not neg_downloads' in text, f'{label} E2E blocked-download assertion missing'
+          assert "if name=='ppm': src_unit='Nos.'" in india_e2e, 'India E2E PPM Nos. source-unit exception fixture missing'
+          assert "if name=='5s audit score': src_unit='%'" in india_e2e, 'India E2E 5S percent source-unit exception fixture missing'
+          assert "if m.get('kpiEn')==ltir: src_unit='%'" in brazil_e2e, 'Brazil E2E LTIR percent source-unit fixture missing'
+          assert "if m.get('kpiEn')==ltir: master_unit='%'" in brazil_e2e, 'Brazil E2E LTIR percent master-unit fixture missing'
 
           print(f'HD24 RUNTIME REGRESSION PASS: cache=v{cache_ver}, runtime=v{runtime_ver}, India=76+1 runtime, Brazil=76+1 runtime, sheet-xml=DOM')
           PY
