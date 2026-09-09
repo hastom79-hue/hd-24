@@ -28,7 +28,8 @@ jobs:
           m=re.search(r'safe-kpi-mapping\.js\?v=(\d+)',ui)
           assert m, 'safe runtime cache version missing from hd24-ui-v3.js'
           cache_ver=m.group(1)
-          assert f'hd24-ui-v3.js?v={cache_ver}' in index, 'index/UI cache version mismatch'
+          assert f'hd24-ui-v3.js?v={cache_ver}' in index, 'index/UI JS cache version mismatch'
+          assert f'hd24-ui-v3.css?v={cache_ver}' in index, 'index/UI CSS cache version mismatch'
           sm=re.search(r'안전 실적 반영 v(\d+) 시작',safe)
           assert sm, 'safe runtime semantic banner/version missing'
           runtime_ver=sm.group(1)
