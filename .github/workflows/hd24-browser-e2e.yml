@@ -43,7 +43,7 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          from openpyxl import Workbook
+          from openpyxl import Workbook, load_workbook
 
           root=Path('.')
           out=root/'qa'/'e2e-runtime'
@@ -66,8 +66,12 @@ jobs:
           for i,h in enumerate(months,start=15): sw.cell(11,i,h)
           for m in mapping:
               lr=int(m['labelRow']); ar=lr+1
+              name=str(m['kpiEn']).strip().lower()
               sw.cell(lr,7,m['kpiEn'])
-              sw.cell(lr,9,m.get('unit') or '')
+              src_unit=m.get('unit') or ''
+              if name=='ppm': src_unit='Nos.'
+              if name=='5s audit score': src_unit='%'
+              sw.cell(lr,9,src_unit)
               scale=float(m.get('scale') or 1)
               raw=10.0/scale
               for mo,c in enumerate(range(15,27),start=1):
@@ -86,12 +90,21 @@ jobs:
                   if mo<=6: mw.cell(r,c,10.0)
           master.save(out/'master.xlsx')
 
+          # Negative fixture: pre-existing future-month numeric value must block output.
+          bad=load_workbook(out/'master.xlsx')
+          bw=bad['인도법인 KPI(26년 보고용)']
+          first_row=min(int(m['masterRow']) for m in mapping)
+          bw.cell(first_row,34,999.0)  # Aug-26, beyond July source horizon
+          bad.save(out/'master_future_contaminated.xlsx')
+
           (out/'expected.json').write_text(json.dumps({
               'sheet':'인도법인 KPI(26년 보고용)',
               'rows':sorted({int(m['masterRow']) for m in mapping}),
               'expectedJuly':10.0,
               'mappingCount':len(mapping)
           },ensure_ascii=False,indent=2),encoding='utf-8')
+          assert any(str(m.get('kpiEn','')).strip().lower()=='ppm' for m in mapping)
+          assert any(str(m.get('kpiEn','')).strip().lower()=='5s audit score' for m in mapping)
           print(f'Fixture mappings: {len(mapping)}')
           PY
 
@@ -106,7 +119,7 @@ jobs:
           cat /tmp/hd24-http.log
           exit 1
 
-      - name: Browser file-select -> reflect -> download E2E
+      - name: Browser future-month block then clean reflect/download E2E
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -119,6 +132,27 @@ jobs:
 
           with sync_playwright() as p:
               browser=p.chromium.launch(headless=True)
+
+              # Negative case: future actual already populated in master must fail closed.
+              neg=browser.new_page(accept_downloads=True)
+              neg_downloads=[]
+              neg.on('download', lambda dl: neg_downloads.append(dl))
+              neg.goto('http://127.0.0.1:8765/index.html', wait_until='networkidle', timeout=120000)
+              neg.wait_for_function('window.hd24SafeReflectReady === true', timeout=30000)
+              neg.locator('#srcFile').set_input_files(str(fixture/'india_source.xlsx'))
+              neg.locator('#masterFile').set_input_files(str(fixture/'master_future_contaminated.xlsx'))
+              neg.wait_for_function("!document.getElementById('btnReflect').disabled", timeout=30000)
+              neg.locator('#btnReflect').click()
+              neg.wait_for_function("document.getElementById('log').innerText.includes('오류:')", timeout=30000)
+              neg_log=neg.locator('#log').inner_text()
+              print('=== HD24 INDIA NEGATIVE LOG ===')
+              print(neg_log)
+              assert '미래월 Actual' in neg_log, 'Future-month contamination did not fail closed'
+              neg.wait_for_timeout(500)
+              assert not neg_downloads, 'Blocked future-month case unexpectedly downloaded a workbook'
+              neg.close()
+
+              # Positive case: clean master must still reflect and download.
               page=browser.new_page(accept_downloads=True)
               console_errors=[]
               downloads=[]
@@ -151,6 +185,7 @@ jobs:
               target=download_dir/dl.suggested_filename
               dl.save_as(str(target))
               assert '안전 실적 반영 v15 시작' in log
+              assert '안전 매핑 검증: 77/77건' in log
               assert '반영 후 재검증 PASS' in log
               assert '미래월 0셀' in log
               assert '과거 기존값 덮어쓰기 0셀' in log
