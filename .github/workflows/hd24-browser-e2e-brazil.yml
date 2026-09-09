@@ -7,6 +7,7 @@ on:
       - 'index.html'
       - 'safe-kpi-mapping.js'
       - 'hd24-ui-v3.js'
+      - 'hd24-ui-v3.css'
       - 'mapping_brazil.json'
       - '.github/workflows/hd24-browser-e2e-brazil.yml'
   pull_request:
@@ -14,6 +15,7 @@ on:
       - 'index.html'
       - 'safe-kpi-mapping.js'
       - 'hd24-ui-v3.js'
+      - 'hd24-ui-v3.css'
       - 'mapping_brazil.json'
       - '.github/workflows/hd24-browser-e2e-brazil.yml'
   workflow_dispatch:
@@ -95,7 +97,6 @@ jobs:
                   if mo<=6: mw.cell(r,c,10.0)
           master.save(out/'master.xlsx')
 
-          # Negative fixture: any numeric actual beyond July source horizon must fail closed.
           bad=load_workbook(out/'master.xlsx')
           bw=bad['브라질법인 KPI(26년 보고용)']
           first_row=min(int(m['masterRow']) for m in mapping)
@@ -138,8 +139,6 @@ jobs:
 
           with sync_playwright() as p:
               browser=p.chromium.launch(headless=True)
-
-              # Negative case first.
               neg=browser.new_page(accept_downloads=True)
               neg_downloads=[]
               neg.on('download', lambda dl: neg_downloads.append(dl))
@@ -160,7 +159,6 @@ jobs:
               assert not neg_downloads, 'Brazil blocked future-month case unexpectedly downloaded a workbook'
               neg.close()
 
-              # Clean positive case.
               page=browser.new_page(accept_downloads=True)
               console_errors=[]
               downloads=[]
@@ -171,12 +169,10 @@ jobs:
               page.locator('#plantSelect').select_option('brazil')
               page.wait_for_function("document.getElementById('log').innerText.includes('브라질 매핑 로드: 76건')", timeout=30000)
               assert page.locator('#btnReflect').is_disabled(), 'Brazil reflect must stay disabled before files are loaded'
-
               page.locator('#srcFile').set_input_files(str(fixture/'brazil_source.xlsx'))
               page.locator('#masterFile').set_input_files(str(fixture/'master.xlsx'))
               page.wait_for_function("!document.getElementById('btnReflect').disabled", timeout=30000)
               assert page.locator('#btnReflect').get_attribute('data-safe-reflect-ready')=='1', 'Safe reflect readiness marker missing'
-
               page.locator('#btnReflect').click()
               page.wait_for_function("""() => {
                 const t=document.getElementById('log').innerText;
@@ -188,7 +184,6 @@ jobs:
               print('=== END HD24 BRAZIL BROWSER LOG ===')
               if '오류:' in log and '반영 후 재검증 PASS' not in log:
                   raise AssertionError('HD24 Brazil reflect failed in browser:\n'+log)
-
               page.wait_for_timeout(1500)
               assert downloads, 'Brazil reflect reported PASS but no browser download event was emitted'
               dl=downloads[0]
