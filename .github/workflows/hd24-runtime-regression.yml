@@ -24,12 +24,14 @@ jobs:
           brazil=json.loads(Path('mapping_brazil.json').read_text(encoding='utf-8'))
           recovery=Path('.github/workflows/apply-approved-ui.yml').read_text(encoding='utf-8')
 
-          # Cache/runtime chain must be internally consistent.
+          # Cache/runtime chain: cache-bust revision and semantic runtime version are separate concepts.
           m=re.search(r'safe-kpi-mapping\.js\?v=(\d+)',ui)
-          assert m, 'safe runtime version missing from hd24-ui-v3.js'
-          ver=m.group(1)
-          assert f'hd24-ui-v3.js?v={ver}' in index, 'index/UI cache version mismatch'
-          assert f'안전 실적 반영 v{ver} 시작' in safe, 'safe runtime banner/version mismatch'
+          assert m, 'safe runtime cache version missing from hd24-ui-v3.js'
+          cache_ver=m.group(1)
+          assert f'hd24-ui-v3.js?v={cache_ver}' in index, 'index/UI cache version mismatch'
+          sm=re.search(r'안전 실적 반영 v(\d+) 시작',safe)
+          assert sm, 'safe runtime semantic banner/version missing'
+          runtime_ver=sm.group(1)
 
           # Reflect path is fail-closed and has no legacy bubble handler.
           assert "document.getElementById('btnReflect').addEventListener('click'" not in index, 'legacy reflect click handler reintroduced'
@@ -38,6 +40,7 @@ jobs:
           assert 's.onerror=' in ui, 'safe loader onerror fail-closed path missing'
           assert "btn.addEventListener('click',safeReflect,true)" in safe, 'safe capture listener missing'
           assert 'window.hd24SafeReflectReady=true' in safe, 'safe readiness install missing'
+          assert "if(btn){btn.addEventListener('click',safeReflect,true);btn.dataset.safeReflectReady='1';window.hd24SafeReflectReady=true;}else{window.hd24SafeReflectReady=false;}" in safe, 'null-safe reflect install guard missing'
 
           # Critical safety guards must remain present.
           required=[
@@ -51,6 +54,11 @@ jobs:
               '반영 건수 불일치',
               'displayPrecisionEqual',
               'validateUnit(srcWs,sr.row,m,masterWs,mr.row)',
+              "currentPlant==='india'&&name==='ppm'&&sf==='count'&&mf==='ppm'",
+              "currentPlant==='india'&&name==='5s audit score'&&sf==='pct'&&mf==='score'",
+              "LTIR (Lost Time Incident Rate)",
+              'masterFutureContamination',
+              'masterInfo.row+1',
           ]
           for token in required:
               assert token in safe, f'missing safety invariant: {token}'
@@ -77,11 +85,11 @@ jobs:
           rccp=[x for x in brazil if x.get('kpiEn')=='M+1 Production Volume Variation Rate']
           assert len(rccp)==1 and rccp[0]['scale']==1 and rccp[0]['valueFormat']=='퍼센트텍스트', 'Brazil RCCP string-percent semantics regression'
 
-          # Recovery workflow must derive active version, never hard-code old v3.
+          # Recovery workflow must derive active cache version, never hard-code old v3.
           stale_js='hd24-ui-v3.js?v='+'3'
           stale_css='hd24-ui-v3.css?v='+'3'
           assert stale_js not in recovery and stale_css not in recovery, 'stale v3 recovery path reintroduced'
           assert 'ver=m.group(1)' in recovery, 'dynamic recovery version extraction missing'
 
-          print(f'HD24 RUNTIME REGRESSION PASS: runtime=v{ver}, India=76+1 runtime, Brazil=76+1 runtime, sheet-xml=DOM')
+          print(f'HD24 RUNTIME REGRESSION PASS: cache=v{cache_ver}, runtime=v{runtime_ver}, India=76+1 runtime, Brazil=76+1 runtime, sheet-xml=DOM')
           PY
