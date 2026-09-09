@@ -43,7 +43,7 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          from openpyxl import Workbook
+          from openpyxl import Workbook, load_workbook
 
           root=Path('.')
           out=root/'qa'/'e2e-runtime-brazil'
@@ -60,6 +60,7 @@ jobs:
               })
 
           months=['Jan-26','Feb-26','Mar-26','Apr-26','May-26','Jun-26','Jul-26','Aug-26','Sep-26','Oct-26','Nov-26','Dec-26']
+          ltir='LTIR (Lost Time Incident Rate)'
 
           src=Workbook()
           sw=src.active
@@ -68,7 +69,9 @@ jobs:
           for m in mapping:
               lr=int(m['labelRow']); ar=lr+1
               sw.cell(lr,6,m['kpiEn'])
-              sw.cell(lr,10,m.get('unit') or '')
+              src_unit=m.get('unit') or ''
+              if m.get('kpiEn')==ltir: src_unit='%'
+              sw.cell(lr,10,src_unit)
               scale=float(m.get('scale') or 1)
               if m.get('valueFormat')=='퍼센트텍스트':
                   raw='+10%'
@@ -85,13 +88,23 @@ jobs:
           for m in mapping:
               r=int(m['masterRow'])
               mw.cell(r,13,m['kpiKr'])
-              mw.cell(r,26,m.get('unit') or '')
+              master_unit=m.get('unit') or ''
+              if m.get('kpiEn')==ltir: master_unit='%'
+              mw.cell(r,26,master_unit)
               for mo,c in enumerate(range(27,39),start=1):
                   if mo<=6: mw.cell(r,c,10.0)
           master.save(out/'master.xlsx')
 
+          # Negative fixture: any numeric actual beyond July source horizon must fail closed.
+          bad=load_workbook(out/'master.xlsx')
+          bw=bad['브라질법인 KPI(26년 보고용)']
+          first_row=min(int(m['masterRow']) for m in mapping)
+          bw.cell(first_row,34,999.0)
+          bad.save(out/'master_future_contaminated.xlsx')
+
           rows=sorted({int(m['masterRow']) for m in mapping})
           assert len(rows)==len(mapping), 'Synthetic Brazil fixture has duplicate master rows'
+          assert any(m.get('kpiEn')==ltir for m in mapping), 'LTIR mapping missing from Brazil fixture'
           (out/'expected.json').write_text(json.dumps({
               'sheet':'브라질법인 KPI(26년 보고용)',
               'rows':rows,
@@ -112,7 +125,7 @@ jobs:
           cat /tmp/hd24-http-brazil.log
           exit 1
 
-      - name: Brazil browser file-select -> reflect -> download E2E
+      - name: Brazil future-month block then clean reflect/download E2E
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -125,6 +138,29 @@ jobs:
 
           with sync_playwright() as p:
               browser=p.chromium.launch(headless=True)
+
+              # Negative case first.
+              neg=browser.new_page(accept_downloads=True)
+              neg_downloads=[]
+              neg.on('download', lambda dl: neg_downloads.append(dl))
+              neg.goto('http://127.0.0.1:8766/index.html', wait_until='networkidle', timeout=120000)
+              neg.wait_for_function('window.hd24SafeReflectReady === true', timeout=30000)
+              neg.locator('#plantSelect').select_option('brazil')
+              neg.wait_for_function("document.getElementById('log').innerText.includes('브라질 매핑 로드: 76건')", timeout=30000)
+              neg.locator('#srcFile').set_input_files(str(fixture/'brazil_source.xlsx'))
+              neg.locator('#masterFile').set_input_files(str(fixture/'master_future_contaminated.xlsx'))
+              neg.wait_for_function("!document.getElementById('btnReflect').disabled", timeout=30000)
+              neg.locator('#btnReflect').click()
+              neg.wait_for_function("document.getElementById('log').innerText.includes('오류:')", timeout=30000)
+              neg_log=neg.locator('#log').inner_text()
+              print('=== HD24 BRAZIL NEGATIVE LOG ===')
+              print(neg_log)
+              assert '미래월 Actual' in neg_log, 'Brazil future-month contamination did not fail closed'
+              neg.wait_for_timeout(500)
+              assert not neg_downloads, 'Brazil blocked future-month case unexpectedly downloaded a workbook'
+              neg.close()
+
+              # Clean positive case.
               page=browser.new_page(accept_downloads=True)
               console_errors=[]
               downloads=[]
