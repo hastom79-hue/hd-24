@@ -36,7 +36,19 @@ jobs:
               p.write_text(s,encoding='utf-8')
           assert f'hd24-ui-v3.css?v={ver}' in s
           assert f'hd24-ui-v3.js?v={ver}' in s
-          print(f'Approved UI version alignment: v{ver}; changed={changed}')
+
+          rp=Path('refresh-runtime.html')
+          rs=rp.read_text(encoding='utf-8')
+          r0=rs
+          rs=re.sub(r'hd24-ui-v3\.css\?v=\d+',f'hd24-ui-v3.css?v={ver}',rs)
+          rs=re.sub(r'hd24-ui-v3\.js\?v=\d+',f'hd24-ui-v3.js?v={ver}',rs)
+          rs=re.sub(r'safe-kpi-mapping\.js\?v=\d+',f'safe-kpi-mapping.js?v={ver}',rs)
+          if rs!=r0:
+              rp.write_text(rs,encoding='utf-8')
+          assert f'hd24-ui-v3.css?v={ver}' in rs
+          assert f'hd24-ui-v3.js?v={ver}' in rs
+          assert f'safe-kpi-mapping.js?v={ver}' in rs
+          print(f'Approved UI + runtime refresh version alignment: v{ver}; index_changed={changed}; refresh_changed={rs!=r0}')
           PY
       - name: Verify no stale v3 reinjection logic
         run: |
@@ -51,6 +63,8 @@ jobs:
           assert 'Cannot determine current HD24 runtime cache version' in s
           assert "re.sub(r'hd24-ui-v3\\.css\\?v=\\d+'" in s
           assert "re.sub(r'hd24-ui-v3\\.js\\?v=\\d+'" in s
+          assert "re.sub(r'safe-kpi-mapping\\.js\\?v=\\d+'" in s
+          assert "Path('refresh-runtime.html')" in s
           print('STALE CACHE REINJECTION/ALIGNMENT GATE PASS')
           PY
       - name: Commit approved UI references
@@ -58,6 +72,6 @@ jobs:
           if git diff --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html
+          git add index.html refresh-runtime.html
           git commit -m "feat: apply approved UI references"
           git push
