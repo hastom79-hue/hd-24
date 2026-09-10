@@ -33,3 +33,23 @@ This FAIL is intentional and accurately exposes the remaining stale outer-refere
 
 ## Remaining blocker
 GitHub Actions hosted runner still does not start workflow steps (`steps=null` / `steps=[]`). Do not classify this as a test-code failure. Apply UI cannot automatically align outer cache references until execution resumes, or index is safely updated through a full-content-preserving edit.
+
+## Follow-up execution verification — 08:25 KST
+- Confirmed current main HEAD: `535a37c8a8ad87415b968a77506452c48d15d759`.
+- Pages run `34537563850` for this HEAD completed with `success`.
+- Explicitly re-ran failed Apply workflow `34537564630`.
+  - attempt: 2
+  - job: `103086816674`
+  - result: `completed / failure`
+  - steps: `[]` / `steps=null`
+  - conclusion: Apply logic did not start.
+- Explicitly re-ran failed Runtime Regression workflow `34537564619`.
+  - attempt: 2
+  - job: `103086862669`
+  - result: `completed / failure`
+  - steps: `[]` / `steps=null`
+  - conclusion: regression assertions did not start.
+- Two independent reruns therefore reconfirm the GitHub Actions execution-layer outage; these are not application/test assertion failures.
+- Pages deployment remains healthy while custom Actions execution remains unavailable.
+- Outer cache-chain alignment remains pending: index CSS v3 / UI JS v15 / safe runtime v18.
+- No unsafe whole-file rewrite of `index.html` was attempted.
