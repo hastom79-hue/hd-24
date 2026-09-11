@@ -53,3 +53,14 @@ GitHub Actions hosted runner still does not start workflow steps (`steps=null` /
 - Pages deployment remains healthy while custom Actions execution remains unavailable.
 - Outer cache-chain alignment remains pending: index CSS v3 / UI JS v15 / safe runtime v18.
 - No unsafe whole-file rewrite of `index.html` was attempted.
+
+## Follow-up execution verification — 09:44 KST
+- Confirmed main HEAD at start of this slice: `9981bb32b9cc7f45d84a1666abff64305dc04290`.
+- Pages run `34542258796` for this HEAD completed `success`.
+- Runtime Regression run `34542259332` produced job `103087267098` with `steps=null`; regression code did not execute.
+- Apply approved UI run `34542259344` produced job `103087266982` with `steps=null`; alignment code did not execute.
+- Revalidated production entrypoint directly: `index.html` still loads `hd24-ui-v3.css?v=3` and `hd24-ui-v3.js?v=15`.
+- Revalidated refresh helper: it force-reloads CSS v3 / UI JS v15 / safe runtime v18, so it cannot repair the outer-reference mismatch by itself.
+- Revalidated permanent regression gate: jsDelivr fallback assertions for XLSX / JSZip / ExcelJS, dependency fail-closed behavior, and fallback-aware runtime-health checks are already pinned. CDN fallback is therefore not the remaining blocker.
+- Remaining application-side defect remains the stale outer cache chain: CSS v3 / UI JS v15 / safe runtime v18.
+- No unsafe full-content `index.html` rewrite was attempted.
