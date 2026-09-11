@@ -77,3 +77,15 @@ GitHub Actions hosted runner still does not start workflow steps (`steps=null` /
 - GitHub Pages continues to deploy successfully while custom Actions jobs remain unable to start.
 - Outer cache-chain alignment remains pending: CSS v3 / UI JS v15 / safe runtime v18.
 - No unsafe whole-file rewrite of `index.html` was attempted.
+
+## Follow-up execution verification — 10:08 KST
+- Confirmed latest main HEAD: `9143e0a885048dadaeb46c068d2a1850623c95c8` (`docs: append latest runner recovery verification`).
+- Pages run `34549222673` for this HEAD completed `success`.
+- Runtime Regression run `34549223727` produced job `103108380791`, `completed / failure`, `steps=null`; regression assertions did not start.
+- Apply approved UI run `34549223714` produced job `103108380627`, `completed / failure`, `steps=null`; alignment logic did not start.
+- Direct file verification on the exact latest HEAD reconfirmed the active browser chain:
+  - `index.html` remains on outer UI references CSS v3 / UI JS v15.
+  - `refresh-runtime.html` force-reloads CSS v3 / UI JS v15 / safe runtime v18.
+  - `hd24-ui-v3.js` still loads `safe-kpi-mapping.js?v=18` and retains jsDelivr fallback loading for XLSX / JSZip / ExcelJS plus fail-closed button disable behavior.
+- Therefore Pages deployment remains healthy, dependency fallback remains present, and the single known application-side alignment defect remains the stale outer cache chain.
+- No unsafe whole-file rewrite of `index.html` was attempted.
