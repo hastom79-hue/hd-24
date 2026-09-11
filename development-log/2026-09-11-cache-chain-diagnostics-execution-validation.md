@@ -64,3 +64,16 @@ GitHub Actions hosted runner still does not start workflow steps (`steps=null` /
 - Revalidated permanent regression gate: jsDelivr fallback assertions for XLSX / JSZip / ExcelJS, dependency fail-closed behavior, and fallback-aware runtime-health checks are already pinned. CDN fallback is therefore not the remaining blocker.
 - Remaining application-side defect remains the stale outer cache chain: CSS v3 / UI JS v15 / safe runtime v18.
 - No unsafe full-content `index.html` rewrite was attempted.
+
+## Follow-up execution verification — 10:01 KST
+- Confirmed latest main HEAD: `2ea2d4b656bc46c79aa028c1fa38fe68ee09dc83`.
+- Pages run `34547893711` for this HEAD completed `success`.
+- Latest-head Runtime Regression run `34547894723` produced job `103104352678` with `steps=null`; regression assertions did not start.
+- Latest-head Apply approved UI run `34547894775` produced job `103104352709` with `steps=null`; alignment logic did not start.
+- Re-ran the immediately preceding failed Regression and Apply jobs as an independent runner recovery probe.
+  - Regression retry produced latest-attempt job `103107887298`, `completed / failure`, `steps=null`.
+  - Apply retry produced latest-attempt job `103107920684`, `completed / failure`, `steps=null`.
+- The retry API accepted the reruns, but both jobs again failed before any workflow step existed; this reconfirms an Actions execution-layer outage rather than test/assertion failure.
+- GitHub Pages continues to deploy successfully while custom Actions jobs remain unable to start.
+- Outer cache-chain alignment remains pending: CSS v3 / UI JS v15 / safe runtime v18.
+- No unsafe whole-file rewrite of `index.html` was attempted.
