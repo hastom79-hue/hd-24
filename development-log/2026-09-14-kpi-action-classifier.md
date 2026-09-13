@@ -14,7 +14,7 @@
 - 향후 HTML 분석메일은 자동분석 결과와 담당자 입력 미달사유/만회계획을 함께 사용한다.
 
 ## 이번 구현
-### 1. 신규 모듈
+### 1. 신규 분류 모듈
 - 파일: `kpi-action-classifier.js`
 - 목적: 기존 `safe-kpi-mapping.js`의 안전반영 로직과 후속조치 분석 로직을 분리하여 회귀위험을 낮춘다.
 - 구현 함수:
@@ -44,8 +44,33 @@
 
 정상/개선 KPI에는 입력 프롬프트를 생성하지 않는다.
 
+### 4. 실제 최종관리파일 구조 점검
+Library에서 접근 가능한 기존 최종관리파일 구조를 실제 확인했다.
+- 대상 시트: `인도법인 KPI(26년 보고용)`, `브라질법인 KPI(26년 보고용)`
+- 헤더행: 4행
+- KPI명: M열 (`표준 성과지표(KPIs)`)
+- 목표: Y열
+- 단위: Z열
+- 월실적: AA~AL열 (1월~12월)
+- AM열은 대부분 비어 있으나 1행에 계산값이 있으므로 덮어쓰기 금지
+- 후속조치 신규 열은 기존 데이터 뒤인 AN열(40번째 열)부터 생성하는 것이 안전함
+- 단, 런타임에서는 M/Y/AA~AL을 무조건 하드코딩하지 않고 헤더명을 재탐색하도록 설계함
+
+### 5. 신규 Workbook 후처리 모듈
+- 파일: `kpi-action-workbook.js`
+- 주요 안전규칙:
+  - KPI 헤더 `표준 성과지표(KPIs)` 재탐색
+  - `목표/단위` 헤더 재탐색
+  - 1~12월 헤더 전수검증 및 중복월 차단
+  - 기존 마지막 사용열 이후에 `미달사유 / 만회계획` 열 생성
+  - KPI명 문자열은 수정하지 않고 fill/font 서식만 변경
+  - 이상 KPI에만 담당자 입력 프롬프트 생성
+  - 안전매핑 결과의 `masterRow` 및 `direction`을 그대로 사용
+  - 중복 masterRow 발생 시 후속조치 생성 중단
+  - KPI명 원문 변경 여부를 처리 후 재검증
+
 ## 검증
-### 저장소 테스트 추가
+### 분류 모듈 저장소 테스트
 - 파일: `tests/kpi-action-classifier.test.js`
 - 검증 케이스:
   1. 상향지표 6개월 연속 악화 + 당월 목표미달
@@ -57,23 +82,38 @@
   7. 이상 KPI에 미달사유/만회계획 입력프롬프트 생성
   8. 방향성 미확정 시 임의 악화판정 금지
 
+### Workbook 후처리 저장소 테스트
+- 파일: `tests/kpi-action-workbook.test.js`
+- 검증 케이스:
+  1. KPI/목표/1~12월 헤더 동적 탐색
+  2. 기존 AM열을 덮지 않고 AN열(40)에 신규 열 생성
+  3. KPI명 문자열 원문 보존
+  4. 상향/하향 KPI 시각서식 적용
+  5. 이상 KPI 담당자 입력 프롬프트 생성
+
 ### 로컬 실행 결과
-- Node 실행: PASS
-- 출력: `PASS kpi-action-classifier`
+- `kpi-action-classifier`: PASS
+- `kpi-action-workbook`: PASS
+- 확인된 출력:
+  - `PASS kpi-action-classifier`
+  - `PASS kpi-action-workbook`
 
 ## 커밋
 - `7deb689dccc4aad1d201d66e059cfd8e268604b9` — `feat: add KPI action trend classifier`
 - `0dadd8caec19c9e106548d5a300e3b109b1b954e` — `test: cover KPI miss and worsening classifications`
+- `5de11241a530f7cbc6f2e21a414e8393f715d8d1` — `feat: add safe KPI action workbook postprocessor`
+- `00d929167ad75e2c3d7d37e1a301894cb879f552` — `test: cover KPI action workbook postprocessor`
 
 ## 현재 미완료 / 다음 단계
-- 신규 classifier는 현재 독립 모듈로 추가되었으며 아직 `index.html` 또는 안전반영 완료 이벤트에 연결하지 않았다.
+- classifier와 workbook 후처리기는 현재 독립 모듈로 구현/테스트 완료했으나 아직 `index.html` 또는 안전반영 완료 이벤트에 연결하지 않았다.
 - 이유: 현재 `index.html`은 CSS v3 / UI JS v15 / safe runtime v18 캐시체인 불일치가 남아 있고, 기존 안전반영부를 대규모 전체파일 치환하여 회귀시키지 않기 위해 통합을 분리한다.
+- Library 검색에서 사용자가 과거에 최종 기준으로 지정한 정확한 파일명 `총괄파일_인도7월반영_최종검증본 (4)(3).xlsx`는 이번 검색에서 직접 식별되지 않았고, 접근 가능한 인접 버전 구조를 런타임 컬럼 설계 확인 용도로만 사용했다. 권위 데이터값 대체에는 사용하지 않는다.
 - 다음 구현 단계:
   1. 안전반영 성공 직후 생성된 최종관리파일의 KPI별 월별 실적/목표/방향을 classifier에 전달
-  2. 결과파일에 `미달사유 / 만회계획` 열 생성
-  3. KPI명 원문 보존 + 시각서식만 적용
-  4. 결과파일 저장 전 신규 열/서식/데이터 무결성 재검증
-  5. HTML 분석메일 Preview가 동일 classifier 결과를 사용하도록 단일 판정원칙 유지
+  2. ExcelJS 결과 workbook에 후속조치 모듈 실행
+  3. 결과파일 저장 전 신규 열/서식/데이터 무결성 재검증
+  4. HTML 분석메일 Preview가 동일 classifier 결과를 사용하도록 단일 판정원칙 유지
+  5. 실제 권위 원본/최종관리파일 조합으로 브라우저 E2E 수행
 
 ## 완료판정 원칙
 - 코드 작성만으로 완료 처리하지 않는다.
