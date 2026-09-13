@@ -89,3 +89,17 @@ GitHub Actions hosted runner still does not start workflow steps (`steps=null` /
   - `hd24-ui-v3.js` still loads `safe-kpi-mapping.js?v=18` and retains jsDelivr fallback loading for XLSX / JSZip / ExcelJS plus fail-closed button disable behavior.
 - Therefore Pages deployment remains healthy, dependency fallback remains present, and the single known application-side alignment defect remains the stale outer cache chain.
 - No unsafe whole-file rewrite of `index.html` was attempted.
+
+## Follow-up execution verification — 2026-09-14 KST
+- Confirmed latest main HEAD before this log update: `ad2c1067cb4d0401a9bb486fb435a46b7817f399`.
+- Revalidated active production source chain on main:
+  - `index.html`: CSS `v=3`, UI JS `v=15`.
+  - `hd24-ui-v3.js`: safe runtime `v=18`.
+- Revalidated Runtime Regression Gate logic: it derives `cache_ver` from `safe-kpi-mapping.js?v=<N>` in `hd24-ui-v3.js` and requires both index CSS and UI JS references to equal that same version.
+- Revalidated Apply approved UI logic: it dynamically derives the same active runtime cache version and is designed to update both `index.html` and `refresh-runtime.html` to the aligned version; there is no hard-coded v3 reinjection path.
+- Re-ran latest-main Runtime Regression run `34549641989`; retry job `103806928252` completed `failure` with `steps=null`.
+- Re-ran latest-main Apply approved UI run `34549641967`; retry job `103806933201` completed `failure` with `steps=null`.
+- Both retry APIs were accepted, both jobs entered `queued`, and both then failed before any workflow step existed. This reconfirms a GitHub Actions runner/execution-layer failure, not an application assertion failure.
+- Permanent India/Brazil E2E workflows still contain future-month contamination fail-closed assertions, and the runtime regression gate still pins the critical mapping/safety invariants.
+- Current application-side blocker remains exactly one known alignment defect: stale outer cache chain CSS v3 / UI JS v15 / safe runtime v18.
+- No unsafe whole-file rewrite of `index.html` was attempted.
