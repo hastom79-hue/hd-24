@@ -22,6 +22,7 @@ jobs:
 
           index=Path('index.html').read_text(encoding='utf-8')
           ui=Path('hd24-ui-v3.js').read_text(encoding='utf-8')
+          core=Path('hd24-ui-v3-core.js').read_text(encoding='utf-8')
           safe=Path('safe-kpi-mapping.js').read_text(encoding='utf-8')
           auto=Path('hd24-auto-run.js').read_text(encoding='utf-8')
           follow=Path('hd24-followup-sync.js').read_text(encoding='utf-8')
@@ -33,8 +34,8 @@ jobs:
           brazil_e2e=Path('.github/workflows/hd24-browser-e2e-brazil.yml').read_text(encoding='utf-8')
 
           # Cache/runtime chain: cache-bust revision and semantic runtime version are separate concepts.
-          m=re.search(r'safe-kpi-mapping\.js\?v=(\d+)',ui)
-          assert m, 'safe runtime cache version missing from hd24-ui-v3.js'
+          m=re.search(r'safe-kpi-mapping\.js\?v=(\d+)',core)
+          assert m, 'safe runtime cache version missing from hd24-ui-v3-core.js'
           cache_ver=m.group(1)
           assert f'hd24-ui-v3.js?v={cache_ver}' in index, 'index/UI JS cache version mismatch'
           assert f'hd24-ui-v3.css?v={cache_ver}' in index, 'index/UI CSS cache version mismatch'
@@ -45,8 +46,8 @@ jobs:
           # Reflect path is fail-closed and has no legacy bubble handler.
           assert "document.getElementById('btnReflect').addEventListener('click'" not in index, 'legacy reflect click handler reintroduced'
           assert 'window.hd24SafeReflectReady && ok && needSrc' in index, 'reflect readiness gate missing'
-          assert 'window.hd24SafeReflectReady=false' in ui, 'loader does not default fail-closed'
-          assert 's.onerror=' in ui, 'safe loader onerror fail-closed path missing'
+          assert 'window.hd24SafeReflectReady=false' in core, 'core loader does not default fail-closed'
+          assert 's.onerror=' in core, 'safe loader onerror fail-closed path missing'
           assert "btn.addEventListener('click',safeReflect,true)" in safe, 'safe capture listener missing'
           assert 'window.hd24SafeReflectReady=true' in safe, 'safe readiness install missing'
           assert "if(btn){btn.addEventListener('click',safeReflect,true);btn.dataset.safeReflectReady='1';window.hd24SafeReflectReady=true;}else{window.hd24SafeReflectReady=false;}" in safe, 'null-safe reflect install guard missing'
@@ -68,12 +69,12 @@ jobs:
           assert "hd24-followup-sync.js?v=3" in ui, 'production loader is not on follow-up sync v3'
 
           # Required Excel runtime dependencies must be fail-closed with a secondary CDN fallback.
-          assert "['XLSX','https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js']" in ui, 'SheetJS fallback guard missing'
-          assert "['JSZip','https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js']" in ui, 'JSZip fallback guard missing'
-          assert "['ExcelJS','https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js']" in ui, 'ExcelJS fallback guard missing'
-          assert 'await ensureDeps()' in ui, 'dependency verification no longer precedes safe runtime load'
-          assert "throw new Error('필수 라이브러리 로드 실패: '+missing.join(', '))" in ui, 'dependency fail-closed terminal gate missing'
-          assert "if(x)x.disabled=true" in ui, 'reflect button fail-closed disable path missing'
+          assert "['XLSX','https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js']" in core, 'SheetJS fallback guard missing'
+          assert "['JSZip','https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js']" in core, 'JSZip fallback guard missing'
+          assert "['ExcelJS','https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js']" in core, 'ExcelJS fallback guard missing'
+          assert 'await ensureDeps()' in core, 'dependency verification no longer precedes safe runtime load'
+          assert "throw new Error('필수 라이브러리 로드 실패: '+missing.join(', '))" in core, 'dependency fail-closed terminal gate missing'
+          assert "if(x)x.disabled=true" in core, 'reflect button fail-closed disable path missing'
           assert "primary.XLSX?'cdnjs':'fallback'" in health, 'runtime health is not fallback-aware for XLSX'
           assert "primary.JSZip?'cdnjs':'fallback'" in health, 'runtime health is not fallback-aware for JSZip'
           assert "primary.ExcelJS?'cdnjs':'fallback'" in health, 'runtime health is not fallback-aware for ExcelJS'
