@@ -30,9 +30,9 @@ function readiness(){
   const btn=document.getElementById('btnReflect');
   const sig=getSignature();
   const core=coreReady();
-  const safe=window.hd24SafeReflectReady===true&&!!btn&&btn.dataset.safeReflectReady==='1';
-  // checkReady() has occasionally lagged behind actual workbook/mapping readiness in the live page.
-  // If every fail-closed prerequisite is independently confirmed, repair only the stale disabled UI state.
+  // The authoritative readiness flag is installed by safe-kpi-mapping.js.
+  // data-safe-reflect-ready is diagnostic only; a stale/missing dataset marker must not deadlock auto-run.
+  const safe=window.hd24SafeReflectReady===true&&!!btn;
   if(sig&&btn&&btn.disabled&&safe&&core.ok){
     btn.disabled=false;
     if(typeof window.checkReady==='function'){
