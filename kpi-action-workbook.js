@@ -85,6 +85,13 @@ function resolveActionColumn(ws,layout,headerRow){
   return c;
 }
 
+function targetComparableForUnit(unit){
+  const s=norm(unit).toLowerCase().replace(/\s+/g,'');
+  if(!s)return true;
+  if(s.includes('/년')||s.includes('peryear')||s.includes('/year')||s.includes('yearly'))return false;
+  return true;
+}
+
 function applyKpiActionColumn({worksheet,resolvedMappings,horizon,classifier,headerRow=4}){
   if(!worksheet)throw new Error('후속조치 생성 차단: worksheet 없음');
   if(!Array.isArray(resolvedMappings)||!resolvedMappings.length)throw new Error('후속조치 생성 차단: 안전 매핑 결과 없음');
@@ -110,9 +117,11 @@ function applyKpiActionColumn({worksheet,resolvedMappings,horizon,classifier,hea
     const wanted=norm(m.kpiKr||m.kpiEn||'');
     if(wanted&&norm(kpiBefore)!==wanted)throw new Error(`KPI명 검증 실패: row ${row} / ${norm(kpiBefore)} ≠ ${wanted}`);
     const target=valueOf(worksheet.getCell(row,layout.targetCol));
+    const unit=valueOf(worksheet.getCell(row,layout.unitCol));
+    const targetComparable=targetComparableForUnit(unit);
     const values=[];
     for(let mo=1;mo<=horizon;mo++)values.push(valueOf(worksheet.getCell(row,layout.monthCols[mo])));
-    const result=classifier.classifyKpi({values,target,direction:m.direction});
+    const result=classifier.classifyKpi({values,target,direction:m.direction,targetComparable});
     const token=classifier.visualToken(result);
     applyFillAndFont(kpiCell,token);
 
@@ -124,7 +133,7 @@ function applyKpiActionColumn({worksheet,resolvedMappings,horizon,classifier,hea
     actionCell.alignment={vertical:'top',wrapText:true};
 
     if(valueOf(kpiCell)!==kpiBefore)throw new Error(`KPI명 원문 보존 실패: row ${row}`);
-    results.push({row,kpi:kpiBefore,result,actionCol,manualActionPreserved:beforeAction!==null&&beforeAction!==undefined&&String(beforeAction).trim()!==''});
+    results.push({row,kpi:kpiBefore,unit,targetComparable,result,actionCol,manualActionPreserved:beforeAction!==null&&beforeAction!==undefined&&String(beforeAction).trim()!==''});
   }
 
   const duplicated=new Set();
@@ -135,7 +144,7 @@ function applyKpiActionColumn({worksheet,resolvedMappings,horizon,classifier,hea
   return {layout,actionCol,results};
 }
 
-const api={norm,findHeaderColumn,monthNumber,discoverMasterLayout,resolveKpiDataColumn,columnHasData,resolveActionColumn,applyKpiActionColumn};
+const api={norm,findHeaderColumn,monthNumber,discoverMasterLayout,resolveKpiDataColumn,columnHasData,resolveActionColumn,targetComparableForUnit,applyKpiActionColumn};
 if(typeof window!=='undefined')window.hd24KpiActionWorkbook=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })();
