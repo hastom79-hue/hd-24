@@ -1,5 +1,8 @@
 (()=>{
 'use strict';
+// This bridge is the only automatic follow-up orchestrator. The legacy module keeps
+// manual Preview/send/import UI, but its old 80 ms auto-package race is suppressed.
+window.hd24FollowupSyncOwnsAutoPackage=true;
 let activeSignature='';
 let completedSignature='';
 let runningSignature='';
@@ -55,8 +58,6 @@ function trySync(reason){
     logSafe('후속조치 패키지 확인: 현재 파일쌍 Preview/회신 Excel 중복 없이 유지');
     return;
   }
-  // Never trust an untagged Preview here. Legacy follow-up code may have rendered it
-  // before the current analysis/export chain completed, so force one fresh package.
   const stale=$('hd24Preview');
   if(stale&&stale.style.display!=='none'&&!stale.dataset.hd24Signature){stale.style.display='none';}
   const mailBtn=$('btnMailWatch');
@@ -96,7 +97,6 @@ function hardReset(reason){
 function safeComplete(){
   const sig=signature();
   if(!sig)return;
-  // Repeated safe-complete events for the same upload pair must not reset completed/downloaded state.
   if(activeSignature!==sig)hardReset('safe reflect complete/new signature');
   else trySync('safe reflect complete');
 }
