@@ -35,7 +35,6 @@ jobs:
           india_e2e=Path('.github/workflows/hd24-browser-e2e.yml').read_text(encoding='utf-8')
           brazil_e2e=Path('.github/workflows/hd24-browser-e2e-brazil.yml').read_text(encoding='utf-8')
 
-          # Cache/runtime chain: cache-bust revision and semantic runtime version are separate concepts.
           m=re.search(r'safe-kpi-mapping\.js\?v=(\d+)',core)
           assert m, 'safe runtime cache version missing from hd24-ui-v3-core.js'
           cache_ver=m.group(1)
@@ -45,7 +44,6 @@ jobs:
           assert sm, 'safe runtime semantic banner/version missing'
           runtime_ver=sm.group(1)
 
-          # Reflect path is fail-closed and has no legacy bubble handler.
           assert "document.getElementById('btnReflect').addEventListener('click'" not in index, 'legacy reflect click handler reintroduced'
           assert 'window.hd24SafeReflectReady && ok && needSrc' in index, 'reflect readiness gate missing'
           assert 'window.hd24SafeReflectReady=false' in core, 'core loader does not default fail-closed'
@@ -54,7 +52,6 @@ jobs:
           assert 'window.hd24SafeReflectReady=true' in safe, 'safe readiness install missing'
           assert "if(btn){btn.addEventListener('click',safeReflect,true);btn.dataset.safeReflectReady='1';window.hd24SafeReflectReady=true;}else{window.hd24SafeReflectReady=false;}" in safe, 'null-safe reflect install guard missing'
 
-          # v27 auto-run may repair only stale UI disabled state; safe runtime + parsed core remain mandatory.
           assert 'function coreReady()' in auto, 'auto-run core readiness guard missing'
           for token in ['srcWorkbook','masterWorkbook','masterZip','mappingData']:
               assert token in auto, f'auto-run parsed prerequisite missing: {token}'
@@ -63,27 +60,33 @@ jobs:
           assert 'if(sig&&btn&&btn.disabled&&safe&&core.ok)' in auto, 'stale-disabled repair is not fail-closed'
           assert "hd24-auto-run.js?v=27" in ui, 'production loader is not on auto-run v27'
 
-          # Action export v26 freezes the exact current-month analysis result that produced the action workbook.
           assert 'const analysisSnapshot=a.current.map(snapshotItem)' in action, 'current-month action snapshot missing'
           assert 'month:horizon,items:analysisSnapshot' in action, 'action-export completion does not carry frozen snapshot'
           assert "hd24-action-export.js?v=26" in ui, 'production loader is not on action export v26'
 
-          # Follow-up v5: one automatic orchestrator only, same-signature action snapshot is mandatory,
-          # and both Preview + reply workbook are generated under that frozen data snapshot.
+          # Follow-up v6 must not claim completion merely because the async download button was clicked.
+          # It reopens the actual generated reply workbook bytes and cross-checks them against the
+          # action-export snapshot and Preview identity before setting replyDownloadedSignature.
           assert 'window.hd24FollowupSyncOwnsAutoPackage=true' in follow, 'follow-up sync does not claim auto-package ownership'
           assert 'if(window.hd24FollowupSyncOwnsAutoPackage)' in legacy_follow, 'legacy 80ms auto-package path is not suppressed by owner guard'
           assert 'actionExportSignature!==sig||!snap||!a.ready' in follow, 'follow-up is not gated by validated action snapshot'
           assert 'window.hd24FollowupSnapshot={signature:sig,month,items:items.map' in follow, 'validated follow-up snapshot storage missing'
           assert 'withSnapshot(sig,()=>mailBtn.click())' in follow, 'Preview is not pinned to the frozen action snapshot'
-          assert 'withSnapshot(sig,()=>b.click())' in follow, 'reply workbook is not pinned to the frozen action snapshot'
+          assert 'async function validateReplyFile(file,sig)' in follow, 'actual reply workbook byte verifier missing'
+          assert 'await wb.xlsx.load(await file.arrayBuffer())' in follow, 'reply workbook bytes are not reopened'
+          assert 'Preview↔회신 Excel KPI 건수 불일치' in follow, 'Preview/reply count cross-check missing'
+          assert '회신 Excel 사업장 불일치' in follow, 'reply plant cross-check missing'
+          assert '회신 Excel 대상월 불일치' in follow, 'reply month cross-check missing'
+          assert '회신 Excel Target 불일치' in follow, 'reply Target cross-check missing'
+          assert '회신 Excel Actual 불일치' in follow, 'reply Actual cross-check missing'
+          assert '회신 Excel Status/Trend 불일치' in follow, 'reply Status/Trend cross-check missing'
+          assert 'replyDownloadedSignature=sig' in follow, 'verified reply completion signature missing'
+          assert 'replyAttempts[sig]' in follow, 'bounded reply verification retry missing'
           assert 'p.dataset.hd24Month=String(snap.month)' in follow, 'Preview month identity tag missing'
           assert 'p.dataset.hd24Count=String(meta.count)' in follow, 'Preview KPI-count identity tag missing'
-          assert 'replyDownloadedSignature===sig' in follow, 'reply workbook dedupe missing'
-          assert 'if(activeSignature!==sig)hardReset' in follow, 'same-signature safe-complete reset regression'
           assert "hd24-followup.js?v=24" in ui, 'production loader is not on legacy follow-up UI v24'
-          assert "hd24-followup-sync.js?v=5" in ui, 'production loader is not on follow-up sync v5'
+          assert "hd24-followup-sync.js?v=6" in ui, 'production loader is not on follow-up sync v6'
 
-          # Required Excel runtime dependencies must be fail-closed with a secondary CDN fallback.
           assert "['XLSX','https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js']" in core, 'SheetJS fallback guard missing'
           assert "['JSZip','https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js']" in core, 'JSZip fallback guard missing'
           assert "['ExcelJS','https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js']" in core, 'ExcelJS fallback guard missing'
@@ -95,7 +98,6 @@ jobs:
           assert "primary.ExcelJS?'cdnjs':'fallback'" in health, 'runtime health is not fallback-aware for ExcelJS'
           assert "./refresh-runtime.html?from_health=" in health, 'runtime health entry bypasses cache refresh helper'
 
-          # Critical safety guards must remain present.
           required=[
               'KPI 전수검증 실패','미래월 Actual','직전월 원천↔총괄 불일치','historyDrift.push(msg)',
               '수식 셀 반영 차단','중복 KPI×월 대상 감지','반영 후 셀 재검증 실패','반영 건수 불일치',
@@ -106,14 +108,12 @@ jobs:
           ]
           for token in required: assert token in safe, f'missing safety invariant: {token}'
 
-          # XLSX sheet relationship lookup must remain producer-independent.
           assert 'new DOMParser()' in index, 'DOM-based workbook relationship parser missing'
           assert "getElementsByTagName('Relationship')" in index, 'relationship lookup is not attribute-order independent'
           assert "relation.getAttribute('Target')" in index, 'relationship target lookup missing'
           assert "if(!zip.file(path))" in index, 'resolved sheet XML existence gate missing'
           assert "Id=\"'+m[1]+'\"[^>]*Target" not in index, 'legacy attribute-order-dependent relationship regex reintroduced'
 
-          # Current production mapping cardinality and uniqueness.
           assert len(india)==76, f'India static mapping changed unexpectedly: {len(india)}'
           assert len(brazil)==76, f'Brazil static mapping changed unexpectedly: {len(brazil)}'
           for plant,data in [('India',india),('Brazil',brazil)]:
@@ -140,7 +140,7 @@ jobs:
           assert "if m.get('kpiEn')==ltir: src_unit='%'" in brazil_e2e, 'Brazil E2E LTIR percent source-unit fixture missing'
           assert "if m.get('kpiEn')==ltir: master_unit='%'" in brazil_e2e, 'Brazil E2E LTIR percent master-unit fixture missing'
 
-          print(f'HD24 RUNTIME REGRESSION PASS: cache=v{cache_ver}, runtime=v{runtime_ver}, auto-run=v27, action-export=v26, follow-up=v5, India=76+1 runtime, Brazil=76+1 runtime')
+          print(f'HD24 RUNTIME REGRESSION PASS: cache=v{cache_ver}, runtime=v{runtime_ver}, auto-run=v27, action-export=v26, follow-up=v6, India=76+1 runtime, Brazil=76+1 runtime')
           PY
           node --check hd24-auto-run.js
           node --check hd24-action-export.js
