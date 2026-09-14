@@ -11,6 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
       - name: Validate production runtime invariants
         run: |
           python - <<'PY'
@@ -20,6 +23,7 @@ jobs:
           index=Path('index.html').read_text(encoding='utf-8')
           ui=Path('hd24-ui-v3.js').read_text(encoding='utf-8')
           safe=Path('safe-kpi-mapping.js').read_text(encoding='utf-8')
+          auto=Path('hd24-auto-run.js').read_text(encoding='utf-8')
           health=Path('runtime-health.html').read_text(encoding='utf-8')
           india=json.loads(Path('mapping_india.json').read_text(encoding='utf-8'))
           brazil=json.loads(Path('mapping_brazil.json').read_text(encoding='utf-8'))
@@ -46,6 +50,15 @@ jobs:
           assert 'window.hd24SafeReflectReady=true' in safe, 'safe readiness install missing'
           assert "if(btn){btn.addEventListener('click',safeReflect,true);btn.dataset.safeReflectReady='1';window.hd24SafeReflectReady=true;}else{window.hd24SafeReflectReady=false;}" in safe, 'null-safe reflect install guard missing'
 
+          # v26 auto-run must repair only stale UI readiness, never bypass safety prerequisites.
+          assert 'function coreReady()' in auto, 'auto-run core readiness guard missing'
+          for token in ['srcWorkbook','masterWorkbook','masterZip','mappingData']:
+              assert token in auto, f'auto-run parsed prerequisite missing: {token}'
+          assert "btn.dataset.safeReflectReady==='1'" in auto, 'auto-run safe dataset gate missing'
+          assert 'window.hd24SafeReflectReady===true' in auto, 'auto-run global safe gate missing'
+          assert 'if(sig&&btn&&btn.disabled&&safe&&core.ok)' in auto, 'stale-disabled repair is not fail-closed'
+          assert "hd24-auto-run.js?v=26" in ui, 'production loader is not on auto-run v26'
+
           # Required Excel runtime dependencies must be fail-closed with a secondary CDN fallback.
           assert "['XLSX','https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js']" in ui, 'SheetJS fallback guard missing'
           assert "['JSZip','https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js']" in ui, 'JSZip fallback guard missing'
@@ -60,24 +73,14 @@ jobs:
 
           # Critical safety guards must remain present.
           required=[
-              'KPI 전수검증 실패',
-              '미래월 Actual',
-              '직전월 원천↔총괄 불일치',
-              'historyDrift.push(msg)',
-              '수식 셀 반영 차단',
-              '중복 KPI×월 대상 감지',
-              '반영 후 셀 재검증 실패',
-              '반영 건수 불일치',
-              'displayPrecisionEqual',
-              'validateUnit(srcWs,sr.row,m,masterWs,mr.row)',
+              'KPI 전수검증 실패','미래월 Actual','직전월 원천↔총괄 불일치','historyDrift.push(msg)',
+              '수식 셀 반영 차단','중복 KPI×월 대상 감지','반영 후 셀 재검증 실패','반영 건수 불일치',
+              'displayPrecisionEqual','validateUnit(srcWs,sr.row,m,masterWs,mr.row)',
               "currentPlant==='india'&&name==='ppm'&&sf==='count'&&mf==='ppm'",
               "currentPlant==='india'&&name==='5s audit score'&&sf==='pct'&&mf==='score'",
-              "LTIR (Lost Time Incident Rate)",
-              'masterFutureContamination',
-              'masterInfo.row+1',
+              'LTIR (Lost Time Incident Rate)','masterFutureContamination','masterInfo.row+1',
           ]
-          for token in required:
-              assert token in safe, f'missing safety invariant: {token}'
+          for token in required: assert token in safe, f'missing safety invariant: {token}'
 
           # XLSX sheet relationship lookup must remain producer-independent.
           assert 'new DOMParser()' in index, 'DOM-based workbook relationship parser missing'
@@ -90,24 +93,19 @@ jobs:
           assert len(india)==76, f'India static mapping changed unexpectedly: {len(india)}'
           assert len(brazil)==76, f'Brazil static mapping changed unexpectedly: {len(brazil)}'
           for plant,data in [('India',india),('Brazil',brazil)]:
-              names=[x['kpiEn'].strip().lower() for x in data]
-              rows=[x['masterRow'] for x in data]
+              names=[x['kpiEn'].strip().lower() for x in data]; rows=[x['masterRow'] for x in data]
               assert len(names)==len(set(names)), f'{plant} duplicate KPI mapping'
               assert len(rows)==len(set(rows)), f'{plant} duplicate masterRow mapping'
 
-          # Known recovered Brazil mappings/semantics.
           nva=[x for x in brazil if x.get('kpiEn')=='NVA reduction cases reflecting from SWC']
           assert len(nva)==1 and nva[0]['labelRow']==150 and nva[0]['actualRow']==151 and nva[0]['masterRow']==122, 'Brazil NVA mapping regression'
           rccp=[x for x in brazil if x.get('kpiEn')=='M+1 Production Volume Variation Rate']
           assert len(rccp)==1 and rccp[0]['scale']==1 and rccp[0]['valueFormat']=='퍼센트텍스트', 'Brazil RCCP string-percent semantics regression'
 
-          # Recovery workflow must derive active cache version, never hard-code old v3.
-          stale_js='hd24-ui-v3.js?v='+'3'
-          stale_css='hd24-ui-v3.css?v='+'3'
+          stale_js='hd24-ui-v3.js?v='+'3'; stale_css='hd24-ui-v3.css?v='+'3'
           assert stale_js not in recovery and stale_css not in recovery, 'stale v3 recovery path reintroduced'
           assert 'ver=m.group(1)' in recovery, 'dynamic recovery version extraction missing'
 
-          # Permanent Browser E2E must retain the real-risk fixtures and CSS trigger coverage.
           for label,text in [('India',india_e2e),('Brazil',brazil_e2e)]:
               assert "'hd24-ui-v3.css'" in text, f'{label} E2E does not trigger on UI CSS changes'
               assert 'master_future_contaminated.xlsx' in text, f'{label} E2E future-month negative fixture missing'
@@ -118,5 +116,7 @@ jobs:
           assert "if m.get('kpiEn')==ltir: src_unit='%'" in brazil_e2e, 'Brazil E2E LTIR percent source-unit fixture missing'
           assert "if m.get('kpiEn')==ltir: master_unit='%'" in brazil_e2e, 'Brazil E2E LTIR percent master-unit fixture missing'
 
-          print(f'HD24 RUNTIME REGRESSION PASS: cache=v{cache_ver}, runtime=v{runtime_ver}, India=76+1 runtime, Brazil=76+1 runtime, sheet-xml=DOM, deps=fallback-guarded')
+          print(f'HD24 RUNTIME REGRESSION PASS: cache=v{cache_ver}, runtime=v{runtime_ver}, auto-run=v26, India=76+1 runtime, Brazil=76+1 runtime')
           PY
+          node --check hd24-auto-run.js
+          node tests/auto-run-readiness.test.js
