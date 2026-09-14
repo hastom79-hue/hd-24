@@ -1,0 +1,48 @@
+name: HD24 Action Export Watchdog Regression
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'hd24-action-export-watchdog.js'
+      - 'hd24-action-export.js'
+      - 'hd24-ui-v3.js'
+      - 'refresh-runtime.html'
+      - 'tests/action-export-watchdog.test.js'
+      - '.github/workflows/hd24-action-export-watchdog-regression.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'hd24-action-export-watchdog.js'
+      - 'hd24-action-export.js'
+      - 'hd24-ui-v3.js'
+      - 'refresh-runtime.html'
+      - 'tests/action-export-watchdog.test.js'
+      - '.github/workflows/hd24-action-export-watchdog-regression.yml'
+permissions:
+  contents: read
+jobs:
+  watchdog-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Syntax check watchdog runtime
+        run: node --check hd24-action-export-watchdog.js
+      - name: Verify production wiring
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'),assert=require('assert');
+          const loader=fs.readFileSync('hd24-ui-v3.js','utf8');
+          const refresh=fs.readFileSync('refresh-runtime.html','utf8');
+          const watchdog=fs.readFileSync('hd24-action-export-watchdog.js','utf8');
+          assert(loader.includes('hd24-action-export-watchdog.js?v=1'),'production loader watchdog version drift');
+          assert(refresh.includes('hd24-action-export-watchdog.js?v=1'),'runtime refresh watchdog version drift');
+          assert(watchdog.includes('const WAKE_DELAYS=[0,2500,7000,15000,30000]'),'bounded wake schedule changed');
+          assert(watchdog.includes('window.hd24SafeReflectSuccessSignature===sig'),'same-signature safe gate missing');
+          assert(watchdog.includes("window.addEventListener('hd24-action-export-complete'"),'completion stop hook missing');
+          console.log('PASS watchdog production wiring');
+          NODE
+      - name: Execute watchdog regression
+        run: node tests/action-export-watchdog.test.js
