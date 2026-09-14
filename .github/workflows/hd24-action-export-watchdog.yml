@@ -1,0 +1,34 @@
+name: HD24 Action Export Watchdog Regression
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'hd24-action-export-watchdog.js'
+      - 'hd24-ui-v3.js'
+      - 'refresh-runtime.html'
+      - 'tests/action-export-watchdog.test.js'
+      - '.github/workflows/hd24-action-export-watchdog.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'hd24-action-export-watchdog.js'
+      - 'hd24-ui-v3.js'
+      - 'refresh-runtime.html'
+      - 'tests/action-export-watchdog.test.js'
+      - '.github/workflows/hd24-action-export-watchdog.yml'
+permissions:
+  contents: read
+jobs:
+  watchdog-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Syntax and behavior regression
+        run: |
+          node --check hd24-action-export-watchdog.js
+          node tests/action-export-watchdog.test.js
+          grep -q 'hd24-action-export-watchdog.js?v=1' hd24-ui-v3.js
+          grep -q 'hd24-action-export-watchdog.js?v=1' refresh-runtime.html
