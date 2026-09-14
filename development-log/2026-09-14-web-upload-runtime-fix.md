@@ -118,3 +118,33 @@
 - 실제 사용자 브라우저에서 두 파일 업로드 → 버튼 활성화 → 반영본 다운로드 E2E 확인: 미완료
 
 따라서 서버측 코드와 Pages 배포는 최신 앱 수정까지 검증 완료했다. 최종 완료 판정은 실제 사용자 브라우저에서 refresh-runtime 경유 후 원본/총괄 파일 업로드 → `실행 준비 재검증 PASS` → 실적 반영 버튼 활성화 → 검증반영본 다운로드까지 성공하는 시점으로 한다.
+
+## 2026-09-14 긴급 복구 — 파일 업로드 즉시 자동실행
+### 사용자 확정 동작
+- 원본 실적파일 + 총괄파일이 모두 준비되는 순간 사용자가 별도 `실적 반영` 버튼을 누르지 않아도 시스템이 자동 구동되어야 함.
+- 안전검증은 우회하지 않음. `hd24SafeReflectReady`, `data-safe-reflect-ready`, 파일 2종, 매핑/파싱 준비가 모두 완료된 시점에 기존 안전반영 버튼 click 경로를 자동 1회 호출함.
+
+### 구현
+커밋: `02db07e4cac27cbe9ec0e0f6a67a0b8303abf7c4`
+메시지: `fix: auto-run safe reflect immediately after file upload`
+
+- 기존 `hd24-ui-v3.js` 전체 로직은 동일 blob을 `hd24-ui-v3-core.js`로 보존함.
+- `hd24-ui-v3.js`는 core(v18) + 신규 `hd24-auto-run.js?v=19`를 순서대로 로딩하는 경량 wrapper로 전환함.
+- `hd24-auto-run.js` 추가:
+  - 원본/총괄 파일 모두 선택 여부 확인
+  - safe runtime true + 버튼 safe dataset + 버튼 enabled 확인
+  - 업로드/사업장 변경/readiness 속성 변경을 감시
+  - 0~10초 범위의 재시도 스케줄로 비동기 파싱/매핑 시차 흡수
+  - 동일 파일쌍 signature는 자동 1회만 실행하여 중복 다운로드 방지
+  - 준비 완료 즉시 `btnReflect.click()`을 호출하여 기존 fail-closed 안전반영 경로 실행
+
+### 실행검증/실패 이력
+- main에서 wrapper와 신규 auto-run 파일이 실제 존재하고 내용이 일치함을 재조회하여 확인함.
+- 커밋 직후 Custom Browser E2E들은 기존 hosted runner 문제로 pre-step failure가 반복됨.
+- 더 중요한 문제 발견: 커밋 `02db07e4...` 직후 조회한 최신 Pages run `34797299268`은 `head_sha=16ac819...`로, 새 자동실행 커밋을 아직 포함하지 않은 이전 배포본이었음.
+- 즉 사용자가 당시 보고 있던 웹에는 신규 자동실행 코드가 배포되지 않은 상태였음. 이를 앱 정상으로 오판하지 않음.
+- 본 개발로그를 일반 Contents API 커밋으로 다시 갱신하여 main 최신 트리를 대상으로 Pages 배포를 재트리거함. 이후 Pages의 `head_sha`가 이 문서 커밋(그리고 부모인 `02db07e4...`)을 포함하는지 확인 후 실제 배포 PASS 여부를 판정한다.
+
+### 잔여위험
+- `index.html`의 외부 UI 참조는 여전히 `hd24-ui-v3.js?v=18`이므로 브라우저 stale cache 가능성이 남아 있음. 새 Pages 배포 확인 후에도 실사용에서 old v18이 재사용되면 index cache key를 v19로 올리는 별도 수정이 필요함.
+- 최종 완료 조건은 실제 사용자 환경에서 두 파일 선택 직후 자동으로 안전검증/반영 흐름이 시작되는 것임.
