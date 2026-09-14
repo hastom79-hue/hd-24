@@ -26,6 +26,7 @@ jobs:
           safe=Path('safe-kpi-mapping.js').read_text(encoding='utf-8')
           auto=Path('hd24-auto-run.js').read_text(encoding='utf-8')
           action=Path('hd24-action-export.js').read_text(encoding='utf-8')
+          cycle_guard=Path('hd24-action-cycle-guard.js').read_text(encoding='utf-8')
           legacy_follow=Path('hd24-followup.js').read_text(encoding='utf-8')
           follow=Path('hd24-followup-sync.js').read_text(encoding='utf-8')
           health=Path('runtime-health.html').read_text(encoding='utf-8')
@@ -62,7 +63,15 @@ jobs:
 
           assert 'const analysisSnapshot=a.current.map(snapshotItem)' in action, 'current-month action snapshot missing'
           assert 'month:horizon,items:analysisSnapshot' in action, 'action-export completion does not carry frozen snapshot'
-          assert "hd24-action-export.js?v=26" in ui, 'production loader is not on action export v26'
+          assert 'cycle:workCycle' in action, 'action-export completion does not carry upload cycle'
+          assert 'captureCycle!==currentCycle()||signature()!==sig' in action, 'safe blob stale-cycle rejection missing'
+          assert 'analysisReadySignature!==sig||analysisReadyCycle!==workCycle' in action, 'analysis readiness is not upload-cycle bound'
+          assert 'stale action-export cycle after workbook load' in action, 'post-load stale-cycle gate missing'
+          assert 'stale action-export cycle after workbook write' in action, 'post-write stale-cycle gate missing'
+          assert 'stopImmediatePropagation' in cycle_guard, 'stale action completion propagation guard missing'
+          assert 'eventCycle!==currentCycle' in cycle_guard, 'action completion guard does not compare event/current cycle'
+          assert "hd24-action-export.js?v=27" in ui, 'production loader is not on action export v27'
+          assert "hd24-action-cycle-guard.js?v=1" in ui, 'production loader is missing action cycle guard v1'
 
           # Follow-up v7: exact watch set must be preserved from action snapshot through Preview
           # and actual generated reply workbook bytes. Same-count substitution is fail-closed.
@@ -147,12 +156,14 @@ jobs:
           assert "if m.get('kpiEn')==ltir: src_unit='%'" in brazil_e2e, 'Brazil E2E LTIR percent source-unit fixture missing'
           assert "if m.get('kpiEn')==ltir: master_unit='%'" in brazil_e2e, 'Brazil E2E LTIR percent master-unit fixture missing'
 
-          print(f'HD24 RUNTIME REGRESSION PASS: cache=v{cache_ver}, runtime=v{runtime_ver}, auto-run=v27, action-export=v26, follow-up=v7 exact-watch-set, India=76+1 runtime, Brazil=76+1 runtime')
+          print(f'HD24 RUNTIME REGRESSION PASS: cache=v{cache_ver}, runtime=v{runtime_ver}, auto-run=v27, action-export=v27 cycle-safe, follow-up=v7 exact-watch-set, India=76+1 runtime, Brazil=76+1 runtime')
           PY
           node --check hd24-auto-run.js
           node --check hd24-action-export.js
+          node --check hd24-action-cycle-guard.js
           node --check hd24-followup.js
           node --check hd24-followup-sync.js
           node tests/auto-run-readiness.test.js
+          node tests/kpi-action-export.test.js
           node tests/followup-sync.test.js
           node tests/followup-reset-guard.test.js
