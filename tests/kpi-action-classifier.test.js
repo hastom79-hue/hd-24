@@ -36,4 +36,14 @@ r=c.classifyKpi({values:[80,79,78],target:85,direction:''});
 eq(r.missedTarget,false,'unknown direction must fail neutral');
 eq(r.trend,'normal','unknown direction must not invent worsening');
 
-console.log('PASS kpi-action-classifier: target miss, 3m/6m, temporary, directionality, combined labels, action prompt');
+r=c.classifyKpi({values:[100,98,96,null],target:95,direction:'상향'});
+eq(r.hasCurrentActual,false,'blank current month not detected');
+eq(r.missedTarget,false,'blank current month must not use stale prior actual');
+eq(r.trend,'normal','blank current month must not create current worsening classification');
+
+r=c.classifyKpi({values:[10,20,30],target:100,direction:'상향',targetComparable:false});
+eq(r.missedTarget,false,'non-comparable annual target must not create monthly miss');
+eq(r.trend,'normal','improving annual-count KPI marked worsening');
+eq(r.targetComparable,false,'target comparability flag lost');
+
+console.log('PASS kpi-action-classifier: target miss, 3m/6m, temporary, directionality, blank-current fail-closed, target comparability');
