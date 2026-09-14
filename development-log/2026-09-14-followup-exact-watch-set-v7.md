@@ -82,15 +82,40 @@ The permanent runtime gate is updated from v6 to v7 and now requires:
 - loader v7 wiring,
 - executable `tests/followup-sync.test.js`.
 
+## Deployment and execution evidence
+Latest repository HEAD observed after this v7 log push: `a4d6ce21897b47871bd680a3e1515e6360cf83e4` (`docs: log exact watch KPI set follow-up v7`).
+
+GitHub Pages:
+- run `34832293532`
+- HEAD `a4d6ce21897b47871bd680a3e1515e6360cf83e4`
+- status `completed`
+- conclusion `success`
+- therefore the v7 production loader / refresh helper / regression-source commits preceding this HEAD are included in the successfully deployed Pages state.
+
+Custom Runtime Regression:
+- run `34832295335`
+- HEAD `a4d6ce21897b47871bd680a3e1515e6360cf83e4`
+- job `103938164273`
+- job conclusion `failure`
+- `steps=null`
+
+Classification: this is the same hosted-runner execution-layer failure already observed repeatedly. No workflow step started, so it is **not** evidence of an application assertion failure and it does not prove the v7 Node test passed either.
+
+A preceding Pages run for the executable v7 test commit `ab782020df2e5c56cf81cde907d92058bdd06f83` also completed successfully as run `34832179378`.
+
 ## Verification status
-Source-level checks completed during implementation:
+Confirmed:
 - production loader points to v7,
 - refresh helper points to v7,
 - legacy follow-up remains v24 with single-orchestrator owner guard,
 - action-export remains v26 with frozen current-month snapshot emission,
-- safe-reflect path was not modified.
+- safe-reflect path was not modified,
+- latest v7 repository state is deployed successfully to GitHub Pages,
+- same-count/wrong-set regression case is permanently encoded in the repository test source.
 
-Execution verification is intentionally not claimed until an actual runner executes the new v7 Node regression or a live browser runs the complete real-file chain. GitHub custom hosted jobs have repeatedly returned `steps=null`; if that continues, it remains classified as execution-layer failure rather than an application assertion failure.
+Not yet claimed:
+- executable Node v7 PASS from GitHub hosted runner, because the custom runner failed before steps started,
+- uninterrupted live production-browser E2E with the actual India/Brazil/current-master files.
 
 ## Remaining completion gate
 Do not declare 100% complete until one uninterrupted real production-browser E2E is observed with the actual India/Brazil/current-master files, including:
