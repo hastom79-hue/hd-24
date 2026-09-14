@@ -106,6 +106,14 @@ Loader 연결 커밋: `891a368a18ffa96fb1fa768b648535ff3b852aa1`
 - 현재 GitHub Pages는 정적 호스팅이므로 실제 웹 단일 버튼 발송을 확정하려면 `HD24_MAIL_ENDPOINT`에 인증된 메일 백엔드(Microsoft Graph/사내메일 API 등)가 필요함. endpoint 미설정 상태에서는 발송 버튼이 기본 메일 앱을 열며 실제 발송완료 시점은 웹에서 확인할 수 없음.
 - 중앙 이력 영구저장도 현재는 브라우저 localStorage 기반. 여러 PC/사용자 간 이력 공유가 필요하면 백엔드 DB 연동 필요.
 
+## 2026-09-14 추가 실행검증
+- 현재 loader `hd24-ui-v3.js`는 `hd24-ui-v3-core.js?v=18`, `hd24-auto-run.js?v=19`, `hd24-pipeline-gate.js?v=21`, `hd24-followup.js?v=21`, `hd24-history-view.js?v=21`을 로드하도록 확인.
+- 최신 Pages build/deployment run `34798477094`의 `build`, `deploy`, `report-build-status` 3개 job 모두 `completed/success` 확인. 최신 메일/회신 이력 및 pipeline gate 코드가 Pages 배포 단계까지 성공함.
+- 같은 HEAD에서 Custom `Apply approved HD-24 UI` run `34798478058`은 job `103836134457`이 `failure`이나 `steps=null`.
+- 같은 HEAD에서 Custom `HD24 Runtime Regression Gate` run `34798478036`은 job `103836134136`이 `failure`이나 `steps=null`.
+- 따라서 위 두 실패는 테스트 assertion 실행 후 실패가 아니라 hosted runner가 workflow step을 시작하지 못한 기존 실행계층 문제로 분리 판정.
+- Pages 배포 성공과 Custom runner pre-step failure를 혼동하지 않는다.
+
 ## 완료판정
 - 메일 Preview-before-send: 구현
 - 영문 회신파일 생성: 구현
