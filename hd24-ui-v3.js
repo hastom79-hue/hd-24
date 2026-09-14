@@ -1,1 +1,1 @@
-document.write('<script src="./hd24-ui-v3-core.js?v=18"><\/script><script src="./hd24-auto-run.js?v=19"><\/script><script src="./hd24-followup.js?v=20"><\/script>');
+document.write('<script src="./hd24-ui-v3-core.js?v=18"><\/script><script src="./hd24-auto-run.js?v=19"><\/script><script src="./hd24-pipeline-gate.js?v=21"><\/script><script src="./hd24-followup.js?v=21"><\/script><script src="./hd24-history-view.js?v=21"><\/script>');
