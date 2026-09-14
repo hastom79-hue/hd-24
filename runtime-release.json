@@ -1,0 +1,21 @@
+{
+  "release": "v23",
+  "date": "2026-09-14T11:58:00+09:00",
+  "components": {
+    "wrapper": "hd24-ui-v3.js?v=18",
+    "safeRuntime": "safe-kpi-mapping.js?v=18",
+    "autoRun": "hd24-auto-run.js?v=19",
+    "pipelineGate": "hd24-pipeline-gate.js?v=21",
+    "classifier": "kpi-action-classifier.js?v=23",
+    "workbookPostprocessor": "kpi-action-workbook.js?v=23",
+    "actionExport": "hd24-action-export.js?v=23",
+    "followup": "hd24-followup.js?v=23",
+    "history": "hd24-history-view.js?v=23"
+  },
+  "verification": {
+    "safeReflectRequiredBeforeAnalysis": true,
+    "previewBeforeSend": true,
+    "xlsmPostprocessFailClosed": true,
+    "replyHistoryAndRecurrence": true
+  }
+}
