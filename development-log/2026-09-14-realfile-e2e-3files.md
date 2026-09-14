@@ -39,8 +39,52 @@ Using production mapping rows/scales visible from `mapping_india.json` and `mapp
    - May source 259 vs master 217
    - Jan/Feb/Mar/Jun/Jul match.
 
-These are pre-existing source↔master historical differences in the uploaded files; do not auto-correct or bypass without explicit data-source decision. They are candidates for the production history-drift fail-closed guard and therefore may explain why a safe-reflect attempt does not complete even though current July values match.
+These are pre-existing source↔master historical differences. Do not auto-correct them without a data-source decision.
 
-## Next verification
-- Continue against exact production fail-closed behavior to determine whether these historical differences are the blocking condition.
-- Do not ask the user to manually validate; use the three uploaded files as the evidence set.
+## Correction — production history behavior rechecked
+The initial working hypothesis that the older Brazil differences could block safe-reflect was incorrect and is superseded by direct inspection of production `safe-kpi-mapping.js`.
+- Only `mo === horizon - 1` is added to `historyMismatch` and blocks the run.
+- Older differences are added to `historyDrift`.
+- `historyDrift` explicitly logs a warning, preserves the existing master value, and continues current-month reflection.
+- Brazil June (`horizon - 1`) values for the identified KPI differences match the source.
+- Therefore the seven Jan–May historical differences are NOT the live auto-run blocker.
+
+## Auto-run control-path verification
+A local Node DOM harness was used to execute the v25 auto-run state machine with fake source/master files and a simulated safe-reflect success transition.
+Result: PASS.
+Observed sequence:
+- upload change recognized
+- readiness true
+- native `btn.click()` invoked
+- safe success signature written
+- auto-run completion signature recognized
+
+A Chromium/headless browser harness was also attempted. It did not produce a usable end-to-end result in the current execution environment and timed out; this failed attempt is retained here and is not counted as application PASS.
+
+## v26 readiness hardening
+Commit `9c8e6904c63dedf25adac08472d8890b3f54d271` — `fix: harden live auto-run readiness v26`
+- `hd24-auto-run.js` now independently checks the actual runtime objects: `srcWorkbook`, `masterWorkbook`, `masterZip`, and non-empty `mappingData`.
+- Safe prerequisites remain mandatory: `window.hd24SafeReflectReady === true` and `btnReflect.dataset.safeReflectReady === '1'`.
+- If all safe/core prerequisites are independently true but the button remains stale-disabled, v26 repairs only that stale UI state and calls `checkReady()` again.
+- No mapping, unit, future-month, previous-month, formula, duplicate-target, or post-write validation is bypassed.
+- Wait-state diagnostics now expose `disabled / safe / dataset / src / master / zip / mapping` so a future stall identifies the exact missing prerequisite.
+- Success logging is emitted only on the first transition for a signature, eliminating repeated success log noise.
+
+Commit `0936e49f8d3bf2580add6ae707b5c795ab25f0ac` — `fix: load auto-run v26`
+- Production wrapper changed from `hd24-auto-run.js?v=25` to `v=26`.
+
+Commit `472cc12404414764d7ff9cd4548b33f4aa6b937f` — `fix: refresh live auto-run v26`
+- `refresh-runtime.html` now force-preloads `hd24-auto-run.js?v=26`.
+
+## Deployment / Actions verification
+- Pages run `34808728499` for v26 wrapper: build SUCCESS, deploy SUCCESS; `report-build-status` was still in progress at the latest poll.
+- Runtime Regression run `34808729057`: failed before executing any job steps (`steps=null`).
+- Apply UI run `34808729017`: failed before executing any job steps (`steps=null`).
+- These `steps=null` runs are retained as GitHub Actions runner/execution-layer failures and are not application assertion failures.
+
+## Current conclusion
+- Current uploaded India/Brazil/master data do not expose a safe-reflect data blocker for July.
+- Older Brazil history differences are warnings, not blockers.
+- Production deployment path is functioning through Pages build/deploy.
+- Remaining live risk is runtime readiness/event synchronization; v26 directly hardens and diagnoses that path without weakening fail-closed safety.
+- Do not declare full live-browser E2E PASS until the full production chain completes: file selection → safe reflect → verified workbook → analysis → action workbook → reply workbook → mail Preview.
