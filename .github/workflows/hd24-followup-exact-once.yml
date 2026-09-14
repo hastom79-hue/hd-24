@@ -1,0 +1,30 @@
+name: HD24 Followup Exact Once
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'hd24-followup-sync.js'
+      - 'hd24-followup.js'
+      - 'tests/followup-exact-once.test.js'
+      - '.github/workflows/hd24-followup-exact-once.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'hd24-followup-sync.js'
+      - 'hd24-followup.js'
+      - 'tests/followup-exact-once.test.js'
+      - '.github/workflows/hd24-followup-exact-once.yml'
+permissions:
+  contents: read
+jobs:
+  exact-once:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Syntax check
+        run: node --check hd24-followup-sync.js && node --check tests/followup-exact-once.test.js
+      - name: Execute exact-once state-machine regression
+        run: node tests/followup-exact-once.test.js
