@@ -110,7 +110,7 @@
   button.filt-lang:hover { background:#f0f2f5; }
   button.filt-lang.active { background:var(--accent-dark); color:#fff; border-color:var(--accent-dark); }
 </style>
-<link rel="stylesheet" href="./hd24-ui-v3.css?v=3">
+<link rel="stylesheet" href="./hd24-ui-v3.css?v=18">
 </head>
 <body>
 <header>
@@ -164,7 +164,7 @@
         <button id="btnMailWatch" class="ghost">🔴📉 주의 대상만 메일 초안</button>
         <button id="btnMailAll" class="ghost">이번 달 전체 지표 메일 초안</button>
       </div>
-      <p class="hint">버튼을 누르면 ① 상세 내역이 담긴 엑셀 파일이 먼저 자동 다운로드되고, ② 이어서 Outlook 등 기본 메일 앱에 제목·본문이 채워진 초안이 뜝니다. 다운로드된 엑셀을 메일 창에 끌어다 놓으신 후 확인하고 [보내기]를 눌러주세요 (mailto 방식은 브라우저에서 파일을 자동 첨부할 수 없어 이 방식으로 처리됩니다). 이메일 주소는 이 브라우저에만 저장됩니다.</p>
+      <p class="hint">버튼을 누르면 ① 상세 내역이 담긴 엑셀 파일이 먼저 자동 다운로드되고, ② 이어서 Outlook 등 기본 메일 앱에 제목·본문이 채워진 초안이 뜹니다. 다운로드된 엑셀을 메일 창에 끌어다 놓으신 후 확인하고 [보내기]를 눌러주세요 (mailto 방식은 브라우저에서 파일을 자동 첨부할 수 없어 이 방식으로 처리됩니다). 이메일 주소는 이 브라우저에만 저장됩니다.</p>
     </div>
 
     <div class="result-cols">
@@ -839,7 +839,6 @@ async function openMailDraft(items, scopeLabelKo, scopeLabelEn, showStatus){
 
   const {file, fname} = await buildMailExcelFile(items, scopeLabelKo, scopeLabelEn);
 
-  // ① "파일 포함 공유"를 지원하면 먼저 시도 (일부 환경에서 실제로 첨부까지 자동으로 됨)
   if (navigator.canShare && navigator.canShare({files:[file]})) {
     try {
       const shareBody = buildMailBody(items, scopeLabelKo, scopeLabelEn, showStatus);
@@ -852,7 +851,6 @@ async function openMailDraft(items, scopeLabelKo, scopeLabelEn, showStatus){
     }
   }
 
-  // ② 공유하기 미지원/실패 시: 다운로드 + mailto
   downloadFile(file);
   log((en?'Excel downloaded for attaching: ':'첨부용 엑셀 다운로드: ') + fname);
   let body = buildMailBody(items, scopeLabelKo, scopeLabelEn, showStatus);
@@ -881,7 +879,6 @@ document.getElementById('btnMailAll').addEventListener('click', () => {
   openMailDraft(items, '이번 달 전체 지표(달성+미달성)', "this month's full KPI list (achieved + not achieved)", true);
 });
 
-// ---------- 실행 이력 (브라우저에 저장, 다시 열어도 유지됨) ----------
 const HISTORY_KEY = 'hdps_history_v1';
 function loadHistory(){
   try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
@@ -898,9 +895,8 @@ function addHistory(entry){
     files: [entry.srcName, entry.masterName].filter(Boolean).join(' / '),
     result: entry.result,
   };
-  if (entry.resultsData) item.resultsData = entry.resultsData; // 판정 이력만 결과 데이터 보관 (재조회용)
+  if (entry.resultsData) item.resultsData = entry.resultsData;
   list.unshift(item);
-  // localStorage 용량 보호: 결과 데이터가 있는 항목은 최근 50건, 나머지(반영 이력 등)는 최근 200건까지만
   let kept = [], dataCount = 0;
   for (const h of list){
     if (h.resultsData){
@@ -912,13 +908,12 @@ function addHistory(entry){
   }
   try {
     saveHistory(kept);
-    // 실제로 결과데이터까지 잘 저장됐는지 즉시 재확인 (일부 브라우저는 오류 없이 조용히 저장을 무시하기도 함)
     const check = loadHistory();
     if (item.resultsData && (!check[0] || !check[0].resultsData)) {
       log('⚠ 저장은 됐지만 상세 결과 데이터가 누락됐습니다 (브라우저 저장공간 제한일 수 있어요).');
     }
   }
-  catch(e){ // 용량 초과 등으로 실패 시 결과데이터 없는 버전으로 강등 후 재시도
+  catch(e){
     log('⚠ 이력 저장 중 오류(용량 초과 등): ' + e.message + ' → 상세 결과 없이 요약만 저장합니다.');
     try {
       const stripped = kept.map(h => { const {resultsData, ...rest} = h; return rest; });
@@ -967,6 +962,6 @@ document.getElementById('btnClearHistory').addEventListener('click', () => {
 });
 renderHistory();
 </script>
-<script src="./hd24-ui-v3.js?v=15"></script>
+<script src="./hd24-ui-v3.js?v=18"></script>
 </body>
 </html>
