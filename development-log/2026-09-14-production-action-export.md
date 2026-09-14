@@ -30,18 +30,26 @@
 - 매크로 손상 위험을 감수하고 임의 변환하지 않음.
 
 ## Runtime Loader
-`hd24-ui-v3.js`에 다음 모듈을 production 연결:
-- `kpi-action-classifier.js?v=22`
-- `kpi-action-workbook.js?v=22`
-- `hd24-action-export.js?v=22`
-- `hd24-history-view.js?v=22`
+초기 production 연결은 v22였으며, 2026-09-14 11:56 KST 전후 캐시 재검증 과정에서 production 전체 분석모듈을 v23으로 cache-bust 함.
+현재 `hd24-ui-v3.js` 연결:
+- `kpi-action-classifier.js?v=23`
+- `kpi-action-workbook.js?v=23`
+- `hd24-action-export.js?v=23`
+- `hd24-followup.js?v=23`
+- `hd24-history-view.js?v=23`
+
+기존 핵심 안전체인은 유지:
+- core v18
+- auto-run v19
+- pipeline-gate v21
 
 ## Cache refresh
-`refresh-runtime.html`이 v22 전체 분석 runtime을 강제 reload하도록 갱신:
-- classifier
-- workbook postprocessor
-- action export bridge
-- history view
+`refresh-runtime.html`은 실제 index가 요청하는 wrapper URL `hd24-ui-v3.js?v=18` 자체를 `cache:'reload'`로 강제 재요청하고, 이후 v23 하위 모듈도 모두 직접 reload함.
+- classifier v23
+- workbook postprocessor v23
+- action export v23
+- follow-up v23
+- history view v23
 - 기존 safe runtime / mapping JSON 포함
 
 ## 영구 회귀테스트
@@ -52,15 +60,22 @@
 - approved `applyKpiActionColumn()` 호출
 - XLSM fail-closed 존재
 - completion event 존재
-- loader에 classifier/workbook/export v22 연결
+- loader에 classifier/workbook/export 현재 production 버전 연결
 
 `.github/workflows/hd24-kpi-action-regression.yml`에도 syntax + bridge assertion을 추가함.
 
+### 검증 중 발견/수정된 실제 회귀
+- v23 cache-bust 후 `tests/kpi-action-export.test.js`가 loader v22를 하드코딩 기대하고 있음을 발견.
+- Hosted runner가 `steps=null` 상태라 자동테스트에서 이 결함이 드러나지 않았음.
+- runner 정상화 시 즉시 실패할 수 있는 잠재 회귀였으므로 v23 assertion으로 즉시 수정.
+- 수정 커밋: `2a7c145c9c1efd98eeacfcc834148c32c0346861`.
+
 ## 실행검증 / Actions 상태
 - Pages 직전 상세 Timeline 배포 run `34799941400`: build / deploy / status 모두 SUCCESS 확인.
-- 신규 action-export 포함 Pages run `34800302959`: 생성 후 build 실행 진행 중(확정 결과 추적 필요).
+- action-export 포함 Pages run `34800302959`: build SUCCESS. 이후 신규 커밋들이 연속 발생하면서 deploy 및 report-build-status가 CANCELLED 됨. 따라서 이 run을 최종 production 배포 PASS로 간주하지 않음.
 - KPI Action Regression run `34800303514`: `completed / failure`, job `103841473976`, `steps=null`.
-- 판정: 기존과 동일한 GitHub hosted runner pre-step/execution-layer 장애. 신규 테스트 assertion이 실행된 결과가 아니므로 애플리케이션 실패로 판정하지 않음.
+- 최신 Runtime Regression run `34800874121`: `completed / failure`. 기존과 동일한 hosted runner pre-step 장애 계열로 추적 중.
+- Web 외부 직접 접근은 private Pages/검색 비노출 특성 때문에 이 환경에서 신뢰 가능한 live HTTP 증거로 사용하지 않음.
 
 ## 커밋
 - `020f40a87ffe68d28439a5e6baeeb437eb355e1f` — production action export bridge
@@ -68,8 +83,11 @@
 - `fab6f94a4ec347b59513cfa986892cbe09dc7218` — v22 refresh chain
 - `4262aea131a114982d14f88497bc076daad0e967` — export bridge regression test
 - `aaed0a9ff1f3a359e5a66987679c2137e9560d30` — action regression workflow 연결
+- `aa9af180a94f5e3426a7737fd67827db4ac97506` — production module cache-bust v23
+- `e174e6d51003174d15d15cd322afbf968a1e7179` — refresh helper v23 체인 정렬
+- `2a7c145c9c1efd98eeacfcc834148c32c0346861` — regression assertion v23 정렬
 
 ## 완료판정 보류사항
-- 최신 Pages 배포 `34800302959` 완료 확인 필요.
+- v23 최신 코드가 포함된 GitHub Pages 새 deploy의 `deploy SUCCESS` 확인 필요.
 - 실제 브라우저에서 권위 실적파일 + 최종관리파일 업로드 후 `검증반영본 → 자동분석 → 분석후속조치본 → 메일 Preview` 전구간 실파일 E2E 확인 필요.
 - 브라질 권위 `(4)(3)` 총괄파일은 8~9월 미래월 오염 18셀 때문에 7월 원천 기준 safe-reflect가 정상적으로 차단될 수 있음. 이를 보호로직 실패로 오판정하거나 강제 우회하지 않는다.
