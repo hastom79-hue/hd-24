@@ -15,10 +15,17 @@ function getSignature(){
   return [plant?plant.value:'',sf.name,sf.size,sf.lastModified,mf.name,mf.size,mf.lastModified].join('|');
 }
 
-function isReady(){
+function readiness(){
   const btn=document.getElementById('btnReflect');
   const sig=getSignature();
-  return !!(sig&&btn&&!btn.disabled&&window.hd24SafeReflectReady===true&&btn.dataset.safeReflectReady==='1');
+  return {
+    sig,
+    btn,
+    ok:!!(sig&&btn&&!btn.disabled&&window.hd24SafeReflectReady===true&&btn.dataset.safeReflectReady==='1'),
+    disabled:btn?!!btn.disabled:null,
+    globalReady:window.hd24SafeReflectReady===true,
+    datasetReady:btn?btn.dataset.safeReflectReady:null
+  };
 }
 
 function writeLog(message){
@@ -37,26 +44,35 @@ function syncSuccess(){
     completedSignature=sig;
     runningSignature='';
     runningSince=0;
+    writeLog('자동 실행 완료 확인: 안전반영 성공 signature 일치');
     return true;
   }
   return false;
 }
 
 function tryAutoRun(reason){
-  const sig=getSignature();
+  const s=readiness();
+  const sig=s.sig;
   if(!sig)return;
   if(syncSuccess()||sig===completedSignature)return;
-  if(!isReady())return;
+  if(!s.ok){
+    if(reason==='watchdog' && Date.now()%5000<1000){
+      writeLog(`자동 실행 대기: disabled=${s.disabled} / safe=${s.globalReady} / dataset=${s.datasetReady||'-'}`);
+    }
+    return;
+  }
 
   const now=Date.now();
-  if(runningSignature===sig&&now-runningSince<30000)return;
+  // If an async click path stalls/fails without success, retry quickly rather than suppressing for 30s.
+  if(runningSignature===sig&&now-runningSince<3000)return;
 
-  const btn=document.getElementById('btnReflect');
+  const btn=s.btn;
   runningSignature=sig;
   runningSince=now;
   writeLog('자동 실행 시작: '+reason+' — 업로드 완료 즉시 안전검증/실적반영');
   try{
-    btn.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));
+    // Use native HTMLElement.click() so the exact production click path executes.
+    btn.click();
   }catch(e){
     runningSignature='';
     runningSince=0;
@@ -82,6 +98,7 @@ function wire(){
     new MutationObserver(()=>tryAutoRun('readiness enabled')).observe(btn,{attributes:true,attributeFilter:['disabled','data-safe-reflect-ready']});
   }
   document.addEventListener('hd24-safe-reflect-success',syncSuccess);
+  window.addEventListener('hd24-safe-reflect-complete',syncSuccess);
   watchdog=setInterval(()=>tryAutoRun('watchdog'),1000);
   window.addEventListener('beforeunload',()=>watchdog&&clearInterval(watchdog),{once:true});
   resetAndRun('startup');
