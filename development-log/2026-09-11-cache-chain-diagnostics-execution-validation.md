@@ -103,3 +103,15 @@ GitHub Actions hosted runner still does not start workflow steps (`steps=null` /
 - Permanent India/Brazil E2E workflows still contain future-month contamination fail-closed assertions, and the runtime regression gate still pins the critical mapping/safety invariants.
 - Current application-side blocker remains exactly one known alignment defect: stale outer cache chain CSS v3 / UI JS v15 / safe runtime v18.
 - No unsafe whole-file rewrite of `index.html` was attempted.
+
+## Follow-up execution verification — 10:25 KST / upload readiness fix
+- Production cache-chain alignment had already been applied before this check: `index.html` references `hd24-ui-v3.css?v=18` and `hd24-ui-v3.js?v=18`; the UI loader references `safe-kpi-mapping.js?v=18`.
+- Found a separate upload-readiness race: after source/master files were loaded, `checkReady()` could run before asynchronous mapping load finished, leaving the reflect button disabled even after a browser refresh.
+- Applied commit `739b9da77d0136922dd0d2089d09ff00ae93655d` (`fix: resync upload readiness after async mapping load`). The UI helper now schedules repeated readiness rechecks after DOM ready, source/master file changes, and plant changes without bypassing the existing fail-closed conditions.
+- Verified the new helper is present on current main and the safe runtime loader remains `v=18`.
+- Runtime Regression run `34795786949` on this exact HEAD initially failed before any step started; original job `103828499544` had `steps=null`.
+- Re-ran that exact job as an independent runner-recovery probe. Retry job `103828909074` again completed `failure` with `steps=null`.
+- Brazil Browser E2E run `34795786939` on the same HEAD also initially failed before steps; original job `103828499489` had `steps=null`.
+- Re-ran the Brazil job. Retry job `103828917362` entered `queued` and then completed `failure` with `steps=null`.
+- Therefore both fresh reruns again prove the remaining CI failure is at the GitHub Actions execution layer before workflow code starts. They do not invalidate the upload-readiness code change, but they also do not constitute a passed browser E2E test.
+- Next required validation remains actual deployed-browser verification of: file upload → readiness/button enable → safe reflection → post-write validation → output download integrity, followed by India/Brazil data-level checks against the authoritative workbook.
