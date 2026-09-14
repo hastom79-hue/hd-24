@@ -1,0 +1,21 @@
+name: HD24 Action Cycle Regression
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  cycle-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validate cycle-safe action export
+        run: |
+          node --check hd24-action-export.js
+          node --check hd24-action-cycle-guard.js
+          node tests/kpi-action-export.test.js
