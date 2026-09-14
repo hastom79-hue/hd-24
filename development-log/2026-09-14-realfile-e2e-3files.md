@@ -105,6 +105,31 @@ Independent local Node execution of the v27 code path with the dataset marker in
 - duplicate auto-run after success prevented: PASS
 - Result: `PASS auto-run v27 local harness`
 
+## Follow-up analysis synchronization bridge
+Initial sync bridge commits:
+- `e9d1de15027c303dec749b5ee0710344b8608b44` — added `hd24-followup-sync.js`.
+- `4723fcb992087790a819bc650090de77b23c9284` — loaded the bridge in production.
+- `8fb74415d87e03789d1a3712d4a7a74141955fd5` — added it to forced runtime refresh.
+
+Reason:
+- Existing `hd24-followup.js` marked an upload signature as handled before proving that asynchronous KPI analysis had finished. Its fixed 80 ms wait could therefore observe empty/stale results and suppress later retries.
+- The bridge waits for the same upload signature to have safe-reflect success plus a valid selected month plus current-month `allResults` before triggering the existing Preview/reply-file path.
+
+Deployment evidence:
+- Pages run `34811523701` for loader HEAD `4723fcb992087790a819bc650090de77b23c9284`: completed SUCCESS.
+
+## Follow-up sync v2 stale-preview fix
+A second race/staleness defect was found during direct code review of the new bridge:
+- `hd24-followup.js` leaves the previous Preview visible when a new source/master pair is selected.
+- The initial sync bridge treated any visible Preview as ready, so a Preview from the previous file pair could be mistaken for the current upload and suppress regeneration.
+
+Fixed by v2:
+- Commit `3acdd7a6e3de2dafb32aeed3214ae1c0dbac2cd2` — clear old Preview state on upload/plant reset and tag generated Preview with the current upload signature.
+- Commit `8930604427d1f19e6047ef6a6c608a8b112425bb` — production loader now uses `hd24-followup-sync.js?v=2`.
+- Commit `74086f6e81f7840e0d5262e2fc28e5a76c23c9c5` — forced refresh helper now preloads sync v2.
+- A visible Preview is reused only when it belongs to the current upload signature; otherwise the bridge triggers the existing watch-mail Preview path and then downloads the reply workbook once.
+- Existing mail approval semantics remain unchanged; no automatic send was introduced.
+
 ## GitHub Actions state
 - Custom Runtime Regression / Apply UI / Browser E2E jobs continue to fail before running steps (`steps=null`) in this period.
 - These are retained as hosted-runner/execution-layer failures, not application assertion failures.
@@ -114,7 +139,7 @@ Independent local Node execution of the v27 code path with the dataset marker in
 - Current uploaded India/Brazil/master data do not expose a safe-reflect data blocker for July.
 - Older Brazil history differences are warnings, not blockers.
 - v27 removes a real auto-run readiness deadlock while retaining safe-reflect fail-closed validation.
-- Latest v27 Pages deployment is confirmed successful.
 - v27 missing-dataset recovery and duplicate suppression are independently PASS in a local Node harness.
+- Follow-up synchronization now waits for completed analysis and v2 prevents reuse of stale Preview from a previous file pair.
 - Remaining unproven item is full production browser E2E with the real uploaded files: file selection → safe reflect → verified workbook → analysis → action workbook → reply workbook → mail Preview.
 - Do not declare full live-browser E2E PASS until that chain is observed end to end.
