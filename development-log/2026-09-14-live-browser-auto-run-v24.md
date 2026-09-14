@@ -33,10 +33,15 @@ Commit `01582a8f26dfaf15d8e160ebe2e56701d23fc1c2`
 
 ## Validation status
 - Code write: PASS.
-- Production wrapper v24 reference: PASS by committed change.
-- Runtime refresh helper v24 reference: PASS by committed change.
-- GitHub Pages deployment for latest HEAD: pending verification after commit.
-- User live-browser E2E after refresh: pending.
+- Production wrapper v24 reference: PASS (`hd24-ui-v3.js` loads `hd24-auto-run.js?v=24`).
+- Runtime refresh helper v24 reference: PASS.
+- Latest release/log HEAD: `e36bddac5794f14a40128388c27c549efcbdd3aa`.
+- GitHub Pages run `34805961817`: `completed / success`.
+- Pages build job `103857801477`: all steps success.
+- Pages deploy job `103857911048`: deploy step success.
+- Pages report-build-status job `103857911033`: success.
+- Therefore v24 production deployment is server-side verified PASS.
+- User live-browser E2E after latest refresh remains the only unresolved runtime check.
 
 ## Failure history retained
 - Previous auto-run v19 did not run in the user's live browser despite both files being selected and the button being enabled.
