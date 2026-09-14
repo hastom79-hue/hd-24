@@ -62,10 +62,17 @@ function resolveKpiDataColumn(ws,layout,resolvedMappings){
   return best.col;
 }
 
-function applyFillAndFont(cell,token){
-  if(!token||!token.fill)return;
-  cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+token.fill}};
-  cell.font={...(cell.font||{}),bold:true,color:{argb:'FF'+token.font}};
+// Existing master workbook uses KPI-cell fills for its own management semantics.
+// Never overwrite the existing fill. HD-24 status uses font cue only.
+function applyStatusFont(cell,token){
+  const current={...(cell.font||{})};
+  if(token&&token.font){
+    cell.font={...current,bold:true,color:{argb:'FF'+token.font}};
+  }else{
+    // Mapped KPI rows in the approved master workbook use the normal theme-1 font.
+    // Reset only the HD-24-managed font attributes; preserve typeface/size/etc.
+    cell.font={...current,bold:false,color:{theme:1}};
+  }
 }
 
 function columnHasData(ws,col){
@@ -114,6 +121,7 @@ function applyKpiActionColumn({worksheet,resolvedMappings,horizon,classifier,hea
     if(!row||row<=headerRow)throw new Error(`후속조치 생성 차단: 잘못된 masterRow ${m.masterRow}`);
     const kpiCell=worksheet.getCell(row,layout.kpiCol);
     const kpiBefore=valueOf(kpiCell);
+    const fillBefore=JSON.stringify(kpiCell.fill||null);
     const wanted=norm(m.kpiKr||m.kpiEn||'');
     if(wanted&&norm(kpiBefore)!==wanted)throw new Error(`KPI명 검증 실패: row ${row} / ${norm(kpiBefore)} ≠ ${wanted}`);
     const target=valueOf(worksheet.getCell(row,layout.targetCol));
@@ -123,7 +131,7 @@ function applyKpiActionColumn({worksheet,resolvedMappings,horizon,classifier,hea
     for(let mo=1;mo<=horizon;mo++)values.push(valueOf(worksheet.getCell(row,layout.monthCols[mo])));
     const result=classifier.classifyKpi({values,target,direction:m.direction,targetComparable});
     const token=classifier.visualToken(result);
-    applyFillAndFont(kpiCell,token);
+    applyStatusFont(kpiCell,token);
 
     const actionCell=worksheet.getCell(row,actionCol);
     const beforeAction=valueOf(actionCell);
@@ -133,6 +141,7 @@ function applyKpiActionColumn({worksheet,resolvedMappings,horizon,classifier,hea
     actionCell.alignment={vertical:'top',wrapText:true};
 
     if(valueOf(kpiCell)!==kpiBefore)throw new Error(`KPI명 원문 보존 실패: row ${row}`);
+    if(JSON.stringify(kpiCell.fill||null)!==fillBefore)throw new Error(`KPI 기존 배경서식 보존 실패: row ${row}`);
     results.push({row,kpi:kpiBefore,unit,targetComparable,result,actionCol,manualActionPreserved:beforeAction!==null&&beforeAction!==undefined&&String(beforeAction).trim()!==''});
   }
 
@@ -144,7 +153,7 @@ function applyKpiActionColumn({worksheet,resolvedMappings,horizon,classifier,hea
   return {layout,actionCol,results};
 }
 
-const api={norm,findHeaderColumn,monthNumber,discoverMasterLayout,resolveKpiDataColumn,columnHasData,resolveActionColumn,targetComparableForUnit,applyKpiActionColumn};
+const api={norm,findHeaderColumn,monthNumber,discoverMasterLayout,resolveKpiDataColumn,applyStatusFont,columnHasData,resolveActionColumn,targetComparableForUnit,applyKpiActionColumn};
 if(typeof window!=='undefined')window.hd24KpiActionWorkbook=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })();
