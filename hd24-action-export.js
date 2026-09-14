@@ -24,6 +24,15 @@ function currentAnalysisState(){
   const current=(horizon>=1&&horizon<=12)?results.filter(r=>Number(r.month)===horizon):[];
   return {horizon,results,current,ready:horizon>=1&&horizon<=12&&current.length>0};
 }
+function snapshotItem(r){
+  return {
+    month:Number(r.month)||0,
+    masterRow:Number(r.masterRow)||0,
+    kpi:r.kpi||'',kpiEn:r.kpiEn||'',direction:r.direction||'',unit:r.unit||'',
+    target:r.target??null,actual:r.actual??null,achieved:!!r.achieved,
+    streak:Number(r.streak)||0,trend:r.trend||'flat'
+  };
+}
 
 HTMLAnchorElement.prototype.click=function(){
   try{
@@ -79,6 +88,10 @@ async function makeFinalActionWorkbook(reason){
   if(typeof ExcelJS==='undefined'||!window.hd24KpiActionWorkbook||!window.hd24KpiActionClassifier)return;
   const a=currentAnalysisState(),results=a.results,horizon=a.horizon;
   if(!a.ready)return;
+  const analysisSnapshot=a.current.map(snapshotItem);
+  if(!analysisSnapshot.length||analysisSnapshot.some(x=>x.month!==horizon||!x.masterRow)){
+    logSafe('최종 분석파일 생성 차단: 현재월 분석 스냅샷 검증 실패');return;
+  }
   if(!capturedSafe||capturedSafe.signature!==sig){if(capturePromise)try{await capturePromise}catch(_){return};}
   if(!capturedSafe||capturedSafe.signature!==sig)return;
 
@@ -97,8 +110,8 @@ async function makeFinalActionWorkbook(reason){
     const u=URL.createObjectURL(file),a=document.createElement('a');a.href=u;a.download=file.name;originalClick.call(a);setTimeout(()=>URL.revokeObjectURL(u),30000);
     processedSignature=sig;
     const abnormal=out.results.filter(x=>x.result&&x.result.label!=='정상/개선').length;
-    logSafe(`최종 분석파일 자동 추출 완료: ${file.name} / 후속조치열 ${out.actionCol}열 / 관리대상 ${abnormal}건`);
-    window.dispatchEvent(new CustomEvent('hd24-action-export-complete',{detail:{signature:sig,fileName:file.name,actionCol:out.actionCol,abnormalCount:abnormal,reason}}));
+    logSafe(`최종 분석파일 자동 추출 완료: ${file.name} / 후속조치열 ${out.actionCol}열 / 관리대상 ${abnormal}건 / 분석스냅샷 ${analysisSnapshot.length}건 고정`);
+    window.dispatchEvent(new CustomEvent('hd24-action-export-complete',{detail:{signature:sig,fileName:file.name,actionCol:out.actionCol,abnormalCount:abnormal,reason,month:horizon,items:analysisSnapshot}}));
   }catch(e){processedSignature='';logSafe('최종 분석파일 생성 차단: '+(e?.message||e));console.error(e);}
 }
 
