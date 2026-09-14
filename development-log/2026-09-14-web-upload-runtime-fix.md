@@ -78,11 +78,12 @@
 ## 실행검증
 ### GitHub Pages
 - `ca02454430f81757662948f0cdac15aa355755e4`에 대한 Pages run `34796683508`은 `completed / success` 확인.
-- 즉 readiness hotfix + hard-refresh helper까지 GitHub Pages 배포가 실제 성공한 증거 확보.
-- 후속 mapping cache-bust URL 수정 `e254e69...`에 대해서도 Pages 재배포가 자동 시작되었으며 최종 완료 여부를 계속 추적함.
+- 후속 mapping cache-bust URL 수정 `e254e69ba5283df2ec85324557a56ce9056437ea`에 대한 Pages run `34796826113`도 `completed / success` 확인.
+- 따라서 readiness hotfix, hard-refresh helper, mapping cache-bust URL 보정까지 실제 GitHub Pages 배포 PASS가 확보됨.
+- 현재 main HEAD `1d37c3bee232933ff65ab1d471168271d73577c2`는 위 앱 코드 `e254e69...`의 직계 후손이며 추가 변경은 개발로그 문서뿐임.
 
 ### Custom Actions runner
-- 최신 Runtime Regression run `34796683905`의 job `103831036151` 확인 결과 `steps: []`, `runner_id: 0`, runner name 공란 상태로 종료됨.
+- Runtime Regression run `34796683905`의 job `103831036151` 확인 결과 `steps: []`, `runner_id: 0`, runner name 공란 상태로 종료됨.
 - 따라서 해당 failure는 테스트 assertion 실패가 아니라 hosted runner가 실제 step을 시작하지 못한 기존 실행계층 장애로 판정함.
 - Browser E2E / Apply approved UI도 동일 계층 장애가 반복되고 있어 application failure 증거로 사용하지 않음.
 
@@ -97,6 +98,8 @@
 - 브라우저 stale cache → CacheStorage 삭제 + reload helper 강화
 - helper 자체 mapping URL 오류 → 즉시 발견/수정
 - 자동 E2E failure → job `steps: []` 확인으로 runner 계층 장애임을 재확인
+- 개발로그 업데이트 중 1회 SHA conflict(HTTP 409) 발생 → 최신 파일 SHA 재조회 후 재시도 성공. 실패 이력 보존.
+- `e254e69...` Pages 배포 run `34796826113` success 확인.
 
 ## 코딩 로그
 - `index.html`: v18 cache chain 정렬
@@ -110,8 +113,8 @@
 - readiness race 완화/강제 재동기화: 완료
 - refresh helper 강화: 완료
 - refresh helper URL 오류 보정: 완료
-- Pages 배포 확인: `ca024544...`까지 PASS, `e254e69...` 최종 배포 확인 진행
+- 최신 앱 코드 Pages 배포 확인: PASS (`e254e69...`, run `34796826113`)
 - GitHub Actions 자동 E2E: hosted runner 장애로 test step 미실행
 - 실제 사용자 브라우저에서 두 파일 업로드 → 버튼 활성화 → 반영본 다운로드 E2E 확인: 미완료
 
-따라서 현재는 코드/배포 계층의 핵심 수정은 반영되었으나, 실제 사용자 브라우저에서 파일 2개를 다시 올려 반영본 다운로드까지 성공하는 시점에 최종 완료로 판정한다.
+따라서 서버측 코드와 Pages 배포는 최신 앱 수정까지 검증 완료했다. 최종 완료 판정은 실제 사용자 브라우저에서 refresh-runtime 경유 후 원본/총괄 파일 업로드 → `실행 준비 재검증 PASS` → 실적 반영 버튼 활성화 → 검증반영본 다운로드까지 성공하는 시점으로 한다.
