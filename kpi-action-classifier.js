@@ -30,6 +30,7 @@ function worsened(prev,current,direction){
 
 function consecutiveWorsening(values,direction){
   const clean=(values||[]).map(finite);
+  if(!clean.length||clean[clean.length-1]===null) return 0;
   let months=0;
   for(let i=clean.length-1;i>0;i--){
     if(clean[i]===null||clean[i-1]===null) break;
@@ -39,11 +40,12 @@ function consecutiveWorsening(values,direction){
   return months ? months+1 : 0;
 }
 
-function classifyKpi({values=[],target=null,direction=''}){
+function classifyKpi({values=[],target=null,direction='',targetComparable=true}){
   const clean=(values||[]).map(finite);
-  const actual=[...clean].reverse().find(v=>v!==null) ?? null;
-  const miss=isMiss(actual,target,direction);
-  const streak=consecutiveWorsening(clean,direction);
+  const actual=clean.length?clean[clean.length-1]:null;
+  const hasCurrentActual=actual!==null;
+  const miss=hasCurrentActual&&targetComparable!==false ? isMiss(actual,target,direction) : false;
+  const streak=hasCurrentActual ? consecutiveWorsening(clean,direction) : 0;
 
   let trend='normal';
   let severity=0;
@@ -63,6 +65,8 @@ function classifyKpi({values=[],target=null,direction=''}){
     actual,
     target:finite(target),
     direction:dirToken(direction),
+    hasCurrentActual,
+    targetComparable:targetComparable!==false,
     missedTarget:miss,
     worseningMonths:streak,
     trend,
