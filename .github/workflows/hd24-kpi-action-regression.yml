@@ -1,0 +1,34 @@
+name: HD24 KPI Action Regression
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'kpi-action-classifier.js'
+      - 'kpi-action-workbook.js'
+      - 'tests/kpi-action-classifier.test.js'
+      - 'tests/kpi-action-workbook.test.js'
+      - '.github/workflows/hd24-kpi-action-regression.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'kpi-action-classifier.js'
+      - 'kpi-action-workbook.js'
+      - 'tests/kpi-action-classifier.test.js'
+      - 'tests/kpi-action-workbook.test.js'
+      - '.github/workflows/hd24-kpi-action-regression.yml'
+permissions:
+  contents: read
+jobs:
+  action-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validate classifier and workbook post-processing
+        run: |
+          node --check kpi-action-classifier.js
+          node --check kpi-action-workbook.js
+          node tests/kpi-action-classifier.test.js
+          node tests/kpi-action-workbook.test.js
