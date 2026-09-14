@@ -9,6 +9,7 @@ on:
       - 'tests/followup-exact-once.test.js'
       - 'tests/followup-inflight-dedupe.test.js'
       - 'tests/reply-cycle-guard.test.js'
+      - 'tests/reply-cycle-same-cycle-state.test.js'
       - '.github/workflows/hd24-followup-exact-once.yml'
   pull_request:
     branches: [main]
@@ -19,6 +20,7 @@ on:
       - 'tests/followup-exact-once.test.js'
       - 'tests/followup-inflight-dedupe.test.js'
       - 'tests/reply-cycle-guard.test.js'
+      - 'tests/reply-cycle-same-cycle-state.test.js'
       - '.github/workflows/hd24-followup-exact-once.yml'
 permissions:
   contents: read
@@ -31,9 +33,10 @@ jobs:
         with:
           node-version: '20'
       - name: Syntax check
-        run: node --check hd24-followup-sync.js && node --check hd24-reply-cycle-guard.js && node --check tests/followup-exact-once.test.js && node --check tests/followup-inflight-dedupe.test.js && node --check tests/reply-cycle-guard.test.js
+        run: node --check hd24-followup-sync.js && node --check hd24-reply-cycle-guard.js && node --check tests/followup-exact-once.test.js && node --check tests/followup-inflight-dedupe.test.js && node --check tests/reply-cycle-guard.test.js && node --check tests/reply-cycle-same-cycle-state.test.js
       - name: Execute exact-once state-machine regressions
         run: |
           node tests/followup-exact-once.test.js
           node tests/followup-inflight-dedupe.test.js
           node tests/reply-cycle-guard.test.js
+          node tests/reply-cycle-same-cycle-state.test.js
