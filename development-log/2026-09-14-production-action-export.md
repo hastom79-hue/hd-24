@@ -140,3 +140,40 @@ Library에서 다음 실제 파일을 다시 찾아 작업 컨테이너에 mater
 - 권위 실파일/원천 구조 preflight: PASS
 - 브라질 `(4)(3)` 미래월 fail-closed 예상차단: PASS
 - 실제 사용자 브라우저의 파일선택 이벤트부터 분석후속조치본/메일 Preview까지 실파일 E2E: 아직 사용자 브라우저에서 최종 확인 필요
+
+## 2026-09-14 12:05 KST 계속 실행검증
+### 최신 HEAD Pages 재검증
+- HEAD `8626153a29b8ae3c38a16d04b2183537a9cf1b9a`에 대해 Pages run `34801350161` 생성 확인.
+- build / deploy / report-build-status 모두 `completed / success` 확인.
+- 따라서 직전 검증일지 반영분까지 포함된 서버측 배포도 PASS.
+
+### Custom Actions 실행계층 재확인
+- Runtime Regression run `34801350878`: job `regression`, `completed / failure`, `steps=null`.
+- Apply approved UI run `34801350894`: job `apply`, `completed / failure`, `steps=null`.
+- 두 실패 모두 테스트 step 자체가 시작되지 않은 동일 hosted runner pre-step 장애 패턴.
+- 따라서 앱 assertion 실패나 UI 적용 실패로 오판정하지 않음.
+
+### 자동분석 → 메일 Preview Gate 코드 교차검증
+- `hd24-pipeline-gate.js`는 인도/브라질에서 새 파일쌍 선택 시 `btnJudge`를 강제 disabled로 유지하고, `addHistory(entry.action==='실적 반영')` 성공 기록이 발생한 동일 signature에 대해서만 `hd24SafeReflectSuccessSignature`를 설정하고 `btnJudge`를 활성화함.
+- `hd24-followup.js`의 `tryAutoPackage()`는 `btnJudge.disabled`이면 즉시 return하므로, 안전반영 성공 전에는 자동분석/회신파일/메일 Preview 패키지가 시작되지 않음.
+- 안전반영 성공 후에는 분석 실행 → 관리대상 추출 → 영문 회신용 Excel 생성/다운로드 → Mail Preview 준비 순서로 진행.
+- 발송 버튼은 Preview 이후에만 사용 가능하며, API 연결 시 성공 응답에서 `sentAt`, API 미연결 시 `mailOpenedAt`을 별도 기록하여 실제 발송과 메일앱 열림을 구분함.
+
+### 인도 실파일 수치 교차검증 샘플
+권위 총괄 `인도법인 KPI(26년 보고용)`과 원천 `Final With HQ Suggestion` 7월 값을 대조:
+- SQDC 목표달성팀 비율: 원천 0.91 → 총괄 91 (percent scale 적용 일치)
+- Cost KPI 달성율: 원천 0.84 → 총괄 84 (percent scale 적용 일치)
+- 대당 비가동 MH: 원천 3.11 → 총괄 3.11 일치
+- 생산이슈 재발율: 원천 0.11 → 총괄 11 (percent scale 적용 일치)
+- 생산지시 준수율: 원천 0.63 → 총괄 63 (percent scale 적용 일치)
+- 대당 펜딩이슈 조치 리드타임: 원천 0.15 → 총괄 0.15 일치
+- 샘플 기준 행/월 밀림이나 percent scale 역전 없음.
+
+### 브라질 원천 파일 구조 재검증
+- `HCEB Module KPI 2026_31Aug2026(1).xlsx`의 `xl/workbook.xml` 시트 목록을 직접 확인.
+- `HCEB KPIs` 시트가 실제 존재하며 workbook ZIP 무결성도 PASS.
+- artifact_tool parser 오류와 파일 구조 손상을 분리 판정함.
+
+### 미완료/잔여 검증
+- 사용자 브라우저에서 실제 파일선택 이벤트를 발생시켜 `검증반영본 → 자동분석 → _분석후속조치본.xlsx → 회신용 Excel → 메일 Preview`의 실제 다운로드/화면 결과를 보는 최종 UI E2E는 이 환경에서 직접 클릭할 수 없어 아직 PASS 선언하지 않음.
+- 브라질 `(4)(3)`는 미래월 오염 때문에 safe-reflect 차단이 정상이며, 성공경로 E2E 대상으로 사용하지 않음.
