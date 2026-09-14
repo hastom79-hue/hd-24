@@ -2,10 +2,13 @@ const fs=require('fs');
 const vm=require('vm');
 function ok(cond,msg){if(!cond)throw new Error(msg)}
 const src=fs.readFileSync('hd24-followup-sync.js','utf8');
+const legacy=fs.readFileSync('hd24-followup.js','utf8');
 const loader=fs.readFileSync('hd24-ui-v3.js','utf8');
 const refresh=fs.readFileSync('refresh-runtime.html','utf8');
 
 // Static production wiring/invariant checks.
+ok(src.includes('window.hd24FollowupSyncOwnsAutoPackage=true'),'sync must claim single auto-package ownership');
+ok(legacy.includes('if(window.hd24FollowupSyncOwnsAutoPackage)'),'legacy auto-package must honor sync ownership');
 ok(src.includes("window.hd24SafeReflectSuccessSignature!==sig||actionExportSignature!==sig||!a.ready"),'follow-up must wait for safe-reflect, action export, and current analysis');
 ok(src.includes("window.addEventListener('hd24-action-export-complete',actionExportComplete)"),'action-export completion listener missing');
 ok(src.includes("eventSig!==sig"),'action-export event must match current upload signature');
@@ -13,8 +16,10 @@ ok(src.includes("replyDownloadedSignature===sig"),'reply workbook dedupe signatu
 ok(src.includes("if(activeSignature!==sig)hardReset"),'duplicate safe-complete must not reset same-signature state');
 ok(src.includes("p.dataset.hd24Signature===sig"),'Preview must be tagged to current signature');
 ok(src.includes("if(stale&&stale.style.display!=='none'&&!stale.dataset.hd24Signature){stale.style.display='none';}"),'untagged legacy Preview must not be trusted');
-ok(loader.includes('hd24-followup-sync.js?v=3'),'production loader must use follow-up sync v3');
-ok(refresh.includes('hd24-followup-sync.js?v=3'),'refresh helper must preload follow-up sync v3');
+ok(loader.includes('hd24-followup.js?v=24'),'production loader must use legacy UI module v24 with owner guard');
+ok(loader.includes('hd24-followup-sync.js?v=4'),'production loader must use follow-up sync v4');
+ok(refresh.includes('hd24-followup.js?v=24'),'refresh helper must preload legacy UI module v24');
+ok(refresh.includes('hd24-followup-sync.js?v=4'),'refresh helper must preload follow-up sync v4');
 
 // Executable state-machine regression: prove ordering and one-time behavior.
 const listeners={};
@@ -24,16 +29,16 @@ const files={
 };
 const elements={};
 function elem(id,extra={}){return elements[id]=Object.assign({id,style:{display:'none'},dataset:{},disabled:false,textContent:'',scrollTop:0,scrollHeight:0,addEventListener(){},click(){}},extra)}
-const plant=elem('plantSelect',{value:'india'});
-const srcFile=elem('srcFile',{files:[files.src]});
-const masterFile=elem('masterFile',{files:[files.master]});
+elem('plantSelect',{value:'india'});
+elem('srcFile',{files:[files.src]});
+elem('masterFile',{files:[files.master]});
 elem('log');
 const preview=elem('hd24Preview');
 const subject=elem('hd24PreviewSubject');
 elem('hd24MailStatus');
 let replyClicks=0,mailClicks=0;
-const reply=elem('hd24DownloadReply',{click(){replyClicks++}});
-const mail=elem('btnMailWatch',{click(){mailClicks++;preview.style.display='block';subject.textContent='HD24 KPI follow-up'}});
+elem('hd24DownloadReply',{click(){replyClicks++}});
+elem('btnMailWatch',{click(){mailClicks++;preview.style.display='block';subject.textContent='HD24 KPI follow-up'}});
 elem('resultCard');
 const currentSig=['india',files.src.name,files.src.size,files.src.lastModified,files.master.name,files.master.size,files.master.lastModified].join('|');
 
@@ -58,6 +63,8 @@ sandbox.log=()=>{};
 vm.createContext(sandbox);
 vm.runInContext(src,sandbox,{filename:'hd24-followup-sync.js'});
 
+ok(sandbox.hd24FollowupSyncOwnsAutoPackage===true,'v4 must expose ownership flag immediately');
+
 // Startup has safe-reflect and analysis data, but no action-export completion: must not package.
 ok(mailClicks===0,'must not create Preview before current action export completes');
 ok(replyClicks===0,'must not download reply before current action export completes');
@@ -80,4 +87,4 @@ sandbox.dispatchEvent(new sandbox.CustomEvent('hd24-safe-reflect-complete',{deta
 ok(mailClicks===1,'duplicate completion events must not regenerate Preview package');
 ok(replyClicks===1,'duplicate completion events must not redownload reply workbook');
 
-console.log('PASS follow-up v3 executable chain: action-export gate -> current Preview -> reply Excel exactly once');
+console.log('PASS follow-up v4 single-orchestrator chain: legacy auto suppressed -> action-export gate -> current Preview -> reply Excel exactly once');
