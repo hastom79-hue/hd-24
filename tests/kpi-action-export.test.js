@@ -1,6 +1,7 @@
 const fs=require('fs');
 function ok(cond,msg){if(!cond)throw new Error(msg)}
 const src=fs.readFileSync('hd24-action-export.js','utf8');
+const guard=fs.readFileSync('hd24-action-cycle-guard.js','utf8');
 const loader=fs.readFileSync('hd24-ui-v3.js','utf8');
 const refresh=fs.readFileSync('refresh-runtime.html','utf8');
 ok(src.includes('hd24SafeReflectSuccessSignature'),'must require safe-reflect success signature');
@@ -10,11 +11,19 @@ ok(src.includes("/\\.xlsm$/i.test(master.name)"),'must fail closed for XLSM macr
 ok(src.includes('hd24-action-export-complete'),'must emit completion event');
 ok(src.includes('analysisMutationSeen'),'must track a post-judge result-card mutation');
 ok(src.includes('!analysisMutationSeen'),'must block action export until post-judge mutation is observed');
-ok(src.includes('analysisReadySignature!==sig'),'must require fresh-analysis readiness for current upload signature');
+ok(src.includes('analysisReadySignature!==sig||analysisReadyCycle!==workCycle'),'must require fresh-analysis readiness for current upload cycle');
 ok(src.includes('results.filter(r=>Number(r.month)===horizon)'),'must require current-month analysis results');
-ok(src.includes('if(sig&&sig===triggerSignature&&window.hd24SafeReflectSuccessSignature===sig&&judgeClickedAt)analysisMutationSeen=true'),'mutation must belong to current triggered/safe signature');
+ok(src.includes('triggerCycle===currentCycle()'),'analysis mutation must belong to current upload cycle');
+ok(src.includes('captureCycle!==currentCycle()||signature()!==sig'),'safe workbook capture must reject stale async completion');
+ok(src.includes("if(workCycle!==currentCycle()||signature()!==sig)throw new Error('stale action-export cycle after workbook load')"),'workbook load must reject stale cycle');
+ok(src.includes("if(workCycle!==currentCycle()||signature()!==sig)throw new Error('stale action-export cycle after workbook write')"),'workbook write must reject stale cycle');
+ok(src.includes('cycle:workCycle'),'completion event must carry upload cycle');
+ok(guard.includes("stopImmediatePropagation"),'cycle guard must stop stale completion propagation');
+ok(guard.includes('eventCycle!==currentCycle'),'cycle guard must compare event/current cycles');
 ok(loader.includes('kpi-action-classifier.js?v=23'),'loader must include classifier v23');
 ok(loader.includes('kpi-action-workbook.js?v=23'),'loader must include workbook v23');
-ok(loader.includes('hd24-action-export.js?v=25'),'loader must include action export v25');
-ok(refresh.includes('hd24-action-export.js?v=25'),'refresh helper must preload action export v25');
-console.log('PASS kpi-action-export v25 fresh-analysis gate assertions');
+ok(loader.includes('hd24-action-export.js?v=27'),'loader must include action export v27');
+ok(loader.includes('hd24-action-cycle-guard.js?v=1'),'loader must include action cycle guard v1');
+ok(refresh.includes('hd24-action-export.js?v=27'),'refresh helper must preload action export v27');
+ok(refresh.includes('hd24-action-cycle-guard.js?v=1'),'refresh helper must preload action cycle guard v1');
+console.log('PASS kpi-action-export v27 upload-cycle fail-closed assertions');
