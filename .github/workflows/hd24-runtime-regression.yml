@@ -64,17 +64,24 @@ jobs:
           assert 'month:horizon,items:analysisSnapshot' in action, 'action-export completion does not carry frozen snapshot'
           assert "hd24-action-export.js?v=26" in ui, 'production loader is not on action export v26'
 
-          # Follow-up v6 must not claim completion merely because the async download button was clicked.
-          # It reopens the actual generated reply workbook bytes and cross-checks them against the
-          # action-export snapshot and Preview identity before setting replyDownloadedSignature.
+          # Follow-up v7: exact watch set must be preserved from action snapshot through Preview
+          # and actual generated reply workbook bytes. Same-count substitution is fail-closed.
           assert 'window.hd24FollowupSyncOwnsAutoPackage=true' in follow, 'follow-up sync does not claim auto-package ownership'
           assert 'if(window.hd24FollowupSyncOwnsAutoPackage)' in legacy_follow, 'legacy 80ms auto-package path is not suppressed by owner guard'
           assert 'actionExportSignature!==sig||!snap||!a.ready' in follow, 'follow-up is not gated by validated action snapshot'
           assert 'window.hd24FollowupSnapshot={signature:sig,month,items:items.map' in follow, 'validated follow-up snapshot storage missing'
           assert 'withSnapshot(sig,()=>mailBtn.click())' in follow, 'Preview is not pinned to the frozen action snapshot'
+          assert "const REPLY_KEY='hd24_kpi_reply_history_v2'" in follow, 'follow-up recurrence source drifted from legacy history'
+          assert 'function expectedWatchItems(sig)' in follow, 'exact watch KPI selector missing'
+          assert "return !r.achieved||Number(r.streak)>=2||r.trend==='down'||!!rec?.isRecurrence" in follow, 'watch selection semantics changed'
+          assert 'count===watch.length' in follow, 'Preview count is not locked to watch set'
+          assert 'p.dataset.hd24Rows=watchFingerprint(sig)' in follow, 'Preview exact-set fingerprint missing'
           assert 'async function validateReplyFile(file,sig)' in follow, 'actual reply workbook byte verifier missing'
           assert 'await wb.xlsx.load(await file.arrayBuffer())' in follow, 'reply workbook bytes are not reopened'
           assert 'Preview↔회신 Excel KPI 건수 불일치' in follow, 'Preview/reply count cross-check missing'
+          assert '관리대상↔회신 Excel KPI 건수 불일치' in follow, 'watch/reply count cross-check missing'
+          assert 'expectedSet.has(uniq)' in follow, 'reply KPI membership is not locked to exact watch set'
+          assert "[...expectedSet].some(x=>!seen.has(x))" in follow, 'reply workbook does not enforce complete watch set coverage'
           assert '회신 Excel 사업장 불일치' in follow, 'reply plant cross-check missing'
           assert '회신 Excel 대상월 불일치' in follow, 'reply month cross-check missing'
           assert '회신 Excel Target 불일치' in follow, 'reply Target cross-check missing'
@@ -85,7 +92,7 @@ jobs:
           assert 'p.dataset.hd24Month=String(snap.month)' in follow, 'Preview month identity tag missing'
           assert 'p.dataset.hd24Count=String(meta.count)' in follow, 'Preview KPI-count identity tag missing'
           assert "hd24-followup.js?v=24" in ui, 'production loader is not on legacy follow-up UI v24'
-          assert "hd24-followup-sync.js?v=6" in ui, 'production loader is not on follow-up sync v6'
+          assert "hd24-followup-sync.js?v=7" in ui, 'production loader is not on follow-up sync v7'
 
           assert "['XLSX','https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js']" in core, 'SheetJS fallback guard missing'
           assert "['JSZip','https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js']" in core, 'JSZip fallback guard missing'
@@ -140,7 +147,7 @@ jobs:
           assert "if m.get('kpiEn')==ltir: src_unit='%'" in brazil_e2e, 'Brazil E2E LTIR percent source-unit fixture missing'
           assert "if m.get('kpiEn')==ltir: master_unit='%'" in brazil_e2e, 'Brazil E2E LTIR percent master-unit fixture missing'
 
-          print(f'HD24 RUNTIME REGRESSION PASS: cache=v{cache_ver}, runtime=v{runtime_ver}, auto-run=v27, action-export=v26, follow-up=v6, India=76+1 runtime, Brazil=76+1 runtime')
+          print(f'HD24 RUNTIME REGRESSION PASS: cache=v{cache_ver}, runtime=v{runtime_ver}, auto-run=v27, action-export=v26, follow-up=v7 exact-watch-set, India=76+1 runtime, Brazil=76+1 runtime')
           PY
           node --check hd24-auto-run.js
           node --check hd24-action-export.js
