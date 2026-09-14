@@ -155,3 +155,4 @@ jobs:
           node --check hd24-followup-sync.js
           node tests/auto-run-readiness.test.js
           node tests/followup-sync.test.js
+          node tests/followup-reset-guard.test.js
