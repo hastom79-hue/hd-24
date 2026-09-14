@@ -5,16 +5,22 @@ on:
     paths:
       - 'kpi-action-classifier.js'
       - 'kpi-action-workbook.js'
+      - 'hd24-action-export.js'
+      - 'hd24-ui-v3.js'
       - 'tests/kpi-action-classifier.test.js'
       - 'tests/kpi-action-workbook.test.js'
+      - 'tests/kpi-action-export.test.js'
       - '.github/workflows/hd24-kpi-action-regression.yml'
   pull_request:
     branches: [main]
     paths:
       - 'kpi-action-classifier.js'
       - 'kpi-action-workbook.js'
+      - 'hd24-action-export.js'
+      - 'hd24-ui-v3.js'
       - 'tests/kpi-action-classifier.test.js'
       - 'tests/kpi-action-workbook.test.js'
+      - 'tests/kpi-action-export.test.js'
       - '.github/workflows/hd24-kpi-action-regression.yml'
 permissions:
   contents: read
@@ -26,9 +32,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Validate classifier and workbook post-processing
+      - name: Validate classifier, workbook post-processing, and production export bridge
         run: |
           node --check kpi-action-classifier.js
           node --check kpi-action-workbook.js
+          node --check hd24-action-export.js
           node tests/kpi-action-classifier.test.js
           node tests/kpi-action-workbook.test.js
+          node tests/kpi-action-export.test.js
