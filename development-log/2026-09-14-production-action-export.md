@@ -91,3 +91,52 @@
 - v23 최신 코드가 포함된 GitHub Pages 새 deploy의 `deploy SUCCESS` 확인 필요.
 - 실제 브라우저에서 권위 실적파일 + 최종관리파일 업로드 후 `검증반영본 → 자동분석 → 분석후속조치본 → 메일 Preview` 전구간 실파일 E2E 확인 필요.
 - 브라질 권위 `(4)(3)` 총괄파일은 8~9월 미래월 오염 18셀 때문에 7월 원천 기준 safe-reflect가 정상적으로 차단될 수 있음. 이를 보호로직 실패로 오판정하거나 강제 우회하지 않는다.
+
+## 2026-09-14 12:02 KST 추가 실행검증
+### v23 최종 Pages 배포
+- release marker commit: `98dd29fb09560903fbcaf8d45b4665791526911c`.
+- Pages run `34800998801` 검증 결과:
+  - build: `completed / success`
+  - deploy: `completed / success`
+  - report-build-status: `completed / success`
+- 따라서 v23 release marker까지 포함된 Pages 서버측 배포는 PASS로 확정.
+- `runtime-release.json`에서 classifier / workbook postprocessor / action export / follow-up / history가 모두 v23으로 선언된 것을 재확인.
+
+### 권위 실파일 재확보 / 구조 Preflight
+Library에서 다음 실제 파일을 다시 찾아 작업 컨테이너에 materialize:
+- 권위 총괄: `총괄파일_인도7월반영_최종검증본 (4)(3).xlsx`
+- 인도 원천: `## HCEI Module KPI 2026 _HQ recomendation Jul 26.(1).xlsx`
+- 브라질 원천: `HCEB Module KPI 2026_31Aug2026(1).xlsx`
+
+구조검증:
+- 권위 총괄에 `인도법인 KPI(26년 보고용)` / `브라질법인 KPI(26년 보고용)` 시트 존재 PASS.
+- 인도 원천에 `Final With HQ Suggestion` 시트 존재 PASS.
+- 브라질 원천에 `HCEB KPIs` 시트 존재 PASS.
+- 세 파일 모두 OOXML ZIP 무결성 확인. 브라질 원천은 ZIP 자체 오류 없음.
+
+### 브라질 권위 총괄 미래월 오염 재검증
+브라질 보고용 시트에서 기준월 7월 이후 8~9월에 기존 숫자 18셀이 존재함을 재확인:
+- row 41: AH=415, AI=519
+- row 42: AH=1306, AI=1203
+- row 43: AH=293, AI=412
+- row 44: AH=1335, AI=1381
+- row 45: AH=2436, AI=2011
+- row 46: AH=1170, AI=1239
+- row 47: AH=58, AI=66
+- row 48: AH=528, AI=520
+- row 49: AH=15, AI=13
+- 즉 `(4)(3)` + 브라질 7월 원천 조합은 현재 safe runtime의 `masterFutureContamination()`에 의해 차단되는 것이 정상 동작임.
+- 이를 우회하거나 자동 삭제하지 않음.
+
+### 추가 검증 도구 이슈
+- `artifact_tool`로 권위 총괄 및 인도 원천은 workbook/sheet 구조 import 확인 가능.
+- 브라질 원천은 `artifact_tool` import 시 `Format_InvalidStringWithValue` 오류가 발생했으나, ZIP 무결성 및 workbook.xml의 `HCEB KPIs` 시트 존재는 정상 확인됨.
+- 이 오류는 ChatGPT 검증 도구의 parser 호환성 이슈로 기록하며, HD-24 브라우저의 SheetJS/ExcelJS 파싱 실패와 동일하다고 단정하지 않음.
+
+### 현재 완료판정
+- 코드 연결: PASS
+- v23 캐시체인: PASS
+- Pages 서버 배포: PASS
+- 권위 실파일/원천 구조 preflight: PASS
+- 브라질 `(4)(3)` 미래월 fail-closed 예상차단: PASS
+- 실제 사용자 브라우저의 파일선택 이벤트부터 분석후속조치본/메일 Preview까지 실파일 E2E: 아직 사용자 브라우저에서 최종 확인 필요
