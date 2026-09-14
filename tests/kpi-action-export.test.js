@@ -7,7 +7,7 @@ ok(src.includes('검증반영본'),'must capture only verified reflected workboo
 ok(src.includes('applyKpiActionColumn'),'must call approved workbook postprocessor');
 ok(src.includes("/\\.xlsm$/i.test(master.name)"),'must fail closed for XLSM macro preservation');
 ok(src.includes('hd24-action-export-complete'),'must emit completion event');
-ok(loader.includes('kpi-action-classifier.js?v=22'),'loader must include classifier v22');
-ok(loader.includes('kpi-action-workbook.js?v=22'),'loader must include workbook v22');
-ok(loader.includes('hd24-action-export.js?v=22'),'loader must include action export v22');
+ok(loader.includes('kpi-action-classifier.js?v=23'),'loader must include classifier v23');
+ok(loader.includes('kpi-action-workbook.js?v=23'),'loader must include workbook v23');
+ok(loader.includes('hd24-action-export.js?v=23'),'loader must include action export v23');
 console.log('PASS kpi-action-export production bridge assertions');
