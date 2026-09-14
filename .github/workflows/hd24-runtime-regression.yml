@@ -73,20 +73,23 @@ jobs:
           assert "hd24-action-export.js?v=27" in ui, 'production loader is not on action export v27'
           assert "hd24-action-cycle-guard.js?v=1" in ui, 'production loader is missing action cycle guard v1'
 
-          # Follow-up v7: exact watch set must be preserved from action snapshot through Preview
-          # and actual generated reply workbook bytes. Same-count substitution is fail-closed.
+          # Follow-up v8: exact watch set and actual reply workbook are bound to the same upload cycle.
           assert 'window.hd24FollowupSyncOwnsAutoPackage=true' in follow, 'follow-up sync does not claim auto-package ownership'
-          assert 'if(window.hd24FollowupSyncOwnsAutoPackage)' in legacy_follow, 'legacy 80ms auto-package path is not suppressed by owner guard'
-          assert 'actionExportSignature!==sig||!snap||!a.ready' in follow, 'follow-up is not gated by validated action snapshot'
-          assert 'window.hd24FollowupSnapshot={signature:sig,month,items:items.map' in follow, 'validated follow-up snapshot storage missing'
-          assert 'withSnapshot(sig,()=>mailBtn.click())' in follow, 'Preview is not pinned to the frozen action snapshot'
+          assert 'if(window.hd24FollowupSyncOwnsAutoPackage)' in legacy_follow, 'legacy auto-package path is not suppressed by owner guard'
+          assert 'function currentCycle(){return Number(window.hd24ActionCycle)||0}' in follow, 'follow-up upload-cycle source missing'
+          assert 'Number(s.cycle)!==Number(cycle)' in follow, 'follow-up snapshot is not cycle-bound'
+          assert 'actionExportSignature!==sig||actionExportCycle!==cycle' in follow, 'follow-up is not gated by same-cycle action export'
+          assert 'window.hd24FollowupSnapshot={signature:sig,cycle,month,items:items.map' in follow, 'cycle-bound follow-up snapshot storage missing'
+          assert 'withSnapshot(sig,cycle,()=>mailBtn.click())' in follow, 'Preview is not pinned to frozen same-cycle action snapshot'
           assert "const REPLY_KEY='hd24_kpi_reply_history_v2'" in follow, 'follow-up recurrence source drifted from legacy history'
-          assert 'function expectedWatchItems(sig)' in follow, 'exact watch KPI selector missing'
+          assert 'function expectedWatchItems(sig,cycle=currentCycle())' in follow, 'exact watch KPI selector missing'
           assert "return !r.achieved||Number(r.streak)>=2||r.trend==='down'||!!rec?.isRecurrence" in follow, 'watch selection semantics changed'
           assert 'count===watch.length' in follow, 'Preview count is not locked to watch set'
-          assert 'p.dataset.hd24Rows=watchFingerprint(sig)' in follow, 'Preview exact-set fingerprint missing'
-          assert 'async function validateReplyFile(file,sig)' in follow, 'actual reply workbook byte verifier missing'
+          assert 'p.dataset.hd24Cycle=String(cycle)' in follow, 'Preview upload-cycle identity tag missing'
+          assert 'p.dataset.hd24Rows=watchFingerprint(sig,cycle)' in follow, 'Preview exact-set fingerprint missing'
+          assert 'async function validateReplyFile(file,sig,cycle)' in follow, 'actual reply workbook byte verifier missing'
           assert 'await wb.xlsx.load(await file.arrayBuffer())' in follow, 'reply workbook bytes are not reopened'
+          assert '회신 Excel 검증 중 업로드 cycle 변경' in follow, 'reply workbook post-load cycle rejection missing'
           assert 'Preview↔회신 Excel KPI 건수 불일치' in follow, 'Preview/reply count cross-check missing'
           assert '관리대상↔회신 Excel KPI 건수 불일치' in follow, 'watch/reply count cross-check missing'
           assert 'expectedSet.has(uniq)' in follow, 'reply KPI membership is not locked to exact watch set'
@@ -96,12 +99,11 @@ jobs:
           assert '회신 Excel Target 불일치' in follow, 'reply Target cross-check missing'
           assert '회신 Excel Actual 불일치' in follow, 'reply Actual cross-check missing'
           assert '회신 Excel Status/Trend 불일치' in follow, 'reply Status/Trend cross-check missing'
-          assert 'replyDownloadedSignature=sig' in follow, 'verified reply completion signature missing'
-          assert 'replyAttempts[sig]' in follow, 'bounded reply verification retry missing'
-          assert 'p.dataset.hd24Month=String(snap.month)' in follow, 'Preview month identity tag missing'
-          assert 'p.dataset.hd24Count=String(meta.count)' in follow, 'Preview KPI-count identity tag missing'
+          assert 'replyDownloadedSignature=sig;replyDownloadedCycle=cycle' in follow, 'verified reply completion cycle missing'
+          assert 'replyAttempts[key]' in follow, 'cycle-keyed bounded reply verification retry missing'
+          assert 'eventSig!==sig||eventCycle!==cycle' in follow, 'stale same-signature prior-cycle action event is not rejected'
           assert "hd24-followup.js?v=24" in ui, 'production loader is not on legacy follow-up UI v24'
-          assert "hd24-followup-sync.js?v=7" in ui, 'production loader is not on follow-up sync v7'
+          assert "hd24-followup-sync.js?v=8" in ui, 'production loader is not on follow-up sync v8'
 
           assert "['XLSX','https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js']" in core, 'SheetJS fallback guard missing'
           assert "['JSZip','https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js']" in core, 'JSZip fallback guard missing'
@@ -156,7 +158,7 @@ jobs:
           assert "if m.get('kpiEn')==ltir: src_unit='%'" in brazil_e2e, 'Brazil E2E LTIR percent source-unit fixture missing'
           assert "if m.get('kpiEn')==ltir: master_unit='%'" in brazil_e2e, 'Brazil E2E LTIR percent master-unit fixture missing'
 
-          print(f'HD24 RUNTIME REGRESSION PASS: cache=v{cache_ver}, runtime=v{runtime_ver}, auto-run=v27, action-export=v27 cycle-safe, follow-up=v7 exact-watch-set, India=76+1 runtime, Brazil=76+1 runtime')
+          print(f'HD24 RUNTIME REGRESSION PASS: cache=v{cache_ver}, runtime=v{runtime_ver}, auto-run=v27, action-export=v27 cycle-safe, follow-up=v8 cycle-safe exact-watch-set, India=76+1 runtime, Brazil=76+1 runtime')
           PY
           node --check hd24-auto-run.js
           node --check hd24-action-export.js
