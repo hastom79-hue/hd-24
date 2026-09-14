@@ -25,6 +25,7 @@ jobs:
           core=Path('hd24-ui-v3-core.js').read_text(encoding='utf-8')
           safe=Path('safe-kpi-mapping.js').read_text(encoding='utf-8')
           auto=Path('hd24-auto-run.js').read_text(encoding='utf-8')
+          action=Path('hd24-action-export.js').read_text(encoding='utf-8')
           legacy_follow=Path('hd24-followup.js').read_text(encoding='utf-8')
           follow=Path('hd24-followup-sync.js').read_text(encoding='utf-8')
           health=Path('runtime-health.html').read_text(encoding='utf-8')
@@ -62,15 +63,25 @@ jobs:
           assert 'if(sig&&btn&&btn.disabled&&safe&&core.ok)' in auto, 'stale-disabled repair is not fail-closed'
           assert "hd24-auto-run.js?v=27" in ui, 'production loader is not on auto-run v27'
 
-          # Follow-up package: one automatic orchestrator only, strictly after action export, deduped by signature.
+          # Action export v26 freezes the exact current-month analysis result that produced the action workbook.
+          assert 'const analysisSnapshot=a.current.map(snapshotItem)' in action, 'current-month action snapshot missing'
+          assert 'month:horizon,items:analysisSnapshot' in action, 'action-export completion does not carry frozen snapshot'
+          assert "hd24-action-export.js?v=26" in ui, 'production loader is not on action export v26'
+
+          # Follow-up v5: one automatic orchestrator only, same-signature action snapshot is mandatory,
+          # and both Preview + reply workbook are generated under that frozen data snapshot.
           assert 'window.hd24FollowupSyncOwnsAutoPackage=true' in follow, 'follow-up sync does not claim auto-package ownership'
           assert 'if(window.hd24FollowupSyncOwnsAutoPackage)' in legacy_follow, 'legacy 80ms auto-package path is not suppressed by owner guard'
-          assert 'actionExportSignature!==sig' in follow, 'follow-up is not gated by action export completion'
+          assert 'actionExportSignature!==sig||!snap||!a.ready' in follow, 'follow-up is not gated by validated action snapshot'
+          assert 'window.hd24FollowupSnapshot={signature:sig,month,items:items.map' in follow, 'validated follow-up snapshot storage missing'
+          assert 'withSnapshot(sig,()=>mailBtn.click())' in follow, 'Preview is not pinned to the frozen action snapshot'
+          assert 'withSnapshot(sig,()=>b.click())' in follow, 'reply workbook is not pinned to the frozen action snapshot'
+          assert 'p.dataset.hd24Month=String(snap.month)' in follow, 'Preview month identity tag missing'
+          assert 'p.dataset.hd24Count=String(meta.count)' in follow, 'Preview KPI-count identity tag missing'
           assert 'replyDownloadedSignature===sig' in follow, 'reply workbook dedupe missing'
-          assert 'p.dataset.hd24Signature===sig' in follow, 'Preview current-signature tag gate missing'
           assert 'if(activeSignature!==sig)hardReset' in follow, 'same-signature safe-complete reset regression'
           assert "hd24-followup.js?v=24" in ui, 'production loader is not on legacy follow-up UI v24'
-          assert "hd24-followup-sync.js?v=4" in ui, 'production loader is not on follow-up sync v4'
+          assert "hd24-followup-sync.js?v=5" in ui, 'production loader is not on follow-up sync v5'
 
           # Required Excel runtime dependencies must be fail-closed with a secondary CDN fallback.
           assert "['XLSX','https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js']" in core, 'SheetJS fallback guard missing'
@@ -129,9 +140,10 @@ jobs:
           assert "if m.get('kpiEn')==ltir: src_unit='%'" in brazil_e2e, 'Brazil E2E LTIR percent source-unit fixture missing'
           assert "if m.get('kpiEn')==ltir: master_unit='%'" in brazil_e2e, 'Brazil E2E LTIR percent master-unit fixture missing'
 
-          print(f'HD24 RUNTIME REGRESSION PASS: cache=v{cache_ver}, runtime=v{runtime_ver}, auto-run=v27, follow-up=v4, India=76+1 runtime, Brazil=76+1 runtime')
+          print(f'HD24 RUNTIME REGRESSION PASS: cache=v{cache_ver}, runtime=v{runtime_ver}, auto-run=v27, action-export=v26, follow-up=v5, India=76+1 runtime, Brazil=76+1 runtime')
           PY
           node --check hd24-auto-run.js
+          node --check hd24-action-export.js
           node --check hd24-followup.js
           node --check hd24-followup-sync.js
           node tests/auto-run-readiness.test.js
