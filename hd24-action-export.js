@@ -5,6 +5,9 @@ let capturedSafe=null;
 let capturePromise=null;
 let processedSignature='';
 let triggerSignature='';
+let analysisReadySignature='';
+let judgeClickedAt=0;
+let analysisReadyLogged='';
 const originalClick=HTMLAnchorElement.prototype.click;
 
 function el(id){return document.getElementById(id)}
@@ -15,6 +18,11 @@ function safeName(name){return String(name||'').replace(/\.(xlsx|xlsm)$/i,'')}
 function getAllResults(){try{return Array.isArray(allResults)?allResults:[]}catch(_){return []}}
 function getMonth(){try{return Number(selectedMonth)||0}catch(_){return 0}}
 function getMasterSheet(){try{return cfg().masterSheet||''}catch(_){return ''}}
+function currentAnalysisState(){
+  const horizon=getMonth(),results=getAllResults();
+  const current=(horizon>=1&&horizon<=12)?results.filter(r=>Number(r.month)===horizon):[];
+  return {horizon,results,current,ready:horizon>=1&&horizon<=12&&current.length>0};
+}
 
 HTMLAnchorElement.prototype.click=function(){
   try{
@@ -42,10 +50,24 @@ function resolvedMappingsFromResults(results){
   return [...map.values()];
 }
 
+function markAnalysisReady(reason){
+  const sig=signature();
+  if(!sig||sig!==triggerSignature||window.hd24SafeReflectSuccessSignature!==sig||!judgeClickedAt)return false;
+  const a=currentAnalysisState();
+  if(!a.ready)return false;
+  analysisReadySignature=sig;
+  if(analysisReadyLogged!==sig){
+    analysisReadyLogged=sig;
+    logSafe(`KPI 분석 결과 동기화 완료: ${reason} / ${a.horizon}월 ${a.current.length}건`);
+  }
+  return true;
+}
+
 async function makeFinalActionWorkbook(reason){
   const sig=signature();
   if(!sig||sig===processedSignature)return;
   if(window.hd24SafeReflectSuccessSignature!==sig)return;
+  if(analysisReadySignature!==sig)return;
   const master=el('masterFile')?.files?.[0];
   if(!master)return;
   if(/\.xlsm$/i.test(master.name)){
@@ -54,8 +76,8 @@ async function makeFinalActionWorkbook(reason){
     return;
   }
   if(typeof ExcelJS==='undefined'||!window.hd24KpiActionWorkbook||!window.hd24KpiActionClassifier)return;
-  const results=getAllResults(),horizon=getMonth();
-  if(!results.length||!(horizon>=1&&horizon<=12))return;
+  const a=currentAnalysisState(),results=a.results,horizon=a.horizon;
+  if(!a.ready)return;
   if(!capturedSafe||capturedSafe.signature!==sig){if(capturePromise)try{await capturePromise}catch(_){return};}
   if(!capturedSafe||capturedSafe.signature!==sig)return;
 
@@ -83,15 +105,18 @@ function tryTriggerJudge(){
   const sig=signature();if(!sig||window.hd24SafeReflectSuccessSignature!==sig||triggerSignature===sig)return;
   const btn=el('btnJudge');if(!btn||btn.disabled)return;
   triggerSignature=sig;
-  try{btn.click();logSafe('안전반영 완료 → 자동 KPI 분석 실행')}catch(e){triggerSignature='';logSafe('자동 KPI 분석 실행 오류: '+(e?.message||e))}
+  analysisReadySignature='';
+  analysisReadyLogged='';
+  judgeClickedAt=Date.now();
+  try{btn.click();logSafe('안전반영 완료 → 자동 KPI 분석 실행')}catch(e){triggerSignature='';judgeClickedAt=0;logSafe('자동 KPI 분석 실행 오류: '+(e?.message||e))}
 }
 
-function schedule(reason){[0,80,200,500,1000,1800,3000,5000,8000].forEach(ms=>setTimeout(()=>{tryTriggerJudge();makeFinalActionWorkbook(reason)},ms))}
-function reset(){capturedSafe=null;capturePromise=null;processedSignature='';triggerSignature=''}
+function schedule(reason){[0,80,200,500,1000,1800,3000,5000,8000].forEach(ms=>setTimeout(()=>{tryTriggerJudge();markAnalysisReady(reason);makeFinalActionWorkbook(reason)},ms))}
+function reset(){capturedSafe=null;capturePromise=null;processedSignature='';triggerSignature='';analysisReadySignature='';analysisReadyLogged='';judgeClickedAt=0}
 function wire(){
   ['srcFile','masterFile','plantSelect'].forEach(id=>el(id)?.addEventListener('change',()=>{reset();schedule(id+' change')}));
   window.addEventListener('hd24-safe-reflect-complete',()=>schedule('safe reflect complete'));
-  const rc=el('resultCard');if(rc)new MutationObserver(()=>schedule('analysis result updated')).observe(rc,{attributes:true,childList:true,subtree:true});
+  const rc=el('resultCard');if(rc)new MutationObserver(()=>{markAnalysisReady('analysis result updated');schedule('analysis result updated')}).observe(rc,{attributes:true,childList:true,subtree:true});
   schedule('startup');
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire,{once:true});else wire();
