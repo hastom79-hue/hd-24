@@ -3,7 +3,7 @@ const assert=require('assert');
 const classifier=require('../kpi-action-classifier.js');
 const post=require('../kpi-action-workbook.js');
 
-class Cell{constructor(v=null){this.value=v;this.font={};this.fill=null;this.alignment={};}}
+class Cell{constructor(v=null){this.value=v;this.font={name:'HD Light',size:11,color:{theme:1}};this.fill=null;this.alignment={};}}
 class Column{constructor(){this.width=null;}}
 class Ws{
   constructor(rows,cols){this.rowCount=rows;this.rows=rows;this.columnCount=cols;this.cells=new Map();this.cols=new Map();}
@@ -19,8 +19,10 @@ for(let m=1;m<=12;m++)ws.getCell(4,26+m).value=`${m}월`;
 ws.getCell(1,39).value='=25/Q1';
 
 ws.getCell(5,12).value=5; ws.getCell(5,13).value='KPI A'; ws.getCell(5,25).value=95; ws.getCell(5,26).value='%';
+ws.getCell(5,13).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFFF00'}};
 [100,98,96,94,92,90].forEach((v,i)=>ws.getCell(5,27+i).value=v);
 ws.getCell(6,12).value='+1'; ws.getCell(6,13).value='KPI B'; ws.getCell(6,25).value=3; ws.getCell(6,26).value='DPTU';
+ws.getCell(6,13).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFC000'}};
 [2,2.2,2.4,2.6,2.8,3.2].forEach((v,i)=>ws.getCell(6,27+i).value=v);
 ws.getCell(7,12).value='+1'; ws.getCell(7,13).value='KPI C'; ws.getCell(7,25).value=420; ws.getCell(7,26).value='건/년';
 [53,35,52,38,57,35].forEach((v,i)=>ws.getCell(7,27+i).value=v);
@@ -43,14 +45,19 @@ assert.strictEqual(post.targetComparableForUnit('%'),true,'percentage target sho
 
 const beforeA=ws.getCell(5,13).value;
 const beforeB=ws.getCell(6,13).value;
+const fillA=JSON.stringify(ws.getCell(5,13).fill);
+const fillB=JSON.stringify(ws.getCell(6,13).fill);
 let out=post.applyKpiActionColumn({worksheet:ws,resolvedMappings:mappings,horizon:6,classifier,headerRow:4});
 assert.strictEqual(out.actionCol,40,'must create AN, not append after formatted AS');
 assert.strictEqual(ws.getCell(4,40).value,'미달사유 / 만회계획');
 assert.strictEqual(ws.getCell(5,13).value,beforeA,'KPI name changed');
 assert.strictEqual(ws.getCell(6,13).value,beforeB,'KPI name changed');
+assert.strictEqual(JSON.stringify(ws.getCell(5,13).fill),fillA,'existing KPI fill was overwritten');
+assert.strictEqual(JSON.stringify(ws.getCell(6,13).fill),fillB,'existing KPI fill was overwritten');
+assert.strictEqual(ws.getCell(5,13).font.bold,true,'abnormal KPI font not emphasized');
+assert.strictEqual(ws.getCell(5,13).font.color.argb,'FF9C0006','critical KPI font color wrong');
 assert(ws.getCell(5,40).value.includes('만회계획'),'action prompt missing');
 assert(ws.getCell(6,40).value.includes('미달사유'),'action prompt missing for lower-is-better miss');
-assert(ws.getCell(5,13).fill&&ws.getCell(6,13).fill,'visual token not applied');
 const annual=out.results.find(x=>x.row===7);
 assert.strictEqual(annual.targetComparable,false,'annual target comparability not propagated');
 assert.strictEqual(annual.result.missedTarget,false,'annual target falsely compared to monthly actual');
@@ -61,4 +68,13 @@ assert.strictEqual(out.actionCol,40,'rerun must reuse existing action column');
 assert.strictEqual(ws.getCell(5,40).value,'미달사유 : 설비정지\n만회계획 : 9월 회복','manual action text overwritten');
 assert.strictEqual(out.results[0].manualActionPreserved,true,'manual preservation flag missing');
 
-console.log('PASS kpi-action-workbook: real layout, AN selection, KPI preservation, annual-target fail-closed, idempotency, manual text preservation');
+// Recovery on a later rerun must clear the stale HD-24 warning font but keep the original fill.
+[80,82,84,86,96,97].forEach((v,i)=>ws.getCell(5,27+i).value=v);
+out=post.applyKpiActionColumn({worksheet:ws,resolvedMappings:mappings,horizon:6,classifier,headerRow:4});
+assert.strictEqual(out.results[0].result.label,'정상/개선','recovered KPI still classified abnormal');
+assert.strictEqual(ws.getCell(5,13).font.bold,false,'stale warning bold not cleared');
+assert.strictEqual(ws.getCell(5,13).font.color.theme,1,'stale warning font color not reset');
+assert.strictEqual(JSON.stringify(ws.getCell(5,13).fill),fillA,'recovery changed original fill');
+assert.strictEqual(ws.getCell(5,40).value,'미달사유 : 설비정지\n만회계획 : 9월 회복','recovery must preserve prior manual action history');
+
+console.log('PASS kpi-action-workbook: real layout, AN selection, existing fills preserved, stale status reset, annual-target fail-closed, idempotency, manual text preservation');
