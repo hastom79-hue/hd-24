@@ -105,7 +105,7 @@ Independent local Node execution of the v27 code path with the dataset marker in
 - duplicate auto-run after success prevented: PASS
 - Result: `PASS auto-run v27 local harness`
 
-## Follow-up analysis synchronization bridge
+## Follow-up analysis synchronization bridge — v1/v2 history
 Initial sync bridge commits:
 - `e9d1de15027c303dec749b5ee0710344b8608b44` — added `hd24-followup-sync.js`.
 - `4723fcb992087790a819bc650090de77b23c9284` — loaded the bridge in production.
@@ -113,33 +113,76 @@ Initial sync bridge commits:
 
 Reason:
 - Existing `hd24-followup.js` marked an upload signature as handled before proving that asynchronous KPI analysis had finished. Its fixed 80 ms wait could therefore observe empty/stale results and suppress later retries.
-- The bridge waits for the same upload signature to have safe-reflect success plus a valid selected month plus current-month `allResults` before triggering the existing Preview/reply-file path.
+- The bridge waited for the same upload signature to have safe-reflect success plus a valid selected month plus current-month `allResults` before triggering the existing Preview/reply-file path.
 
 Deployment evidence:
 - Pages run `34811523701` for loader HEAD `4723fcb992087790a819bc650090de77b23c9284`: completed SUCCESS.
 
-## Follow-up sync v2 stale-preview fix
-A second race/staleness defect was found during direct code review of the new bridge:
+v2 then corrected a stale-preview race:
 - `hd24-followup.js` leaves the previous Preview visible when a new source/master pair is selected.
-- The initial sync bridge treated any visible Preview as ready, so a Preview from the previous file pair could be mistaken for the current upload and suppress regeneration.
+- The initial bridge could mistake that visible Preview for the new file pair.
+- `3acdd7a6e3de2dafb32aeed3214ae1c0dbac2cd2` cleared old Preview state and tagged generated Preview with the current upload signature.
+- `8930604427d1f19e6047ef6a6c608a8b112425bb` loaded v2.
+- `74086f6e81f7840e0d5262e2fc28e5a76c23c9c5` refreshed v2.
 
-Fixed by v2:
-- Commit `3acdd7a6e3de2dafb32aeed3214ae1c0dbac2cd2` — clear old Preview state on upload/plant reset and tag generated Preview with the current upload signature.
-- Commit `8930604427d1f19e6047ef6a6c608a8b112425bb` — production loader now uses `hd24-followup-sync.js?v=2`.
-- Commit `74086f6e81f7840e0d5262e2fc28e5a76c23c9c5` — forced refresh helper now preloads sync v2.
-- A visible Preview is reused only when it belongs to the current upload signature; otherwise the bridge triggers the existing watch-mail Preview path and then downloads the reply workbook once.
-- Existing mail approval semantics remain unchanged; no automatic send was introduced.
+## Action export v25 — stale analysis protection
+Direct review found another race: immediately after `btnJudge.click()`, an earlier upload's `allResults` could still be present and be mistaken for the current analysis.
+
+v25 correction:
+- `eb2c503e3991db82e543c69809008741015e65c5` — action-export v25 requires a resultCard mutation after the current `btnJudge` trigger before current-month results can be marked analysis-ready.
+- `14e3682ed3c1fe703ea37e392a173bd8e7df7a40` — production loader v25.
+- `19dfb2cd8d79295031909e48b939aa4979477f63` — refresh helper v25.
+- `bc695e8d1befb80646d23c2cdfd0d8888fec0cbb` — regression aligned to v25.
+- `hd24-action-export-complete` carries the current upload signature and is emitted only after `_분석후속조치본.xlsx` is generated.
+
+Pages evidence:
+- run `34812674886` completed SUCCESS for the v25/log HEAD at that stage.
+
+## Follow-up sync v3 — action-export gate + dedupe
+A further chain review showed v2 was still not sufficient for end-to-end integrity:
+- it did not prove that `_분석후속조치본.xlsx` for the current signature had completed before follow-up packaging.
+- an untagged visible Preview could still be trusted in some legacy timing paths.
+- repeated same-signature safe-complete events could reset state and allow duplicate package/reply generation.
+- reply Excel had no explicit once-per-signature guard in the sync bridge.
+
+v3 correction:
+- `080d9692f28b6121ebe212c3fb9dc127d6aabc4b` — strict action-export signature gate and dedupe.
+- `6a5c88fc4543de25ded885240b40a10bfd473186` — production wrapper loads `hd24-followup-sync.js?v=3`.
+- `a2666f95d933eb09c62cce6b37649b5b016058a1` — refresh helper preloads v3.
+- `060f18152cb06b9a465d972ec52ae9bbd6b581cc` — new `tests/followup-sync.test.js`.
+
+v3 requires the same current signature across:
+1. safe-reflect success,
+2. `hd24-action-export-complete`,
+3. current-month analysis,
+4. mail Preview tag,
+5. reply workbook once-per-signature state.
+
+Target chain is now encoded as:
+`upload → safe-reflect → current analysis → _분석후속조치본.xlsx complete → current-signature Preview → reply Excel 1x`.
+
+Runtime workflow hardening:
+- `c07bc03f534ada0929265f6e4546cc3dfe740573` — runtime gate updated for auto-run v27 and follow-up sync v3; runs syntax checks and new follow-up regression.
+- `39b86f2ae983cb1b0575605bc2fe4d8c92e1cde0` — corrected workflow to inspect dependency/fail-closed invariants from actual `hd24-ui-v3-core.js` rather than thin wrapper `hd24-ui-v3.js`.
+- This workflow correction records a real test-infrastructure defect instead of hiding it.
+
+Deployment/execution evidence:
+- Pages run `34813275926` for `c07bc03f...` completed SUCCESS; v3 production runtime/cache wiring is deployed.
+- Latest HEAD Pages run `34813339866` for `39b86f2...` was still queued at last observation; final result must be recorded later rather than assumed.
+- Runtime Regression run `34813340598`, job `103878853753`, completed failure with `steps=null`; no workflow steps ran, so it remains an execution-layer/runner failure rather than an application assertion failure.
 
 ## GitHub Actions state
 - Custom Runtime Regression / Apply UI / Browser E2E jobs continue to fail before running steps (`steps=null`) in this period.
-- These are retained as hosted-runner/execution-layer failures, not application assertion failures.
-- The stale v26 test was nevertheless fixed proactively so it cannot become the next blocker when runners recover.
+- These are retained as runner/execution-layer failures, not application assertion failures.
+- Static and code-path regressions are nevertheless kept current so stale assertions cannot become the next blocker once runners recover.
 
 ## Current conclusion
 - Current uploaded India/Brazil/master data do not expose a safe-reflect data blocker for July.
 - Older Brazil history differences are warnings, not blockers.
 - v27 removes a real auto-run readiness deadlock while retaining safe-reflect fail-closed validation.
-- v27 missing-dataset recovery and duplicate suppression are independently PASS in a local Node harness.
-- Follow-up synchronization now waits for completed analysis and v2 prevents reuse of stale Preview from a previous file pair.
+- Action export v25 prevents stale previous-upload analysis from being accepted as current.
+- Follow-up sync v3 now waits for the current action-workbook completion event and enforces current-signature Preview/reply generation with duplicate suppression.
+- Production v3 wiring is confirmed on Pages via successful run `34813275926`.
 - Remaining unproven item is full production browser E2E with the real uploaded files: file selection → safe reflect → verified workbook → analysis → action workbook → reply workbook → mail Preview.
 - Do not declare full live-browser E2E PASS until that chain is observed end to end.
+- Actual authenticated email sending is not claimed unless a real `HD24_MAIL_ENDPOINT` is configured; static Pages otherwise provides Preview/mail-client fallback only.
