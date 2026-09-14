@@ -8,6 +8,7 @@ let triggerSignature='';
 let analysisReadySignature='';
 let judgeClickedAt=0;
 let analysisReadyLogged='';
+let analysisMutationSeen=false;
 const originalClick=HTMLAnchorElement.prototype.click;
 
 function el(id){return document.getElementById(id)}
@@ -52,7 +53,7 @@ function resolvedMappingsFromResults(results){
 
 function markAnalysisReady(reason){
   const sig=signature();
-  if(!sig||sig!==triggerSignature||window.hd24SafeReflectSuccessSignature!==sig||!judgeClickedAt)return false;
+  if(!sig||sig!==triggerSignature||window.hd24SafeReflectSuccessSignature!==sig||!judgeClickedAt||!analysisMutationSeen)return false;
   const a=currentAnalysisState();
   if(!a.ready)return false;
   analysisReadySignature=sig;
@@ -107,16 +108,22 @@ function tryTriggerJudge(){
   triggerSignature=sig;
   analysisReadySignature='';
   analysisReadyLogged='';
+  analysisMutationSeen=false;
   judgeClickedAt=Date.now();
-  try{btn.click();logSafe('안전반영 완료 → 자동 KPI 분석 실행')}catch(e){triggerSignature='';judgeClickedAt=0;logSafe('자동 KPI 분석 실행 오류: '+(e?.message||e))}
+  try{btn.click();logSafe('안전반영 완료 → 자동 KPI 분석 실행')}catch(e){triggerSignature='';analysisMutationSeen=false;judgeClickedAt=0;logSafe('자동 KPI 분석 실행 오류: '+(e?.message||e))}
 }
 
 function schedule(reason){[0,80,200,500,1000,1800,3000,5000,8000].forEach(ms=>setTimeout(()=>{tryTriggerJudge();markAnalysisReady(reason);makeFinalActionWorkbook(reason)},ms))}
-function reset(){capturedSafe=null;capturePromise=null;processedSignature='';triggerSignature='';analysisReadySignature='';analysisReadyLogged='';judgeClickedAt=0}
+function reset(){capturedSafe=null;capturePromise=null;processedSignature='';triggerSignature='';analysisReadySignature='';analysisReadyLogged='';analysisMutationSeen=false;judgeClickedAt=0}
 function wire(){
   ['srcFile','masterFile','plantSelect'].forEach(id=>el(id)?.addEventListener('change',()=>{reset();schedule(id+' change')}));
   window.addEventListener('hd24-safe-reflect-complete',()=>schedule('safe reflect complete'));
-  const rc=el('resultCard');if(rc)new MutationObserver(()=>{markAnalysisReady('analysis result updated');schedule('analysis result updated')}).observe(rc,{attributes:true,childList:true,subtree:true});
+  const rc=el('resultCard');if(rc)new MutationObserver(()=>{
+    const sig=signature();
+    if(sig&&sig===triggerSignature&&window.hd24SafeReflectSuccessSignature===sig&&judgeClickedAt)analysisMutationSeen=true;
+    markAnalysisReady('analysis result updated');
+    schedule('analysis result updated');
+  }).observe(rc,{attributes:true,childList:true,subtree:true});
   schedule('startup');
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire,{once:true});else wire();
