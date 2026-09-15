@@ -27,7 +27,7 @@ ok(loader.includes('hd24-action-cycle-guard.js?v=1'),'loader must include action
 const exportPos=loader.indexOf('hd24-action-export.js?v=27');
 const guardPos=loader.indexOf('hd24-action-cycle-guard.js?v=1');
 const watchdogPos=loader.indexOf('hd24-action-export-watchdog.js?v=1');
-const followPos=loader.indexOf('hd24-followup-sync.js?v=7');
+const followPos=loader.indexOf('hd24-followup-sync.js?v=8');
 ok(exportPos>=0&&guardPos>exportPos,'cycle guard must load after action export producer');
 ok(watchdogPos>guardPos,'cycle guard must load before watchdog consumer');
 ok(followPos>guardPos,'cycle guard must load before follow-up consumer');
