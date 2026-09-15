@@ -23,8 +23,68 @@ function unitCompatible(sf,mf,m){if(sf===mf)return true;const name=normText((m&&
 function validateUnit(ws,labelRow,m,masterWs,masterRow){const c=sourceUnitCol(),raw=c?getCell(ws,labelRow,c):null,sf=unitFamily(raw),mf=unitFamily(m.unit),masterRaw=masterWs&&masterRow?getCell(masterWs,masterRow,26):null,tf=unitFamily(masterRaw);if(!mf){log(`매핑 단위 미분류 차단: ${m.kpiKr||m.kpiEn} / ${m.unit}`);return false;}if(!sf){if(tf&&unitCompatible(tf,mf,m)){log(`원본 단위 공란 허용(총괄 교차검증 PASS): ${m.kpiKr||m.kpiEn} / 매핑 ${m.unit} / 총괄 ${masterRaw}`);return true;}log(`원본 단위 미분류 차단: ${m.kpiKr||m.kpiEn} / 원본 ${raw} / 매핑 ${m.unit}`);return false;}if(!unitCompatible(sf,mf,m)){log(`단위 불일치 차단: ${m.kpiKr||m.kpiEn} / 원본 ${raw}(${sf}) / 매핑 ${m.unit}(${mf})`);return false;}if(tf&&!unitCompatible(tf,mf,m)&&!unitCompatible(mf,tf,m)){log(`총괄 단위 불일치 차단: ${m.kpiKr||m.kpiEn} / 총괄 ${masterRaw}(${tf}) / 매핑 ${m.unit}(${mf})`);return false;}return true;}
 function strictActualRow(ws,labelRow,m,srcInfo){const r=labelRow+1,b=sheetBounds(ws),kcol=sourceKpiCol();if(r>b.maxR||normText(getCell(ws,r,kcol))!=='')return 0;return r;}
 window.hd24SafeResolveMappings=function(srcWs,masterWs,srcInfo){const source=runtimeMappings(),rejected=[],out=[],usedMaster=new Set(),kcol=sourceKpiCol();let movedSrc=0,movedMaster=0;for(const m of source){const sr=findStrictInColumn(srcWs,kcol,m.kpiEn),mr=findStrictInColumn(masterWs,13,m.kpiKr);if(sr.ambiguous||mr.ambiguous||sr.score<SAFE_SCORE||mr.score<SAFE_SCORE){rejected.push(`${m.kpiKr||m.kpiEn} (원본 ${sr.score.toFixed(2)} / 총괄 ${mr.score.toFixed(2)})`);continue;}if(!validateUnit(srcWs,sr.row,m,masterWs,mr.row)){rejected.push(`${m.kpiKr||m.kpiEn} (단위 불일치: ${getCell(srcWs,sr.row,sourceUnitCol())} ↔ ${m.unit})`);continue;}const actualRow=strictActualRow(srcWs,sr.row,m,srcInfo);if(!actualRow){rejected.push(`${m.kpiKr||m.kpiEn} (KPI 바로 다음 Actual 행 구조 불일치)`);continue;}if(usedMaster.has(mr.row)){rejected.push(`${m.kpiKr||m.kpiEn} (총괄 KPI 행 중복 ${mr.row})`);continue;}usedMaster.add(mr.row);if(sr.row!==m.labelRow)movedSrc++;if(mr.row!==m.masterRow)movedMaster++;out.push({...m,labelRow:sr.row,actualRow,masterRow:mr.row,_srcScore:sr.score,_masterScore:mr.score});}log(`안전 매핑 검증: ${out.length}/${source.length}건 / 제외 ${rejected.length}건 / 원본행 재탐색 ${movedSrc}건 / 총괄행 재탐색 ${movedMaster}건`);if(rejected.length)log(`반영 차단 원인: ${rejected.slice(0,15).join(' | ')}${rejected.length>15?' 외 '+(rejected.length-15)+'건':''}`);if(out.length!==source.length||rejected.length)throw new Error(`KPI 전수검증 실패: ${out.length}/${source.length}. 총괄파일 생성 중단`);return out;};
-function sourceHorizon(srcWs,resolved,srcInfo){const latest=[];for(const m of resolved){let h=0;for(let mo=1;mo<=12;mo++){const raw=getCell(srcWs,m.actualRow,srcInfo.map[mo]);if(raw==null||String(raw).trim()==='')continue;if(normalizeValue(raw)!==null)h=mo;}if(h)latest.push({kpi:m.kpiKr||m.kpiEn,h});}if(!latest.length)return 0;const counts={};for(const x of latest)counts[x.h]=(counts[x.h]||0)+1;const ranked=Object.entries(counts).map(([m,c])=>({m:Number(m),c})).sort((a,b)=>b.c-a.c||b.m-a.m);const horizon=ranked[0].m;const future=latest.filter(x=>x.h>horizon);if(future.length){log(`미래월 Actual 이상 ${future.length}건 감지: 기준월 ${horizon}월 초과`);log(future.slice(0,15).map(x=>`${x.kpi} ${x.h}월`).join(' | ')+(future.length>15?' 외 '+(future.length-15)+'건':''));throw new Error(`미래월 Actual ${future.length}건 감지. 총괄파일 생성 중단`);}const near=latest.filter(x=>x.h===horizon||x.h===horizon-1).length;if(near/latest.length<0.95)throw new Error(`기준월 분포 이상: ${near}/${latest.length}건만 ${horizon-1}~${horizon}월 범위`);return horizon;}
-function masterFutureContamination(masterWs,masterInfo,horizon){const b=sheetBounds(masterWs),hits=[];for(let mo=horizon+1;mo<=12;mo++){const c=masterInfo.map[mo];for(let r=masterInfo.row+1;r<=b.maxR;r++){const raw=getCell(masterWs,r,c);if(raw==null||String(raw).trim()==='')continue;const n=numericCell(raw),a=annotatedNumeric(raw);if(n===null&&a===null)continue;const ref=XLSX.utils.encode_cell({r:r-1,c:c-1});hits.push(`${ref}=${raw}`);}}if(hits.length){log(`총괄 미래월 기존값 ${hits.length}셀 감지: 기준월 ${horizon}월 이후`);log(hits.slice(0,20).join(' | ')+(hits.length>20?' 외 '+(hits.length-20)+'건':''));throw new Error(`총괄 미래월 기존값 ${hits.length}셀 감지. 총괄파일 생성 중단`);}return 0;}
+function sourceHorizon(srcWs,resolved,srcInfo){
+  const latest=[],seriesByRow={};
+  for(const m of resolved){
+    let h=0;const vals={};
+    for(let mo=1;mo<=12;mo++){
+      const raw=getCell(srcWs,m.actualRow,srcInfo.map[mo]);
+      if(raw==null||String(raw).trim()==='')continue;
+      const nv=normalizeValue(raw);
+      if(nv!==null){h=mo;vals[mo]=nv;}
+    }
+    if(h){latest.push({kpi:m.kpiKr||m.kpiEn,h,masterRow:m.masterRow});seriesByRow[m.masterRow]=vals;}
+  }
+  if(!latest.length)return 0;
+  const counts={};for(const x of latest)counts[x.h]=(counts[x.h]||0)+1;
+  const ranked=Object.entries(counts).map(([m,c])=>({m:Number(m),c})).sort((a,b)=>b.c-a.c||b.m-a.m);
+  const horizon=ranked[0].m;
+  // 기준월(horizon) 이후 칸까지 값이 채워진 KPI라도, 그 미래월 값들이 전부 기준월 값과 동일하게
+  // 반복되는 '연간 고정/누적형' 지표(예: 육성코칭 인력수처럼 연초 도달 후 계속 같은 값 유지)라면
+  // 진짜 미래월 데이터 오류가 아니라 정상적인 고정값 반복이므로 이상치에서 제외한다.
+  // 값이 실제로 달라지는 경우(=진짜 미래월 실적이 잘못 입력된 경우)만 이상치로 판단한다.
+  const flatFutureRows=[];
+  const future=latest.filter(x=>{
+    if(x.h<=horizon)return false;
+    const vals=seriesByRow[x.masterRow],atHorizon=vals[horizon];
+    if(atHorizon===undefined)return true;
+    for(let mo=horizon+1;mo<=x.h;mo++){
+      if(vals[mo]===undefined)continue;
+      if(!almostEqual(vals[mo],atHorizon))return true;
+    }
+    flatFutureRows.push(x);
+    return false;
+  });
+  if(flatFutureRows.length)log(`미래월 칸에 값이 있으나 기준월과 동일하게 반복되는 고정형 지표로 판단해 이상치 제외: ${flatFutureRows.length}건 (${flatFutureRows.slice(0,10).map(x=>`${x.kpi} ${x.h}월까지`).join(' | ')}${flatFutureRows.length>10?' 외 '+(flatFutureRows.length-10)+'건':''})`);
+  if(future.length){log(`미래월 Actual 이상 ${future.length}건 감지: 기준월 ${horizon}월 초과`);log(future.slice(0,15).map(x=>`${x.kpi} ${x.h}월`).join(' | ')+(future.length>15?' 외 '+(future.length-15)+'건':''));throw new Error(`미래월 Actual ${future.length}건 감지. 총괄파일 생성 중단`);}
+  const near=latest.filter(x=>x.h===horizon||x.h===horizon-1).length;
+  if(near/latest.length<0.95)throw new Error(`기준월 분포 이상: ${near}/${latest.length}건만 ${horizon-1}~${horizon}월 범위`);
+  return horizon;
+}
+function masterFutureContamination(masterWs,masterInfo,horizon){
+  const b=sheetBounds(masterWs),hits=[],flatSkipped=[];
+  const horizonCol=masterInfo.map[horizon];
+  for(let mo=horizon+1;mo<=12;mo++){
+    const c=masterInfo.map[mo];
+    for(let r=masterInfo.row+1;r<=b.maxR;r++){
+      const raw=getCell(masterWs,r,c);
+      if(raw==null||String(raw).trim()==='')continue;
+      const n=numericCell(raw),a=annotatedNumeric(raw);
+      if(n===null&&a===null)continue;
+      const ref=XLSX.utils.encode_cell({r:r-1,c:c-1});
+      // 기준월 값과 동일하게 반복되는 값이면(연간 고정/누적형 지표가 미래월까지 미리 채워진 경우)
+      // 실제 오염이 아니라고 보고 제외한다. 값이 다르면(=진짜 미래 실적이 잘못 들어간 경우) 그대로 차단.
+      const horizonRaw=horizonCol?getCell(masterWs,r,horizonCol):null;
+      const hv=horizonRaw==null?null:(numericCell(horizonRaw)??annotatedNumeric(horizonRaw));
+      const fv=n??a;
+      if(hv!==null&&fv!==null&&almostEqual(hv,fv)){flatSkipped.push(`${ref}=${raw}`);continue;}
+      hits.push(`${ref}=${raw}`);
+    }
+  }
+  if(flatSkipped.length)log(`총괄 미래월 칸이 기준월과 동일값으로 반복되어 고정형 지표로 판단, 오염 검사 제외: ${flatSkipped.length}셀`);
+  if(hits.length){log(`총괄 미래월 기존값 ${hits.length}셀 감지: 기준월 ${horizon}월 이후`);log(hits.slice(0,20).join(' | ')+(hits.length>20?' 외 '+(hits.length-20)+'건':''));throw new Error(`총괄 미래월 기존값 ${hits.length}셀 감지. 총괄파일 생성 중단`);}
+  return 0;
+}
 function almostEqual(a,b){const x=Number(a),y=Number(b),diff=Math.abs(x-y);return diff<=ABS_EPS||diff<=REL_EPS*Math.max(1,Math.abs(x),Math.abs(y));}
 function numericCell(v){const n=normalizeValue(v);return n===null?null:n;}
 function annotatedNumeric(v){if(typeof v!=='string')return null;const s=v.trim().replace(/,/g,'');if(s==='-')return 0;const m=s.match(/^([+-]?\d+(?:\.\d+)?)/);return m?Number(m[1]):null;}
