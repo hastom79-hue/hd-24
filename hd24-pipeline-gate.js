@@ -17,7 +17,10 @@ function gateJudge(){
   const btn=el('btnJudge'),sig=signature();
   if(!btn)return;
   const passed=!!(sig&&successfulSignature===sig);
-  if(!passed&&!btn.disabled){resetting=true;btn.disabled=true;resetting=false;}
+  // NOTE: previously force-disabled btnJudge until a successful 실적반영 completed
+  // for the exact same file pair. That made 판정(자동분석) unusable on its own and,
+  // combined with reflect being broken, left it permanently locked. 판정 is an
+  // independent, read-only action and should follow only checkReady()'s own gating.
   btn.dataset.safePipelinePassed=passed?'1':'0';
 }
 function markSafeReflectSuccess(entry){
@@ -51,7 +54,7 @@ function reset(reason){
   successfulSignature='';
   window.hd24SafeReflectSuccessSignature='';
   gateJudge();
-  logSafe('안전반영 Gate RESET: '+reason+' — 새 파일쌍은 안전반영 성공 전 분석/메일 생성 차단');
+  logSafe('안전반영 Gate RESET: '+reason+' — 새 파일쌍 감지 (판정은 별도로 바로 가능)');
 }
 function wire(){
   [0,50,150,400,1000,2500].forEach(ms=>setTimeout(()=>{wrapAddHistory();gateJudge()},ms));
