@@ -1,290 +1,338 @@
 [
- {
-  "masterRow": 5,
-  "kpiKr": "EHS 리더십 점검 개선완료율",
-  "direction": "상향",
-  "unit": "%"
- },
- {
-  "masterRow": 8,
-  "kpiKr": "LTIR(근로손실 사고율)",
-  "direction": "상향",
-  "unit": "건/년"
- },
- {
-  "masterRow": 9,
-  "kpiKr": "중대사고 재해건수",
-  "direction": "하향",
-  "unit": "건"
- },
- {
-  "masterRow": 10,
-  "kpiKr": "SQDC 목표달성팀 수(또는 비율)",
-  "direction": "상향",
-  "unit": "%"
- },
- {
-  "masterRow": 14,
-  "kpiKr": "대당 설비 비가동손실MH",
-  "direction": "하향",
-  "unit": "MH/대"
- },
- {
-  "masterRow": 19,
-  "kpiKr": "생산이슈 재발율",
-  "direction": "하향",
-  "unit": "%"
- },
- {
-  "masterRow": 20,
-  "kpiKr": "생산지시 준수율(완제품 입고계획 준수율)  - 울산기준으로는 가장 큰 것은 기존 : 입고계획일 D+1일 준수, 변경 : 입고계획일 D-day까지만 준수",
-  "direction": "상향",
-  "unit": "%"
- },
- {
-  "masterRow": 24,
-  "kpiKr": "개인별 3공정 달성율",
-  "direction": "상향",
-  "unit": "%"
- },
- {
-  "masterRow": 25,
-  "kpiKr": "공정별 3인 달성율",
-  "direction": "상향",
-  "unit": "%"
- },
- {
-  "masterRow": 28,
-  "kpiKr": "QIR 개선율  - 차세대신모델 Pilot 장비(E48/52) 완성차 평가 등록품질  개선율",
-  "direction": "상향",
-  "unit": "%"
- },
- {
-  "masterRow": 29,
-  "kpiKr": "IQ(초기품질) - 울산캠퍼스 + OEM",
-  "direction": "하향",
-  "unit": "DPTU"
- },
- {
-  "masterRow": 30,
-  "kpiKr": "WQ(내구품질) - 울산캠퍼스 + OEM",
-  "direction": "하향",
-  "unit": "DPTU"
- },
- {
-  "masterRow": 33,
-  "kpiKr": "IQ200(생산귀책)",
-  "direction": "하향",
-  "unit": "DPTU"
- },
- {
-  "masterRow": 39,
-  "kpiKr": "부품 공정불량율",
-  "direction": "하향",
-  "unit": "PPM"
- },
- {
-  "masterRow": 40,
-  "kpiKr": "라인품질비가동(부품)손실",
-  "direction": "하향",
-  "unit": "MH/대"
- },
- {
-  "masterRow": 41,
-  "kpiKr": "완제품 시운전 불량율(전체)",
-  "direction": "하향",
-  "unit": "DPTU"
- },
- {
-  "masterRow": 44,
-  "kpiKr": "완제품 입고검사 불량율(전체)",
-  "direction": "하향",
-  "unit": "DPTU"
- },
- {
-  "masterRow": 55,
-  "kpiKr": "부품재고 회전율 - 25년 예상 매출 1조 945억 - 26년 예상 매출 2조 500억",
-  "direction": "상향",
-  "unit": "회전"
- },
- {
-  "masterRow": 56,
-  "kpiKr": "출하 리드타임",
-  "direction": "하향",
-  "unit": "일"
- },
- {
-  "masterRow": 57,
-  "kpiKr": "가치시간 비율(가치 흐름 효율, VSE)",
-  "direction": "상향",
-  "unit": "%"
- },
- {
-  "masterRow": 65,
-  "kpiKr": "자율개선활동 참여도(GMES VTB 기준)",
-  "direction": "상향",
-  "unit": "%"
- },
- {
-  "masterRow": 68,
-  "kpiKr": "소그룹활동 수평전개건수",
-  "direction": "상향",
-  "unit": "건/년"
- },
- {
-  "masterRow": 69,
-  "kpiKr": "VTB 개선완료율",
-  "direction": "상향",
-  "unit": "%"
- },
- {
-  "masterRow": 72,
-  "kpiKr": "5S Audit 점수",
-  "direction": "상향",
-  "unit": "점"
- },
- {
-  "masterRow": 73,
-  "kpiKr": "불합리 개선건수 (또는 개선율) → 불합리 개선조치이행율로 관리 개선",
-  "direction": "상향",
-  "unit": "건/년"
- },
- {
-  "masterRow": 75,
-  "kpiKr": "표준화 건수",
-  "direction": "상향",
-  "unit": "건/월"
- },
- {
-  "masterRow": 76,
-  "kpiKr": "설비 비가동손실MH",
-  "direction": "하향",
-  "unit": "MH/대"
- },
- {
-  "masterRow": 77,
-  "kpiKr": "MTTR(평균 고장시간)",
-  "direction": "하향",
-  "unit": "min"
- },
- {
-  "masterRow": 78,
-  "kpiKr": "MTBF(평균 고장간격)",
-  "direction": "상향",
-  "unit": "hr"
- },
- {
-  "masterRow": 79,
-  "kpiKr": "MTTD(초기고장 대응시간)",
-  "direction": "하향",
-  "unit": "min"
- },
- {
-  "masterRow": 84,
-  "kpiKr": "완제품 중요품질지표 (누락, 누유/누수, 미조임, 오조립)",
-  "direction": "하향",
-  "unit": "DPTU"
- },
- {
-  "masterRow": 90,
-  "kpiKr": "RCCP 준수율(M+1변동율)",
-  "direction": "하향",
-  "unit": "%"
- },
- {
-  "masterRow": 96,
-  "kpiKr": "내자재 입고 준수율 장비 착수 2주전 발주한 내자재에 대한 입고 실적",
-  "direction": "상향",
-  "unit": "%"
- },
- {
-  "masterRow": 97,
-  "kpiKr": "옵션플래닝 정확도 - M-2~M-4 옵션플래닝 예측대비 정확도 평균",
-  "direction": "상향",
-  "unit": "%"
- },
- {
-  "masterRow": 100,
-  "kpiKr": "내자입고계획 준수율",
-  "direction": "상향",
-  "unit": "%"
- },
- {
-  "masterRow": 102,
-  "kpiKr": "DIO(재고회전일수, Days)",
-  "direction": "상향",
-  "unit": "일"
- },
- {
-  "masterRow": 104,
-  "kpiKr": "재고일치율",
-  "direction": "상향",
-  "unit": "%"
- },
- {
-  "masterRow": 105,
-  "kpiKr": "장기재고금액 Aging(입고부터 미 사용된) 기간에 6개월 초과된 자재 -장기재고(7개월 이상) 품복별단가x해당 품목의 수량",
-  "direction": "하향",
-  "unit": "백만원"
- },
- {
-  "masterRow": 109,
-  "kpiKr": "표준재공 준수율(대형라인) → 라인사이드 Min/Max 준수율로 관리",
-  "direction": "상향",
-  "unit": "%"
- },
- {
-  "masterRow": 110,
-  "kpiKr": "표준재공 준수율(중형라인) → 라인사이드 Min/Max 준수율로 관리",
-  "direction": "상향",
-  "unit": "%"
- },
- {
-  "masterRow": 111,
-  "kpiKr": "표준재공 준수율(HL라인) → 라인사이드 Min/Max 준수율로 관리",
-  "direction": "상향",
-  "unit": "%"
- },
- {
-  "masterRow": 118,
-  "kpiKr": "생산라인별 표준재공 준수율(제작라인)",
-  "direction": "상향",
-  "unit": "%"
- },
- {
-  "masterRow": 119,
-  "kpiKr": "생산라인별 표준재공 준수율(성능라인)",
-  "direction": "상향",
-  "unit": "%"
- },
- {
-  "masterRow": 120,
-  "kpiKr": "생산라인별 순서생산 준수율",
-  "direction": "상향",
-  "unit": "%"
- },
- {
-  "masterRow": 122,
-  "kpiKr": "대당 투입MH - 조립라인",
-  "direction": "하향",
-  "unit": "MH/대"
- },
- {
-  "masterRow": 123,
-  "kpiKr": "라인 편성효율(병목공정 기준, 공정설계이슈)  - 제작라인",
-  "direction": "상향",
-  "unit": "%"
- },
- {
-  "masterRow": 124,
-  "kpiKr": "라인 편성효율(병목공정 기준, 공정설계이슈)  - 대형굴착기 조립라인",
-  "direction": "상향",
-  "unit": "%"
- },
- {
-  "masterRow": 125,
-  "kpiKr": "라인 편성효율(병목공정 기준, 공정설계이슈)  - 휠로더 조립라인",
-  "direction": "상향",
-  "unit": "%"
- }
+  {
+    "masterRow": 5,
+    "kpiKr": "EHS 리더십 점검 개선완료율",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "EHS Leadership Inspection Improvement Completion Rate"
+  },
+  {
+    "masterRow": 8,
+    "kpiKr": "LTIR(근로손실 사고율)",
+    "direction": "상향",
+    "unit": "건/년",
+    "kpiEn": "LTIR (Lost Time Incident Rate)"
+  },
+  {
+    "masterRow": 9,
+    "kpiKr": "중대사고 재해건수",
+    "direction": "하향",
+    "unit": "건",
+    "kpiEn": "Incident/Accident Count"
+  },
+  {
+    "masterRow": 10,
+    "kpiKr": "SQDC 목표달성팀 수(또는 비율)",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "Line wise SQDCEI KPIs Achievement Rate"
+  },
+  {
+    "masterRow": 14,
+    "kpiKr": "대당 설비 비가동손실MH",
+    "direction": "하향",
+    "unit": "MH/대",
+    "kpiEn": "Equipment Downtime MH Loss per Unit"
+  },
+  {
+    "masterRow": 19,
+    "kpiKr": "생산이슈 재발율",
+    "direction": "하향",
+    "unit": "%",
+    "kpiEn": "Issue Recurrence Rate"
+  },
+  {
+    "masterRow": 20,
+    "kpiKr": "생산지시 준수율(완제품 입고계획 준수율)  - 울산기준으로는 가장 큰 것은 기존 : 입고계획일 D+1일 준수, 변경 : 입고계획일 D-day까지만 준수",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "Production Instruction Compliance Rate  (against FDI out plan)"
+  },
+  {
+    "masterRow": 24,
+    "kpiKr": "개인별 3공정 달성율",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "3 process achievement rate per person"
+  },
+  {
+    "masterRow": 25,
+    "kpiKr": "공정별 3인 달성율",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "3 people achievement rate per process"
+  },
+  {
+    "masterRow": 28,
+    "kpiKr": "QIR 개선율  - 차세대신모델 Pilot 장비(E48/52) 완성차 평가 등록품질  개선율",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "QIR (PPR) Improvement Completion Rate (R210E)"
+  },
+  {
+    "masterRow": 29,
+    "kpiKr": "IQ(초기품질) - 울산캠퍼스 + OEM",
+    "direction": "하향",
+    "unit": "DPTU",
+    "kpiEn": "IQ 200 (Initial Quality)"
+  },
+  {
+    "masterRow": 30,
+    "kpiKr": "WQ(내구품질) - 울산캠퍼스 + OEM",
+    "direction": "하향",
+    "unit": "DPTU",
+    "kpiEn": "W.Q. (Warranty Quality)"
+  },
+  {
+    "masterRow": 33,
+    "kpiKr": "IQ200(생산귀책)",
+    "direction": "하향",
+    "unit": "DPTU",
+    "kpiEn": "IQ 200 Issues with Production responsibility"
+  },
+  {
+    "masterRow": 39,
+    "kpiKr": "부품 공정불량율",
+    "direction": "하향",
+    "unit": "PPM",
+    "kpiEn": "Process Defect Rate (Parts from Local Supplier)"
+  },
+  {
+    "masterRow": 40,
+    "kpiKr": "라인품질비가동(부품)손실",
+    "direction": "하향",
+    "unit": "MH/대",
+    "kpiEn": "Quality Line Downtime - Supplier/Part Attribution"
+  },
+  {
+    "masterRow": 41,
+    "kpiKr": "완제품 시운전 불량율(전체)",
+    "direction": "하향",
+    "unit": "DPTU",
+    "kpiEn": "Performance Test Defect Rate"
+  },
+  {
+    "masterRow": 44,
+    "kpiKr": "완제품 입고검사 불량율(전체)",
+    "direction": "하향",
+    "unit": "DPTU",
+    "kpiEn": "(Finished Product) Incoming Inspection Defect Rate (at FDI)"
+  },
+  {
+    "masterRow": 55,
+    "kpiKr": "부품재고 회전율 - 25년 예상 매출 1조 945억 - 26년 예상 매출 2조 500억",
+    "direction": "상향",
+    "unit": "회전",
+    "kpiEn": "Parts Inventory Turnover"
+  },
+  {
+    "masterRow": 56,
+    "kpiKr": "출하 리드타임",
+    "direction": "하향",
+    "unit": "일",
+    "kpiEn": "Shipment Lead Time (Wait Time)"
+  },
+  {
+    "masterRow": 57,
+    "kpiKr": "가치시간 비율(가치 흐름 효율, VSE)",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "Value Time Ratio"
+  },
+  {
+    "masterRow": 65,
+    "kpiKr": "자율개선활동 참여도(GMES VTB 기준)",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "Improvements Collection Rate (Team & Self)"
+  },
+  {
+    "masterRow": 68,
+    "kpiKr": "소그룹활동 수평전개건수",
+    "direction": "상향",
+    "unit": "건/년",
+    "kpiEn": "Horizontal Deployment Application Cases"
+  },
+  {
+    "masterRow": 69,
+    "kpiKr": "VTB 개선완료율",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "VTB (/Improvements) Completion Rate  (against suggestions from Suggestion box, 3'G walk, SIP)"
+  },
+  {
+    "masterRow": 72,
+    "kpiKr": "5S Audit 점수",
+    "direction": "상향",
+    "unit": "점",
+    "kpiEn": "5S Audit Score"
+  },
+  {
+    "masterRow": 73,
+    "kpiKr": "불합리 개선건수 (또는 개선율) → 불합리 개선조치이행율로 관리 개선",
+    "direction": "상향",
+    "unit": "건/년",
+    "kpiEn": "5'S Audit Non-Compliance Closure Rate"
+  },
+  {
+    "masterRow": 75,
+    "kpiKr": "표준화 건수",
+    "direction": "상향",
+    "unit": "건/월",
+    "kpiEn": "Advance 5'S Application Cases"
+  },
+  {
+    "masterRow": 76,
+    "kpiKr": "설비 비가동손실MH",
+    "direction": "하향",
+    "unit": "MH/대",
+    "kpiEn": "Equipment Downtime Loss"
+  },
+  {
+    "masterRow": 77,
+    "kpiKr": "MTTR(평균 고장시간)",
+    "direction": "하향",
+    "unit": "min",
+    "kpiEn": "MTTR (Mean Time To Repair)"
+  },
+  {
+    "masterRow": 78,
+    "kpiKr": "MTBF(평균 고장간격)",
+    "direction": "상향",
+    "unit": "hr",
+    "kpiEn": "MTBF (Mean Time  Between Failure)"
+  },
+  {
+    "masterRow": 79,
+    "kpiKr": "MTTD(초기고장 대응시간)",
+    "direction": "하향",
+    "unit": "min",
+    "kpiEn": "MTTD : Mean Time To Detect"
+  },
+  {
+    "masterRow": 84,
+    "kpiKr": "완제품 중요품질지표 (누락, 누유/누수, 미조임, 오조립)",
+    "direction": "하향",
+    "unit": "DPTU",
+    "kpiEn": "Critical Quality Indicators (Missing, Leakage, Loose, Misassembly)"
+  },
+  {
+    "masterRow": 90,
+    "kpiKr": "RCCP 준수율(M+1변동율)",
+    "direction": "하향",
+    "unit": "%",
+    "kpiEn": "M+1 Production Volume Variation Rate"
+  },
+  {
+    "masterRow": 96,
+    "kpiKr": "내자재 입고 준수율 장비 착수 2주전 발주한 내자재에 대한 입고 실적",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "Local Material Inbound Schedule Compliance Rate"
+  },
+  {
+    "masterRow": 97,
+    "kpiKr": "옵션플래닝 정확도 - M-2~M-4 옵션플래닝 예측대비 정확도 평균",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "Option Planning Forecast Accuracy"
+  },
+  {
+    "masterRow": 100,
+    "kpiKr": "내자입고계획 준수율",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "Domestic Incoming Plan Compliance Rate"
+  },
+  {
+    "masterRow": 102,
+    "kpiKr": "DIO(재고회전일수, Days)",
+    "direction": "상향",
+    "unit": "일",
+    "kpiEn": "DIO (Days Inventory Outstanding)"
+  },
+  {
+    "masterRow": 104,
+    "kpiKr": "재고일치율",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "Inventory Accuracy Rate"
+  },
+  {
+    "masterRow": 105,
+    "kpiKr": "장기재고금액 Aging(입고부터 미 사용된) 기간에 6개월 초과된 자재 -장기재고(7개월 이상) 품복별단가x해당 품목의 수량",
+    "direction": "하향",
+    "unit": "백만원",
+    "kpiEn": "Long-term Aging Inventory Value"
+  },
+  {
+    "masterRow": 109,
+    "kpiKr": "표준재공 준수율(대형라인) → 라인사이드 Min/Max 준수율로 관리",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "Min/Max compliance rate of     input materials by process"
+  },
+  {
+    "masterRow": 110,
+    "kpiKr": "표준재공 준수율(중형라인) → 라인사이드 Min/Max 준수율로 관리",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "Min/Max compliance rate of     input materials by process"
+  },
+  {
+    "masterRow": 111,
+    "kpiKr": "표준재공 준수율(HL라인) → 라인사이드 Min/Max 준수율로 관리",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "Min/Max compliance rate of     input materials by process"
+  },
+  {
+    "masterRow": 118,
+    "kpiKr": "생산라인별 표준재공 준수율(제작라인)",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "WIP compliance rate (Fabrication)"
+  },
+  {
+    "masterRow": 119,
+    "kpiKr": "생산라인별 표준재공 준수율(성능라인)",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "WIP compliance rate (Fabrication)"
+  },
+  {
+    "masterRow": 120,
+    "kpiKr": "생산라인별 순서생산 준수율",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "Sequence Compliance Rate by Line"
+  },
+  {
+    "masterRow": 122,
+    "kpiKr": "대당 투입MH - 조립라인",
+    "direction": "하향",
+    "unit": "MH/대",
+    "kpiEn": "Input MH per machine Fabrication"
+  },
+  {
+    "masterRow": 123,
+    "kpiKr": "라인 편성효율(병목공정 기준, 공정설계이슈)  - 제작라인",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "Fabrication - Weighted Average ACTUAL LOB Efficiency"
+  },
+  {
+    "masterRow": 124,
+    "kpiKr": "라인 편성효율(병목공정 기준, 공정설계이슈)  - 대형굴착기 조립라인",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "Fabrication - Weighted Average ACTUAL LOB Efficiency"
+  },
+  {
+    "masterRow": 125,
+    "kpiKr": "라인 편성효율(병목공정 기준, 공정설계이슈)  - 휠로더 조립라인",
+    "direction": "상향",
+    "unit": "%",
+    "kpiEn": "Fabrication - Weighted Average ACTUAL LOB Efficiency"
+  }
 ]
