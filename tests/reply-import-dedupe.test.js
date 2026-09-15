@@ -1,0 +1,11 @@
+const fs=require('fs');const vm=require('vm');const assert=require('assert');
+const code=fs.readFileSync('hd24-reply-import-dedupe.js','utf8');
+const listeners={};const file={name:'reply.xlsx',size:100,lastModified:1};
+const input={id:'hd24ReplyFile',files:[file]};const button={id:'hd24ImportReply',dataset:{},contains:t=>t===button};
+const document={getElementById:id=>id==='hd24ReplyFile'?input:id==='hd24ImportReply'?button:null,addEventListener:(type,fn,capture)=>{(listeners[type]??=[]).push({fn,capture})}};
+const ctx={document,Date,setTimeout:fn=>fn(),log:()=>{}};vm.createContext(ctx);vm.runInContext(code,ctx);
+let changeStopped=false;for(const h of listeners.change||[])h.fn({target:input,preventDefault(){},stopImmediatePropagation(){changeStopped=true}});assert.equal(changeStopped,false,'guard must not suppress automatic change import');
+let prevented=false,stopped=false;for(const h of listeners.click||[]){h.fn({target:button,preventDefault(){prevented=true},stopImmediatePropagation(){stopped=true}});if(stopped)break}assert(prevented&&stopped,'same-file manual retrigger immediately after auto import must be suppressed');
+const other={name:'reply2.xlsx',size:101,lastModified:2};input.files=[other];prevented=false;stopped=false;for(const h of listeners.click||[])h.fn({target:button,preventDefault(){prevented=true},stopImmediatePropagation(){stopped=true}});assert(!prevented&&!stopped,'different file manual import must remain available');
+const loader=fs.readFileSync('hd24-ui-v3.js','utf8'),refresh=fs.readFileSync('refresh-runtime.html','utf8');assert(loader.includes('hd24-reply-import-dedupe.js?v=1'),'production loader must include dedupe guard');assert(refresh.includes('hd24-reply-import-dedupe.js?v=1'),'runtime refresh must preload dedupe guard');
+console.log('reply import dedupe regression: PASS');
