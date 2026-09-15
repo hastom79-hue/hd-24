@@ -24,14 +24,37 @@ function recurrenceFor(r){const h=replyHistoryFor(r);if(h.length<2)return h.leng
 function isActionTarget(r){const rec=recurrenceFor(r);return !r.achieved||r.streak>=2||r.trend==='down'||!!rec?.isRecurrence;}
 function selectItems(mode){const items=current();if(mode==='all')return items;if(mode==='month')return items.filter(r=>!r.achieved);return items.filter(isActionTarget);}
 function tags(r){const out=[];if(!r.achieved)out.push('Target Miss');if(r.streak>=3)out.push(`${r.streak}M Consecutive Miss`);else if(r.streak>=2)out.push('Temporary / Consecutive Miss');if(r.trend==='down')out.push('Worsening');const rec=recurrenceFor(r);if(rec?.isRecurrence)out.push(`Repeated Issue x${rec.sameCauseCount}`);return out;}
-function subject(items){return `[HDPS KPI Action Required] ${pname()} - ${month()}M (${items.length} KPI${items.length===1?'':'s'})`;}
+function subject(items){return `[HDPS KPI 조치필요/Action Required] ${pnameKo()}/${pname()} - ${month()}월/${month()}M (${items.length}건/${items.length===1?'item':'items'})`;}
 function dirLabelEn(direction){return direction==='상향'?'Higher is better':direction==='하향'?'Lower is better':'';}
 function fmtNum(v,unit){if(v==null||typeof v!=='number'||!isFinite(v))return 'N/A';const n=(typeof round==='function')?round(v):v;return unit==='%'?`${n}%`:`${n}${unit?' '+unit:''}`;}
 function gapText(r){const t=r.target,a=r.actual;if(typeof t!=='number'||typeof a!=='number'||!isFinite(t)||!isFinite(a))return '';const g=r.direction==='하향'?a-t:t-a;const sign=g>0?'-':(g<0?'+':'');return ` | Gap: ${sign}${fmtNum(Math.abs(g),r.unit)}`;}
 function kpiRow(r){const rec=recurrenceFor(r);const dir=dirLabelEn(r.direction);const notes=tags(r).join(', ')||'Review';const last=rec?.latest?.replyReceivedAt?`Last reply: ${String(rec.latest.replyReceivedAt).slice(0,10)}`:'';const gapRaw=gapText(r).replace(/^ \| Gap: /,'');const cells=[r.kpiEn||r.kpi,fmtNum(r.target,r.unit),fmtNum(r.actual,r.unit),gapRaw,dir,notes,last];return '| '+cells.join(' | ')+' |';}
 const KPI_TABLE_HEADERS=['KPI','Target','Actual','Gap','Direction','Notes','Last Reply'];
 function kpiTableHeader(){return ['| '+KPI_TABLE_HEADERS.join(' | ')+' |','|'+KPI_TABLE_HEADERS.map(()=>'---').join('|')+'|'];}
-function body(items){const repeated=items.filter(r=>recurrenceFor(r)?.isRecurrence).length;const lines=[`Dear Team,`,'',`Please review the ${pname()} HDPS KPI results for ${month()}M below and reply with the reason for the gap and your recovery plan for each KPI marked as Target Miss / Consecutive Miss / Worsening.`,`Target vs. Actual figures for every listed KPI are shown below; the attached Excel file has the same fields for you to fill in and return.`,'',`Summary`,`- Action-required KPIs: ${items.length}`,`- Repeated / recurrence KPIs: ${repeated}`,'',`REQUIRED \u2014 please reply with the following for each KPI:`,`1. Reason for the miss / deterioration (required)`,`2. Root cause (required)`,`3. Recovery / catch-up plan (required)`,`4. Action owner`,`5. Planned completion date`,`6. Next-month recovery target`,'',`For repeated issues, please also explain why the previous countermeasure was not effective and what has changed in the new action.`,'',`KPI results (Target vs. Actual):`,'',...kpiTableHeader()];items.slice(0,40).forEach(r=>lines.push(kpiRow(r)));if(items.length>40)lines.push(`... and ${items.length-40} more KPI(s) in the attachment.`);lines.push('',`Please complete and return the attached Excel file (or reply to this email with the same information) by the earliest possible date.`,'',`Regards`);return lines.join('\n');}
+function pnameKo(){return pkey()==='india'?'인도':pkey()==='brazil'?'브라질':pkey()==='ulsan'?'울산':pname()}
+function body(items){const repeated=items.filter(r=>recurrenceFor(r)?.isRecurrence).length;const lines=[
+  `안녕하세요, / Dear Team,`,'',
+  `${pnameKo()} 사업장 HDPS KPI 결과를 아래와 같이 안내드립니다 (${month()}월 기준). 목표 미달성/연속 미달성/악화 표시된 지표별로 사유와 만회대책을 회신 부탁드립니다.`,
+  `Please review the ${pname()} HDPS KPI results for ${month()}M below and reply with the reason for the gap and your recovery plan for each KPI marked as Target Miss / Consecutive Miss / Worsening.`,
+  `각 KPI의 목표/실적 수치는 아래 표에 정리되어 있으며, 첨부된 엑셀 파일에도 동일한 항목이 있어 그대로 작성해 회신해 주셔도 됩니다.`,
+  `Target vs. Actual figures for every listed KPI are shown below; the attached Excel file has the same fields for you to fill in and return.`,
+  '',
+  `요약 / Summary`,
+  `- 조치 필요 KPI / Action-required KPIs: ${items.length}`,
+  `- 반복(재발) KPI / Repeated / recurrence KPIs: ${repeated}`,
+  '',
+  `필수 회신 / REQUIRED \u2014 위 KPI별로 아래 내용을 회신 부탁드립니다 (please reply with the following for each KPI):`,
+  `1. 미달성/악화 사유 / Reason for the miss / deterioration (required)`,
+  `2. 근본 원인 / Root cause (required)`,
+  `3. 만회대책 / Recovery / catch-up plan (required)`,
+  `4. 담당자 / Action owner`,
+  `5. 완료 예정일 / Planned completion date`,
+  `6. 익월 회복 목표 / Next-month recovery target`,
+  '',
+  `반복적으로 발생하는 이슈는 기존 대책이 왜 효과가 없었는지, 이번 대책에서 무엇이 달라졌는지도 함께 설명 부탁드립니다. / For repeated issues, please also explain why the previous countermeasure was not effective and what has changed in the new action.`,
+  '',
+  `KPI 결과 (목표 대비 실적) / KPI results (Target vs. Actual):`,'',...kpiTableHeader()
+];items.slice(0,40).forEach(r=>lines.push(kpiRow(r)));if(items.length>40)lines.push(`... 외 ${items.length-40}건 더 있음(첨부파일 참고) / ... and ${items.length-40} more KPI(s) in the attachment.`);lines.push('',`첨부된 엑셀 파일을 작성하여 회신해 주시거나, 이 메일에 동일한 내용으로 회신해 주시기 바랍니다. 가능한 빠른 회신 부탁드립니다. / Please complete and return the attached Excel file (or reply to this email with the same information) by the earliest possible date.`,'',`감사합니다. / Regards`);return lines.join('\n');}
 function lastMailFor(r,targetMonth=month()){return load(MAIL_KEY).filter(x=>x.plant===pkey()&&x.targetMonth===targetMonth&&norm(x.kpiEn||x.kpi)===norm(r.kpiEn||r.kpi)).sort((a,b)=>String(b.sentAt||b.mailOpenedAt||b.preparedAt||'').localeCompare(String(a.sentAt||a.mailOpenedAt||a.preparedAt||'')))[0]||{};}
 async function buildReplyFile(items){if(typeof ExcelJS==='undefined')throw new Error('ExcelJS unavailable');const wb=new ExcelJS.Workbook();const ws=wb.addWorksheet('KPI Response');const cols=['Plant','Target Month','KPI (KR)','KPI (EN)','Target','Actual','Status / Trend','Repeated Issue','Previous Reason / Root Cause','Previous Countermeasure','Last Mail Prepared At','Last Mail Sent At','Last Reply Received At','Reason for Miss / Deterioration','Root Cause','Recovery / Catch-up Plan','Action Owner','Planned Completion Date','Next-month Recovery Target','Responder'];ws.columns=cols.map((h,i)=>({header:h,key:'c'+i,width:[12,12,34,38,12,12,24,18,32,32,22,22,22,34,34,36,20,22,24,20][i]}));const hr=ws.getRow(1);hr.font={bold:true,color:{argb:'FFFFFFFF'}};hr.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF2B4A63'}};hr.alignment={vertical:'middle',horizontal:'center',wrapText:true};for(const r of items){const rec=recurrenceFor(r),last=rec?.latest||{},mh=lastMailFor(r);const row=ws.addRow([pname(),month(),r.kpi||'',r.kpiEn||'',r.target??'',r.actual??'',tags(r).join(' / '),rec?.isRecurrence?`YES (same cause x${rec.sameCauseCount})`:'NO',last.rootCause||last.reason||'',last.recoveryPlan||'',mh.preparedAt||'',mh.sentAt||mh.mailOpenedAt||'',last.replyReceivedAt||'','','','','','','','']);[14,15,16,17,18,19,20].forEach(ci=>{row.getCell(ci).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFFF99'}};row.getCell(ci).alignment={wrapText:true,vertical:'top'}})}ws.views=[{state:'frozen',ySplit:1,xSplit:4}];ws.autoFilter={from:'A1',to:'T1'};const buf=await wb.xlsx.writeBuffer();const fname=`HDPS_KPI_Response_${pname()}_${month()}M.xlsx`;return {buf,fname,file:new File([buf],fname,{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})};}
 function downloadFile(file){const u=URL.createObjectURL(file),a=document.createElement('a');a.href=u;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(u),30000)}
