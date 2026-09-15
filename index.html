@@ -92,6 +92,7 @@
   .tag-streak { background:var(--miss); color:#fff; }
   .tag-down { background:var(--amber); color:#fff; }
   .tag-recur { background:#7c3aed; color:#fff; }
+  .tag-flat { background:#5b6b7a; color:#fff; }
 
   .result-cols { display:flex; gap:20px; align-items:flex-start; }
   .result-col { flex:1 1 0; min-width:0; }
@@ -497,8 +498,17 @@ document.getElementById('btnJudge').addEventListener('click', () => {
           if (last < first*0.97) trend='down';
           else if (last > first*1.03) trend='up';
         }
+        // 정체(변화없음) 감지: 실적치가 전월과 완전히 동일하게 유지되는 개월수.
+        // 예) 누적형 지표(육성코칭 인력수 등)가 목표는 계속 '달성'으로 나오더라도,
+        // 실제로는 이번 달에 새로운 진전이 전혀 없었던 경우를 '달성' 배지 뒤에 숨기지 않기 위함.
+        let flatStreak = 0;
+        for (let j=i; j>0; j--){
+          const a = hist[j].actual, b = hist[j-1].actual;
+          if (typeof a==='number' && typeof b==='number' && Math.abs(a-b) <= 1e-9*Math.max(1,Math.abs(a),Math.abs(b))+1e-9) flatStreak++;
+          else break;
+        }
         results.push({month:cur.month, masterRow:Number(masterRow), kpi:info.kpi, kpiEn:info.kpiEn, direction:info.direction, unit:info.unit,
-                       target:cur.target, actual:cur.actual, achieved:cur.achieved, streak, trend});
+                       target:cur.target, actual:cur.actual, achieved:cur.achieved, streak, trend, flatStreak});
       }
     }
     renderResults(results);
@@ -600,10 +610,10 @@ function renderTable(){
   document.querySelectorAll('#okTable thead th')[2].textContent = currentLang==='ko' ? '방향' : 'Direction';
   document.querySelectorAll('#okTable thead th')[3].textContent = currentLang==='ko' ? '목표 대비 실적' : 'Target vs Actual';
 
-  document.getElementById('trendNote').style.display = missRows.some(r=>r.streak>=2||r.trend==='down'||replyRecurrenceFor(r)) ? 'block' : 'none';
+  document.getElementById('trendNote').style.display = (missRows.some(r=>r.streak>=2||r.trend==='down'||replyRecurrenceFor(r)) || rows.some(r=>r.flatStreak>=1)) ? 'block' : 'none';
   document.getElementById('trendNote').textContent = currentLang==='ko'
-    ? '🔴 연속 미달성 · 📉 최근 3개월 악화 추세 · ⚠ 회신 이력상 동일 사유 반복(중점관리) — KPI 옆 배지로 표시됩니다. 정렬은 "연속 미달성 개월수"가 큰 순서입니다.'
-    : '🔴 Consecutive miss · 📉 Worsening over last 3 months · ⚠ Recurring same cause in reply history (Focus) — shown as badges next to each KPI, sorted by longest miss streak first.';
+    ? '🔴 연속 미달성 · 📉 최근 3개월 악화 추세 · ⚠ 회신 이력상 동일 사유 반복(중점관리) · ➖ 전월 대비 실적 변화없음(달성이어도 진전 없음 표시) — KPI 옆 배지로 표시됩니다. 정렬은 "연속 미달성 개월수"가 큰 순서입니다.'
+    : '🔴 Consecutive miss · 📉 Worsening over last 3 months · ⚠ Recurring same cause in reply history (Focus) · ➖ No change vs last month (flags achieved-but-stalled KPIs) — shown as badges next to each KPI, sorted by longest miss streak first.';
   document.getElementById('missCount').textContent = missRows.length + (currentLang==='ko' ? '건' : '');
   document.getElementById('okCount').textContent = okRows.length + (currentLang==='ko' ? '건' : '');
 
@@ -617,6 +627,7 @@ function renderTable(){
     if (r.trend==='down') badges += currentLang==='ko' ? `<br><span class="tag tag-down">📉 최근 악화</span>` : `<br><span class="tag tag-down">📉 Recent decline</span>`;
     const recur = replyRecurrenceFor(r);
     if (recur) badges += currentLang==='ko' ? `<br><span class="tag tag-recur">⚠ 동일 사유 반복(${recur.sameCauseCount}회) · 중점관리</span>` : `<br><span class="tag tag-recur">⚠ Recurring same cause (x${recur.sameCauseCount}) · Focus</span>`;
+    if (r.flatStreak>=1) badges += currentLang==='ko' ? `<br><span class="tag tag-flat">➖ 전월과 동일(변화없음 ${r.flatStreak+1}개월째)</span>` : `<br><span class="tag tag-flat">➖ No change vs last month (${r.flatStreak+1}mo flat)</span>`;
     tr.innerHTML = `<td class="num mono">${r.masterRow}</td>
       <td>${kpiLabel(r)}${badges}</td>
       <td>${dirLabelWithArrow(r.direction)}</td>
@@ -629,8 +640,10 @@ function renderTable(){
   for (const r of okRows){
     const tr = document.createElement('tr');
     tr.className = 'ok';
+    let badges = '';
+    if (r.flatStreak>=1) badges += currentLang==='ko' ? `<br><span class="tag tag-flat">➖ 전월과 동일(변화없음 ${r.flatStreak+1}개월째)</span>` : `<br><span class="tag tag-flat">➖ No change vs last month (${r.flatStreak+1}mo flat)</span>`;
     tr.innerHTML = `<td class="num mono">${r.masterRow}</td>
-      <td>${kpiLabel(r)}</td>
+      <td>${kpiLabel(r)}${badges}</td>
       <td>${dirLabelWithArrow(r.direction)}</td>
       <td>${miniBar(r.target, r.actual, r.achieved, r.unit)}</td>`;
     okBody.appendChild(tr);
