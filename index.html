@@ -425,6 +425,19 @@ function replaceCell(xml, ref, val){
 
 // Legacy reflect path removed: safe-kpi-mapping.js is the only execution path.
 
+// ---------- 판정 + 최근 추세 ----------
+function makeHistEntry(month, target, actual, direction){
+  let achieved;
+  if (direction==='상향') achieved = actual >= target;
+  else if (direction==='하향') achieved = actual <= target;
+  else achieved = Math.abs(actual-target) < 1e-6;
+  let ratio;
+  if (target===0) ratio = achieved ? 1 : 0;
+  else if (direction==='하향') ratio = target / (actual===0 ? 1e-9 : actual);
+  else ratio = actual / target;
+  return {month, target, actual, achieved, ratio};
+}
+
 document.getElementById('btnJudge').addEventListener('click', () => {
   try {
     log('=== 판정 시작 ===');
