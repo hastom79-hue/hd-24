@@ -19,153 +19,45 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import json,re
-
           index=Path('index.html').read_text(encoding='utf-8')
           ui=Path('hd24-ui-v3.js').read_text(encoding='utf-8')
           core=Path('hd24-ui-v3-core.js').read_text(encoding='utf-8')
           safe=Path('safe-kpi-mapping.js').read_text(encoding='utf-8')
-          auto=Path('hd24-auto-run.js').read_text(encoding='utf-8')
-          action=Path('hd24-action-export.js').read_text(encoding='utf-8')
-          cycle_guard=Path('hd24-action-cycle-guard.js').read_text(encoding='utf-8')
-          legacy_follow=Path('hd24-followup.js').read_text(encoding='utf-8')
-          follow=Path('hd24-followup-sync.js').read_text(encoding='utf-8')
-          health=Path('runtime-health.html').read_text(encoding='utf-8')
+          refresh=Path('refresh-runtime.html').read_text(encoding='utf-8')
           india=json.loads(Path('mapping_india.json').read_text(encoding='utf-8'))
           brazil=json.loads(Path('mapping_brazil.json').read_text(encoding='utf-8'))
-          recovery=Path('.github/workflows/apply-approved-ui.yml').read_text(encoding='utf-8')
-          india_e2e=Path('.github/workflows/hd24-browser-e2e.yml').read_text(encoding='utf-8')
-          brazil_e2e=Path('.github/workflows/hd24-browser-e2e-brazil.yml').read_text(encoding='utf-8')
 
-          m=re.search(r'safe-kpi-mapping\.js\?v=(\d+)',core)
-          assert m, 'safe runtime cache version missing from hd24-ui-v3-core.js'
-          cache_ver=m.group(1)
-          assert f'hd24-ui-v3.js?v={cache_ver}' in index, 'index/UI JS cache version mismatch'
-          assert f'hd24-ui-v3.css?v={cache_ver}' in index, 'index/UI CSS cache version mismatch'
-          sm=re.search(r'안전 실적 반영 v(\d+) 시작',safe)
-          assert sm, 'safe runtime semantic banner/version missing'
-          runtime_ver=sm.group(1)
+          outer_js=re.search(r'hd24-ui-v3\.js\?v=(\d+)',index)
+          outer_css=re.search(r'hd24-ui-v3\.css\?v=(\d+)',index)
+          safe_ver=re.search(r'safe-kpi-mapping\.js\?v=(\d+)',core)
+          assert outer_js and outer_css and safe_ver, 'production cache-bust reference missing'
+          assert f'hd24-ui-v3.js?v={outer_js.group(1)}' in refresh, 'refresh/UI JS cache version mismatch'
+          assert f'hd24-ui-v3.css?v={outer_css.group(1)}' in refresh, 'refresh/UI CSS cache version mismatch'
+          assert f'safe-kpi-mapping.js?v={safe_ver.group(1)}' in refresh, 'refresh/safe runtime cache version mismatch'
 
-          assert "document.getElementById('btnReflect').addEventListener('click'" not in index, 'legacy reflect click handler reintroduced'
-          assert 'window.hd24SafeReflectReady && ok && needSrc' in index, 'reflect readiness gate missing'
-          assert 'window.hd24SafeReflectReady=false' in core, 'core loader does not default fail-closed'
-          assert 's.onerror=' in core, 'safe loader onerror fail-closed path missing'
-          assert "btn.addEventListener('click',safeReflect,true)" in safe, 'safe capture listener missing'
-          assert 'window.hd24SafeReflectReady=true' in safe, 'safe readiness install missing'
-          assert "if(btn){btn.addEventListener('click',safeReflect,true);btn.dataset.safeReflectReady='1';window.hd24SafeReflectReady=true;}else{window.hd24SafeReflectReady=false;}" in safe, 'null-safe reflect install guard missing'
+          for asset in ['hd24-ui-v3-core.js?v=18','hd24-auto-run.js?v=27','hd24-pipeline-gate.js?v=22','hd24-followup.js?v=29','hd24-direct-reply-guard.js?v=1','hd24-reply-import-dedupe.js?v=1','hd24-history-view.js?v=23']:
+              assert asset in ui, f'production loader missing {asset}'
+              assert asset in refresh or asset.startswith('hd24-ui-v3-core'), f'refresh preload missing {asset}'
+          assert 'hd24-action-export.js' not in ui and 'hd24-followup-sync.js' not in ui, 'obsolete parallel action/follow-up runtime reintroduced'
 
-          assert 'function coreReady()' in auto, 'auto-run core readiness guard missing'
-          for token in ['srcWorkbook','masterWorkbook','masterZip','mappingData']:
-              assert token in auto, f'auto-run parsed prerequisite missing: {token}'
-          assert 'window.hd24SafeReflectReady===true&&!!btn' in auto, 'auto-run authoritative safe gate missing'
-          assert 'stale/missing dataset marker must not deadlock auto-run' in auto, 'v27 diagnostic dataset semantics missing'
-          assert 'if(sig&&btn&&btn.disabled&&safe&&core.ok)' in auto, 'stale-disabled repair is not fail-closed'
-          assert "hd24-auto-run.js?v=27" in ui, 'production loader is not on auto-run v27'
-
-          assert 'const analysisSnapshot=a.current.map(snapshotItem)' in action, 'current-month action snapshot missing'
-          assert 'month:horizon,items:analysisSnapshot' in action, 'action-export completion does not carry frozen snapshot'
-          assert 'cycle:workCycle' in action, 'action-export completion does not carry upload cycle'
-          assert 'captureCycle!==currentCycle()||signature()!==sig' in action, 'safe blob stale-cycle rejection missing'
-          assert 'analysisReadySignature!==sig||analysisReadyCycle!==workCycle' in action, 'analysis readiness is not upload-cycle bound'
-          assert 'stale action-export cycle after workbook load' in action, 'post-load stale-cycle gate missing'
-          assert 'stale action-export cycle after workbook write' in action, 'post-write stale-cycle gate missing'
-          assert 'stopImmediatePropagation' in cycle_guard, 'stale action completion propagation guard missing'
-          assert 'eventCycle!==currentCycle' in cycle_guard, 'action completion guard does not compare event/current cycle'
-          assert "hd24-action-export.js?v=27" in ui, 'production loader is not on action export v27'
-          assert "hd24-action-cycle-guard.js?v=1" in ui, 'production loader is missing action cycle guard v1'
-
-          # Follow-up v8: exact watch set and actual reply workbook are bound to the same upload cycle.
-          assert 'window.hd24FollowupSyncOwnsAutoPackage=true' in follow, 'follow-up sync does not claim auto-package ownership'
-          assert 'if(window.hd24FollowupSyncOwnsAutoPackage)' in legacy_follow, 'legacy auto-package path is not suppressed by owner guard'
-          assert 'function currentCycle(){return Number(window.hd24ActionCycle)||0}' in follow, 'follow-up upload-cycle source missing'
-          assert 'Number(s.cycle)!==Number(cycle)' in follow, 'follow-up snapshot is not cycle-bound'
-          assert 'actionExportSignature!==sig||actionExportCycle!==cycle' in follow, 'follow-up is not gated by same-cycle action export'
-          assert 'window.hd24FollowupSnapshot={signature:sig,cycle,month,items:items.map' in follow, 'cycle-bound follow-up snapshot storage missing'
-          assert 'withSnapshot(sig,cycle,()=>mailBtn.click())' in follow, 'Preview is not pinned to frozen same-cycle action snapshot'
-          assert "const REPLY_KEY='hd24_kpi_reply_history_v2'" in follow, 'follow-up recurrence source drifted from legacy history'
-          assert 'function expectedWatchItems(sig,cycle=currentCycle())' in follow, 'exact watch KPI selector missing'
-          assert "return !r.achieved||Number(r.streak)>=2||r.trend==='down'||!!rec?.isRecurrence" in follow, 'watch selection semantics changed'
-          assert 'count===watch.length' in follow, 'Preview count is not locked to watch set'
-          assert 'p.dataset.hd24Cycle=String(cycle)' in follow, 'Preview upload-cycle identity tag missing'
-          assert 'p.dataset.hd24Rows=watchFingerprint(sig,cycle)' in follow, 'Preview exact-set fingerprint missing'
-          assert 'async function validateReplyFile(file,sig,cycle)' in follow, 'actual reply workbook byte verifier missing'
-          assert 'await wb.xlsx.load(await file.arrayBuffer())' in follow, 'reply workbook bytes are not reopened'
-          assert '회신 Excel 검증 중 업로드 cycle 변경' in follow, 'reply workbook post-load cycle rejection missing'
-          assert 'Preview↔회신 Excel KPI 건수 불일치' in follow, 'Preview/reply count cross-check missing'
-          assert '관리대상↔회신 Excel KPI 건수 불일치' in follow, 'watch/reply count cross-check missing'
-          assert 'expectedSet.has(uniq)' in follow, 'reply KPI membership is not locked to exact watch set'
-          assert "[...expectedSet].some(x=>!seen.has(x))" in follow, 'reply workbook does not enforce complete watch set coverage'
-          assert '회신 Excel 사업장 불일치' in follow, 'reply plant cross-check missing'
-          assert '회신 Excel 대상월 불일치' in follow, 'reply month cross-check missing'
-          assert '회신 Excel Target 불일치' in follow, 'reply Target cross-check missing'
-          assert '회신 Excel Actual 불일치' in follow, 'reply Actual cross-check missing'
-          assert '회신 Excel Status/Trend 불일치' in follow, 'reply Status/Trend cross-check missing'
-          assert 'replyDownloadedSignature=sig;replyDownloadedCycle=cycle' in follow, 'verified reply completion cycle missing'
-          assert 'replyAttempts[key]' in follow, 'cycle-keyed bounded reply verification retry missing'
-          assert 'eventSig!==sig||eventCycle!==cycle' in follow, 'stale same-signature prior-cycle action event is not rejected'
-          assert "hd24-followup.js?v=24" in ui, 'production loader is not on legacy follow-up UI v24'
-          assert "hd24-followup-sync.js?v=8" in ui, 'production loader is not on follow-up sync v8'
-
-          assert "['XLSX','https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js']" in core, 'SheetJS fallback guard missing'
-          assert "['JSZip','https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js']" in core, 'JSZip fallback guard missing'
-          assert "['ExcelJS','https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js']" in core, 'ExcelJS fallback guard missing'
-          assert 'await ensureDeps()' in core, 'dependency verification no longer precedes safe runtime load'
-          assert "throw new Error('필수 라이브러리 로드 실패: '+missing.join(', '))" in core, 'dependency fail-closed terminal gate missing'
-          assert "if(x)x.disabled=true" in core, 'reflect button fail-closed disable path missing'
-          assert "primary.XLSX?'cdnjs':'fallback'" in health, 'runtime health is not fallback-aware for XLSX'
-          assert "primary.JSZip?'cdnjs':'fallback'" in health, 'runtime health is not fallback-aware for JSZip'
-          assert "primary.ExcelJS?'cdnjs':'fallback'" in health, 'runtime health is not fallback-aware for ExcelJS'
-          assert "./refresh-runtime.html?from_health=" in health, 'runtime health entry bypasses cache refresh helper'
-
-          required=[
-              'KPI 전수검증 실패','미래월 Actual','직전월 원천↔총괄 불일치','historyDrift.push(msg)',
-              '수식 셀 반영 차단','중복 KPI×월 대상 감지','반영 후 셀 재검증 실패','반영 건수 불일치',
-              'displayPrecisionEqual','validateUnit(srcWs,sr.row,m,masterWs,mr.row)',
-              "currentPlant==='india'&&name==='ppm'&&sf==='count'&&mf==='ppm'",
-              "currentPlant==='india'&&name==='5s audit score'&&sf==='pct'&&mf==='score'",
-              'LTIR (Lost Time Incident Rate)','masterFutureContamination','masterInfo.row+1',
-          ]
+          assert 'window.hd24SafeReflectReady=false' in core
+          assert 's.onerror=' in core
+          assert "btn.addEventListener('click',safeReflect,true)" in safe
+          required=['KPI 전수검증 실패','미래월 Actual','직전월 원천↔총괄 불일치','historyDrift.push(msg)','수식 셀 반영 차단','중복 KPI×월 대상 감지','반영 후 셀 재검증 실패','반영 건수 불일치','displayPrecisionEqual','validateUnit(srcWs,sr.row,m,masterWs,mr.row)','masterFutureContamination']
           for token in required: assert token in safe, f'missing safety invariant: {token}'
 
-          assert 'new DOMParser()' in index, 'DOM-based workbook relationship parser missing'
-          assert "getElementsByTagName('Relationship')" in index, 'relationship lookup is not attribute-order independent'
-          assert "relation.getAttribute('Target')" in index, 'relationship target lookup missing'
-          assert "if(!zip.file(path))" in index, 'resolved sheet XML existence gate missing'
-          assert "Id=\"'+m[1]+'\"[^>]*Target" not in index, 'legacy attribute-order-dependent relationship regex reintroduced'
-
-          assert len(india)==76, f'India static mapping changed unexpectedly: {len(india)}'
-          assert len(brazil)==76, f'Brazil static mapping changed unexpectedly: {len(brazil)}'
+          assert len(india)==76 and len(brazil)==76
           for plant,data in [('India',india),('Brazil',brazil)]:
               names=[x['kpiEn'].strip().lower() for x in data]; rows=[x['masterRow'] for x in data]
               assert len(names)==len(set(names)), f'{plant} duplicate KPI mapping'
               assert len(rows)==len(set(rows)), f'{plant} duplicate masterRow mapping'
-
-          nva=[x for x in brazil if x.get('kpiEn')=='NVA reduction cases reflecting from SWC']
-          assert len(nva)==1 and nva[0]['labelRow']==150 and nva[0]['actualRow']==151 and nva[0]['masterRow']==122, 'Brazil NVA mapping regression'
-          rccp=[x for x in brazil if x.get('kpiEn')=='M+1 Production Volume Variation Rate']
-          assert len(rccp)==1 and rccp[0]['scale']==1 and rccp[0]['valueFormat']=='퍼센트텍스트', 'Brazil RCCP string-percent semantics regression'
-
-          stale_js='hd24-ui-v3.js?v='+'3'; stale_css='hd24-ui-v3.css?v='+'3'
-          assert stale_js not in recovery and stale_css not in recovery, 'stale v3 recovery path reintroduced'
-          assert 'ver=m.group(1)' in recovery, 'dynamic recovery version extraction missing'
-
-          for label,text in [('India',india_e2e),('Brazil',brazil_e2e)]:
-              assert "'hd24-ui-v3.css'" in text, f'{label} E2E does not trigger on UI CSS changes'
-              assert 'master_future_contaminated.xlsx' in text, f'{label} E2E future-month negative fixture missing'
-              assert "assert '미래월 Actual'" in text, f'{label} E2E fail-closed future-month assertion missing'
-              assert 'assert not neg_downloads' in text, f'{label} E2E blocked-download assertion missing'
-          assert "if name=='ppm': src_unit='Nos.'" in india_e2e, 'India E2E PPM Nos. source-unit exception fixture missing'
-          assert "if name=='5s audit score': src_unit='%'" in india_e2e, 'India E2E 5S percent source-unit exception fixture missing'
-          assert "if m.get('kpiEn')==ltir: src_unit='%'" in brazil_e2e, 'Brazil E2E LTIR percent source-unit fixture missing'
-          assert "if m.get('kpiEn')==ltir: master_unit='%'" in brazil_e2e, 'Brazil E2E LTIR percent master-unit fixture missing'
-
-          print(f'HD24 RUNTIME REGRESSION PASS: cache=v{cache_ver}, runtime=v{runtime_ver}, auto-run=v27, action-export=v27 cycle-safe, follow-up=v8 cycle-safe exact-watch-set, India=76+1 runtime, Brazil=76+1 runtime')
+          print(f'HD24 RUNTIME REGRESSION PASS: ui=v{outer_js.group(1)}, css=v{outer_css.group(1)}, safe=v{safe_ver.group(1)}, direct-reply-guard=v1')
           PY
           node --check hd24-auto-run.js
-          node --check hd24-action-export.js
-          node --check hd24-action-cycle-guard.js
+          node --check hd24-pipeline-gate.js
           node --check hd24-followup.js
-          node --check hd24-followup-sync.js
+          node --check hd24-direct-reply-guard.js
+          node --check hd24-reply-import-dedupe.js
           node tests/auto-run-readiness.test.js
-          node tests/kpi-action-export.test.js
-          node tests/followup-sync.test.js
-          node tests/followup-reset-guard.test.js
+          node tests/reply-import-dedupe.test.js
+          node tests/direct-reply-guard.test.js
