@@ -17,8 +17,7 @@ jobs:
           import re
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          ui=Path('hd24-ui-v3.js').read_text(encoding='utf-8')
-          # The old safe-kpi-mapping loader left the production chain in 5976600c.
+          # The old safe KPI mapping loader left the production chain in 5976600c.
           # Derive the outer UI cache version from the currently deployed index instead.
           m=re.search(r"hd24-ui-v3\.js\?v=(\d+)",s)
           if not m:
@@ -57,10 +56,11 @@ jobs:
           s=Path('.github/workflows/apply-approved-ui.yml').read_text(encoding='utf-8')
           stale_js='hd24-ui-v3.js?v='+'3'
           stale_css='hd24-ui-v3.css?v='+'3'
+          retired_loader='safe-kpi-'+'mapping'
           assert stale_js not in s
           assert stale_css not in s
           assert "re.search(r\"hd24-ui-v3\\.js\\?v=(\\d+)\",s)" in s
-          assert 'safe-kpi-mapping' not in s.replace('# The old safe-kpi-mapping loader left the production chain in 5976600c.','')
+          assert retired_loader not in s
           assert 'Cannot determine current HD24 outer UI cache version' in s
           assert "re.sub(r'hd24-ui-v3\\.css\\?v=\\d+'" in s
           assert "re.sub(r'hd24-ui-v3\\.js\\?v=\\d+'" in s
