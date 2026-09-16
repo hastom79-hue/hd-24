@@ -14,8 +14,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Validate cycle-safe action export
+      - name: Validate current production follow-up/reply cycle
         run: |
-          node --check hd24-action-export.js
-          node --check hd24-action-cycle-guard.js
-          node tests/kpi-action-export.test.js
+          node --check hd24-followup.js
+          node --check hd24-direct-reply-guard.js
+          node --check hd24-reply-import-dedupe.js
+          node tests/direct-reply-guard.test.js
+          node tests/reply-import-dedupe.test.js
+          node tests/followup-exact-once.test.js
+          node tests/followup-inflight-dedupe.test.js
