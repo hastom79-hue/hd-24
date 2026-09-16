@@ -115,8 +115,7 @@
   .hd24-tab { appearance:none; border:none; background:none; padding:10px 16px; font-size:14px; font-weight:600; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; }
   .hd24-tab:hover { color:var(--ink); }
   .hd24-tab.active { color:var(--accent-dark); border-bottom-color:var(--accent-dark); }
-  .hd24-tab-pane { display:none; }
-  .hd24-tab-pane.active { display:block; }
+  .hd24-tab-hidden { display:none !important; }
   #hd24ResultSummary::before { content:'이번 달 요약'; display:block; font-size:11px; font-weight:900; letter-spacing:.12em; color:#6c8da3; margin-bottom:8px; grid-column:1 / -1; }
   #resultCard > #hd24FollowupPanel { border-top:3px solid var(--accent-dark); }
   .hd24-tab-badge { display:inline-block; min-width:18px; padding:0 5px; margin-left:6px; border-radius:10px; background:var(--miss); color:#fff; font-size:11px; font-weight:700; line-height:18px; text-align:center; vertical-align:middle; }
@@ -1072,11 +1071,11 @@ renderHistory();
 // ---------- 화면을 탭으로 분리 (업로드·실행 / 판정결과·메일·담당자 / 실행 이력) ----------
 // 실행 로그는 탭에 가두지 않고 항상 보이는 접이식 패널로 둔다 (업로드·반영·판정·메일 전
 // 과정에서 실시간으로 찍히는 피드백이라, 다른 탭에 있을 때도 봐야 함).
-// 기존 요소는 삭제/재작성하지 않고 그대로 다른 컨테이너로 옮기기만 한다(id 유지되므로
-// 기존 getElementById/querySelector 기반 로직에는 영향 없음). hd24-ui-v3-core.js가
-// DOMContentLoaded 시점에 상단 요약카드·패널 재배치를 먼저 끝낸 뒤에 실행되도록
-// setTimeout으로 한 틱 늦춘다.
-function groupPanelsIntoTabs(){
+// 안전성을 위해 기존 요소를 다른 컨테이너로 "옮기지" 않는다 — appendChild/before/after로
+// 재부모지정하면 브라우저별로 input[type=file] 등 특정 엘리먼트에 예기치 못한 부작용이
+// 있을 수 있어, 원래 자리에 그대로 둔 채 CSS class(display:none)만 토글해서 탭처럼 보이게
+// 한다. id/속성/이벤트 리스너 전부 그대로 유지되므로 기존 로직에는 전혀 영향이 없다.
+function setupTabs(){
   const main = document.querySelector('main');
   if (!main || document.getElementById('hd24TabBar')) return;
   const resultCard = document.getElementById('resultCard');
@@ -1097,16 +1096,13 @@ function groupPanelsIntoTabs(){
   bar.id = 'hd24TabBar';
   bar.className = 'hd24-tab-bar';
   bar.innerHTML = `<button type="button" class="hd24-tab active" data-tab="upload">업로드 · 실행</button><button type="button" class="hd24-tab" data-tab="results">판정 결과 · 메일<span class="hd24-tab-badge" id="hd24TabMissBadge" hidden>0</span></button><button type="button" class="hd24-tab" data-tab="history">실행 이력</button>`;
+  const anchor = workGrid || topPanels[0];
+  if (anchor) anchor.before(bar); else main.prepend(bar); // 새 엘리먼트만 삽입, 기존 엘리먼트는 옮기지 않음
 
-  const paneUpload = document.createElement('div'); paneUpload.id='hd24PaneUpload'; paneUpload.className='hd24-tab-pane active';
-  const paneResults = document.createElement('div'); paneResults.id='hd24PaneResults'; paneResults.className='hd24-tab-pane';
-  const paneHistory = document.createElement('div'); paneHistory.id='hd24PaneHistory'; paneHistory.className='hd24-tab-pane';
-
-  // 실행 로그: 탭이 아니라 접었다 펼 수 있는 상시노출 패널로 전환
-  let logToggleBtn = null;
+  // 실행 로그: 탭이 아니라 접었다 펼 수 있는 상시노출 패널로 전환 (제자리에서 스타일만 변경)
   if (logPanel){
     const h2 = logPanel.querySelector('h2');
-    logToggleBtn = document.createElement('button');
+    const logToggleBtn = document.createElement('button');
     logToggleBtn.type = 'button';
     logToggleBtn.className = 'hd24-log-toggle';
     logToggleBtn.id = 'hd24LogToggle';
@@ -1119,28 +1115,22 @@ function groupPanelsIntoTabs(){
     });
   }
 
-  const anchor = workGrid || topPanels[0];
-  if (anchor) anchor.before(bar); else main.prepend(bar);
-  bar.after(paneUpload);
-  if (logPanel) paneUpload.after(logPanel); // 탭 바로 아래, 모든 탭 공통으로 보이는 자리
-  const afterLog = logPanel || paneUpload;
-  afterLog.after(paneResults);
-  paneResults.after(paneHistory);
-
-  if (workGrid) paneUpload.appendChild(workGrid);
-  paneResults.appendChild(resultCard); // 실적판정 결과 표 + (나중에 생기는) 메일 미리보기 패널도 resultCard의 자식이라 함께 이동됨
-  if (contactPanel) paneResults.appendChild(contactPanel); // 담당자 정보는 메일 발송용이라 결과·메일 탭에 배치
-  if (historyPanel) paneHistory.appendChild(historyPanel);
-
-  const panes = {upload:paneUpload, results:paneResults, history:paneHistory};
-  bar.querySelectorAll('.hd24-tab').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      bar.querySelectorAll('.hd24-tab').forEach(b=>b.classList.toggle('active', b===btn));
-      Object.values(panes).forEach(p=>p.classList.remove('active'));
-      panes[btn.dataset.tab].classList.add('active');
+  const groups = {
+    upload: [workGrid].filter(Boolean),
+    results: [resultCard, contactPanel].filter(Boolean),
+    history: [historyPanel].filter(Boolean),
+  };
+  function activate(tab){
+    Object.entries(groups).forEach(([name, els]) => {
+      els.forEach(el => el.classList.toggle('hd24-tab-hidden', name !== tab));
     });
+    bar.querySelectorAll('.hd24-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  }
+  bar.querySelectorAll('.hd24-tab').forEach(btn => {
+    btn.addEventListener('click', () => activate(btn.dataset.tab));
   });
-  window.hd24SwitchTab = (name)=>{ const btn=bar.querySelector(`[data-tab="${name}"]`); if (btn) btn.click(); };
+  activate('upload');
+  window.hd24SwitchTab = activate;
 
   // 판정결과 탭에 미달성 건수 배지 표시, 판정이 다시 돌 때마다 갱신
   window.hd24UpdateTabBadge = (missCount)=>{
@@ -1150,8 +1140,8 @@ function groupPanelsIntoTabs(){
     else badge.hidden = true;
   };
 }
-if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', ()=>setTimeout(groupPanelsIntoTabs, 100));
-else setTimeout(groupPanelsIntoTabs, 100);
+if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', ()=>setTimeout(setupTabs, 100));
+else setTimeout(setupTabs, 100);
 </script>
 <script src="./hd24-ui-v3.js?v=26"></script>
 </body>
