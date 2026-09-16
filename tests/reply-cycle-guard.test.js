@@ -13,7 +13,7 @@ const src=fs.readFileSync('hd24-reply-cycle-guard.js','utf8');
   let cycle=7;
   const itemA={month:7,masterRow:11,kpi:'KPI A',kpiEn:'KPI A',target:90,actual:80,achieved:false,streak:2,trend:'down'};
   const itemB={month:8,masterRow:21,kpi:'KPI B',kpiEn:'KPI B',target:95,actual:70,achieved:false,streak:3,trend:'down'};
-  function applySnapshot(item){const sig=signature();preview.dataset.hd24Signature=sig;preview.dataset.hd24Cycle=String(cycle);preview.dataset.hd24Rows=String(item.masterRow);sandbox.hd24FollowupSnapshot={signature:sig,cycle,month:item.month,items:[item]}}
+  function applySnapshot(item){const sig=signature();preview.dataset.hd24Signature=sig;preview.dataset.hd24Cycle=String(cycle);preview.dataset.hd24Rows=String(item.masterRow);preview.dataset.hd24Month=String(item.month);preview.dataset.hd24Count='1';sandbox.hd24FollowupSnapshot={signature:sig,cycle,month:item.month,items:[item]}}
 
   let buildNo=0,releaseA,releaseB;
   const gateA=new Promise(r=>releaseA=r),gateB=new Promise(r=>releaseB=r);
@@ -36,7 +36,6 @@ const src=fs.readFileSync('hd24-reply-cycle-guard.js','utf8');
   assert.equal(buildNo,1,'first cycle must start one async reply workbook build');
   assert.equal(downloads.length,0,'first build is intentionally still pending');
 
-  // Change upload cycle while A is still writing. Start B before A resolves.
   cycle=8;sandbox.hd24ActionCycle=cycle;
   srcFile.files=[{name:'india-b.xlsx',size:333,lastModified:3}];masterFile.files=[{name:'master-b.xlsx',size:444,lastModified:4}];
   applySnapshot(itemB);
@@ -44,11 +43,9 @@ const src=fs.readFileSync('hd24-reply-cycle-guard.js','utf8');
   await new Promise(r=>setTimeout(r,5));
   assert.equal(buildNo,2,'new cycle must be allowed to start its own workbook while old build is pending');
 
-  // Resolve the new cycle first: only B is allowed to download.
   releaseB();await new Promise(r=>setTimeout(r,10));
   assert.deepEqual(downloads,['HDPS_KPI_Response_India_8M.xlsx'],'current cycle workbook must download');
 
-  // Resolve stale A afterwards: it must be quarantined and never reach URL/anchor download.
   releaseA();await new Promise(r=>setTimeout(r,10));
   assert.deepEqual(downloads,['HDPS_KPI_Response_India_8M.xlsx'],'stale prior-cycle workbook must never download after reset');
   assert(logs.some(x=>x.includes('회신 Excel stale 생성 차단: cycle 7')),'stale prior-cycle block must be logged');
