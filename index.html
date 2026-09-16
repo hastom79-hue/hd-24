@@ -644,17 +644,23 @@ function kpiLabel(r){ return currentLang==='ko' ? r.kpi : (r.kpiEn || r.kpi); }
 function plantLabel(){ return currentLang==='ko' ? cfg().label : (cfg().labelEn || cfg().label); }
 
 // 목표 대비 실적을 작은 막대그래프로 시각화 (단위 표시 포함)
+function fmtValWithUnit(v, unit){
+  // %  단위 지표는 원본이 0.581(=58.1%) 같은 분수 형태로 저장되어 있어서, 그냥 "%"만
+  // 붙이면 "0.581%"처럼 100배 작게 잘못 표시된다. %일 때만 100을 곱해서 보여준다.
+  if (typeof v !== 'number' || !isFinite(v)) return '';
+  if (unit === '%') return round(v*100) + '%';
+  return round(v) + (unit ? ' '+unit : '');
+}
 function miniBar(target, actual, achieved, unit){
   const t = Math.abs(target), a = Math.abs(actual);
   const max = Math.max(t, a, 1e-9) * 1.08; // 여유 8%
   const tPct = Math.min(100, (t/max)*100);
   const aPct = Math.min(100, (a/max)*100);
   const cls = achieved ? 'ok' : 'miss';
-  const u = unit ? (unit==='%' ? unit : ' '+unit) : '';
   return `<div class="mini-bar">
     <div class="bar-track"><div class="bar-fill target" style="width:${tPct}%"></div></div>
     <div class="bar-track"><div class="bar-fill actual ${cls}" style="width:${aPct}%"></div></div>
-    <div class="bar-nums"><span>${round(target)}${u}</span><span>${round(actual)}${u}</span></div>
+    <div class="bar-nums"><span>${fmtValWithUnit(target, unit)}</span><span>${fmtValWithUnit(actual, unit)}</span></div>
   </div>`;
 }
 
@@ -897,8 +903,9 @@ renderContactSelect();
 
 function fmtKpiNum(v, unit){
   if (typeof v !== 'number' || !isFinite(v)) return 'N/A';
+  if (unit === '%') return round(v*100) + '%'; // 원본이 0.581(=58.1%) 형태라 100을 곱해야 맞다
   const n = round(v);
-  return unit === '%' ? `${n}%` : `${n}${unit ? ' '+unit : ''}`;
+  return `${n}${unit ? ' '+unit : ''}`;
 }
 function gapAmount(r){
   if (typeof r.target !== 'number' || typeof r.actual !== 'number' || !isFinite(r.target) || !isFinite(r.actual)) return null;
