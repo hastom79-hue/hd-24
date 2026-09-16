@@ -139,7 +139,15 @@
 <header>
   <h1>HDPS KPI 관리시스템</h1>
   <p>인도 · 브라질 KPI 실적 반영 / 목표대비 판정 &amp; 최근 추세 — 행 밀림 자동 보정</p>
+  <button type="button" id="hd24ReminderBtn" style="position:absolute; top:20px; right:20px; font-size:12px; padding:8px 12px; border-radius:6px; border:1px solid #ffffff55; background:#ffffff1a; color:#fff; cursor:pointer;">🔔 월간 리마인더 캘린더 등록</button>
 </header>
+
+<div id="hd24MonthlyBanner" style="display:none; max-width:1280px; margin:14px auto 0; padding:0 18px;">
+  <div style="background:#fff4e5; border:1px solid #f0b775; border-radius:8px; padding:14px 18px; color:#7a4a0a; font-size:14px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <span id="hd24MonthlyBannerText"></span>
+    <button type="button" id="hd24MonthlyBannerCalBtn" style="flex-shrink:0; font-size:13px; padding:8px 14px; border-radius:6px; border:1px solid #d99a3f; background:#fff; color:#7a4a0a; cursor:pointer; font-weight:700;">📅 캘린더 알림 받기</button>
+  </div>
+</div>
 
 <main>
   <section class="panel">
@@ -1032,6 +1040,7 @@ function addHistory(entry){
   const list = loadHistory();
   const item = {
     time: new Date().toLocaleString('ko-KR'),
+    timeIso: new Date().toISOString(), // 날짜 비교(이번 달 처리 여부 등)를 안정적으로 하기 위한 ISO 타임스탬프
     plant: cfg().label,
     plantKey: entry.plantKey || currentPlant,
     action: entry.action,
@@ -1104,6 +1113,64 @@ document.getElementById('btnClearHistory').addEventListener('click', () => {
   renderHistory();
 });
 renderHistory();
+
+// ---------- 월간 리마인더 (캘린더 등록 + "이번 달 아직 안 함" 배너) ----------
+// 이 앱은 서버가 없는 순수 브라우저 앱이라 진짜 푸시 알림은 불가능하다. 대신
+// (1) Outlook/Google 캘린더에 등록 가능한 월간 반복 일정(.ics) 다운로드,
+// (2) 사이트 접속 시 이번 달 처리 여부를 이력에서 확인해 배너로 경고, 두 가지로 대신한다.
+function buildReminderIcs(dayOfMonth){
+  const day = String(dayOfMonth).padStart(2, '0');
+  const now = new Date();
+  const y = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0');
+  const stamp = now.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+  const lines = [
+    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//HDPS KPI//hd-24//KO','CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT',
+    'UID:hdps-kpi-monthly-reminder-'+stamp+'@hd-24',
+    'DTSTAMP:'+stamp,
+    'DTSTART;VALUE=DATE:'+y+m+day,
+    'RRULE:FREQ=MONTHLY;BYMONTHDAY='+dayOfMonth,
+    'SUMMARY:HDPS KPI 실적반영 · 판정 · 메일 발송',
+    'DESCRIPTION:HDPS KPI 관리시스템에서 이번 달 원본/총괄 파일을 올려 실적반영과 판정을 진행하고\\, 미달성 지표는 담당자에게 메일을 보내주세요. https://hastom79-hue.github.io/hd-24/',
+    'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:HDPS KPI 월간 처리 리마인더','TRIGGER:-PT0M','END:VALARM',
+    'END:VEVENT','END:VCALENDAR',
+  ];
+  return lines.join('\r\n');
+}
+function downloadReminderIcs(){
+  const dayInput = prompt('매월 며칠에 알림을 받을까요? (1~28 사이 숫자)', '25');
+  if (dayInput === null) return;
+  const day = Math.min(28, Math.max(1, parseInt(dayInput, 10) || 25));
+  const ics = buildReminderIcs(day);
+  const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'HDPS_KPI_월간리마인더.ics'; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  log(`캘린더 리마인더(.ics) 다운로드 — 매월 ${day}일. 다운로드된 파일을 더블클릭하면 Outlook/캘린더 앱에 반복 일정으로 등록됩니다.`);
+}
+document.getElementById('hd24ReminderBtn').addEventListener('click', downloadReminderIcs);
+document.getElementById('hd24MonthlyBannerCalBtn').addEventListener('click', downloadReminderIcs);
+
+function checkMonthlyBanner(){
+  const banner = document.getElementById('hd24MonthlyBanner');
+  const text = document.getElementById('hd24MonthlyBannerText');
+  if (!banner || !text) return;
+  const hist = loadHistory().filter(h => h.action && (h.action.includes('반영') || h.action.includes('판정')));
+  const now = new Date();
+  const thisYm = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  const doneThisMonth = hist.some(h => {
+    const iso = h.timeIso || null;
+    if (!iso) return false;
+    return iso.slice(0,7) === thisYm;
+  });
+  if (doneThisMonth) { banner.style.display = 'none'; return; }
+  const latest = hist.find(h => h.timeIso);
+  const latestLabel = latest ? `${latest.timeIso.slice(0,10)} (${latest.plant})` : '기록 없음';
+  text.textContent = `⚠️ 이번 달(${thisYm}) KPI 반영/판정 기록이 아직 없습니다 — 마지막 처리: ${latestLabel}`;
+  banner.style.display = 'block';
+}
+checkMonthlyBanner();
 
 // ---------- 화면을 탭으로 분리 (업로드·실행 / 판정결과·메일·담당자 / 실행 이력) ----------
 // 실행 로그는 탭에 가두지 않고 항상 보이는 접이식 패널로 둔다 (업로드·반영·판정·메일 전
