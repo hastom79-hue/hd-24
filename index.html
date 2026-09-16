@@ -369,10 +369,14 @@ function normalizeValue(v){
     const s=v.trim();
     let m=s.match(/^(\d+):(\d+)(?::(\d+))?$/); if(m) return +m[1]+(+m[2])/60+(+(m[3]||0))/3600;
     m=s.match(/^([+-]?\d+(?:\.\d+)?)%$/); if(m) return parseFloat(m[1]);
-    const n=Number(s.replace(/,/g,'')); return Number.isFinite(n) ? n : null;
+    const n=Number(s.replace(/,/g,'')); if (Number.isFinite(n)) return n;
+    // "22\n(누적)"처럼 숫자 뒤에 "(누적)" 등 부가 설명이 붙은 셀도 앞쪽 숫자를 그대로 인식한다
+    const pm = s.replace(/,/g,'').match(/^([+-]?\d+(?:\.\d+)?)/);
+    return pm ? parseFloat(pm[1]) : null;
   }
   return null;
 }
+function isCumulativeCell(v){ return typeof v==='string' && /누적/.test(v); }
 
 // 매핑표의 고정 행번호를, KPI명 텍스트로 실제 위치를 재확인해서 보정된 매핑을 만든다
 function resolveMappings(srcWs, masterWs){
@@ -456,15 +460,21 @@ document.getElementById('btnJudge').addEventListener('click', () => {
       const srcWs = srcWorkbook.Sheets[cfg().srcSheet], masterWs = masterWorkbook.Sheets[cfg().masterSheet];
       const resolved = resolveMappings(srcWs, masterWs);
       const months = buildMonthCols(srcWs, cfg().srcMonthStartCol, SRC_MONTH_HEADER_ROW);
+      // 총괄파일에 "(누적)"으로 표기된 지표를 누적형으로 인식하기 위해 총괄 월 헤더도 함께 읽는다
+      // (원본파일에는 이 표기가 없고 총괄파일에만 있음). 실패해도 판정 자체는 계속 진행한다.
+      let masterMonths = null;
+      try { masterMonths = buildMonthCols(masterWs, null, 4); } catch(_) { masterMonths = null; }
       for (const m of resolved){
         const hist = [];
+        let isCumulative = false;
         for (let mo=1; mo<=12; mo++){
           const target = normalizeValue(getCell(srcWs, m.labelRow, months[mo]));
           const actual = normalizeValue(getCell(srcWs, m.actualRow, months[mo]));
           if (target===null || actual===null) continue;
+          if (masterMonths && masterMonths[mo] && isCumulativeCell(getCell(masterWs, m.masterRow, masterMonths[mo]))) isCumulative = true;
           hist.push(makeHistEntry(mo, target, actual, m.direction));
         }
-        if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, kpiEn:m.kpiEn||m.kpiKr, direction:m.direction, unit:m.unit||"", months:hist};
+        if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, kpiEn:m.kpiEn||m.kpiKr, direction:m.direction, unit:m.unit||"", months:hist, isCumulative};
       }
     } else {
       // 울산: 별도 원본파일 없음. 총괄파일 안의 (연간 고정)목표와 월별 실적을 그대로 사용
@@ -474,12 +484,15 @@ document.getElementById('btnJudge').addEventListener('click', () => {
         const target = normalizeValue(getCell(masterWs, m.masterRow, targetCol));
         if (target===null) continue;
         const hist = [];
+        let isCumulative = isCumulativeCell(getCell(masterWs, m.masterRow, targetCol));
         for (let mo=1; mo<=12; mo++){
-          const actual = normalizeValue(getCell(masterWs, m.masterRow, startCol+mo-1));
+          const cellRaw = getCell(masterWs, m.masterRow, startCol+mo-1);
+          if (isCumulativeCell(cellRaw)) isCumulative = true;
+          const actual = normalizeValue(cellRaw);
           if (actual===null) continue;
           hist.push(makeHistEntry(mo, target, actual, m.direction));
         }
-        if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, kpiEn:m.kpiEn||m.kpiKr, direction:m.direction, unit:m.unit||"", months:hist};
+        if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, kpiEn:m.kpiEn||m.kpiKr, direction:m.direction, unit:m.unit||"", months:hist, isCumulative};
       }
       log('⚠ 울산은 월별 목표가 아닌 연간 고정목표로 판정합니다 (원본파일이 없어 인도/브라질과 정확도가 다를 수 있음)');
     }
@@ -508,7 +521,7 @@ document.getElementById('btnJudge').addEventListener('click', () => {
           else break;
         }
         results.push({month:cur.month, masterRow:Number(masterRow), kpi:info.kpi, kpiEn:info.kpiEn, direction:info.direction, unit:info.unit,
-                       target:cur.target, actual:cur.actual, achieved:cur.achieved, streak, trend, flatStreak});
+                       target:cur.target, actual:cur.actual, achieved:cur.achieved, streak, trend, flatStreak, isCumulative:!!info.isCumulative});
       }
     }
     renderResults(results);
@@ -627,7 +640,9 @@ function renderTable(){
     if (r.trend==='down') badges += currentLang==='ko' ? `<br><span class="tag tag-down">📉 최근 악화</span>` : `<br><span class="tag tag-down">📉 Recent decline</span>`;
     const recur = replyRecurrenceFor(r);
     if (recur) badges += currentLang==='ko' ? `<br><span class="tag tag-recur">⚠ 동일 사유 반복(${recur.sameCauseCount}회) · 중점관리</span>` : `<br><span class="tag tag-recur">⚠ Recurring same cause (x${recur.sameCauseCount}) · Focus</span>`;
-    if (r.flatStreak>=1) badges += currentLang==='ko' ? `<br><span class="tag tag-flat">➖ 전월과 동일(변화없음 ${r.flatStreak+1}개월째)</span>` : `<br><span class="tag tag-flat">➖ No change vs last month (${r.flatStreak+1}mo flat)</span>`;
+    if (r.flatStreak>=1) badges += r.isCumulative
+      ? (currentLang==='ko' ? `<br><span class="tag tag-flat">🔁 누적형 지표 · ${r.flatStreak+1}개월째 변화없음</span>` : `<br><span class="tag tag-flat">🔁 Cumulative KPI · No change for ${r.flatStreak+1}mo</span>`)
+      : (currentLang==='ko' ? `<br><span class="tag tag-flat">➖ 전월과 동일(변화없음 ${r.flatStreak+1}개월째)</span>` : `<br><span class="tag tag-flat">➖ No change vs last month (${r.flatStreak+1}mo flat)</span>`);
     tr.innerHTML = `<td class="num mono">${r.masterRow}</td>
       <td>${kpiLabel(r)}${badges}</td>
       <td>${dirLabelWithArrow(r.direction)}</td>
@@ -641,7 +656,9 @@ function renderTable(){
     const tr = document.createElement('tr');
     tr.className = 'ok';
     let badges = '';
-    if (r.flatStreak>=1) badges += currentLang==='ko' ? `<br><span class="tag tag-flat">➖ 전월과 동일(변화없음 ${r.flatStreak+1}개월째)</span>` : `<br><span class="tag tag-flat">➖ No change vs last month (${r.flatStreak+1}mo flat)</span>`;
+    if (r.flatStreak>=1) badges += r.isCumulative
+      ? (currentLang==='ko' ? `<br><span class="tag tag-flat">🔁 누적형 지표 · ${r.flatStreak+1}개월째 변화없음</span>` : `<br><span class="tag tag-flat">🔁 Cumulative KPI · No change for ${r.flatStreak+1}mo</span>`)
+      : (currentLang==='ko' ? `<br><span class="tag tag-flat">➖ 전월과 동일(변화없음 ${r.flatStreak+1}개월째)</span>` : `<br><span class="tag tag-flat">➖ No change vs last month (${r.flatStreak+1}mo flat)</span>`);
     tr.innerHTML = `<td class="num mono">${r.masterRow}</td>
       <td>${kpiLabel(r)}${badges}</td>
       <td>${dirLabelWithArrow(r.direction)}</td>
