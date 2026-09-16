@@ -156,6 +156,7 @@
     <h2>사업장 · 파일</h2>
     <div class="field-row"><label>사업장</label>
       <select id="plantSelect"><option value="india">인도</option><option value="brazil">브라질</option><option value="ulsan">울산</option></select>
+      <button type="button" id="hd24ReloadHistoryBtn" title="이 사업장의 저장된 판정 결과 다시 불러오기" style="margin-left:8px; font-size:12px; padding:6px 10px; border-radius:6px; border:1px solid var(--line); background:#fff; cursor:pointer;">🔄 이력 다시 불러오기</button>
     </div>
     <div class="field-row" id="srcFileRow"><label id="srcLabel">원본 KPI 파일</label><input type="file" id="srcFile" accept=".xlsx,.xlsm"></div>
     <div class="field-row"><label>총괄파일</label><input type="file" id="masterFile" accept=".xlsx,.xlsm"></div>
@@ -322,12 +323,16 @@ function hideHistoricalNotice(){
 }
 function loadLatestHistoryForPlant(){
   const hist = loadHistory().find(h => h.plantKey === currentPlant && h.action === '판정' && h.resultsData);
-  if (!hist) return;
+  if (!hist) { log(`저장된 판정 이력 없음: ${cfg().label} — 파일을 업로드해 새로 판정해주세요.`); return; }
   renderResults(hist.resultsData);
   log(`=== 사업장 선택 시 저장된 이력 자동 표시: ${hist.time} (${hist.plant}) ===`);
   if (window.hd24SwitchTab) window.hd24SwitchTab('results');
   showHistoricalResultNotice(hist.time, hist.plant);
 }
+// 이미 선택되어 있는 사업장을 다시 선택하면 브라우저 특성상 select의 'change' 이벤트가
+// 아예 안 뜬다(값이 실제로 안 바뀌었으므로) — 그래서 같은 사업장에서 방금 판정한 결과를
+// "다시" 확인하고 싶을 때를 위해 언제든 수동으로 재조회할 수 있는 버튼을 둔다.
+document.getElementById('hd24ReloadHistoryBtn').addEventListener('click', loadLatestHistoryForPlant);
 
 function applyPlantUI(){
   const has = cfg().hasSource;
