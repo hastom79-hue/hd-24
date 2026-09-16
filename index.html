@@ -470,7 +470,7 @@ function makeHistEntry(month, target, actual, direction){
   return {month, target, actual, achieved, ratio};
 }
 
-document.getElementById('btnJudge').addEventListener('click', () => {
+document.getElementById('btnJudge').addEventListener('click', (clickEvent) => {
   try {
     log('=== 판정 시작 ===');
     const byRow = {};
@@ -547,7 +547,12 @@ document.getElementById('btnJudge').addEventListener('click', () => {
       }
     }
     renderResults(results);
-    if (window.hd24SwitchTab) window.hd24SwitchTab('results');
+    // 자동화 파이프라인(파일 업로드 즉시 실적반영→판정)이 이 버튼을 프로그램적으로
+    // 클릭하는 경우(clickEvent.isTrusted===false)에는 탭을 강제로 전환하지 않는다 —
+    // 사용자가 아직 업로드 탭에서 다른 파일을 마저 올리는 중일 수 있는데, 화면이
+    // 갑자기 결과 탭으로 넘어가버리면 "버튼이 반응 없다"처럼 느껴지기 때문.
+    // 실제 사람이 이 버튼을 직접 눌렀을 때만 결과 탭으로 자동 이동한다.
+    if (window.hd24SwitchTab && clickEvent && clickEvent.isTrusted) window.hd24SwitchTab('results');
     log('판정 완료: 총 ' + results.length + '건 (연속미달성/추세 포함)');
     const missTotal = results.filter(r=>!r.achieved).length;
     addHistory({action:'판정', plantKey:currentPlant, srcName:(document.getElementById('srcFile').files[0]||{}).name||'', masterName:masterFileName, result:results.length+'건 중 미달성 '+missTotal+'건', resultsData:results});
