@@ -111,6 +111,12 @@
   button.filt-lang { background:#fff; color:var(--ink); border:1px solid var(--line); padding:6px 14px; border-radius:20px; font-size:12.5px; font-weight:600; box-shadow:none; }
   button.filt-lang:hover { background:#f0f2f5; }
   button.filt-lang.active { background:var(--accent-dark); color:#fff; border-color:var(--accent-dark); }
+  .hd24-tab-bar { display:flex; gap:6px; margin:0 0 16px 0; border-bottom:1px solid var(--line); }
+  .hd24-tab { appearance:none; border:none; background:none; padding:10px 16px; font-size:14px; font-weight:600; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; }
+  .hd24-tab:hover { color:var(--ink); }
+  .hd24-tab.active { color:var(--accent-dark); border-bottom-color:var(--accent-dark); }
+  .hd24-tab-pane { display:none; }
+  .hd24-tab-pane.active { display:block; }
 </style>
 <link rel="stylesheet" href="./hd24-ui-v3.css?v=26">
 </head>
@@ -528,6 +534,7 @@ document.getElementById('btnJudge').addEventListener('click', () => {
       }
     }
     renderResults(results);
+    if (window.hd24SwitchTab) window.hd24SwitchTab('results');
     log('판정 완료: 총 ' + results.length + '건 (연속미달성/추세 포함)');
     const missTotal = results.filter(r=>!r.achieved).length;
     addHistory({action:'판정', plantKey:currentPlant, srcName:(document.getElementById('srcFile').files[0]||{}).name||'', masterName:masterFileName, result:results.length+'건 중 미달성 '+missTotal+'건', resultsData:results});
@@ -1042,6 +1049,60 @@ document.getElementById('btnClearHistory').addEventListener('click', () => {
   renderHistory();
 });
 renderHistory();
+
+// ---------- 화면을 탭으로 분리 (업로드/설정 · 판정결과/메일 · 로그/이력) ----------
+// 기존 요소는 삭제/재작성하지 않고 그대로 다른 컨테이너로 옮기기만 한다(id 유지되므로
+// 기존 getElementById/querySelector 기반 로직에는 영향 없음). hd24-ui-v3-core.js가
+// DOMContentLoaded 시점에 상단 요약카드·패널 재배치를 먼저 끝낸 뒤에 실행되도록
+// setTimeout으로 한 틱 늦춘다.
+function groupPanelsIntoTabs(){
+  const main = document.querySelector('main');
+  if (!main || document.getElementById('hd24TabBar')) return;
+  const resultCard = document.getElementById('resultCard');
+  if (!resultCard) return;
+
+  const workGrid = main.querySelector(':scope > .hd24-work-grid');
+  let contactPanel=null, logPanel=null, historyPanel=null;
+  const topPanels = [...main.querySelectorAll(':scope > section.panel')];
+  topPanels.forEach(sec => {
+    const h2 = sec.querySelector('h2');
+    const t = h2 ? h2.textContent.trim() : '';
+    if (t.includes('담당자')) contactPanel = sec;
+    else if (t.includes('실행 로그')) logPanel = sec;
+    else if (t.includes('실행 이력')) historyPanel = sec;
+  });
+
+  const bar = document.createElement('div');
+  bar.id = 'hd24TabBar';
+  bar.className = 'hd24-tab-bar';
+  bar.innerHTML = `<button type="button" class="hd24-tab active" data-tab="upload">업로드 · 설정</button><button type="button" class="hd24-tab" data-tab="results">판정 결과 · 메일</button><button type="button" class="hd24-tab" data-tab="log">실행 로그 · 이력</button>`;
+
+  const paneUpload = document.createElement('div'); paneUpload.id='hd24PaneUpload'; paneUpload.className='hd24-tab-pane active';
+  const paneResults = document.createElement('div'); paneResults.id='hd24PaneResults'; paneResults.className='hd24-tab-pane';
+  const paneLog = document.createElement('div'); paneLog.id='hd24PaneLog'; paneLog.className='hd24-tab-pane';
+
+  const anchor = workGrid || topPanels[0];
+  if (anchor) anchor.before(bar); else main.prepend(bar);
+  bar.after(paneUpload, paneResults, paneLog);
+
+  if (workGrid) paneUpload.appendChild(workGrid);
+  if (contactPanel) paneUpload.appendChild(contactPanel);
+  paneResults.appendChild(resultCard); // 실적판정 결과 표 + (나중에 생기는) 메일 미리보기 패널도 resultCard의 자식이라 함께 이동됨
+  if (logPanel) paneLog.appendChild(logPanel);
+  if (historyPanel) paneLog.appendChild(historyPanel);
+
+  const panes = {upload:paneUpload, results:paneResults, log:paneLog};
+  bar.querySelectorAll('.hd24-tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      bar.querySelectorAll('.hd24-tab').forEach(b=>b.classList.toggle('active', b===btn));
+      Object.values(panes).forEach(p=>p.classList.remove('active'));
+      panes[btn.dataset.tab].classList.add('active');
+    });
+  });
+  window.hd24SwitchTab = (name)=>{ const btn=bar.querySelector(`[data-tab="${name}"]`); if (btn) btn.click(); };
+}
+if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', ()=>setTimeout(groupPanelsIntoTabs, 100));
+else setTimeout(groupPanelsIntoTabs, 100);
 </script>
 <script src="./hd24-ui-v3.js?v=26"></script>
 </body>
