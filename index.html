@@ -123,6 +123,11 @@
   .hd24-log-toggle { appearance:none; border:none; background:none; padding:0; margin:0 0 10px; font-size:16px; font-weight:700; color:var(--ink); cursor:pointer; }
   .hd24-log-panel.collapsed #log { display:none; }
   .hd24-log-panel #log { max-height:260px; overflow-y:auto; }
+  .hd24-collapsible-panel.collapsed > *:not(:first-child) { display:none; }
+  /* 업로드 탭이 데스크톱 큰 화면에서 너무 휑해 보이지 않도록: 전체 폭을 좁히고, 입력칸이
+     불필요하게 길게 늘어나지 않도록 각 필드행에 최대 너비를 준다 */
+  .hd24-work-grid { max-width:1000px; }
+  .hd24-source-panel .field-row { max-width:480px; }
   @media (max-width: 640px) {
     .hd24-tab-bar { overflow-x:auto; -webkit-overflow-scrolling:touch; flex-wrap:nowrap; }
     .hd24-tab { padding:10px 12px; font-size:13px; white-space:nowrap; flex:0 0 auto; }
@@ -167,24 +172,6 @@
     <div class="month-strip" id="monthStrip"></div>
     <p class="note" id="trendNote" style="display:none;">🔴 연속 미달성 · 📉 최근 3개월 악화 추세 — KPI 옆 배지로 표시됩니다. 정렬은 "연속 미달성 개월수"가 큰 순서입니다.</p>
 
-    <div id="quickMailBox" style="margin:16px 0 20px; padding:16px; background:#f5f8fb; border:1px solid var(--line); border-radius:6px;">
-      <div class="hd24-section-tag">빠른 메일 발송</div>
-      <div class="field-row"><label>담당자</label>
-        <select id="contactSelect" style="max-width:100%;">
-          <option value="">— 직접 입력 —</option>
-        </select>
-      </div>
-      <div class="field-row"><label>담당자 이메일</label><input type="email" id="mailTo" placeholder="hemant.kadam@hd.com"></div>
-      <div class="field-row"><label>담당자 이름</label><input type="text" id="mailToName" placeholder="Hemant Kadam (미입력 시 생략)"></div>
-      <div class="field-row"><label>보내는 사람</label><input type="text" id="mailFromName" placeholder="예: 홍길동 / 글로벌생산전략팀"></div>
-      <p class="hint" style="margin-top:4px;">위 담당자 드롭다운에서 고르면 이메일/이름이 자동 입력됩니다. 새 담당자는 아래 "담당자 관리"에서 등록하세요.</p>
-      <div class="actions">
-        <button id="btnMailMonth" class="ghost">이번 달 미달성만 메일 초안</button>
-        <button id="btnMailWatch" class="ghost">🔴📉 주의 대상만 메일 초안</button>
-        <button id="btnMailAll" class="ghost">이번 달 전체 지표 메일 초안</button>
-      </div>
-      <p class="hint">버튼을 누르면 ① 상세 내역이 담긴 엑셀 파일이 먼저 자동 다운로드되고, ② 이어서 Outlook 등 기본 메일 앱에 제목·본문이 채워진 초안이 뜹니다. 다운로드된 엑셀을 메일 창에 끌어다 놓으신 후 확인하고 [보내기]를 눌러주세요 (mailto 방식은 브라우저에서 파일을 자동 첨부할 수 없어 이 방식으로 처리됩니다). 이메일 주소는 이 브라우저에만 저장됩니다.</p>
-    </div>
 
     <div class="hd24-section-tag" style="margin-top:8px">판정 상세 (미달성 · 달성)</div>
     <div class="result-cols">
@@ -204,6 +191,25 @@
           <tbody></tbody>
         </table>
       </div>
+    </div>
+
+    <div id="quickMailBox" style="margin:16px 0 20px; padding:16px; background:#f5f8fb; border:1px solid var(--line); border-radius:6px;">
+      <div class="hd24-section-tag">빠른 메일 발송</div>
+      <div class="field-row"><label>담당자</label>
+        <select id="contactSelect" style="max-width:100%;">
+          <option value="">— 직접 입력 —</option>
+        </select>
+      </div>
+      <div class="field-row"><label>담당자 이메일</label><input type="email" id="mailTo" placeholder="hemant.kadam@hd.com"></div>
+      <div class="field-row"><label>담당자 이름</label><input type="text" id="mailToName" placeholder="Hemant Kadam (미입력 시 생략)"></div>
+      <div class="field-row"><label>보내는 사람</label><input type="text" id="mailFromName" placeholder="예: 홍길동 / 글로벌생산전략팀"></div>
+      <p class="hint" style="margin-top:4px;">위 담당자 드롭다운에서 고르면 이메일/이름이 자동 입력됩니다. 새 담당자는 아래 "담당자 관리"에서 등록하세요.</p>
+      <div class="actions">
+        <button id="btnMailMonth" class="ghost">이번 달 미달성만 메일 초안</button>
+        <button id="btnMailWatch" class="ghost">🔴📉 주의 대상만 메일 초안</button>
+        <button id="btnMailAll" class="ghost">이번 달 전체 지표 메일 초안</button>
+      </div>
+      <p class="hint">버튼을 누르면 ① 상세 내역이 담긴 엑셀 파일이 먼저 자동 다운로드되고, ② 이어서 Outlook 등 기본 메일 앱에 제목·본문이 채워진 초안이 뜹니다. 다운로드된 엑셀을 메일 창에 끌어다 놓으신 후 확인하고 [보내기]를 눌러주세요 (mailto 방식은 브라우저에서 파일을 자동 첨부할 수 없어 이 방식으로 처리됩니다). 이메일 주소는 이 브라우저에만 저장됩니다.</p>
     </div>
   </section>
 
@@ -1143,6 +1149,22 @@ function setupTabs(){
     logToggleBtn.addEventListener('click', ()=>{
       const collapsed = logPanel.classList.toggle('collapsed');
       logToggleBtn.textContent = '실행 로그 ' + (collapsed ? '▾' : '▴');
+    });
+  }
+
+  // 담당자 관리: 설정성 항목이라 기본은 접어두고 필요할 때만 펼치도록 전환
+  if (contactPanel){
+    const h2 = contactPanel.querySelector('h2');
+    const contactToggleBtn = document.createElement('button');
+    contactToggleBtn.type = 'button';
+    contactToggleBtn.className = 'hd24-log-toggle';
+    contactToggleBtn.id = 'hd24ContactToggle';
+    contactToggleBtn.textContent = '담당자 관리 ▾';
+    if (h2) h2.replaceWith(contactToggleBtn); else contactPanel.prepend(contactToggleBtn);
+    contactPanel.classList.add('hd24-collapsible-panel', 'collapsed');
+    contactToggleBtn.addEventListener('click', ()=>{
+      const collapsed = contactPanel.classList.toggle('collapsed');
+      contactToggleBtn.textContent = '담당자 관리 ' + (collapsed ? '▾' : '▴');
     });
   }
 
