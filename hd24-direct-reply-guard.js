@@ -6,7 +6,7 @@ const norm=v=>String(v??'').toLowerCase().replace(/\r?\n/g,' ').replace(/["'â€œâ
 function load(k){try{return JSON.parse(localStorage.getItem(k)||'[]')}catch(_){return []}}
 function plant(){return $('plantSelect')?.value||''} function month(){try{return Number(selectedMonth)||0}catch(_){return 0}}
 function pname(p=plant()){return p==='india'?'India':p==='brazil'?'Brazil':p==='ulsan'?'Ulsan':p}
-function signature(){const a=$('srcFile')?.files?.[0],b=$('masterFile')?.files?.[0];if(!a||!b)return '';return [plant(),a.name,a.size,a.lastModified,b.name,b.size,b.lastModified].join('|')}
+function signature(){const p=plant(),a=$('srcFile')?.files?.[0],b=$('masterFile')?.files?.[0];if(!b)return '';if(p==='ulsan')return [p,'master-only',b.name,b.size,b.lastModified].join('|');if(!a)return '';return [p,a.name,a.size,a.lastModified,b.name,b.size,b.lastModified].join('|')}
 function results(){try{return (allResults||[]).filter(r=>Number(r.month)===month())}catch(_){return []}}
 function similarity(a,b){a=norm(a);b=norm(b);if(!a||!b)return 0;if(a===b||a.includes(b)||b.includes(a))return 1;const A=new Set(a.split(' ').filter(x=>x.length>1)),B=new Set(b.split(' ').filter(x=>x.length>1));let hit=0;A.forEach(x=>B.has(x)&&hit++);return hit/Math.max(1,Math.min(A.size,B.size))}
 function recurrence(r,p){const k=norm(r.kpiEn||r.kpi),h=load(REPLY_KEY).filter(x=>x.plant===p&&norm(x.kpiEn||x.kpi)===k).sort((a,b)=>String(b.replyReceivedAt||'').localeCompare(String(a.replyReceivedAt||'')));if(!h.length)return null;const latest=h[0],cause=latest.rootCause||latest.reason||'',same=h.filter(x=>similarity(cause,x.rootCause||x.reason||'')>=.6).length;return {latest,sameCauseCount:same,isRecurrence:h.length>=2&&same>=2}}
