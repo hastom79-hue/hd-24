@@ -146,7 +146,7 @@ jobs:
               neg_log=neg.locator('#log').inner_text()
               print('=== HD24 INDIA NEGATIVE LOG ===')
               print(neg_log)
-              assert '미래월 Actual' in neg_log, 'Future-month contamination did not fail closed'
+              assert '총괄 미래월 기존값' in neg_log and '총괄파일 생성 중단' in neg_log, 'Future-month contamination did not fail closed'
               neg.wait_for_timeout(500)
               assert not neg_downloads, 'Blocked future-month case unexpectedly downloaded a workbook'
               neg.close()
