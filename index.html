@@ -609,6 +609,7 @@ function setLang(lang){
 function renderResults(results){
   document.getElementById('resultCard').style.display = 'block';
   allResults = results;
+  invalidateReplyHistoryCache(); // 새 판정마다 회신 이력을 다시 한 번만 불러오도록 캐시 초기화
   const months = [...new Set(results.map(r=>r.month))].sort((a,b)=>a-b);
   selectedMonth = months[months.length-1];
   renderMonthStrip();
@@ -714,10 +715,27 @@ function textSimilarity(a,b){
 function loadReplyHistoryList(){
   try { return JSON.parse(localStorage.getItem(REPLY_HISTORY_KEY) || '[]'); } catch(_) { return []; }
 }
+// renderTable()이 매 행마다 localStorage를 다시 읽고 전체 이력을 필터링하면, 회신 이력이
+// 쌓일수록(특히 오래 테스트한 사업장일수록) 급격히 느려지거나 화면이 멈출 수 있다.
+// 렌더링 1회당 이력을 한 번만 불러와 KPI별로 미리 묶어두고 재사용한다.
+let _replyHistoryIndexCache = null; // {plant, byKey: Map<normKpiKey, entries[]>}
+function replyHistoryIndex(){
+  if (_replyHistoryIndexCache && _replyHistoryIndexCache.plant === currentPlant) return _replyHistoryIndexCache;
+  const byKey = new Map();
+  for (const x of loadReplyHistoryList()){
+    if (x.plant !== currentPlant) continue;
+    const k = normKpiKey(x.kpiEn || x.kpi);
+    if (!byKey.has(k)) byKey.set(k, []);
+    byKey.get(k).push(x);
+  }
+  _replyHistoryIndexCache = { plant: currentPlant, byKey };
+  return _replyHistoryIndexCache;
+}
+function invalidateReplyHistoryCache(){ _replyHistoryIndexCache = null; }
 function replyRecurrenceFor(r){
   const key = normKpiKey(r.kpiEn || r.kpi);
-  const hist = loadReplyHistoryList()
-    .filter(x => x.plant === currentPlant && normKpiKey(x.kpiEn || x.kpi) === key)
+  const hist = (replyHistoryIndex().byKey.get(key) || [])
+    .slice()
     .sort((a,b) => String(b.replyReceivedAt||'').localeCompare(String(a.replyReceivedAt||'')));
   if (hist.length < 2) return null;
   const latest = hist[0];
@@ -1143,6 +1161,6 @@ function setupTabs(){
 if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', ()=>setTimeout(setupTabs, 100));
 else setTimeout(setupTabs, 100);
 </script>
-<script src="./hd24-ui-v3.js?v=26"></script>
+<script src="./hd24-ui-v3.js?v=27"></script>
 </body>
 </html>
