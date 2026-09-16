@@ -140,6 +140,20 @@
     "kpiEn": "Value Time Ratio"
   },
   {
+    "masterRow": 60,
+    "kpiKr": "문제해결기법 활용인력",
+    "direction": "상향",
+    "unit": "건/년",
+    "kpiEn": "Personnel Using Problem-Solving Techniques"
+  },
+  {
+    "masterRow": 61,
+    "kpiKr": "문제해결기법 코칭인력",
+    "direction": "상향",
+    "unit": "명/년",
+    "kpiEn": "Personnel Coaching Problem-Solving Techniques"
+  },
+  {
     "masterRow": 65,
     "kpiKr": "자율개선활동 참여도(GMES VTB 기준)",
     "direction": "상향",
