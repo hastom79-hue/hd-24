@@ -260,6 +260,7 @@ const MASTER_MONTH_START_COL = 27;
 let currentPlant = 'india';
 let mappingData = [];
 let srcWorkbook = null, masterWorkbook = null, masterZip = null, masterFileName = '';
+let srcWorkbookRaw = null, masterWorkbookRaw = null; // cellDates:false 버전 — 날짜/시간 셀의 원본 시리얼 숫자(타임존 영향 없음)
 
 const logEl = document.getElementById('log');
 function log(msg){ logEl.textContent += '\n' + msg; logEl.scrollTop = logEl.scrollHeight; }
@@ -305,6 +306,7 @@ document.getElementById('srcFile').addEventListener('change', async (e) => {
   const f = e.target.files[0]; if (!f) return;
   const buf = await f.arrayBuffer();
   srcWorkbook = XLSX.read(buf, {type:'array', cellDates:true});
+  srcWorkbookRaw = XLSX.read(buf, {type:'array', cellDates:false}); // 날짜/시간 셀의 원본 시리얼 숫자 보존용 (타임존 영향 없음)
   log('원본 로드: ' + f.name);
   checkReady();
 });
@@ -313,6 +315,7 @@ document.getElementById('masterFile').addEventListener('change', async (e) => {
   const buf = await f.arrayBuffer();
   masterFileName = f.name;
   masterWorkbook = XLSX.read(buf, {type:'array', cellDates:true});
+  masterWorkbookRaw = XLSX.read(buf, {type:'array', cellDates:false});
   masterZip = await JSZip.loadAsync(buf);
   log('총괄 로드: ' + f.name);
   checkReady();
@@ -326,6 +329,7 @@ function checkReady(){
 
 // ---------- 셀/텍스트 유틸 ----------
 function getCell(ws,r,c){ const x = ws[XLSX.utils.encode_cell({r:r-1,c:c-1})]; return x ? x.v : null; }
+function getCellRaw(wsRaw,r,c){ if(!wsRaw) return null; const x = wsRaw[XLSX.utils.encode_cell({r:r-1,c:c-1})]; return x ? x.v : null; }
 function colLetter(n){ let s=''; while(n>0){ const r=(n-1)%26; s=String.fromCharCode(65+r)+s; n=Math.floor((n-1)/26);} return s; }
 function sheetBounds(ws){ if(!ws || !ws['!ref']) return {maxR:0,maxC:0}; const d=XLSX.utils.decode_range(ws['!ref']); return {maxR:d.e.r+1,maxC:d.e.c+1}; }
 function normText(v){ return String(v??'').toLowerCase().replace(/\r?\n/g,' ').replace(/["'“”‘’]/g,'').replace(/[→▶▷·•]/g,' ').replace(/[()\[\]{}%:/\\,_-]/g,' ').replace(/\s+/g,' ').trim(); }
@@ -379,9 +383,16 @@ function buildMonthCols(ws, startCol, headerRow){
   for (let m=1;m<=12;m++){ cols[m] = startCol+m-1; }
   return cols;
 }
-function normalizeValue(v){
+function normalizeValue(v, rawV){
   if (v===null||v===undefined||v==='') return null;
-  if (v instanceof Date){ const epoch=new Date(Date.UTC(1899,11,30)); return (v-epoch)/86400000*24; }
+  if (v instanceof Date){
+    // SheetJS의 cellDates 변환이 브라우저 타임존에 따라 최대 반나절 가까이 밀릴 수 있어
+    // (실측: 한국 시간대에서 시간serial 값이 음수로 깨지는 것까지 확인됨), 원본 시리얼
+    // 숫자(rawV, cellDates:false로 별도 읽어둔 값 — 타임존 영향 없음)가 있으면 그걸로
+    // 정확히 계산하고, 없을 때만 기존 방식으로 폴백한다.
+    if (typeof rawV === 'number' && isFinite(rawV)) return rawV * 24;
+    const epoch=new Date(Date.UTC(1899,11,30)); return (v-epoch)/86400000*24;
+  }
   if (typeof v==='number') return v;
   if (typeof v==='string'){
     const s=v.trim();
@@ -476,6 +487,7 @@ document.getElementById('btnJudge').addEventListener('click', (clickEvent) => {
 
     if (cfg().hasSource) {
       const srcWs = srcWorkbook.Sheets[cfg().srcSheet], masterWs = masterWorkbook.Sheets[cfg().masterSheet];
+      const srcWsRaw = srcWorkbookRaw ? srcWorkbookRaw.Sheets[cfg().srcSheet] : null;
       const resolved = resolveMappings(srcWs, masterWs);
       const months = buildMonthCols(srcWs, cfg().srcMonthStartCol, SRC_MONTH_HEADER_ROW);
       // 총괄파일에 "(누적)"으로 표기된 지표를 누적형으로 인식하기 위해 총괄 월 헤더도 함께 읽는다
@@ -489,8 +501,8 @@ document.getElementById('btnJudge').addEventListener('click', (clickEvent) => {
         const hist = [];
         let isCumulative = masterTargetColForCumulative && isCumulativeCell(getCell(masterWs, m.masterRow, masterTargetColForCumulative));
         for (let mo=1; mo<=12; mo++){
-          const target = normalizeValue(getCell(srcWs, m.labelRow, months[mo]));
-          const actual = normalizeValue(getCell(srcWs, m.actualRow, months[mo]));
+          const target = normalizeValue(getCell(srcWs, m.labelRow, months[mo]), getCellRaw(srcWsRaw, m.labelRow, months[mo]));
+          const actual = normalizeValue(getCell(srcWs, m.actualRow, months[mo]), getCellRaw(srcWsRaw, m.actualRow, months[mo]));
           if (target===null || actual===null) continue;
           if (masterMonths && masterMonths[mo] && isCumulativeCell(getCell(masterWs, m.masterRow, masterMonths[mo]))) isCumulative = true;
           hist.push(makeHistEntry(mo, target, actual, m.direction));
@@ -500,16 +512,17 @@ document.getElementById('btnJudge').addEventListener('click', (clickEvent) => {
     } else {
       // 울산: 별도 원본파일 없음. 총괄파일 안의 (연간 고정)목표와 월별 실적을 그대로 사용
       const masterWs = masterWorkbook.Sheets[cfg().masterSheet];
+      const masterWsRaw = masterWorkbookRaw ? masterWorkbookRaw.Sheets[cfg().masterSheet] : null;
       const targetCol = cfg().masterTargetCol, startCol = cfg().masterMonthStartCol;
       for (const m of mappingData){
-        const target = normalizeValue(getCell(masterWs, m.masterRow, targetCol));
+        const target = normalizeValue(getCell(masterWs, m.masterRow, targetCol), getCellRaw(masterWsRaw, m.masterRow, targetCol));
         if (target===null) continue;
         const hist = [];
         let isCumulative = isCumulativeCell(getCell(masterWs, m.masterRow, targetCol));
         for (let mo=1; mo<=12; mo++){
           const cellRaw = getCell(masterWs, m.masterRow, startCol+mo-1);
           if (isCumulativeCell(cellRaw)) isCumulative = true;
-          const actual = normalizeValue(cellRaw);
+          const actual = normalizeValue(cellRaw, getCellRaw(masterWsRaw, m.masterRow, startCol+mo-1));
           if (actual===null) continue;
           hist.push(makeHistEntry(mo, target, actual, m.direction));
         }
