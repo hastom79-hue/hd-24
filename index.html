@@ -464,9 +464,12 @@ document.getElementById('btnJudge').addEventListener('click', () => {
       // (원본파일에는 이 표기가 없고 총괄파일에만 있음). 실패해도 판정 자체는 계속 진행한다.
       let masterMonths = null;
       try { masterMonths = buildMonthCols(masterWs, null, 4); } catch(_) { masterMonths = null; }
+      // "(누적)" 표기는 매달 실적 칸마다 있는 게 아니라, 대개 "목표/단위" 칸(1월 칸 바로 왼쪽 2번째 열)에
+      // 붙어있는 경우가 많다 (예: 인도 48/49행). 실적 칸에도 붙어있는 경우가 있어 둘 다 확인한다.
+      const masterTargetColForCumulative = masterMonths && masterMonths[1] ? masterMonths[1] - 2 : null;
       for (const m of resolved){
         const hist = [];
-        let isCumulative = false;
+        let isCumulative = masterTargetColForCumulative && isCumulativeCell(getCell(masterWs, m.masterRow, masterTargetColForCumulative));
         for (let mo=1; mo<=12; mo++){
           const target = normalizeValue(getCell(srcWs, m.labelRow, months[mo]));
           const actual = normalizeValue(getCell(srcWs, m.actualRow, months[mo]));
