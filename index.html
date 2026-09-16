@@ -155,8 +155,10 @@
   <section class="panel">
     <h2>사업장 · 파일</h2>
     <div class="field-row"><label>사업장</label>
-      <select id="plantSelect"><option value="india">인도</option><option value="brazil">브라질</option><option value="ulsan">울산</option></select>
-      <button type="button" id="hd24ReloadHistoryBtn" title="이 사업장의 저장된 판정 결과 다시 불러오기" style="margin-left:8px; font-size:12px; padding:6px 10px; border-radius:6px; border:1px solid var(--line); background:#fff; cursor:pointer;">🔄 이력 다시 불러오기</button>
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <select id="plantSelect"><option value="india">인도</option><option value="brazil">브라질</option><option value="ulsan">울산</option></select>
+        <button type="button" id="hd24ReloadHistoryBtn" title="이 사업장의 저장된 판정 결과 다시 불러오기" style="font-size:12px; padding:6px 10px; border-radius:6px; border:1px solid var(--line); background:#fff; cursor:pointer; white-space:nowrap;">🔄 이력 다시 불러오기</button>
+      </div>
     </div>
     <div class="field-row" id="srcFileRow"><label id="srcLabel">원본 KPI 파일</label><input type="file" id="srcFile" accept=".xlsx,.xlsm"></div>
     <div class="field-row"><label>총괄파일</label><input type="file" id="masterFile" accept=".xlsx,.xlsm"></div>
