@@ -126,6 +126,15 @@
   .hd24-log-panel.collapsed #log { display:none; }
   .hd24-log-panel #log { max-height:260px; overflow-y:auto; }
   .hd24-collapsible-panel.collapsed > *:not(:first-child) { display:none; }
+  .hd24-plant-cards { display:flex; gap:10px; flex-wrap:wrap; }
+  .hd24-plant-card { display:flex; flex-direction:column; align-items:center; gap:4px; width:110px; padding:12px 8px; border:2px solid var(--line); border-radius:10px; background:#fff; cursor:pointer; text-align:center; }
+  .hd24-plant-card:hover { border-color:var(--accent); background:#f5f9fc; }
+  .hd24-plant-card.active { border-color:var(--accent-dark); background:var(--ok-bg); box-shadow:0 0 0 2px var(--accent-dark) inset; }
+  .hd24-plant-tag { font-size:10px; font-weight:800; letter-spacing:.04em; padding:2px 8px; border-radius:10px; }
+  .hd24-plant-tag-kr { background:#e7f0fb; color:#1f4e8c; }
+  .hd24-plant-tag-os { background:#fdeee5; color:#a05a1f; }
+  .hd24-plant-icon { font-size:26px; line-height:1; margin-top:2px; }
+  .hd24-plant-name { font-size:13px; font-weight:700; color:var(--ink); }
   /* 업로드 탭이 데스크톱 큰 화면에서 너무 휑해 보이지 않도록: 전체 폭을 좁히고, 입력칸이
      불필요하게 길게 늘어나지 않도록 각 필드행에 최대 너비를 준다 */
   .hd24-work-grid { max-width:1000px; }
@@ -154,10 +163,15 @@
 <main>
   <section class="panel">
     <h2>사업장 · 파일</h2>
-    <div class="field-row"><label>사업장</label>
-      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-        <select id="plantSelect"><option value="india">인도</option><option value="brazil">브라질</option><option value="ulsan">울산</option></select>
-        <button type="button" id="hd24ReloadHistoryBtn" title="이 사업장의 저장된 판정 결과 다시 불러오기" style="font-size:12px; padding:6px 10px; border-radius:6px; border:1px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; white-space:nowrap;">🔄 이력 다시 불러오기</button>
+    <div class="field-row" style="align-items:start;"><label>사업장</label>
+      <div>
+        <select id="plantSelect" style="display:none;"><option value="india">인도</option><option value="brazil">브라질</option><option value="ulsan">울산</option></select>
+        <div id="hd24PlantCards" class="hd24-plant-cards">
+          <button type="button" class="hd24-plant-card" data-plant="ulsan"><span class="hd24-plant-tag hd24-plant-tag-kr">한국</span><span class="hd24-plant-icon">🇰🇷</span><span class="hd24-plant-name">울산캠퍼스</span></button>
+          <button type="button" class="hd24-plant-card" data-plant="india"><span class="hd24-plant-tag hd24-plant-tag-os">해외</span><span class="hd24-plant-icon">🇮🇳</span><span class="hd24-plant-name">인도법인</span></button>
+          <button type="button" class="hd24-plant-card" data-plant="brazil"><span class="hd24-plant-tag hd24-plant-tag-os">해외</span><span class="hd24-plant-icon">🇧🇷</span><span class="hd24-plant-name">브라질법인</span></button>
+        </div>
+        <button type="button" id="hd24ReloadHistoryBtn" title="이 사업장의 저장된 판정 결과 다시 불러오기" style="margin-top:10px; font-size:12px; padding:6px 10px; border-radius:6px; border:1px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; white-space:nowrap;">🔄 이력 다시 불러오기</button>
       </div>
     </div>
     <div class="field-row" id="srcFileRow"><label id="srcLabel">원본 KPI 파일</label><input type="file" id="srcFile" accept=".xlsx,.xlsm"></div>
@@ -352,8 +366,20 @@ function applyPlantUI(){
   if (isUlsan && currentLang !== 'ko') setLang('ko');
   const plantBadge = document.getElementById('hd24PlantBadge');
   if (plantBadge) plantBadge.textContent = '현재 사업장: ' + cfg().label;
+  document.querySelectorAll('.hd24-plant-card').forEach(card => {
+    card.classList.toggle('active', card.dataset.plant === currentPlant);
+  });
 }
 applyPlantUI();
+
+document.querySelectorAll('.hd24-plant-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const plantSel = document.getElementById('plantSelect');
+    if (plantSel.value === card.dataset.plant) return; // 이미 선택된 사업장이면 아무 것도 안 함(중복 처리 방지)
+    plantSel.value = card.dataset.plant;
+    plantSel.dispatchEvent(new Event('change', {bubbles:true})); // 기존 select change 로직을 그대로 재사용
+  });
+});
 
 document.getElementById('srcFile').addEventListener('change', async (e) => {
   const f = e.target.files[0]; if (!f) return;
