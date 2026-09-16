@@ -111,7 +111,9 @@
   button.filt-lang { background:#fff; color:var(--ink); border:1px solid var(--line); padding:6px 14px; border-radius:20px; font-size:12.5px; font-weight:600; box-shadow:none; }
   button.filt-lang:hover { background:#f0f2f5; }
   button.filt-lang.active { background:var(--accent-dark); color:#fff; border-color:var(--accent-dark); }
-  .hd24-tab-bar { display:flex; gap:6px; margin:0 0 16px 0; border-bottom:1px solid var(--line); }
+  .hd24-tab-bar-wrap { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:0 0 16px 0; border-bottom:1px solid var(--line); }
+  .hd24-tab-bar { display:flex; gap:6px; margin:0; border-bottom:none; }
+  .hd24-plant-badge { font-size:12px; font-weight:700; color:var(--accent-dark); background:var(--ok-bg); border:1px solid var(--accent); border-radius:20px; padding:5px 14px; white-space:nowrap; margin-bottom:6px; }
   .hd24-tab { appearance:none; border:none; background:none; padding:10px 16px; font-size:14px; font-weight:600; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; }
   .hd24-tab:hover { color:var(--ink); }
   .hd24-tab.active { color:var(--accent-dark); border-bottom-color:var(--accent-dark); }
@@ -313,6 +315,8 @@ function applyPlantUI(){
   const mailLangToggle = document.querySelector('.lang-toggle');
   if (mailLangToggle) mailLangToggle.style.display = isUlsan ? 'none' : '';
   if (isUlsan && currentLang !== 'ko') setLang('ko');
+  const plantBadge = document.getElementById('hd24PlantBadge');
+  if (plantBadge) plantBadge.textContent = '현재 사업장: ' + cfg().label;
 }
 applyPlantUI();
 
@@ -1200,8 +1204,17 @@ function setupTabs(){
   bar.id = 'hd24TabBar';
   bar.className = 'hd24-tab-bar';
   bar.innerHTML = `<button type="button" class="hd24-tab active" data-tab="upload">업로드 · 실행</button><button type="button" class="hd24-tab" data-tab="results">판정 결과<span class="hd24-tab-badge" id="hd24TabMissBadge" hidden>0</span></button><button type="button" class="hd24-tab" data-tab="mail">메일</button><button type="button" class="hd24-tab" data-tab="history">실행 이력</button>`;
+
+  const barWrap = document.createElement('div');
+  barWrap.className = 'hd24-tab-bar-wrap';
+  const plantBadge = document.createElement('div');
+  plantBadge.id = 'hd24PlantBadge';
+  plantBadge.className = 'hd24-plant-badge';
+  plantBadge.textContent = '현재 사업장: ' + cfg().label; // 탭을 오가도 지금 어느 사업장을 보고 있는지 항상 보이게
+  barWrap.append(bar, plantBadge);
+
   const anchor = workGrid || topPanels[0];
-  if (anchor) anchor.before(bar); else main.prepend(bar); // 새 엘리먼트만 삽입, 기존 엘리먼트는 옮기지 않음
+  if (anchor) anchor.before(barWrap); else main.prepend(barWrap); // 새 엘리먼트만 삽입, 기존 엘리먼트는 옮기지 않음
 
   // 실행 로그: 탭이 아니라 접었다 펼 수 있는 상시노출 패널로 전환 (제자리에서 스타일만 변경)
   if (logPanel){
@@ -1296,6 +1309,6 @@ function setupTabs(){
 if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', ()=>setTimeout(setupTabs, 100));
 else setTimeout(setupTabs, 100);
 </script>
-<script src="./hd24-ui-v3.js?v=27"></script>
+<script src="./hd24-ui-v3.js?v=28"></script>
 </body>
 </html>
