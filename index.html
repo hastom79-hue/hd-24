@@ -117,6 +117,15 @@
   .hd24-tab.active { color:var(--accent-dark); border-bottom-color:var(--accent-dark); }
   .hd24-tab-pane { display:none; }
   .hd24-tab-pane.active { display:block; }
+  .hd24-tab-badge { display:inline-block; min-width:18px; padding:0 5px; margin-left:6px; border-radius:10px; background:var(--miss); color:#fff; font-size:11px; font-weight:700; line-height:18px; text-align:center; vertical-align:middle; }
+  .hd24-log-panel { margin-bottom:16px; }
+  .hd24-log-toggle { appearance:none; border:none; background:none; padding:0; margin:0 0 10px; font-size:16px; font-weight:700; color:var(--ink); cursor:pointer; }
+  .hd24-log-panel.collapsed #log { display:none; }
+  .hd24-log-panel #log { max-height:260px; overflow-y:auto; }
+  @media (max-width: 640px) {
+    .hd24-tab-bar { overflow-x:auto; -webkit-overflow-scrolling:touch; flex-wrap:nowrap; }
+    .hd24-tab { padding:10px 12px; font-size:13px; white-space:nowrap; flex:0 0 auto; }
+  }
 </style>
 <link rel="stylesheet" href="./hd24-ui-v3.css?v=26">
 </head>
@@ -620,6 +629,7 @@ function updateStripActive(){
 function renderTable(){
   const rows = allResults.filter(r=>r.month===selectedMonth);
   const missRows = rows.filter(r=>!r.achieved).sort((a,b)=> (b.streak-a.streak) || a.masterRow-b.masterRow);
+  if (window.hd24UpdateTabBadge) window.hd24UpdateTabBadge(missRows.length);
   const okRows = rows.filter(r=>r.achieved).sort((a,b)=> a.masterRow-b.masterRow);
 
   const missH = document.querySelector('.col-head .miss-h'); if (missH) missH.textContent = currentLang==='ko' ? '미달성' : 'Not Achieved';
@@ -1050,7 +1060,9 @@ document.getElementById('btnClearHistory').addEventListener('click', () => {
 });
 renderHistory();
 
-// ---------- 화면을 탭으로 분리 (업로드/설정 · 판정결과/메일 · 로그/이력) ----------
+// ---------- 화면을 탭으로 분리 (업로드·실행 / 판정결과·메일·담당자 / 실행 이력) ----------
+// 실행 로그는 탭에 가두지 않고 항상 보이는 접이식 패널로 둔다 (업로드·반영·판정·메일 전
+// 과정에서 실시간으로 찍히는 피드백이라, 다른 탭에 있을 때도 봐야 함).
 // 기존 요소는 삭제/재작성하지 않고 그대로 다른 컨테이너로 옮기기만 한다(id 유지되므로
 // 기존 getElementById/querySelector 기반 로직에는 영향 없음). hd24-ui-v3-core.js가
 // DOMContentLoaded 시점에 상단 요약카드·패널 재배치를 먼저 끝낸 뒤에 실행되도록
@@ -1075,23 +1087,43 @@ function groupPanelsIntoTabs(){
   const bar = document.createElement('div');
   bar.id = 'hd24TabBar';
   bar.className = 'hd24-tab-bar';
-  bar.innerHTML = `<button type="button" class="hd24-tab active" data-tab="upload">업로드 · 설정</button><button type="button" class="hd24-tab" data-tab="results">판정 결과 · 메일</button><button type="button" class="hd24-tab" data-tab="log">실행 로그 · 이력</button>`;
+  bar.innerHTML = `<button type="button" class="hd24-tab active" data-tab="upload">업로드 · 실행</button><button type="button" class="hd24-tab" data-tab="results">판정 결과 · 메일<span class="hd24-tab-badge" id="hd24TabMissBadge" hidden>0</span></button><button type="button" class="hd24-tab" data-tab="history">실행 이력</button>`;
 
   const paneUpload = document.createElement('div'); paneUpload.id='hd24PaneUpload'; paneUpload.className='hd24-tab-pane active';
   const paneResults = document.createElement('div'); paneResults.id='hd24PaneResults'; paneResults.className='hd24-tab-pane';
-  const paneLog = document.createElement('div'); paneLog.id='hd24PaneLog'; paneLog.className='hd24-tab-pane';
+  const paneHistory = document.createElement('div'); paneHistory.id='hd24PaneHistory'; paneHistory.className='hd24-tab-pane';
+
+  // 실행 로그: 탭이 아니라 접었다 펼 수 있는 상시노출 패널로 전환
+  let logToggleBtn = null;
+  if (logPanel){
+    const h2 = logPanel.querySelector('h2');
+    logToggleBtn = document.createElement('button');
+    logToggleBtn.type = 'button';
+    logToggleBtn.className = 'hd24-log-toggle';
+    logToggleBtn.id = 'hd24LogToggle';
+    logToggleBtn.textContent = '실행 로그 ▾';
+    if (h2) h2.replaceWith(logToggleBtn); else logPanel.prepend(logToggleBtn);
+    logPanel.classList.add('hd24-log-panel', 'collapsed');
+    logToggleBtn.addEventListener('click', ()=>{
+      const collapsed = logPanel.classList.toggle('collapsed');
+      logToggleBtn.textContent = '실행 로그 ' + (collapsed ? '▾' : '▴');
+    });
+  }
 
   const anchor = workGrid || topPanels[0];
   if (anchor) anchor.before(bar); else main.prepend(bar);
-  bar.after(paneUpload, paneResults, paneLog);
+  bar.after(paneUpload);
+  if (logPanel) paneUpload.after(logPanel); // 탭 바로 아래, 모든 탭 공통으로 보이는 자리
+  const afterLog = logPanel || paneUpload;
+  afterLog.after(paneResults);
+  paneResults.after(paneHistory);
 
   if (workGrid) paneUpload.appendChild(workGrid);
-  if (contactPanel) paneUpload.appendChild(contactPanel);
   paneResults.appendChild(resultCard); // 실적판정 결과 표 + (나중에 생기는) 메일 미리보기 패널도 resultCard의 자식이라 함께 이동됨
-  if (logPanel) paneLog.appendChild(logPanel);
-  if (historyPanel) paneLog.appendChild(historyPanel);
+  if (contactPanel) paneResults.appendChild(contactPanel); // 담당자 정보는 메일 발송용이라 결과·메일 탭에 배치
+  if (historyPanel) paneHistory.appendChild(historyPanel);
 
-  const panes = {upload:paneUpload, results:paneResults, log:paneLog};
+  const panes = {upload:paneUpload, results:paneResults, history:paneHistory};
   bar.querySelectorAll('.hd24-tab').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       bar.querySelectorAll('.hd24-tab').forEach(b=>b.classList.toggle('active', b===btn));
@@ -1100,6 +1132,14 @@ function groupPanelsIntoTabs(){
     });
   });
   window.hd24SwitchTab = (name)=>{ const btn=bar.querySelector(`[data-tab="${name}"]`); if (btn) btn.click(); };
+
+  // 판정결과 탭에 미달성 건수 배지 표시, 판정이 다시 돌 때마다 갱신
+  window.hd24UpdateTabBadge = (missCount)=>{
+    const badge = document.getElementById('hd24TabMissBadge');
+    if (!badge) return;
+    if (missCount>0){ badge.textContent = missCount>99 ? '99+' : String(missCount); badge.hidden = false; }
+    else badge.hidden = true;
+  };
 }
 if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', ()=>setTimeout(groupPanelsIntoTabs, 100));
 else setTimeout(groupPanelsIntoTabs, 100);
