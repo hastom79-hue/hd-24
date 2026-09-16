@@ -35,7 +35,7 @@ jobs:
           assert f'hd24-ui-v3.css?v={outer_css.group(1)}' in refresh, 'refresh/UI CSS cache version mismatch'
           assert f'safe-kpi-mapping.js?v={safe_ver.group(1)}' in refresh, 'refresh/safe runtime cache version mismatch'
 
-          for asset in ['hd24-ui-v3-core.js?v=18','hd24-auto-run.js?v=27','hd24-pipeline-gate.js?v=22','hd24-followup.js?v=29','hd24-direct-reply-guard.js?v=1','hd24-reply-import-dedupe.js?v=1','hd24-history-view.js?v=23']:
+          for asset in ['hd24-ui-v3-core.js?v=18','hd24-auto-run.js?v=27','hd24-pipeline-gate.js?v=22','hd24-followup.js?v=29','hd24-direct-reply-guard.js?v=2','hd24-reply-import-dedupe.js?v=1','hd24-history-view.js?v=23']:
               assert asset in ui, f'production loader missing {asset}'
               assert asset in refresh or asset.startswith('hd24-ui-v3-core'), f'refresh preload missing {asset}'
           assert 'hd24-action-export.js' not in ui and 'hd24-followup-sync.js' not in ui, 'obsolete parallel action/follow-up runtime reintroduced'
@@ -51,7 +51,7 @@ jobs:
               names=[x['kpiEn'].strip().lower() for x in data]; rows=[x['masterRow'] for x in data]
               assert len(names)==len(set(names)), f'{plant} duplicate KPI mapping'
               assert len(rows)==len(set(rows)), f'{plant} duplicate masterRow mapping'
-          print(f'HD24 RUNTIME REGRESSION PASS: ui=v{outer_js.group(1)}, css=v{outer_css.group(1)}, safe=v{safe_ver.group(1)}, direct-reply-guard=v1')
+          print(f'HD24 RUNTIME REGRESSION PASS: ui=v{outer_js.group(1)}, css=v{outer_css.group(1)}, safe=v{safe_ver.group(1)}, direct-reply-guard=v2')
           PY
           node --check hd24-auto-run.js
           node --check hd24-pipeline-gate.js
