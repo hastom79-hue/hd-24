@@ -1199,7 +1199,7 @@ function setupTabs(){
   const bar = document.createElement('div');
   bar.id = 'hd24TabBar';
   bar.className = 'hd24-tab-bar';
-  bar.innerHTML = `<button type="button" class="hd24-tab active" data-tab="upload">업로드 · 실행</button><button type="button" class="hd24-tab" data-tab="results">판정 결과 · 메일<span class="hd24-tab-badge" id="hd24TabMissBadge" hidden>0</span></button><button type="button" class="hd24-tab" data-tab="history">실행 이력</button>`;
+  bar.innerHTML = `<button type="button" class="hd24-tab active" data-tab="upload">업로드 · 실행</button><button type="button" class="hd24-tab" data-tab="results">판정 결과<span class="hd24-tab-badge" id="hd24TabMissBadge" hidden>0</span></button><button type="button" class="hd24-tab" data-tab="mail">메일</button><button type="button" class="hd24-tab" data-tab="history">실행 이력</button>`;
   const anchor = workGrid || topPanels[0];
   if (anchor) anchor.before(bar); else main.prepend(bar); // 새 엘리먼트만 삽입, 기존 엘리먼트는 옮기지 않음
 
@@ -1235,15 +1235,36 @@ function setupTabs(){
     });
   }
 
+  // resultCard 하나 안에 "판정 결과"(표)와 "메일"(빠른발송 박스 + 메일 미리보기 패널) 내용이
+  // 같이 들어있다 — 둘을 각각 다른 탭으로 보이게 하려면 resultCard 자체는 두 탭 모두에서
+  // 보이게 하되, 그 자식 요소들만 탭에 따라 나눠서 숨긴다.
+  const resultTitleBar = resultCard.firstElementChild; // 판정 결과 제목 + 한글/English 토글
+  const monthStripEl = document.getElementById('monthStrip');
+  const trendNoteEl = document.getElementById('trendNote');
+  const resultColsEl = resultCard.querySelector(':scope > .result-cols');
+  const resultTagEl = resultColsEl ? resultColsEl.previousElementSibling : null; // "판정 상세" 라벨
+  const quickMailBoxEl = document.getElementById('quickMailBox');
+  const resultsSubEls = [resultTitleBar, monthStripEl, trendNoteEl, resultTagEl, resultColsEl].filter(Boolean);
+  const mailSubEls = [quickMailBoxEl].filter(Boolean);
+
   const groups = {
     upload: [workGrid].filter(Boolean),
-    results: [resultCard, contactPanel].filter(Boolean),
+    results: [resultCard].filter(Boolean),
+    mail: [resultCard, contactPanel].filter(Boolean),
     history: [historyPanel].filter(Boolean),
   };
+  function applyResultCardSubVisibility(tab){
+    resultsSubEls.forEach(el => el.classList.toggle('hd24-tab-hidden', tab !== 'results'));
+    mailSubEls.forEach(el => el.classList.toggle('hd24-tab-hidden', tab !== 'mail'));
+    // hd24-followup.js가 나중에 동적으로 만드는 메일 미리보기 패널도 같은 규칙 적용
+    const followupPanel = document.getElementById('hd24FollowupPanel');
+    if (followupPanel) followupPanel.classList.toggle('hd24-tab-hidden', tab !== 'mail');
+  }
   function activate(tab){
     Object.entries(groups).forEach(([name, els]) => {
-      els.forEach(el => el.classList.toggle('hd24-tab-hidden', name !== tab));
+      els.forEach(el => el.classList.toggle('hd24-tab-hidden', !(name === tab || (el === resultCard && (tab === 'results' || tab === 'mail')))));
     });
+    if (tab === 'results' || tab === 'mail') applyResultCardSubVisibility(tab);
     bar.querySelectorAll('.hd24-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   }
   bar.querySelectorAll('.hd24-tab').forEach(btn => {
@@ -1251,6 +1272,18 @@ function setupTabs(){
   });
   activate('upload');
   window.hd24SwitchTab = activate;
+
+  // 메일 미리보기 패널은 판정 이후 나중에(비동기로) 생성되므로, 생성되는 순간을 감지해서
+  // 그 시점의 활성 탭 기준으로 보이기/숨기기를 한 번 더 맞춰준다.
+  const followupWatcher = new MutationObserver(() => {
+    const followupPanel = document.getElementById('hd24FollowupPanel');
+    if (!followupPanel) return;
+    const activeBtn = bar.querySelector('.hd24-tab.active');
+    const activeTab = activeBtn ? activeBtn.dataset.tab : 'upload';
+    followupPanel.classList.toggle('hd24-tab-hidden', activeTab !== 'mail');
+    followupWatcher.disconnect();
+  });
+  followupWatcher.observe(resultCard, {childList:true});
 
   // 판정결과 탭에 미달성 건수 배지 표시, 판정이 다시 돌 때마다 갱신
   window.hd24UpdateTabBadge = (missCount)=>{
