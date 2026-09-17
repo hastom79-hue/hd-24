@@ -28,17 +28,19 @@ function isEn(){try{return currentLang==='en'}catch(_){return false}}
 function pnameKo(){return pkey()==='india'?'인도':pkey()==='brazil'?'브라질':pkey()==='ulsan'?'울산':pname()}
 function subject(items){
   const en=isEn();
+  const monthsText = (typeof itemsMonthLabel==='function') ? itemsMonthLabel(items, en) : (en?`${month()}M`:`${month()}월`);
   return en
-    ? `[HDPS KPI Action Required] ${pname()} - ${month()}M (${items.length} item${items.length===1?'':'s'})`
-    : `[HDPS KPI 조치필요] ${pnameKo()} - ${month()}월 (${items.length}건)`;
+    ? `[HDPS KPI Action Required] ${pname()} - ${monthsText} (${items.length} item${items.length===1?'':'s'})`
+    : `[HDPS KPI 조치필요] ${pnameKo()} - ${monthsText} (${items.length}건)`;
 }
 function body(items){
   const en=isEn();
+  const monthsText = (typeof itemsMonthLabel==='function') ? itemsMonthLabel(items, en) : (en?`${month()}M`:`${month()}월`);
   const repeated=items.filter(r=>recurrenceFor(r)?.isRecurrence).length;
   const miss=items.filter(r=>!r.achieved).length;
   const lines=en?[
     `Dear Team,`,'',
-    `Please review the ${pname()} HDPS KPI results for ${month()}M in the attached Excel file, and reply with the reason, root cause, and recovery plan for each KPI marked as Target Miss / Consecutive Miss / Worsening.`,
+    `Please review the ${pname()} HDPS KPI results for ${monthsText} in the attached Excel file, and reply with the reason, root cause, and recovery plan for each KPI marked as Target Miss / Consecutive Miss / Worsening.`,
     '',
     `Summary: ${items.length} KPI(s) require attention (${miss} not achieved, ${repeated} repeated issue${repeated===1?'':'s'}).`,
     '',
@@ -52,7 +54,7 @@ function body(items){
     `Thank you for your cooperation.`,
   ]:[
     `안녕하세요,`,'',
-    `${pnameKo()} 사업장 ${month()}월 HDPS KPI 결과를 첨부 엑셀 파일로 안내드립니다. 목표 미달성/연속 미달성/악화로 표시된 지표별로 사유·근본원인·만회대책을 회신 부탁드립니다.`,
+    `${pnameKo()} 사업장 ${monthsText} HDPS KPI 결과를 첨부 엑셀 파일로 안내드립니다. 목표 미달성/연속 미달성/악화로 표시된 지표별로 사유·근본원인·만회대책을 회신 부탁드립니다.`,
     '',
     `요약: 조치 필요 KPI ${items.length}건 (미달성 ${miss}건, 반복 재발 ${repeated}건)`,
     '',
@@ -112,6 +114,14 @@ async function importReply(){const f=$('hd24ReplyFile')?.files?.[0];if(!f){alert
 function uploadSignature(){const a=$('srcFile')?.files?.[0],b=$('masterFile')?.files?.[0];if(!a||!b)return '';return [pkey(),a.name,a.size,a.lastModified,b.name,b.size,b.lastModified].join('|')}
 async function tryAutoPackage(reason){if(window.hd24FollowupSyncOwnsAutoPackage){if(!legacyAutoSuppressedLogged){legacyAutoSuppressedLogged=true;logSafe('레거시 자동패키지 비활성화: follow-up sync가 단일 오케스트레이터로 실행');}return}const sig=uploadSignature(),judge=$('btnJudge');if(!sig||sig===lastAutoPackageSignature||!judge||judge.disabled)return;lastAutoPackageSignature=sig;try{logSafe(`자동분석 시작: ${reason}`);judge.click();await new Promise(r=>setTimeout(r,80));const items=selectItems('watch');if(!items.length){$('hd24MailStatus').textContent='자동분석 완료 · 메일 관리대상 KPI 없음';logSafe('자동분석 완료: 관리대상 KPI 없음');return}const preparedAt=nowIso();renderPreview(items,'watch',preparedAt);mailHistoryRecord(items,{status:'prepared',preparedAt,autoPrepared:true});const pack=await buildReplyFile(items);downloadFile(pack.file);$('hd24MailStatus').textContent=`자동분석/파일추출/메일 Preview 준비 완료 · ${items.length} KPI`;logSafe(`자동 분석파일 추출: ${pack.fname} / 메일 Preview ${items.length}건`)}catch(e){lastAutoPackageSignature='';logSafe('자동분석 패키지 오류: '+(e?.message||e))}}
 function scheduleAutoPackage(reason){[0,100,300,700,1500,3000,6000,10000].forEach(ms=>setTimeout(()=>tryAutoPackage(reason),ms))}
+// 메일 발송 대상 월 체크박스가 바뀌었을 때(자동패키지의 파일서명 기준 중복방지 가드에
+// 걸리지 않고) 미리보기를 즉시 다시 계산하기 위해 index.html에서 호출하는 훅.
+window.hd24RefreshMailPreview = function(){
+  const mode = previewState ? previewState.mode : 'watch';
+  const items = selectItems(mode);
+  if (items.length) renderPreview(items, mode, nowIso());
+  else { $('hd24Preview').style.display='none'; $('hd24MailStatus').textContent='선택한 달에 해당하는 관리대상 KPI가 없습니다.'; }
+};
 function wireUi(){interceptMailButton('btnMailMonth','month');interceptMailButton('btnMailWatch','watch');interceptMailButton('btnMailAll','all');$('hd24DownloadReply')?.addEventListener('click',async()=>{if(!previewState)return;downloadFile((await buildReplyFile(previewState.items)).file)});$('hd24SendMail')?.addEventListener('click',sendPreview);$('hd24ImportReply')?.addEventListener('click',()=>importReply().catch(e=>{alert(e.message);logSafe('회신 파일 반영 오류: '+e.message)}));
   function switchLang(lang){try{if(typeof setLang==='function')setLang(lang);else currentLang=lang}catch(_){currentLang=lang}$('hd24LangKo')?.classList.toggle('active',lang==='ko');$('hd24LangEn')?.classList.toggle('active',lang==='en');if(previewState)renderPreview(previewState.items,previewState.mode,previewState.preparedAt)}
   $('hd24LangKo')?.addEventListener('click',()=>switchLang('ko'));

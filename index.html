@@ -857,6 +857,7 @@ function renderMailMonthChips(months){
       if (cb.checked) selectedMailMonths.add(mo); else selectedMailMonths.delete(mo);
       if (selectedMailMonths.size === 0) { selectedMailMonths.add(mo); cb.checked = true; } // 최소 1개월은 유지
       label.classList.toggle('checked', cb.checked);
+      if (typeof window.hd24RefreshMailPreview === 'function') window.hd24RefreshMailPreview(); // 메일 미리보기도 선택 변경에 맞춰 즉시 재계산
     });
     label.append(cb, document.createTextNode(monthLabel(mo)));
     box.appendChild(label);
