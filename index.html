@@ -178,6 +178,13 @@
   </div>
 </div>
 
+<div id="hd24KpiChangeBanner" style="display:none; max-width:1280px; margin:14px auto 0; padding:0 18px;">
+  <div style="background:#fdeeee; border:1px solid #e0a0a0; border-radius:8px; padding:14px 18px; color:#8a2a2a; font-size:14px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <span id="hd24KpiChangeBannerText">⚠️ 이번 달 파일에서 이전에 관리하던 지표를 찾을 수 없습니다 — 지표가 교체/삭제된 것 같습니다.</span>
+    <button type="button" id="hd24KpiChangeBannerBtn" style="flex-shrink:0; font-size:13px; padding:8px 14px; border-radius:6px; border:1px solid #8a2a2a; background:#fff; color:#8a2a2a; cursor:pointer; font-weight:700;">📝 사유 기록하기</button>
+  </div>
+</div>
+
 <main>
   <section class="panel">
     <h2>사업장 · 파일</h2>
@@ -317,6 +324,7 @@
       <thead><tr><th>일시</th><th>사업장</th><th>작업</th><th>파일</th><th>결과</th></tr></thead>
       <tbody></tbody>
     </table>
+    <div id="kpiChangeLogView" style="margin-top:20px;"></div>
   </section>
 </main>
 
@@ -354,7 +362,50 @@ function log(msg){
       if (toggleBtn) toggleBtn.textContent = '실행 로그 ▴';
     }
   }
+  // 안전 매핑 검증에서 KPI를 못 찾아 "반영 차단"된 경우 — 현업에서 지표를 슬쩍 바꿔서
+  // 관리하는 경우를 놓치지 않기 위해, 이 순간을 감지해서 사유를 남기도록 배너로 알린다.
+  // (기존의 판정/반영 차단 로직 자체는 안전을 위해 그대로 두고, 감지·기록만 추가함)
+  const m = msg.match(/^반영 차단 원인: (.+)$/);
+  if (m) {
+    pendingKpiChangeCandidates = m[1].split(' | ').map(s => s.replace(/\s*\([^)]*\)\s*$/, '').trim());
+    const banner = document.getElementById('hd24KpiChangeBanner');
+    if (banner) banner.style.display = 'block';
+  }
 }
+let pendingKpiChangeCandidates = [];
+const KPI_CHANGE_LOG_KEY = 'hd24_kpi_change_log_v1';
+function loadKpiChangeLog(){ try { return JSON.parse(localStorage.getItem(KPI_CHANGE_LOG_KEY) || '[]'); } catch(_) { return []; } }
+function saveKpiChangeLog(kpiNames, reason){
+  const list = loadKpiChangeLog();
+  list.unshift({ at: new Date().toISOString(), plantKey: currentPlant, plant: cfg().label, kpiNames, reason });
+  localStorage.setItem(KPI_CHANGE_LOG_KEY, JSON.stringify(list.slice(0, 300)));
+  renderKpiChangeLog();
+}
+function renderKpiChangeLog(){
+  const box = document.getElementById('kpiChangeLogView');
+  if (!box) return;
+  const list = loadKpiChangeLog();
+  if (!list.length){ box.innerHTML = ''; return; }
+  const rows = list.slice(0, 30).map(e => `<tr>
+    <td>${new Date(e.at).toLocaleString('ko-KR')}</td>
+    <td>${e.plant}</td>
+    <td>${e.kpiNames.join(', ')}</td>
+    <td>${e.reason}</td>
+  </tr>`).join('');
+  box.innerHTML = `<div class="hd24-section-tag" style="margin-top:8px;">지표 변경(추가/삭제) 사유 기록</div>
+  <p class="hint" style="margin-top:0;">이전에 관리하던 지표가 파일에서 갑자기 안 보일 때(반영/판정 차단) 남긴 사유입니다.</p>
+  <table class="results"><colgroup><col style="width:150px"><col style="width:70px"><col style="width:240px"><col></colgroup>
+  <thead><tr><th>일시</th><th>사업장</th><th>대상 지표</th><th>사유</th></tr></thead>
+  <tbody>${rows}</tbody></table>`;
+}
+document.getElementById('hd24KpiChangeBannerBtn').addEventListener('click', () => {
+  const reason = prompt(`다음 지표를 이번 달 파일에서 찾을 수 없습니다:\n\n${pendingKpiChangeCandidates.join('\n')}\n\n지표가 교체/삭제된 사유를 입력해주세요:`);
+  if (reason === null) return; // 취소
+  if (!reason.trim()) { alert('사유를 입력해야 기록됩니다.'); return; }
+  saveKpiChangeLog(pendingKpiChangeCandidates, reason.trim());
+  document.getElementById('hd24KpiChangeBanner').style.display = 'none';
+  log(`지표 변경 사유 기록됨: ${pendingKpiChangeCandidates.join(', ')} — ${reason.trim()}`);
+});
 function cfg(){ return PLANT_CONFIG[currentPlant]; }
 
 async function loadMapping(){
@@ -365,6 +416,7 @@ async function loadMapping(){
 loadMapping();
 loadLatestHistoryForPlant(); // 페이지를 새로 열었을 때도(기본 사업장=인도) 저장된 이력이 있으면 바로 보여준다
 syncSpotCheckScheduleInput();
+renderKpiChangeLog();
 
 document.getElementById('plantSelect').addEventListener('change', async (e) => {
   currentPlant = e.target.value;
@@ -379,6 +431,7 @@ document.getElementById('plantSelect').addEventListener('change', async (e) => {
   loadLatestHistoryForPlant(); // 사업장 선택 즉시, 저장된 이력 중 가장 최근 판정 결과를 바로 보여준다
   if (typeof renderSpotCheckHistory === 'function') renderSpotCheckHistory();
   if (typeof syncSpotCheckScheduleInput === 'function') syncSpotCheckScheduleInput();
+  if (typeof renderKpiChangeLog === 'function') renderKpiChangeLog();
 });
 
 function showHistoricalResultNotice(time, plantLabel){
