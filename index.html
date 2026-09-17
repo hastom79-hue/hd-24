@@ -117,6 +117,14 @@
   .hd24-mail-month-chip { display:inline-flex; align-items:center; gap:5px; font-size:13px; padding:6px 12px; border-radius:16px; border:1px solid var(--line); background:#fff; cursor:pointer; user-select:none; }
   .hd24-mail-month-chip input { margin:0; }
   .hd24-mail-month-chip.checked { background:var(--accent-dark); color:#fff; border-color:var(--accent-dark); }
+  .hd24-spot-card { border:1px solid var(--line); border-radius:8px; padding:14px 16px; margin-bottom:12px; background:#fff; }
+  .hd24-spot-card .hd24-spot-cat { font-size:11px; font-weight:900; letter-spacing:.08em; padding:3px 10px; border-radius:10px; display:inline-block; margin-bottom:8px; }
+  .hd24-spot-cat-month { background:#e7f0fb; color:#1f4e8c; }
+  .hd24-spot-cat-cum { background:#f3e9fb; color:#6a2f9c; }
+  .hd24-spot-cat-long { background:#fdeee5; color:#a05a1f; }
+  .hd24-spot-card .hd24-spot-kpi { font-size:15px; font-weight:700; margin-bottom:4px; }
+  .hd24-spot-card .hd24-spot-meta { font-size:13px; color:var(--muted); }
+  #spotCheckActions.visible { display:flex !important; }
   .hd24-tab { appearance:none; border:none; background:none; padding:10px 16px; font-size:14px; font-weight:600; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; }
   .hd24-tab:hover { color:var(--ink); }
   .hd24-tab.active { color:var(--accent-dark); border-bottom-color:var(--accent-dark); }
@@ -243,6 +251,17 @@
         <button id="btnMailAll" class="ghost">이번 달 전체 지표 메일 초안</button>
       </div>
       <p class="hint">버튼을 누르면 ① 상세 내역이 담긴 엑셀 파일이 먼저 자동 다운로드되고, ② 이어서 Outlook 등 기본 메일 앱에 제목·본문이 채워진 초안이 뜹니다. 다운로드된 엑셀을 메일 창에 끌어다 놓으신 후 확인하고 [보내기]를 눌러주세요 (mailto 방식은 브라우저에서 파일을 자동 첨부할 수 없어 이 방식으로 처리됩니다). 이메일 주소는 이 브라우저에만 저장됩니다.</p>
+    </div>
+  </section>
+
+  <section class="panel" id="spotCheckPanel">
+    <h2>🎲 중점관리 집중점검</h2>
+    <p class="hint">당해년도 판정 데이터에서 "당월 미달성 · 누적형 미달성 · 장기(3개월+) 미달성" 세 가지 관점으로 각각 무작위 1개씩 뽑아, 사업장이 지표를 평소에 잘 관리하고 있는지 스팟 점검합니다.</p>
+    <button type="button" id="btnSpotCheckDraw">🎲 지금 뽑기</button>
+    <div id="spotCheckResults" style="margin-top:16px;"></div>
+    <div id="spotCheckActions" style="display:none; margin-top:16px; gap:10px; display:none;">
+      <button type="button" id="btnSpotCheckReport" class="ghost">📄 점검 보고서 다운로드</button>
+      <button type="button" id="btnSpotCheckMail" class="ghost">✉️ 이 지표들로 대응 메일 작성</button>
     </div>
   </section>
 
@@ -1190,6 +1209,88 @@ function mailMonthScopeLabel(base, en){
   return `${monthsText} ${base}`;
 }
 
+// ---------- 중점관리 집중점검 (당해년도 데이터에서 관점별 무작위 1개씩 뽑기) ----------
+let spotCheckDrawn = [];
+function spotCheckPools(){
+  const miss = (allResults||[]).filter(r => !r.achieved);
+  const latestMonth = miss.length ? Math.max(...(allResults||[]).map(r=>r.month)) : null;
+  return {
+    month: miss.filter(r => r.month === latestMonth),           // 당월 미달성
+    cum:   miss.filter(r => r.isCumulative),                    // 누적형 미달성
+    long:  miss.filter(r => r.streak >= 3),                     // 장기(3개월+) 미달성
+  };
+}
+function pickRandom(arr, exclude){
+  const pool = exclude ? arr.filter(x => !exclude.some(e => e.masterRow===x.masterRow && e.month===x.month)) : arr;
+  const from = pool.length ? pool : arr; // 중복 제외하면 후보가 없으면 원래 풀에서라도 뽑는다
+  if (!from.length) return null;
+  return from[Math.floor(Math.random() * from.length)];
+}
+function drawSpotCheck(){
+  if (!allResults || !allResults.length){ alert('먼저 판정을 실행해주세요.'); return; }
+  const pools = spotCheckPools();
+  const drawn = [];
+  const m1 = pickRandom(pools.month, drawn); if (m1) drawn.push({...m1, __spotCat:'month'});
+  const m2 = pickRandom(pools.cum, drawn); if (m2) drawn.push({...m2, __spotCat:'cum'});
+  const m3 = pickRandom(pools.long, drawn); if (m3) drawn.push({...m3, __spotCat:'long'});
+  spotCheckDrawn = drawn;
+  renderSpotCheckResults();
+}
+function renderSpotCheckResults(){
+  const box = document.getElementById('spotCheckResults');
+  const actions = document.getElementById('spotCheckActions');
+  if (!box) return;
+  if (!spotCheckDrawn.length){
+    box.innerHTML = '<p class="hint">뽑을 수 있는 미달성 지표가 없습니다 (전부 달성 중이거나 아직 판정 전입니다).</p>';
+    actions?.classList.remove('visible');
+    return;
+  }
+  const catLabel = {month:['당월 미달성','hd24-spot-cat-month'], cum:['누적형 미달성','hd24-spot-cat-cum'], long:['장기(3개월+) 미달성','hd24-spot-cat-long']};
+  box.innerHTML = spotCheckDrawn.map(r => {
+    const [label, cls] = catLabel[r.__spotCat];
+    const rec = (typeof replyHistoryIndex==='function') ? (replyHistoryIndex().byKey.get(normKpiKey ? normKpiKey(r.kpiEn||r.kpi) : (r.kpiEn||r.kpi)) || []) : [];
+    const lastReason = rec[0]?.rootCause || rec[0]?.reason || '';
+    return `<div class="hd24-spot-card">
+      <span class="hd24-spot-cat ${cls}">${label}</span>
+      <div class="hd24-spot-kpi">[${r.masterRow}] ${r.kpi}${r.kpiEn ? ' / '+r.kpiEn : ''}</div>
+      <div class="hd24-spot-meta">${monthLabel(r.month)} · 목표 ${fmtValWithUnit(r.target, r.unit)} / 실적 ${fmtValWithUnit(r.actual, r.unit)} · 연속미달성 ${r.streak}개월 · 추세 ${r.trend==='down'?'악화':r.trend==='up'?'개선':'유지'}${lastReason ? ' · 과거 사유: '+lastReason : ''}</div>
+    </div>`;
+  }).join('');
+  actions?.classList.add('visible');
+}
+async function downloadSpotCheckReport(){
+  if (!spotCheckDrawn.length) return;
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('집중점검 보고서');
+  ws.columns = [{width:10},{width:12},{width:34},{width:10},{width:12},{width:12},{width:12},{width:10},{width:40}];
+  ws.addRow(['점검 관점','총괄행','KPI','단위','목표','실적','판정','연속미달성','비고']);
+  const hr = ws.getRow(1);
+  hr.font = {bold:true, color:{argb:'FFFFFFFF'}};
+  hr.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FF2B4A63'}};
+  const catLabel = {month:'당월 미달성', cum:'누적형 미달성', long:'장기(3개월+) 미달성'};
+  spotCheckDrawn.forEach(r => {
+    ws.addRow([catLabel[r.__spotCat], r.masterRow, r.kpi, r.unit||'', r.target, r.actual, r.achieved?'달성':'미달성', r.streak, '']);
+  });
+  ws.addRow([]);
+  ws.addRow(['점검일시', new Date().toLocaleString('ko-KR')]);
+  ws.addRow(['사업장', cfg().label]);
+  const buf = await wb.xlsx.writeBuffer();
+  const fname = `HDPS_집중점검보고서_${cfg().label}_${new Date().toISOString().slice(0,10)}.xlsx`;
+  const file = new File([buf], fname, {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  downloadFile(file);
+  log(`집중점검 보고서 다운로드: ${fname}`);
+}
+function startSpotCheckMail(){
+  if (!spotCheckDrawn.length) return;
+  selectedMailMonths = new Set(spotCheckDrawn.map(r => r.month));
+  renderMailMonthChips([...new Set((allResults||[]).map(r=>r.month))].sort((a,b)=>a-b));
+  openMailDraft(spotCheckDrawn, mailMonthScopeLabel('집중점검 대상 지표', false), mailMonthScopeLabel('spot-check sampled indicators', true), false);
+  if (window.hd24SwitchTab) window.hd24SwitchTab('mail');
+}
+document.getElementById('btnSpotCheckDraw').addEventListener('click', drawSpotCheck);
+document.getElementById('btnSpotCheckReport').addEventListener('click', downloadSpotCheckReport);
+document.getElementById('btnSpotCheckMail').addEventListener('click', startSpotCheckMail);
+
 const HISTORY_KEY = 'hdps_history_v1';
 function loadHistory(){
   try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
@@ -1347,6 +1448,7 @@ function setupTabs(){
 
   const workGrid = main.querySelector(':scope > .hd24-work-grid');
   let contactPanel=null, logPanel=null, historyPanel=null;
+  const spotCheckPanel = document.getElementById('spotCheckPanel');
   const topPanels = [...main.querySelectorAll(':scope > section.panel')];
   topPanels.forEach(sec => {
     const h2 = sec.querySelector('h2');
@@ -1359,7 +1461,7 @@ function setupTabs(){
   const bar = document.createElement('div');
   bar.id = 'hd24TabBar';
   bar.className = 'hd24-tab-bar';
-  bar.innerHTML = `<button type="button" class="hd24-tab active" data-tab="upload">업로드 · 실행</button><button type="button" class="hd24-tab" data-tab="results">판정 결과<span class="hd24-tab-badge" id="hd24TabMissBadge" hidden>0</span></button><button type="button" class="hd24-tab" data-tab="mail">메일</button><button type="button" class="hd24-tab" data-tab="history">실행 이력</button>`;
+  bar.innerHTML = `<button type="button" class="hd24-tab active" data-tab="upload">업로드 · 실행</button><button type="button" class="hd24-tab" data-tab="results">판정 결과<span class="hd24-tab-badge" id="hd24TabMissBadge" hidden>0</span></button><button type="button" class="hd24-tab" data-tab="mail">메일</button><button type="button" class="hd24-tab" data-tab="spotcheck">집중점검</button><button type="button" class="hd24-tab" data-tab="history">실행 이력</button>`;
 
   const barWrap = document.createElement('div');
   barWrap.className = 'hd24-tab-bar-wrap';
@@ -1423,6 +1525,7 @@ function setupTabs(){
     upload: [workGrid].filter(Boolean),
     results: [resultCard].filter(Boolean),
     mail: [resultCard, contactPanel].filter(Boolean),
+    spotcheck: [spotCheckPanel].filter(Boolean),
     history: [historyPanel].filter(Boolean),
   };
   function applyResultCardSubVisibility(tab){
