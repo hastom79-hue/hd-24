@@ -171,6 +171,13 @@
   </div>
 </div>
 
+<div id="hd24SpotCheckBanner" style="display:none; max-width:1280px; margin:14px auto 0; padding:0 18px;">
+  <div style="background:#eef4fb; border:1px solid #90b8de; border-radius:8px; padding:14px 18px; color:#1f4e8c; font-size:14px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <span id="hd24SpotCheckBannerText"></span>
+    <button type="button" id="hd24SpotCheckBannerBtn" style="flex-shrink:0; font-size:13px; padding:8px 14px; border-radius:6px; border:1px solid #1f4e8c; background:#fff; color:#1f4e8c; cursor:pointer; font-weight:700;">🎲 지금 확인하기</button>
+  </div>
+</div>
+
 <main>
   <section class="panel">
     <h2>사업장 · 파일</h2>
@@ -257,6 +264,13 @@
   <section class="panel" id="spotCheckPanel">
     <h2>🎲 중점관리 집중점검</h2>
     <p class="hint">당해년도 판정 데이터에서 "당월 미달성 · 누적형 미달성 · 장기(3개월+) 미달성" 세 가지 관점으로 각각 무작위 1개씩 뽑아, 사업장이 지표를 평소에 잘 관리하고 있는지 스팟 점검합니다.</p>
+    <div style="background:#f5f8fb; border:1px solid var(--line); border-radius:6px; padding:12px 16px; margin-bottom:16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <label for="spotCheckScheduleDay" style="font-size:13px; font-weight:600;">정기 집중점검일: 매월</label>
+      <input type="number" id="spotCheckScheduleDay" min="1" max="28" style="width:60px;">
+      <span style="font-size:13px;">일 — 그 날짜 이후 앱을 열면 자동으로 뽑아서 알려드립니다</span>
+      <button type="button" id="btnSpotCheckScheduleSave" style="font-size:12px; padding:6px 10px; border-radius:6px; border:1px solid var(--line); background:#fff; color:var(--ink); cursor:pointer;">저장</button>
+      <span id="spotCheckScheduleSaved" style="font-size:12px; color:#1e6b47; display:none;">✓ 저장됨</span>
+    </div>
     <button type="button" id="btnSpotCheckDraw">🎲 지금 뽑기</button>
     <div id="spotCheckResults" style="margin-top:16px;"></div>
     <div id="spotCheckActions" style="display:none; margin-top:16px; gap:10px; display:none;">
@@ -350,6 +364,7 @@ async function loadMapping(){
 }
 loadMapping();
 loadLatestHistoryForPlant(); // 페이지를 새로 열었을 때도(기본 사업장=인도) 저장된 이력이 있으면 바로 보여준다
+syncSpotCheckScheduleInput();
 
 document.getElementById('plantSelect').addEventListener('change', async (e) => {
   currentPlant = e.target.value;
@@ -363,6 +378,7 @@ document.getElementById('plantSelect').addEventListener('change', async (e) => {
   await loadMapping();
   loadLatestHistoryForPlant(); // 사업장 선택 즉시, 저장된 이력 중 가장 최근 판정 결과를 바로 보여준다
   if (typeof renderSpotCheckHistory === 'function') renderSpotCheckHistory();
+  if (typeof syncSpotCheckScheduleInput === 'function') syncSpotCheckScheduleInput();
 });
 
 function showHistoricalResultNotice(time, plantLabel){
@@ -768,6 +784,7 @@ function renderResults(results){
   renderTable();
   renderMailMonthChips(months);
   if (typeof renderSpotCheckHistory === 'function') renderSpotCheckHistory();
+  if (typeof checkSpotCheckSchedule === 'function') checkSpotCheckSchedule();
 }
 // 메일 발송 시 여러 달(예: 6월+7월 둘 다 못 보낸 경우)을 한꺼번에 고를 수 있게 하는
 // 체크박스 칩. 기본값은 최신월 하나만 선택된 상태(기존과 동일한 동작 유지).
@@ -1333,6 +1350,60 @@ function renderSpotCheckHistory(){
   }).join('');
   box.innerHTML = `<div class="hd24-section-tag" style="margin-top:20px;">지난 수시점검 지시 이력 · 개선 여부 확인</div>${rows}`;
 }
+
+// ---------- 정기 집중점검 자동 뽑기 (매월 지정일 이후 앱을 열면 자동으로 뽑아서 알려줌) ----------
+// 서버가 없는 브라우저 앱이라 사람 손 없이 메일이 저절로 나가는 건 불가능하다. 대신
+// "뽑기"까지는 자동으로 해두고, 눈에 띄는 배너로 알려서 사람은 확인 후 발송 버튼만
+//누르면 되도록 한다.
+const SPOTCHECK_SCHEDULE_KEY = 'hd24_spotcheck_schedule_v1'; // {[plantKey]: dayOfMonth}
+const SPOTCHECK_LAST_AUTO_KEY = 'hd24_spotcheck_last_auto_v1'; // {[plantKey]: 'YYYY-MM'}
+function loadSpotCheckSchedule(){ try { return JSON.parse(localStorage.getItem(SPOTCHECK_SCHEDULE_KEY) || '{}'); } catch(_) { return {}; } }
+function loadSpotCheckLastAuto(){ try { return JSON.parse(localStorage.getItem(SPOTCHECK_LAST_AUTO_KEY) || '{}'); } catch(_) { return {}; } }
+function syncSpotCheckScheduleInput(){
+  const input = document.getElementById('spotCheckScheduleDay');
+  if (!input) return;
+  const schedule = loadSpotCheckSchedule();
+  input.value = schedule[currentPlant] || '';
+}
+function saveSpotCheckSchedule(){
+  const input = document.getElementById('spotCheckScheduleDay');
+  const day = Math.min(28, Math.max(1, parseInt(input.value, 10) || 1));
+  input.value = day;
+  const schedule = loadSpotCheckSchedule();
+  schedule[currentPlant] = day;
+  localStorage.setItem(SPOTCHECK_SCHEDULE_KEY, JSON.stringify(schedule));
+  const saved = document.getElementById('spotCheckScheduleSaved');
+  if (saved){ saved.style.display = 'inline'; setTimeout(()=>{ saved.style.display = 'none'; }, 2500); }
+  log(`정기 집중점검일 설정: ${cfg().label} — 매월 ${day}일`);
+}
+// 오늘이 지정일 이후이고, 이번 달에 아직 이 사업장에 대해 자동으로 안 뽑았으면 자동 실행
+function checkSpotCheckSchedule(){
+  if (!allResults || !allResults.length) return;
+  const schedule = loadSpotCheckSchedule();
+  const scheduledDay = schedule[currentPlant];
+  if (!scheduledDay) return; // 설정 안 했으면 아무 것도 안 함
+  const now = new Date();
+  const thisYm = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  const lastAuto = loadSpotCheckLastAuto();
+  if (lastAuto[currentPlant] === thisYm) return; // 이번 달엔 이미 자동으로 뽑음
+  if (now.getDate() < scheduledDay) return; // 아직 지정일 전
+  drawSpotCheck();
+  if (!spotCheckDrawn.length) return; // 뽑을 미달성 지표가 없으면 배너도 안 띄움
+  lastAuto[currentPlant] = thisYm;
+  localStorage.setItem(SPOTCHECK_LAST_AUTO_KEY, JSON.stringify(lastAuto));
+  const banner = document.getElementById('hd24SpotCheckBanner');
+  const text = document.getElementById('hd24SpotCheckBannerText');
+  if (banner && text){
+    text.textContent = `🎲 오늘(매월 ${scheduledDay}일 정기 점검일)은 ${cfg().label} 집중점검 자동 뽑기가 완료됐습니다 — ${spotCheckDrawn.length}개 지표. 확인 후 메일을 보내주세요.`;
+    banner.style.display = 'block';
+  }
+  log(`정기 집중점검 자동 뽑기 실행: ${cfg().label} · ${spotCheckDrawn.length}개 지표 (매월 ${scheduledDay}일 설정)`);
+}
+document.getElementById('btnSpotCheckScheduleSave').addEventListener('click', saveSpotCheckSchedule);
+document.getElementById('hd24SpotCheckBannerBtn').addEventListener('click', () => {
+  document.getElementById('hd24SpotCheckBanner').style.display = 'none';
+  if (window.hd24SwitchTab) window.hd24SwitchTab('spotcheck');
+});
 document.getElementById('btnSpotCheckDraw').addEventListener('click', drawSpotCheck);
 document.getElementById('btnSpotCheckReport').addEventListener('click', downloadSpotCheckReport);
 document.getElementById('btnSpotCheckMail').addEventListener('click', startSpotCheckMail);
