@@ -1010,13 +1010,13 @@ async function buildMailExcelFile(items, scopeLabelKo, scopeLabelEn){
   const en = currentLang==='en';
   const scopeLabel = en ? scopeLabelEn : scopeLabelKo;
   const header = en
-    ? ['Row','KPI (KR)','KPI (EN)','Unit','Direction','Month','Target','Actual','Result','Consecutive Miss(mo)','Trend','Reason for Not Achieving','Countermeasure / Due Date']
-    : ['총괄행','KPI(국문)','KPI(영문)','단위','방향','월','목표','실적','판정','연속미달성(개월)','추세','미달성 사유','만회대책 / 완료예정일'];
+    ? ['Row','KPI','Unit','Direction','Month','Target','Actual','Result','Consecutive Miss(mo)','Trend','Reason for Not Achieving','Countermeasure / Due Date']
+    : ['총괄행','KPI','단위','방향','월','목표','실적','판정','연속미달성(개월)','추세','미달성 사유','만회대책 / 완료예정일'];
 
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet('KPI');
   ws.columns = [
-    {width:9},{width:36},{width:36},{width:9},{width:14},{width:8},{width:10},{width:10},{width:13},{width:12},{width:10},{width:30},{width:30}
+    {width:9},{width:36},{width:9},{width:14},{width:8},{width:10},{width:10},{width:13},{width:12},{width:10},{width:30},{width:30}
   ];
 
   const headerRow = ws.addRow(header);
@@ -1038,11 +1038,12 @@ async function buildMailExcelFile(items, scopeLabelKo, scopeLabelEn){
     const resultText = r.achieved ? (en?'Achieved':'달성') : (en?'Not Achieved':'미달성');
     const trendText = r.trend==='down' ? (en?'Worsening':'악화') : (r.trend==='up' ? (en?'Improving':'개선') : (en?'Flat':'유지'));
     const isPct = r.unit === '%';
+    const kpiName = en ? (r.kpiEn||r.kpi) : r.kpi;
     const row = ws.addRow([
-      r.masterRow, r.kpi, r.kpiEn||'', r.unit||'', dirLabel(r.direction), monthLabel(r.month),
+      r.masterRow, kpiName, r.unit||'', dirLabel(r.direction), monthLabel(r.month),
       isPct ? r.target : round(r.target), isPct ? r.actual : round(r.actual), resultText, r.streak, trendText, '', '',
     ]);
-    if (isPct){ row.getCell(7).numFmt = '0.0%'; row.getCell(8).numFmt = '0.0%'; }
+    if (isPct){ row.getCell(6).numFmt = '0.0%'; row.getCell(7).numFmt = '0.0%'; }
     const fill = r.achieved ? OK_FILL : MISS_FILL;
     const fontColor = r.achieved ? OK_FONT : MISS_FONT;
     row.eachCell(c => {
@@ -1050,23 +1051,23 @@ async function buildMailExcelFile(items, scopeLabelKo, scopeLabelEn){
       c.border = {top:THIN, bottom:THIN, left:THIN, right:THIN};
       c.alignment = {vertical:'middle', wrapText:true};
     });
-    row.getCell(9).font = {bold:true, color:{argb:fontColor}}; // 판정 칸 강조
+    row.getCell(8).font = {bold:true, color:{argb:fontColor}}; // 판정 칸 강조
+    row.getCell(6).alignment = {horizontal:'right'};
     row.getCell(7).alignment = {horizontal:'right'};
-    row.getCell(8).alignment = {horizontal:'right'};
-    row.getCell(10).alignment = {horizontal:'center'};
+    row.getCell(9).alignment = {horizontal:'center'};
     // 웹 화면의 "N개월 연속 미달성"/"최근 악화" 배지처럼, 심각한 상태는 굵은 진한 빨강
     // 배경+흰 글씨로 강조해서 평범한 텍스트 사이에서도 바로 눈에 띄게 한다
     if (r.streak>=3){
+      row.getCell(9).fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFB0362B'}};
+      row.getCell(9).font = {bold:true, color:{argb:'FFFFFFFF'}};
+    }
+    if (r.trend==='down'){
       row.getCell(10).fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFB0362B'}};
       row.getCell(10).font = {bold:true, color:{argb:'FFFFFFFF'}};
     }
-    if (r.trend==='down'){
-      row.getCell(11).fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFB0362B'}};
-      row.getCell(11).font = {bold:true, color:{argb:'FFFFFFFF'}};
-    }
     // 미달성 행만 사유/만회대책 칸을 입력용(노랑)으로 강조
     if (!r.achieved){
-      [12,13].forEach(ci => {
+      [11,12].forEach(ci => {
         const cell = row.getCell(ci);
         cell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:INPUT_FILL}};
         cell.border = {top:INPUT_BORDER, bottom:INPUT_BORDER, left:INPUT_BORDER, right:INPUT_BORDER};
@@ -1080,8 +1081,8 @@ async function buildMailExcelFile(items, scopeLabelKo, scopeLabelEn){
   if (lastRow > 1) {
     // Target/Actual 칸에 엑셀 자체 막대그래프(Data Bar) 서식을 넣어서, 파일을 열자마자
     // 웹 화면의 목표 대비 실적 막대와 같은 느낌을 바로 볼 수 있게 한다.
-    ws.addConditionalFormatting({ ref: `G2:G${lastRow}`, rules: [{ type:'dataBar', color:{argb:'FFB9C6D6'}, cfvo:[{type:'min'},{type:'max'}], gradient:true }] });
-    ws.addConditionalFormatting({ ref: `H2:H${lastRow}`, rules: [{ type:'dataBar', color:{argb:'FF3C7FB1'}, cfvo:[{type:'min'},{type:'max'}], gradient:true }] });
+    ws.addConditionalFormatting({ ref: `F2:F${lastRow}`, rules: [{ type:'dataBar', color:{argb:'FFB9C6D6'}, cfvo:[{type:'min'},{type:'max'}], gradient:true }] });
+    ws.addConditionalFormatting({ ref: `G2:G${lastRow}`, rules: [{ type:'dataBar', color:{argb:'FF3C7FB1'}, cfvo:[{type:'min'},{type:'max'}], gradient:true }] });
   }
   const fname = `HDPS_KPI_${plantLabel()}_${monthLabel(selectedMonth)}_${scopeForName}.xlsx`;
   const buf = await wb.xlsx.writeBuffer();
