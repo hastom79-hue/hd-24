@@ -114,6 +114,9 @@
   .hd24-tab-bar-wrap { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:0 0 16px 0; border-bottom:1px solid var(--line); }
   .hd24-tab-bar { display:flex; gap:6px; margin:0; border-bottom:none; }
   .hd24-plant-badge { font-size:12px; font-weight:700; color:var(--accent-dark); background:var(--ok-bg); border:1px solid var(--accent); border-radius:20px; padding:5px 14px; white-space:nowrap; margin-bottom:6px; }
+  .hd24-mail-month-chip { display:inline-flex; align-items:center; gap:5px; font-size:13px; padding:6px 12px; border-radius:16px; border:1px solid var(--line); background:#fff; cursor:pointer; user-select:none; }
+  .hd24-mail-month-chip input { margin:0; }
+  .hd24-mail-month-chip.checked { background:var(--accent-dark); color:#fff; border-color:var(--accent-dark); }
   .hd24-tab { appearance:none; border:none; background:none; padding:10px 16px; font-size:14px; font-weight:600; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; }
   .hd24-tab:hover { color:var(--ink); }
   .hd24-tab.active { color:var(--accent-dark); border-bottom-color:var(--accent-dark); }
@@ -222,6 +225,9 @@
 
     <div id="quickMailBox" style="margin:16px 0 20px; padding:16px; background:#f5f8fb; border:1px solid var(--line); border-radius:6px;">
       <div class="hd24-section-tag">빠른 메일 발송</div>
+      <div class="field-row"><label>발송 대상 월</label>
+        <div id="hd24MailMonths" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+      </div>
       <div class="field-row"><label>담당자</label>
         <select id="contactSelect" style="max-width:100%;">
           <option value="">— 직접 입력 —</option>
@@ -739,6 +745,30 @@ function renderResults(results){
   selectedMonth = months[months.length-1];
   renderMonthStrip();
   renderTable();
+  renderMailMonthChips(months);
+}
+// 메일 발송 시 여러 달(예: 6월+7월 둘 다 못 보낸 경우)을 한꺼번에 고를 수 있게 하는
+// 체크박스 칩. 기본값은 최신월 하나만 선택된 상태(기존과 동일한 동작 유지).
+let selectedMailMonths = new Set();
+function renderMailMonthChips(months){
+  const box = document.getElementById('hd24MailMonths');
+  if (!box) return;
+  if (selectedMailMonths.size === 0) selectedMailMonths = new Set([selectedMonth]);
+  box.innerHTML = '';
+  months.forEach(mo => {
+    const label = document.createElement('label');
+    label.className = 'hd24-mail-month-chip' + (selectedMailMonths.has(mo) ? ' checked' : '');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = selectedMailMonths.has(mo);
+    cb.addEventListener('change', () => {
+      if (cb.checked) selectedMailMonths.add(mo); else selectedMailMonths.delete(mo);
+      if (selectedMailMonths.size === 0) { selectedMailMonths.add(mo); cb.checked = true; } // 최소 1개월은 유지
+      label.classList.toggle('checked', cb.checked);
+    });
+    label.append(cb, document.createTextNode(monthLabel(mo)));
+    box.appendChild(label);
+  });
 }
 function renderMonthStrip(){
   const months = [...new Set(allResults.map(r=>r.month))].sort((a,b)=>a-b);
@@ -965,6 +995,10 @@ function gapAmount(r){
   if (typeof r.target !== 'number' || typeof r.actual !== 'number' || !isFinite(r.target) || !isFinite(r.actual)) return null;
   return r.direction === '하향' ? (r.actual - r.target) : (r.target - r.actual); // positive = shortfall
 }
+function itemsMonthLabel(items, en){
+  const months = [...new Set(items.map(r=>r.month))].sort((a,b)=>a-b);
+  return months.map(mo => en ? MONTH_EN[mo-1] : (mo+'월')).join('+');
+}
 function buildMailBody(items, scopeLabelKo, scopeLabelEn, showStatus){
   const en = currentLang==='en';
   const scopeLabel = en ? scopeLabelEn : scopeLabelKo;
@@ -977,8 +1011,8 @@ function buildMailBody(items, scopeLabelKo, scopeLabelEn, showStatus){
   lines.push(toName ? (en?`Dear ${toName},`:`${toName}님, 안녕하세요.`) : (en?'Hello,':'안녕하세요,'));
   lines.push('');
   lines.push(en
-    ? `Please review the ${plantLabel()} HDPS KPI results for ${monthLabel(selectedMonth)} (${scopeLabel}) in the attached Excel file, and reply with the reason, root cause, and recovery plan for each not-achieved KPI.`
-    : `${cfg().label} 사업장 HDPS KPI 결과(${scopeLabel})를 첨부 엑셀 파일로 안내드립니다 — ${selectedMonth}월 기준. 미달성 지표별로 사유·근본원인·만회대책을 회신 부탁드립니다.`);
+    ? `Please review the ${plantLabel()} HDPS KPI results for ${itemsMonthLabel(items, true)} (${scopeLabel}) in the attached Excel file, and reply with the reason, root cause, and recovery plan for each not-achieved KPI.`
+    : `${cfg().label} 사업장 HDPS KPI 결과(${scopeLabel})를 첨부 엑셀 파일로 안내드립니다 — ${itemsMonthLabel(items, false)} 기준. 미달성 지표별로 사유·근본원인·만회대책을 회신 부탁드립니다.`);
   lines.push('');
   lines.push(en
     ? `Summary: ${items.length} total, ${ok.length} achieved, ${miss.length} not achieved.`
@@ -1076,7 +1110,7 @@ async function buildMailExcelFile(items, scopeLabelKo, scopeLabelEn){
   }
   ws.autoFilter = { from:{row:1,column:1}, to:{row:1,column:header.length} };
 
-  const scopeForName = scopeLabel.replace(/[^\w가-힣]/g,'');
+  const scopeForName = scopeLabel.replace(/^([\w가-힣]+\+)*[\w가-힣]+\s+/,'').replace(/[^\w가-힣]/g,'');
   const lastRow = items.length + 1;
   if (lastRow > 1) {
     // Target/Actual 칸에 엑셀 자체 막대그래프(Data Bar) 서식을 넣어서, 파일을 열자마자
@@ -1084,7 +1118,7 @@ async function buildMailExcelFile(items, scopeLabelKo, scopeLabelEn){
     ws.addConditionalFormatting({ ref: `F2:F${lastRow}`, rules: [{ type:'dataBar', color:{argb:'FFB9C6D6'}, cfvo:[{type:'min'},{type:'max'}], gradient:true }] });
     ws.addConditionalFormatting({ ref: `G2:G${lastRow}`, rules: [{ type:'dataBar', color:{argb:'FF3C7FB1'}, cfvo:[{type:'min'},{type:'max'}], gradient:true }] });
   }
-  const fname = `HDPS_KPI_${plantLabel()}_${monthLabel(selectedMonth)}_${scopeForName}.xlsx`;
+  const fname = `HDPS_KPI_${plantLabel()}_${itemsMonthLabel(items, currentLang==='en').replace(/\+/g,'-')}_${scopeForName}.xlsx`;
   const buf = await wb.xlsx.writeBuffer();
   const file = new File([buf], fname, {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
   return {file, fname, buf};
@@ -1104,8 +1138,8 @@ async function openMailDraft(items, scopeLabelKo, scopeLabelEn, showStatus){
   if (!to){ alert(en ? 'Please enter the recipient email first.' : '담당자 이메일을 먼저 입력해주세요.'); mailToInput.focus(); return; }
 
   const subject = en
-    ? `[HDPS KPI ${showStatus?'Status':'Alert'}] ${plantLabel()} - ${monthLabel(selectedMonth)} (${items.length} items)`
-    : `[HDPS KPI ${showStatus?'현황':'미달성 알림'}] ${cfg().label} - ${selectedMonth}월 (${items.length}건)`;
+    ? `[HDPS KPI ${showStatus?'Status':'Alert'}] ${plantLabel()} - ${itemsMonthLabel(items, true)} (${items.length} items)`
+    : `[HDPS KPI ${showStatus?'현황':'미달성 알림'}] ${cfg().label} - ${itemsMonthLabel(items, false)} (${items.length}건)`;
 
   const {file, fname} = await buildMailExcelFile(items, scopeLabelKo, scopeLabelEn);
 
@@ -1137,17 +1171,24 @@ async function openMailDraft(items, scopeLabelKo, scopeLabelEn, showStatus){
 }
 
 document.getElementById('btnMailMonth').addEventListener('click', () => {
-  const items = allResults.filter(r => r.month===selectedMonth && !r.achieved);
-  openMailDraft(items, '이번 달 미달성 전체', "this month's not-achieved items", false);
+  const items = allResults.filter(r => selectedMailMonths.has(r.month) && !r.achieved);
+  openMailDraft(items, mailMonthScopeLabel('이번 달 미달성 전체', false), mailMonthScopeLabel("not-achieved items", true), false);
 });
 document.getElementById('btnMailWatch').addEventListener('click', () => {
-  const items = allResults.filter(r => r.month===selectedMonth && (r.streak>=2 || r.trend==='down'));
-  openMailDraft(items, '연속 미달성 또는 최근 악화 추세', 'consecutive-miss / recently worsening items', false);
+  const items = allResults.filter(r => selectedMailMonths.has(r.month) && (r.streak>=2 || r.trend==='down'));
+  openMailDraft(items, mailMonthScopeLabel('연속 미달성 또는 최근 악화 추세', false), mailMonthScopeLabel('consecutive-miss / recently worsening items', true), false);
 });
 document.getElementById('btnMailAll').addEventListener('click', () => {
-  const items = allResults.filter(r => r.month===selectedMonth);
-  openMailDraft(items, '이번 달 전체 지표(달성+미달성)', "this month's full KPI list (achieved + not achieved)", true);
+  const items = allResults.filter(r => selectedMailMonths.has(r.month));
+  openMailDraft(items, mailMonthScopeLabel('전체 지표(달성+미달성)', false), mailMonthScopeLabel("full KPI list (achieved + not achieved)", true), true);
 });
+// 선택한 월이 여러 개면 "6월+7월"/"Jun+Jul" 식으로 라벨 앞에 같이 표시해서, 어느
+// 달들을 합쳐 보낸 건지 메일 본문·로그·파일명에서도 알 수 있게 한다.
+function mailMonthScopeLabel(base, en){
+  const months = [...selectedMailMonths].sort((a,b)=>a-b);
+  const monthsText = months.map(mo => en ? MONTH_EN[mo-1] : (mo+'월')).join('+');
+  return `${monthsText} ${base}`;
+}
 
 const HISTORY_KEY = 'hdps_history_v1';
 function loadHistory(){
