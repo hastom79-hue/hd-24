@@ -302,7 +302,19 @@ function currentUploadSig(){
 }
 
 const logEl = document.getElementById('log');
-function log(msg){ logEl.textContent += '\n' + msg; logEl.scrollTop = logEl.scrollHeight; }
+function log(msg){
+  logEl.textContent += '\n' + msg;
+  logEl.scrollTop = logEl.scrollHeight;
+  // 오류 메시지는 평소 접혀있어도 바로 눈에 띄도록 로그 패널을 자동으로 펼친다
+  if (/오류|실패|불일치|중단/.test(msg)) {
+    const logPanel = document.getElementById('log')?.closest('.hd24-log-panel');
+    const toggleBtn = document.getElementById('hd24LogToggle');
+    if (logPanel && logPanel.classList.contains('collapsed')) {
+      logPanel.classList.remove('collapsed');
+      if (toggleBtn) toggleBtn.textContent = '실행 로그 ▴';
+    }
+  }
+}
 function cfg(){ return PLANT_CONFIG[currentPlant]; }
 
 async function loadMapping(){
@@ -1301,7 +1313,9 @@ function setupTabs(){
   const anchor = workGrid || topPanels[0];
   if (anchor) anchor.before(barWrap); else main.prepend(barWrap); // 새 엘리먼트만 삽입, 기존 엘리먼트는 옮기지 않음
 
-  // 실행 로그: 탭이 아니라 접었다 펼 수 있는 상시노출 패널로 전환 (제자리에서 스타일만 변경)
+  // 실행 로그: 탭이 아니라 접었다 펼 수 있는 상시노출 패널로 전환하고, 문제를 바로
+  // 알아챌 수 있도록 탭 바로 아래(맨 위)로 옮긴다. input[type=file] 같은 특수 엘리먼트가
+  // 아니라 평범한 텍스트 div라 재배치에 따른 부작용 위험이 없다.
   if (logPanel){
     const h2 = logPanel.querySelector('h2');
     const logToggleBtn = document.createElement('button');
@@ -1315,6 +1329,7 @@ function setupTabs(){
       const collapsed = logPanel.classList.toggle('collapsed');
       logToggleBtn.textContent = '실행 로그 ' + (collapsed ? '▾' : '▴');
     });
+    barWrap.after(logPanel);
   }
 
   // 담당자 관리: 설정성 항목이라 기본은 접어두고 필요할 때만 펼치도록 전환
