@@ -1054,6 +1054,16 @@ async function buildMailExcelFile(items, scopeLabelKo, scopeLabelEn){
     row.getCell(7).alignment = {horizontal:'right'};
     row.getCell(8).alignment = {horizontal:'right'};
     row.getCell(10).alignment = {horizontal:'center'};
+    // 웹 화면의 "N개월 연속 미달성"/"최근 악화" 배지처럼, 심각한 상태는 굵은 진한 빨강
+    // 배경+흰 글씨로 강조해서 평범한 텍스트 사이에서도 바로 눈에 띄게 한다
+    if (r.streak>=3){
+      row.getCell(10).fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFB0362B'}};
+      row.getCell(10).font = {bold:true, color:{argb:'FFFFFFFF'}};
+    }
+    if (r.trend==='down'){
+      row.getCell(11).fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFB0362B'}};
+      row.getCell(11).font = {bold:true, color:{argb:'FFFFFFFF'}};
+    }
     // 미달성 행만 사유/만회대책 칸을 입력용(노랑)으로 강조
     if (!r.achieved){
       [12,13].forEach(ci => {
@@ -1070,8 +1080,8 @@ async function buildMailExcelFile(items, scopeLabelKo, scopeLabelEn){
   if (lastRow > 1) {
     // Target/Actual 칸에 엑셀 자체 막대그래프(Data Bar) 서식을 넣어서, 파일을 열자마자
     // 웹 화면의 목표 대비 실적 막대와 같은 느낌을 바로 볼 수 있게 한다.
-    ws.addConditionalFormatting({ ref: `G2:G${lastRow}`, rules: [{ type:'dataBar', color:{argb:'FFB9C6D6'}, cfvo:[{type:'min'},{type:'max'}], gradient:false, border:true }] });
-    ws.addConditionalFormatting({ ref: `H2:H${lastRow}`, rules: [{ type:'dataBar', color:{argb:'FF3C7FB1'}, cfvo:[{type:'min'},{type:'max'}], gradient:false, border:true }] });
+    ws.addConditionalFormatting({ ref: `G2:G${lastRow}`, rules: [{ type:'dataBar', color:{argb:'FFB9C6D6'}, cfvo:[{type:'min'},{type:'max'}], gradient:true }] });
+    ws.addConditionalFormatting({ ref: `H2:H${lastRow}`, rules: [{ type:'dataBar', color:{argb:'FF3C7FB1'}, cfvo:[{type:'min'},{type:'max'}], gradient:true }] });
   }
   const fname = `HDPS_KPI_${plantLabel()}_${monthLabel(selectedMonth)}_${scopeForName}.xlsx`;
   const buf = await wb.xlsx.writeBuffer();

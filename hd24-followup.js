@@ -73,6 +73,13 @@ async function buildReplyFile(items){if(typeof ExcelJS==='undefined')throw new E
   items.forEach((r,idx)=>{const rec=recurrenceFor(r),last=rec?.latest||{},mh=lastMailFor(r);const isPct=r.unit==='%';const row=ws.addRow([pname(),month(),r.kpi||'',r.kpiEn||'',r.unit||'',isPct?(typeof r.target==='number'?r.target:null):(r.target??''),isPct?(typeof r.actual==='number'?r.actual:null):(r.actual??''),tags(r).join(' / '),rec?.isRecurrence?`YES (same cause x${rec.sameCauseCount})`:'NO',last.rootCause||last.reason||'',last.recoveryPlan||'',mh.preparedAt||'',mh.sentAt||mh.mailOpenedAt||'',last.replyReceivedAt||'','','','','','','','']);
     if(isPct){row.getCell(6).numFmt='0.0%';row.getCell(7).numFmt='0.0%'}else{row.getCell(6).numFmt='0.00';row.getCell(7).numFmt='0.00'}
     for(let ci=1;ci<=21;ci++)row.getCell(ci).fill={type:'pattern',pattern:'solid',fgColor:{argb:MISS_FILL}};
+    // 웹 화면의 "7개월 연속 미달성"/"최근 악화" 배지처럼, 심각한 상태는 셀 자체를 굵은 진한
+    // 빨강 배경+흰 글씨로 강조해서 표에서 바로 눈에 띄게 한다 (그냥 평범한 텍스트면 놓치기 쉬움)
+    const statusCell = row.getCell(8);
+    if (r.streak>=3 || r.trend==='down'){
+      statusCell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFB0362B'}};
+      statusCell.font = {bold:true, color:{argb:'FFFFFFFF'}};
+    }
     [15,16,17,18,19,20,21].forEach(ci=>{row.getCell(ci).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFFF99'}};row.getCell(ci).alignment={wrapText:true,vertical:'top'}});
   });
   const lastRow = items.length + 1;
@@ -80,8 +87,8 @@ async function buildReplyFile(items){if(typeof ExcelJS==='undefined')throw new E
     // Target/Actual 칸에 엑셀 자체 막대그래프(Data Bar) 서식을 넣어서, 파일을 열자마자
     // 웹 화면의 목표 대비 실적 막대와 같은 느낌을 바로 볼 수 있게 한다 (mailto는
     // 스크린샷/첨부를 지원하지 않아서, 엑셀 자체를 시각적으로 만드는 쪽으로 대신함).
-    ws.addConditionalFormatting({ ref: `F2:F${lastRow}`, rules: [{ type:'dataBar', color:{argb:'FFB9C6D6'}, cfvo:[{type:'min'},{type:'max'}], gradient:false, border:true }] });
-    ws.addConditionalFormatting({ ref: `G2:G${lastRow}`, rules: [{ type:'dataBar', color:{argb:'FFCE5A4F'}, cfvo:[{type:'min'},{type:'max'}], gradient:false, border:true }] });
+    ws.addConditionalFormatting({ ref: `F2:F${lastRow}`, rules: [{ type:'dataBar', color:{argb:'FFB9C6D6'}, cfvo:[{type:'min'},{type:'max'}], gradient:true }] });
+    ws.addConditionalFormatting({ ref: `G2:G${lastRow}`, rules: [{ type:'dataBar', color:{argb:'FFCE5A4F'}, cfvo:[{type:'min'},{type:'max'}], gradient:true }] });
   }
   ws.views=[{state:'frozen',ySplit:1,xSplit:5}];ws.autoFilter={from:'A1',to:'U1'};const buf=await wb.xlsx.writeBuffer();const fname=`HDPS_KPI_Response_${pname()}_${month()}M.xlsx`;return {buf,fname,file:new File([buf],fname,{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})};}
 function downloadFile(file){const u=URL.createObjectURL(file),a=document.createElement('a');a.href=u;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(u),30000)}
