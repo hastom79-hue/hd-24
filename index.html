@@ -271,6 +271,7 @@
 
   <section class="panel" id="spotCheckPanel">
     <h2>🎲 중점관리 집중점검</h2>
+    <div id="spotCheckPlantBadge" class="hd24-plant-badge" style="margin-bottom:10px;"></div>
     <p class="hint">당해년도 판정 데이터에서 "당월 미달성 · 누적형 미달성 · 장기(3개월+) 미달성" 세 가지 관점으로 각각 무작위 1개씩 뽑아, 사업장이 지표를 평소에 잘 관리하고 있는지 스팟 점검합니다.</p>
     <div style="background:#f5f8fb; border:1px solid var(--line); border-radius:6px; padding:12px 16px; margin-bottom:16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
       <label for="spotCheckScheduleDay" style="font-size:13px; font-weight:600;">정기 집중점검일: 매월</label>
@@ -481,6 +482,8 @@ function applyPlantUI(){
   if (isUlsan && currentLang !== 'ko') setLang('ko');
   const plantBadge = document.getElementById('hd24PlantBadge');
   if (plantBadge) plantBadge.textContent = '현재 사업장: ' + cfg().label;
+  const spotBadge = document.getElementById('spotCheckPlantBadge');
+  if (spotBadge) spotBadge.textContent = '사업장: ' + cfg().label;
   document.querySelectorAll('.hd24-plant-card').forEach(card => {
     card.classList.toggle('active', card.dataset.plant === currentPlant);
   });
