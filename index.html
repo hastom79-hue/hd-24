@@ -137,8 +137,8 @@
   .hd24-log-panel.collapsed #log { display:none; }
   .hd24-log-panel #log { max-height:260px; overflow-y:auto; }
   .hd24-collapsible-panel.collapsed > *:not(:first-child) { display:none; }
-  .hd24-plant-cards { display:flex; gap:10px; flex-wrap:wrap; }
-  .hd24-plant-card { display:flex; flex-direction:column; align-items:center; gap:4px; width:110px; padding:12px 8px; border:2px solid var(--line); border-radius:10px; background:#fff; cursor:pointer; text-align:center; }
+  .hd24-plant-cards { display:flex; gap:10px; flex-wrap:nowrap; }
+  .hd24-plant-card { display:flex; flex:1 1 0; flex-direction:column; align-items:center; gap:4px; min-width:0; padding:12px 6px; border:2px solid var(--line); border-radius:10px; background:#fff; cursor:pointer; text-align:center; }
   .hd24-plant-card:hover { border-color:var(--accent); background:#f5f9fc; }
   .hd24-plant-card.active { border-color:var(--accent-dark); background:var(--ok-bg); box-shadow:0 0 0 2px var(--accent-dark) inset; }
   .hd24-plant-tag { font-size:10px; font-weight:800; letter-spacing:.04em; padding:2px 8px; border-radius:10px; }
