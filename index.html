@@ -1289,10 +1289,14 @@ let spotCheckDrawn = [];
 function spotCheckPools(){
   const miss = (allResults||[]).filter(r => !r.achieved);
   const latestMonth = miss.length ? Math.max(...(allResults||[]).map(r=>r.month)) : null;
+  // "누적형"/"장기미달성"도 판단 기준(연중 언제 그랬는지)과 무관하게, 실제로 뽑혀서
+  // 보여줄 때는 항상 "지금(최신월) 기준" 상태여야 한다 — 그래야 옛날 달의 목표/실적이
+  // 뽑혀서 "이게 왜 이렇게 나오지" 싶은 혼란이 없다. 그래서 셋 다 latestMonth로 제한한다.
+  const latest = miss.filter(r => r.month === latestMonth);
   return {
-    month: miss.filter(r => r.month === latestMonth),           // 당월 미달성
-    cum:   miss.filter(r => r.isCumulative),                    // 누적형 미달성
-    long:  miss.filter(r => r.streak >= 3),                     // 장기(3개월+) 미달성
+    month: latest,                              // 당월 미달성
+    cum:   latest.filter(r => r.isCumulative),  // 누적형 미달성 (현재도 미달성인 것만)
+    long:  latest.filter(r => r.streak >= 3),   // 장기(3개월+) 미달성 (현재도 미달성인 것만)
   };
 }
 function pickRandom(arr, exclude){
