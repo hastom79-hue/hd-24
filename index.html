@@ -263,6 +263,7 @@
       <button type="button" id="btnSpotCheckReport" class="ghost">📄 점검 보고서 다운로드</button>
       <button type="button" id="btnSpotCheckMail" class="ghost">✉️ 이 지표들로 대응 메일 작성</button>
     </div>
+    <div id="spotCheckHistory"></div>
   </section>
 
   <section class="panel">
@@ -361,6 +362,7 @@ document.getElementById('plantSelect').addEventListener('change', async (e) => {
   checkReady();
   await loadMapping();
   loadLatestHistoryForPlant(); // 사업장 선택 즉시, 저장된 이력 중 가장 최근 판정 결과를 바로 보여준다
+  if (typeof renderSpotCheckHistory === 'function') renderSpotCheckHistory();
 });
 
 function showHistoricalResultNotice(time, plantLabel){
@@ -765,6 +767,7 @@ function renderResults(results){
   renderMonthStrip();
   renderTable();
   renderMailMonthChips(months);
+  if (typeof renderSpotCheckHistory === 'function') renderSpotCheckHistory();
 }
 // 메일 발송 시 여러 달(예: 6월+7월 둘 다 못 보낸 경우)을 한꺼번에 고를 수 있게 하는
 // 체크박스 칩. 기본값은 최신월 하나만 선택된 상태(기존과 동일한 동작 유지).
@@ -1286,6 +1289,49 @@ function startSpotCheckMail(){
   renderMailMonthChips([...new Set((allResults||[]).map(r=>r.month))].sort((a,b)=>a-b));
   openMailDraft(spotCheckDrawn, mailMonthScopeLabel('집중점검 대상 지표', false), mailMonthScopeLabel('spot-check sampled indicators', true), false);
   if (window.hd24SwitchTab) window.hd24SwitchTab('mail');
+  saveSpotCheckDirective(spotCheckDrawn); // 메일로 실제 지시한 시점의 스냅샷을 남겨서, 다음 달에 개선됐는지 비교할 수 있게 함
+}
+
+// ---------- 수시점검 지시 이력 — 다음 달에 실제로 개선됐는지 자동 확인 ----------
+const SPOTCHECK_KEY = 'hd24_spotcheck_directives_v1';
+function loadSpotCheckDirectives(){
+  try { return JSON.parse(localStorage.getItem(SPOTCHECK_KEY) || '[]'); } catch(_) { return []; }
+}
+function saveSpotCheckDirective(drawn){
+  const list = loadSpotCheckDirectives();
+  list.unshift({
+    directedAt: new Date().toISOString(),
+    plantKey: currentPlant,
+    plant: cfg().label,
+    items: drawn.map(r => ({masterRow:r.masterRow, kpi:r.kpi, kpiEn:r.kpiEn||'', month:r.month, target:r.target, actual:r.actual, streak:r.streak, unit:r.unit, category:r.__spotCat})),
+  });
+  localStorage.setItem(SPOTCHECK_KEY, JSON.stringify(list.slice(0, 200)));
+  renderSpotCheckHistory();
+}
+// 지시했던 지표가 그 이후(더 최신 월) 판정에서 달성으로 바뀌었는지 현재 allResults에서 찾아본다.
+// 같은 masterRow 기준으로, 지시월보다 뒤의 가장 최신 판정 결과를 비교 대상으로 삼는다.
+function followUpStatus(item){
+  const later = (allResults||[]).filter(r => r.masterRow===item.masterRow && r.month>item.month).sort((a,b)=>b.month-a.month)[0];
+  if (!later) return {status:'no-data'};
+  return {status: later.achieved ? 'improved' : 'still-miss', month: later.month, target: later.target, actual: later.actual, streak: later.streak};
+}
+function renderSpotCheckHistory(){
+  const box = document.getElementById('spotCheckHistory');
+  if (!box) return;
+  const list = loadSpotCheckDirectives().filter(d => d.plantKey === currentPlant);
+  if (!list.length){ box.innerHTML = ''; return; }
+  const rows = list.slice(0, 20).map(d => {
+    const itemRows = d.items.map(item => {
+      const fu = followUpStatus(item);
+      let statusHtml;
+      if (!fu || fu.status==='no-data') statusHtml = `<span style="color:var(--muted)">⏳ 아직 그 뒤 판정 없음</span>`;
+      else if (fu.status==='improved') statusHtml = `<span style="color:#1e6b47; font-weight:700">✅ 개선됨 (${monthLabel(fu.month)}: ${fmtValWithUnit(fu.target, item.unit)} / ${fmtValWithUnit(fu.actual, item.unit)})</span>`;
+      else statusHtml = `<span style="color:#9a3324; font-weight:700">❌ 아직 미달성 (${monthLabel(fu.month)}: 연속 ${fu.streak}개월)</span>`;
+      return `<div style="padding:6px 0; border-top:1px solid var(--line); font-size:13px;">[${item.masterRow}] ${item.kpi} (${monthLabel(item.month)} 지시) → ${statusHtml}</div>`;
+    }).join('');
+    return `<div class="hd24-spot-card"><div class="hd24-spot-meta" style="margin-bottom:6px;">📌 ${new Date(d.directedAt).toLocaleString('ko-KR')} 지시</div>${itemRows}</div>`;
+  }).join('');
+  box.innerHTML = `<div class="hd24-section-tag" style="margin-top:20px;">지난 수시점검 지시 이력 · 개선 여부 확인</div>${rows}`;
 }
 document.getElementById('btnSpotCheckDraw').addEventListener('click', drawSpotCheck);
 document.getElementById('btnSpotCheckReport').addEventListener('click', downloadSpotCheckReport);
