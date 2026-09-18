@@ -333,8 +333,8 @@
 <script>
 window.hd24SafeReflectReady = false;
 const PLANT_CONFIG = {
-  india: { label:'인도', labelEn:'India', mappingFile:'mapping_india.json', srcSheet:'Final With HQ Suggestion', masterSheet:'인도법인 KPI(26년 보고용)', srcMonthStartCol:15, hasSource:true },
-  brazil:{ label:'브라질', labelEn:'Brazil', mappingFile:'mapping_brazil.json', srcSheet:'HCEB KPIs', masterSheet:'브라질법인 KPI(26년 보고용)', srcMonthStartCol:18, hasSource:true },
+  india: { label:'인도', labelEn:'India', mappingFile:'mapping_india.json', srcSheet:'Final With HQ Suggestion', masterSheet:'인도법인 KPI(26년 보고용)', srcMonthStartCol:15, masterTargetCol:25, masterMonthStartCol:27, hasSource:true },
+  brazil:{ label:'브라질', labelEn:'Brazil', mappingFile:'mapping_brazil.json', srcSheet:'HCEB KPIs', masterSheet:'브라질법인 KPI(26년 보고용)', srcMonthStartCol:18, masterTargetCol:25, masterMonthStartCol:27, hasSource:true },
   ulsan: { label:'울산', labelEn:'Ulsan', mappingFile:'mapping_ulsan.json', masterSheet:'울산캠퍼스 KPI(26년 보고용)', masterTargetCol:28, masterMonthStartCol:30, hasSource:false },
 };
 const SRC_MONTH_HEADER_ROW = 11;
@@ -521,9 +521,13 @@ document.getElementById('masterFile').addEventListener('change', async (e) => {
 });
 function checkReady(){
   const needSrc = cfg().hasSource;
-  const ok = !!((!needSrc || srcWorkbook) && masterWorkbook && masterZip && mappingData.length);
-  document.getElementById('btnReflect').disabled = !(window.hd24SafeReflectReady && ok && needSrc);
-  document.getElementById('btnJudge').disabled = !ok;
+  // 판정은 총괄파일만 있어도 가능하다 — 원본파일 없이 총괄파일에 이미 반영된 과거
+  // 이력(목표/월별 실적)만으로도 판정·집중점검을 볼 수 있게 한다. 실적반영은 원본의
+  // "이번 달 새 실적"이 있어야 하는 작업이라 원본파일이 반드시 필요하다.
+  const judgeOk = !!(masterWorkbook && masterZip && mappingData.length);
+  const reflectOk = !!(needSrc && srcWorkbook && masterWorkbook && masterZip && mappingData.length);
+  document.getElementById('btnReflect').disabled = !(window.hd24SafeReflectReady && reflectOk);
+  document.getElementById('btnJudge').disabled = !judgeOk;
 }
 
 // ---------- 셀/텍스트 유틸 ----------
@@ -685,7 +689,7 @@ document.getElementById('btnJudge').addEventListener('click', (clickEvent) => {
     hideHistoricalNotice(); // 실제 새 판정이 시작되면 "저장된 이력" 안내는 지운다
     const byRow = {};
 
-    if (cfg().hasSource) {
+    if (cfg().hasSource && srcWorkbook) {
       const srcWs = srcWorkbook.Sheets[cfg().srcSheet], masterWs = masterWorkbook.Sheets[cfg().masterSheet];
       const srcWsRaw = srcWorkbookRaw ? srcWorkbookRaw.Sheets[cfg().srcSheet] : null;
       const resolved = resolveMappings(srcWs, masterWs);
@@ -710,7 +714,10 @@ document.getElementById('btnJudge').addEventListener('click', (clickEvent) => {
         if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, kpiEn:m.kpiEn||m.kpiKr, direction:m.direction, unit:m.unit||"", months:hist, isCumulative};
       }
     } else {
-      // 울산: 별도 원본파일 없음. 총괄파일 안의 (연간 고정)목표와 월별 실적을 그대로 사용
+      // 원본파일 없이 총괄파일만 있는 경우(울산은 원래 구조가 이렇고, 인도/브라질도 원본을
+      // 아직 안 올렸으면 이 경로로) — 총괄파일 안의 (연간 고정)목표와 월별 실적을 그대로 사용.
+      // 총괄파일에 이미 반영된 과거 달까지는 판정/집중점검이 가능하지만, 아직 반영 전인
+      // 이번 달 최신 실적은 원본파일을 올려야 정확히 반영된다.
       const masterWs = masterWorkbook.Sheets[cfg().masterSheet];
       const masterWsRaw = masterWorkbookRaw ? masterWorkbookRaw.Sheets[cfg().masterSheet] : null;
       const targetCol = cfg().masterTargetCol, startCol = cfg().masterMonthStartCol;
@@ -728,7 +735,11 @@ document.getElementById('btnJudge').addEventListener('click', (clickEvent) => {
         }
         if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, kpiEn:m.kpiEn||m.kpiKr, direction:m.direction, unit:m.unit||"", months:hist, isCumulative};
       }
-      log('⚠ 울산은 월별 목표가 아닌 연간 고정목표로 판정합니다 (원본파일이 없어 인도/브라질과 정확도가 다를 수 있음)');
+      if (!cfg().hasSource) {
+        log('⚠ 울산은 월별 목표가 아닌 연간 고정목표로 판정합니다 (원본파일이 없어 인도/브라질과 정확도가 다를 수 있음)');
+      } else {
+        log(`⚠ 원본파일 없이 총괄파일만으로 판정했습니다 — 총괄파일에 이미 반영된 과거 달까지만 정확합니다. 이번 달 최신 실적을 반영하려면 원본 KPI 파일을 올려주세요.`);
+      }
     }
 
     const results = [];
