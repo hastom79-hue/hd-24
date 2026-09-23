@@ -20,17 +20,25 @@ ok(src.includes("if(workCycle!==currentCycle()||signature()!==sig)throw new Erro
 ok(src.includes('cycle:workCycle'),'completion event must carry upload cycle');
 ok(guard.includes('stopImmediatePropagation'),'cycle guard must stop stale completion propagation');
 ok(guard.includes('eventCycle!==currentCycle'),'cycle guard must compare event/current cycles');
-ok(loader.includes('kpi-action-classifier.js?v=23'),'loader must include classifier v23');
-ok(loader.includes('kpi-action-workbook.js?v=23'),'loader must include workbook v23');
-ok(loader.includes('hd24-action-export.js?v=27'),'loader must include action export v27');
-ok(loader.includes('hd24-action-cycle-guard.js?v=1'),'loader must include action cycle guard v1');
-const exportPos=loader.indexOf('hd24-action-export.js?v=27');
-const guardPos=loader.indexOf('hd24-action-cycle-guard.js?v=1');
-const watchdogPos=loader.indexOf('hd24-action-export-watchdog.js?v=1');
-const followPos=loader.indexOf('hd24-followup-sync.js?v=8');
-ok(exportPos>=0&&guardPos>exportPos,'cycle guard must load after action export producer');
-ok(watchdogPos>guardPos,'cycle guard must load before watchdog consumer');
-ok(followPos>guardPos,'cycle guard must load before follow-up consumer');
-ok(refresh.includes('hd24-action-export.js?v=27'),'refresh helper must preload action export v27');
-ok(refresh.includes('hd24-action-cycle-guard.js?v=1'),'refresh helper must preload action cycle guard v1');
-console.log('PASS kpi-action-export v27 upload-cycle fail-closed assertions + consumer load order');
+// Legacy action-export/watchdog/followup-sync modules are retained as regression fixtures only.
+// Production intentionally uses the single current runtime chain; reintroducing the legacy
+// consumers would recreate duplicate execution/race risk.
+ok(!loader.includes('kpi-action-classifier.js'),'production loader must not reintroduce legacy classifier');
+ok(!loader.includes('kpi-action-workbook.js'),'production loader must not reintroduce legacy workbook postprocessor');
+ok(!loader.includes('hd24-action-export.js'),'production loader must not reintroduce legacy action export producer');
+ok(!loader.includes('hd24-action-cycle-guard.js'),'production loader must not reintroduce legacy cycle guard');
+ok(!loader.includes('hd24-action-export-watchdog.js'),'production loader must not reintroduce legacy watchdog');
+ok(!loader.includes('hd24-followup-sync.js'),'production loader must not reintroduce legacy follow-up sync');
+ok(loader.includes('hd24-auto-run.js?v=27'),'production loader must include current auto-run');
+ok(loader.includes('hd24-pipeline-gate.js?v=22'),'production loader must include current pipeline gate');
+ok(loader.includes('hd24-followup.js?v=37'),'production loader must include current follow-up');
+ok(loader.includes('hd24-direct-reply-guard.js?v=2'),'production loader must include direct reply guard');
+ok(loader.includes('hd24-reply-import-dedupe.js?v=1'),'production loader must include reply import dedupe');
+ok(!refresh.includes('hd24-action-export.js'),'refresh helper must not preload legacy action export');
+ok(!refresh.includes('hd24-action-cycle-guard.js'),'refresh helper must not preload legacy cycle guard');
+ok(refresh.includes('hd24-auto-run.js?v=27'),'refresh helper must preload current auto-run');
+ok(refresh.includes('hd24-pipeline-gate.js?v=22'),'refresh helper must preload current pipeline gate');
+ok(refresh.includes('hd24-followup.js?v=37'),'refresh helper must preload current follow-up');
+ok(refresh.includes('hd24-direct-reply-guard.js?v=2'),'refresh helper must preload direct reply guard');
+ok(refresh.includes('hd24-reply-import-dedupe.js?v=1'),'refresh helper must preload reply import dedupe');
+console.log('PASS kpi-action-export legacy fixture invariants + current production runtime wiring');
