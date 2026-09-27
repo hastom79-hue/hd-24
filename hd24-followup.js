@@ -79,6 +79,7 @@ async function buildReplyFile(items){if(typeof ExcelJS==='undefined')throw new E
     : ['Plant','Target Month','KPI','Unit','Target','Actual','Status / Trend','Repeated Issue','Previous Reason / Root Cause','Previous Countermeasure','Last Mail Prepared At','Last Mail Sent At','Last Reply Received At','Reason for Miss / Deterioration','Root Cause','Recovery / Catch-up Plan','Action Owner','Planned Completion Date','Next-month Recovery Target','Responder'];
   ws.columns=cols.map((h,i)=>({header:h,key:'c'+i,width:[12,12,36,10,12,12,24,18,32,32,22,22,22,34,34,36,20,22,24,20][i]}));const hr=ws.getRow(1);hr.font={bold:true,color:{argb:'FFFFFFFF'}};hr.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF2B4A63'}};hr.alignment={vertical:'middle',horizontal:'center',wrapText:true};hr.height=32;
   const MISS_FILL='FFFBEBE7';
+  const STATUS_FILL='FFE2E8F0';
   const plantLabelForFile = isKo ? pnameKo() : pname();
   items.forEach((r,idx)=>{const rec=recurrenceFor(r),last=rec?.latest||{},mh=lastMailFor(r);const isPct=r.unit==='%';const kpiName = isKo ? (r.kpi||r.kpiEn||'') : (r.kpiEn||r.kpi||'');const row=ws.addRow([plantLabelForFile,r.month,kpiName,r.unit||'',isPct?(typeof r.target==='number'?r.target:null):(r.target??''),isPct?(typeof r.actual==='number'?r.actual:null):(r.actual??''),tags(r,isKo).join(' / '),rec?.isRecurrence?(isKo?`예 (동일사유 x${rec.sameCauseCount})`:`YES (same cause x${rec.sameCauseCount})`):(isKo?'아니오':'NO'),last.rootCause||last.reason||'',last.recoveryPlan||'',mh.preparedAt||'',mh.sentAt||mh.mailOpenedAt||'',last.replyReceivedAt||'','','','','','','','']);
     if(isPct){row.getCell(5).numFmt='0.0%';row.getCell(6).numFmt='0.0%'}else{row.getCell(5).numFmt='0.00';row.getCell(6).numFmt='0.00'}
@@ -86,6 +87,7 @@ async function buildReplyFile(items){if(typeof ExcelJS==='undefined')throw new E
     // 웹 화면의 "7개월 연속 미달성"/"최근 악화" 배지처럼, 심각한 상태는 셀 자체를 굵은 진한
     // 빨강 배경+흰 글씨로 강조해서 표에서 바로 눈에 띄게 한다 (그냥 평범한 텍스트면 놓치기 쉬움)
     const statusCell = row.getCell(7);
+    statusCell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:STATUS_FILL}};
     if (r.streak>=3 || r.trend==='down'){
       statusCell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFB0362B'}};
       statusCell.font = {bold:true, color:{argb:'FFFFFFFF'}};
