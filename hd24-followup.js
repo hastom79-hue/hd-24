@@ -24,6 +24,7 @@ function recurrenceFor(r){const h=replyHistoryFor(r);if(h.length<2)return h.leng
 function isActionTarget(r){const rec=recurrenceFor(r);return !r.achieved||r.streak>=2||r.trend==='down'||!!rec?.isRecurrence;}
 function selectItems(mode){const items=current();if(mode==='all')return items;if(mode==='month')return items.filter(r=>!r.achieved);return items.filter(isActionTarget);}
 function tags(r, ko){const out=[];if(ko){if(!r.achieved)out.push('목표 미달');if(r.streak>=3)out.push(`${r.streak}개월 연속 미달성`);else if(r.streak>=2)out.push('일시적/연속 미달성');if(r.trend==='down')out.push('악화 추세');const rec=recurrenceFor(r);if(rec?.isRecurrence)out.push(`반복 이슈 x${rec.sameCauseCount}`);}else{if(!r.achieved)out.push('Target Miss');if(r.streak>=3)out.push(`${r.streak}M Consecutive Miss`);else if(r.streak>=2)out.push('Temporary / Consecutive Miss');if(r.trend==='down')out.push('Worsening');const rec=recurrenceFor(r);if(rec?.isRecurrence)out.push(`Repeated Issue x${rec.sameCauseCount}`);}return out;}
+function statusRich(r){const xs=tags(r,false),richText=[];xs.forEach((v,i)=>{if(i)richText.push({text:' / ',font:{color:{argb:'FF64748B'}}});let color='FF334155';if(v==='Target Miss')color='FFB42318';else if(v.includes('Consecutive Miss'))color='FFB54708';else if(v==='Worsening')color='FF7A3E9D';else if(v.startsWith('Repeated Issue'))color='FF0F6B78';richText.push({text:v,font:{bold:true,color:{argb:color}}})});return {richText}}
 function isEn(){try{return currentLang==='en'}catch(_){return false}}
 function pnameKo(){return pkey()==='india'?'인도':pkey()==='brazil'?'브라질':pkey()==='ulsan'?'울산':pname()}
 function subject(items){
@@ -87,6 +88,7 @@ async function buildReplyFile(items){if(typeof ExcelJS==='undefined')throw new E
     // 웹 화면의 "7개월 연속 미달성"/"최근 악화" 배지처럼, 심각한 상태는 셀 자체를 굵은 진한
     // 빨강 배경+흰 글씨로 강조해서 표에서 바로 눈에 띄게 한다 (그냥 평범한 텍스트면 놓치기 쉬움)
     const statusCell = row.getCell(7);
+    statusCell.value = statusRich(r);
     statusCell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:STATUS_FILL}};
     if (r.streak>=3 || r.trend==='down'){
       statusCell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFB0362B'}};
