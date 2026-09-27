@@ -416,7 +416,7 @@ async function loadMapping(){
   log(cfg().label + ' 매핑 로드: ' + mappingData.length + '건');
 }
 loadMapping();
-loadLatestHistoryForPlant(); // 페이지를 새로 열었을 때도(기본 사업장=인도) 저장된 이력이 있으면 바로 보여준다
+// 과거이력은 사업장 선택만으로 자동 표시하지 않는다. 업로드/실행 완료 후 판정 결과로 이동한다.
 syncSpotCheckScheduleInput();
 renderKpiChangeLog();
 
@@ -430,7 +430,8 @@ document.getElementById('plantSelect').addEventListener('change', async (e) => {
   applyPlantUI();
   checkReady();
   await loadMapping();
-  loadLatestHistoryForPlant(); // 사업장 선택 즉시, 저장된 이력 중 가장 최근 판정 결과를 바로 보여준다
+  // 사업장 선택은 업로드/실행 화면에 그대로 머문다. 과거 이력 자동 로드는 금지한다.
+  if (window.hd24SwitchTab) window.hd24SwitchTab('upload');
   if (typeof renderSpotCheckHistory === 'function') renderSpotCheckHistory();
   if (typeof syncSpotCheckScheduleInput === 'function') syncSpotCheckScheduleInput();
   if (typeof renderKpiChangeLog === 'function') renderKpiChangeLog();
@@ -770,17 +771,13 @@ document.getElementById('btnJudge').addEventListener('click', (clickEvent) => {
       }
     }
     renderResults(results);
-    // 실제 사람이 이 버튼을 직접 눌렀으면 바로 결과 탭으로 이동한다.
-    // 자동화 파이프라인(파일 업로드 즉시 실적반영→판정)이 프로그램적으로 클릭한
-    // 경우(isTrusted===false)에는, 사용자가 아직 파일 입력칸을 만지고 있는 도중에
-    // 화면이 갑자기 넘어가버리는 걸 막기 위해 "마지막 파일 입력으로부터 충분한
-    // 시간(1.2초)이 지났을 때만", 그리고 "같은 파일쌍에 대해 한 번만" 이동한다.
+    // 사업장 선택만으로는 이동하지 않고, 실제 판정 실행이 완료된 뒤에만 결과 화면으로 이동한다.
+    // 수동/자동 실행 모두 renderResults까지 정상 완료된 이 시점이 이동 anchor다.
     const sig = currentUploadSig();
-    const trustedClick = clickEvent && clickEvent.isTrusted;
-    const autoSafeToSwitch = !trustedClick && (Date.now() - lastFileInputChangeAt > 1200) && autoSwitchedForSignature !== sig;
-    if (window.hd24SwitchTab && (trustedClick || autoSafeToSwitch)) {
+    if (window.hd24SwitchTab) {
       window.hd24SwitchTab('results');
-      if (autoSafeToSwitch) { autoSwitchedForSignature = sig; log('자동판정 완료 → 판정 결과 탭으로 자동 이동'); }
+      autoSwitchedForSignature = sig;
+      log('업로드/실행 판정 완료 → 판정 결과 탭으로 이동');
     }
     log('판정 완료: 총 ' + results.length + '건 (연속미달성/추세 포함)');
     const missTotal = results.filter(r=>!r.achieved).length;
