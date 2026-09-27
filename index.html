@@ -148,8 +148,11 @@
   .hd24-plant-name { font-size:13px; font-weight:700; color:var(--ink); }
   /* 업로드 탭이 데스크톱 큰 화면에서 너무 휑해 보이지 않도록: 전체 폭을 좁히고, 입력칸이
      불필요하게 길게 늘어나지 않도록 각 필드행에 최대 너비를 준다 */
-  .hd24-work-grid { max-width:1000px; margin-left:auto; margin-right:auto; }
-  .hd24-source-panel .field-row { max-width:480px; }
+  /* 업로드/실행은 메인 콘텐츠 폭을 적극 활용해 불필요한 좌우 공백을 제거한다. */
+  .hd24-work-grid { width:100%; max-width:none; margin-left:0; margin-right:0; grid-template-columns:minmax(0,1.25fr) minmax(360px,.75fr); gap:14px; }
+  .hd24-source-panel .field-row { width:100%; max-width:none; }
+  .hd24-source-panel .hd24-plant-cards { width:100%; }
+  @media (max-width:950px){ .hd24-work-grid { grid-template-columns:1fr; } }
   @media (max-width: 640px) {
     .hd24-tab-bar { overflow-x:auto; -webkit-overflow-scrolling:touch; flex-wrap:nowrap; }
     .hd24-tab { padding:10px 12px; font-size:13px; white-space:nowrap; flex:0 0 auto; }
