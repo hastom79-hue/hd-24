@@ -23,3 +23,10 @@ ok(src.includes("b&&b.size>1000"),'empty PNG guard missing');
 const vm=ui.match(/hd24-followup\.js\?v=(\d+)/);ok(vm,'production loader missing followup');
 ok(refresh.includes('hd24-followup.js?v='+vm[1]),'refresh/followup cache version mismatch');
 console.log('HD24 FOLLOWUP DEFAULT-SENDER PASS');
+
+ok(src.includes("메일 패키지 준비 시작..."),'send button must expose pipeline start');
+ok(src.includes("2/6 회신 Excel 생성 완료"),'Excel stage completion diagnostic missing');
+ok(src.includes("3/6 KPI PNG 생성 완료"),'PNG stage completion diagnostic missing');
+ok(src.includes("4/6 Outlook EML 생성 완료"),'EML stage completion diagnostic missing');
+ok(src.includes("5/6 Outlook EML 다운로드 시작..."),'EML download stage diagnostic missing');
+ok(src.includes("메일 패키지 생성 실패:"),'top-level send pipeline error diagnostic missing');
