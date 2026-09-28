@@ -47,7 +47,7 @@ ok(src.includes("동일 회신 재Import 차단"),'persistent duplicate reply di
 
 ok(src.includes("lastMailFor(r,Number(r.month)||month())"),'follow-up reply workbook must use each KPI row month for mail-history anchor');
 
-ok(src.includes("replySequence:prev.length+1"),'new non-duplicate reply must advance reply sequence');
+ok(src.includes("replySequence:prev.length+pending.filter")&&src.includes(".length+1"),'new non-duplicate reply must advance reply sequence');
 ok(src.includes("sameCauseCount:same")&&src.includes("isRecurrence:same>=2"),'second same-cause reply must drive recurrence state');
 ok(src.includes("last.rootCause||last.reason||''")&&src.includes("last.recoveryPlan||''"),'follow-up workbook must carry previous cause and countermeasure');
 
