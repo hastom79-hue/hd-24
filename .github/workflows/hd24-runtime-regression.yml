@@ -48,8 +48,11 @@ jobs:
           assert 'window.hd24SafeReflectReady=false' in core
           assert 's.onerror=' in core
           assert "btn.addEventListener('click',safeReflect,true)" in safe
-          required=['KPI 전수검증 실패','미래월 Actual','직전월 원천↔총괄 불일치','historyDrift.push(msg)','수식 셀 반영 차단','중복 KPI×월 대상 감지','반영 후 셀 재검증 실패','반영 건수 불일치','displayPrecisionEqual','validateUnit(srcWs,sr.row,m,masterWs,mr.row)','masterFutureContamination']
+          required=['KPI 전수검증 실패','미래월 Actual','직전월 무결성 불일치','historyDrift.push(msg)','수식 셀 반영 차단','중복 KPI×월 대상 감지','반영 후 셀 재검증 실패','반영 건수 불일치','displayPrecisionEqual','validateUnit(srcWs,sr.row,m,masterWs,mr.row)','masterFutureContamination']
           for token in required: assert token in safe, f'missing safety invariant: {token}'
+          assert '기존 총괄값 보존, 당월 반영 계속' in safe
+          assert 'historyDrift.push(...historyMismatch)' in safe
+          assert '총괄파일 생성 중단' not in safe
 
           assert len(india)==76 and len(brazil)==76
           for plant,data in [('India',india),('Brazil',brazil)]:
