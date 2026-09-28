@@ -67,3 +67,6 @@ ok(src.includes("const list=load(REPLY_KEY),pending=[]"),'reply import atomic st
 ok(src.includes("pending.push({plant,targetMonth")&&src.includes("list.unshift(...pending.reverse());save(REPLY_KEY"),'reply import must commit only after all worksheets finish');
 
 ok(src.includes("const sameReply=x=>")&&src.includes("prev.some(sameReply)||pending.some"),'staged workbook duplicate rows must be deduplicated against prev and pending');
+
+ok(src.includes("String(x.reason||'')===reason")&&src.includes("String(x.rootCause||'')===rootCause")&&src.includes("String(x.recoveryPlan||'')===recoveryPlan"),'dedupe must require identical reply content so changed second replies remain valid');
+ok(src.includes("replySequence:prev.length+pending.filter")&&src.includes("sameCauseCount:same")&&src.includes("isRecurrence:same>=2"),'valid second reply must advance sequence and remain recurrence-eligible');
