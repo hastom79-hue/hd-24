@@ -359,17 +359,11 @@ function currentUploadSig(){
 
 const logEl = document.getElementById('log');
 function log(msg){
-  logEl.textContent += '\n' + msg;
+  const raw=String(msg??'');
+  const preserved=/기존 총괄값 보존|과거 개정\/잔존값 차이|과거 개정차이 경고/.test(raw);
+  const line=preserved?'[참고·보존] '+raw:/오류|실패|중단|차단/.test(raw)?'[ERROR] '+raw:raw;
+  logEl.textContent += '\n' + line;
   logEl.scrollTop = logEl.scrollHeight;
-  // 오류 메시지는 평소 접혀있어도 바로 눈에 띄도록 로그 패널을 자동으로 펼친다
-  if (/오류|실패|불일치|중단/.test(msg)) {
-    const logPanel = document.getElementById('log')?.closest('.hd24-log-panel');
-    const toggleBtn = document.getElementById('hd24LogToggle');
-    if (logPanel && logPanel.classList.contains('collapsed')) {
-      logPanel.classList.remove('collapsed');
-      if (toggleBtn) toggleBtn.textContent = '실행 로그 ▴';
-    }
-  }
   // 안전 매핑 검증에서 KPI를 못 찾아 "반영 차단"된 경우 — 현업에서 지표를 슬쩍 바꿔서
   // 관리하는 경우를 놓치지 않기 위해, 이 순간을 감지해서 사유를 남기도록 배너로 알린다.
   // (기존의 판정/반영 차단 로직 자체는 안전을 위해 그대로 두고, 감지·기록만 추가함)
