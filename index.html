@@ -210,11 +210,15 @@
   <section class="panel">
     <h2>자동 실행</h2>
     <div class="hd24-section-tag">⚡ 사업장 실적파일 + 최종관리파일 업로드 완료 시 자동 처리</div>
-    <div class="actions" style="display:none">
-      <button id="btnReflect" disabled aria-hidden="true" tabindex="-1">자동 실적 반영</button>
-      <button id="btnJudge" class="ghost" disabled aria-hidden="true" tabindex="-1">자동 판정</button>
-    </div>
     <p class="hint">두 파일 업로드가 완료되면 안전검증 → 신규 실적 반영 → 반영 후 재검증 → 실적이 업데이트된 최종관리파일 자동 다운로드 → KPI 판정까지 자동 실행됩니다. 업로드한 원본 최종관리파일 자체를 다시 추출하지 않습니다.</p>
+    <details class="hd24-manual-tools" style="margin-top:10px">
+      <summary style="cursor:pointer;font-size:12px;font-weight:700;color:var(--muted)">수동 재실행 · 고급 기능</summary>
+      <div class="actions" style="margin-top:10px">
+        <button id="btnReflect" disabled>실적 반영 재실행 · 업데이트 최종관리파일 다운로드</button>
+        <button id="btnJudge" class="ghost" disabled>판정 · 추세 다시 보기</button>
+      </div>
+      <p class="hint">자동처리 실패 또는 재검증이 필요한 경우에만 사용합니다. 정상 운영에서는 누를 필요가 없습니다.</p>
+    </details>
   </section>
 
   <section class="panel" id="resultCard" style="display:none;">
