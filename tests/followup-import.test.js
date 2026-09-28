@@ -16,4 +16,6 @@ ok(src.includes("replySequence:prev.length+pending.filter(y=>y.plant===plant&&y.
 ok(src.includes("const duplicate=prev.some(sameReply)||pending.some"),'duplicate reply must check persisted and staged rows');
 ok(src.includes("function replyHistoryFor(r)")&&src.includes("norm(h.kpiEn||h.kpi)===k"),'recurrence history must remain KPI scoped');
 ok(src.includes("isRecurrence:same>=2"),'Repeated Issue requires at least two similar causes');
-console.log('HD24 FOLLOWUP IMPORT FAIL-CLOSED + ATOMIC/SEQUENCE PASS');
+ok(src.includes("const sent=xs.filter(x=>x.status==='sent'||!!x.sentAt)"),'actual sent mail must win reply anchor selection');
+ok(src.includes("if(sent)return sent"),'sent anchor must take precedence over later package/prepared events');
+console.log('HD24 FOLLOWUP IMPORT FAIL-CLOSED + ATOMIC/SEQUENCE/MAIL-ANCHOR PASS');
