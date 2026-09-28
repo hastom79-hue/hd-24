@@ -134,14 +134,18 @@ async function resultScreenshots(){
       for(let i=0;i<2;i++){
         host.innerHTML='';const clone=live[i].cloneNode(true);clone.classList.remove('hd24-tab-hidden');clone.style.cssText+=';display:block!important;visibility:visible!important;opacity:1!important;width:1320px!important;max-width:none!important;height:auto!important;overflow:visible!important;background:#fff!important;color:#17324d!important;';host.appendChild(clone);
         await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-        const w=Math.max(clone.scrollWidth,clone.offsetWidth,1),fullH=Math.max(clone.scrollHeight,clone.offsetHeight,1),viewportH=Math.min(fullH,900),scale=1;
-        // 첨부 PNG는 100% 배율 가독성을 우선한다. 긴 표 전체를 한 장에 축소하지 않고
-        // 실제 화면 폭/글자 크기를 유지한 첫 viewport를 캡처해 수신자가 100%에서 바로 읽을 수 있게 한다.
-        const canvas=await html2canvas(clone,{backgroundColor:'#ffffff',scale,useCORS:true,logging:false,width:w,height:viewportH,windowWidth:w,windowHeight:viewportH,scrollX:0,scrollY:0});
-        if(!canvas.width||!canvas.height)throw new Error('empty screenshot canvas');
-        const ctx=canvas.getContext('2d',{willReadFrequently:true});if(ctx){const d=ctx.getImageData(0,0,Math.min(canvas.width,64),Math.min(canvas.height,64)).data;let opaque=0;for(let k=3;k<d.length;k+=4)if(d[k]>0)opaque++;if(!opaque)throw new Error('transparent screenshot canvas');}
-        const blob=await new Promise((resolve,reject)=>{try{canvas.toBlob(b=>b&&b.size>1000?resolve(b):reject(new Error('PNG encoder returned empty image')),'image/png')}catch(e){reject(e)}});
-        const file=new File([blob],`HDPS_KPI_${pname()}_${String(mo).padStart(2,'0')}M_${names[i]}.png`,{type:'image/png'});out.push({file,name:file.name,base64:await fileToBase64(file),month:mo,type:names[i]});
+        const w=Math.max(clone.scrollWidth,clone.offsetWidth,1),fullH=Math.max(clone.scrollHeight,clone.offsetHeight,1),viewportH=900,scale=1,pageCount=Math.max(1,Math.ceil(fullH/viewportH));
+        // 100% 배율을 유지한 채 긴 결과를 세로 스크롤 단위로 분할 캡처한다.
+        // 전체를 한 장으로 축소하지 않으므로 각 PNG의 글자 크기는 실제 화면과 동일하게 유지된다.
+        for(let page=0;page<pageCount;page++){
+          const y=page*viewportH,h=Math.min(viewportH,fullH-y);
+          const canvas=await html2canvas(clone,{backgroundColor:'#ffffff',scale,useCORS:true,logging:false,width:w,height:h,windowWidth:w,windowHeight:viewportH,scrollX:0,scrollY:-y,y});
+          if(!canvas.width||!canvas.height)throw new Error('empty screenshot canvas');
+          const ctx=canvas.getContext('2d',{willReadFrequently:true});if(ctx){const d=ctx.getImageData(0,0,Math.min(canvas.width,64),Math.min(canvas.height,64)).data;let opaque=0;for(let k=3;k<d.length;k+=4)if(d[k]>0)opaque++;if(!opaque)throw new Error('transparent screenshot canvas');}
+          const blob=await new Promise((resolve,reject)=>{try{canvas.toBlob(b=>b&&b.size>1000?resolve(b):reject(new Error('PNG encoder returned empty image')),'image/png')}catch(e){reject(e)}});
+          const part=pageCount>1?`_P${String(page+1).padStart(2,'0')}`:'',file=new File([blob],`HDPS_KPI_${pname()}_${String(mo).padStart(2,'0')}M_${names[i]}${part}.png`,{type:'image/png'});
+          out.push({file,name:file.name,base64:await fileToBase64(file),month:mo,type:names[i],page:page+1,pageCount});
+        }
       }
     }
   }finally{host.remove();if(typeof selectedMonth!=='undefined')selectedMonth=originalMonth;if(typeof renderTable==='function')renderTable();if(typeof updateStripActive==='function')updateStripActive();}
