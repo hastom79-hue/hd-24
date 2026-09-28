@@ -9,3 +9,10 @@
 - Production loader and refresh runtime aligned at `hd24-followup.js?v=57`.
 - Regression coverage added in `tests/followup-mailto.test.js` and wired into HD24 Action Cycle Regression.
 - GitHub status/workflow results for the latest HEAD were not yet exposed by the connector at validation time; deployment PASS was therefore not assumed.
+
+## 2026-09-28 — Outlook automatic attachment draft package
+- Replaced the manual-download + mailto fallback with one RFC 822 `.eml` package for Outlook when no mail API endpoint is configured.
+- The package contains To, CC, UTF-8 subject/body, reply Excel, and every paginated KPI PNG attachment.
+- Added `X-Unsent: 1` so Outlook can treat the opened message as an unsent draft where supported.
+- No sender/account/server is embedded; Outlook continues to choose the local default sending account.
+- Production follow-up runtime advanced to v58. Action Cycle Regression and Runtime Regression Gate passed on HEAD `55396e9e...`; Pages deployment was still in progress at the time of this log entry.
