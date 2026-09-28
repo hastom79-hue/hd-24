@@ -44,3 +44,5 @@ ok(src.includes("targetMonth:Number(r.month)||month()"),'mail history must persi
 
 ok(src.includes("const duplicate=prev.some"),'persistent reply import idempotency guard missing');
 ok(src.includes("동일 회신 재Import 차단"),'persistent duplicate reply diagnostic missing');
+
+ok(src.includes("lastMailFor(r,Number(r.month)||month())"),'follow-up reply workbook must use each KPI row month for mail-history anchor');
