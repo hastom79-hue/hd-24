@@ -141,6 +141,7 @@ jobs:
               neg.locator('#srcFile').set_input_files(str(fixture/'india_source.xlsx'))
               neg.locator('#masterFile').set_input_files(str(fixture/'master_future_contaminated.xlsx'))
               neg.wait_for_function("!document.getElementById('btnReflect').disabled", timeout=30000)
+              neg.evaluate("window.hd24SwitchTab && window.hd24SwitchTab('upload')")
               neg.locator('#btnReflect').click()
               neg.wait_for_function("document.getElementById('log').innerText.includes('오류:')", timeout=30000)
               neg_log=neg.locator('#log').inner_text()
@@ -163,6 +164,7 @@ jobs:
               page.locator('#masterFile').set_input_files(str(fixture/'master.xlsx'))
               page.wait_for_function("!document.getElementById('btnReflect').disabled", timeout=30000)
               assert page.locator('#btnReflect').get_attribute('data-safe-reflect-ready')=='1', 'Safe reflect readiness marker missing'
+              page.evaluate("window.hd24SwitchTab && window.hd24SwitchTab('upload')")
               page.locator('#btnReflect').click()
               page.wait_for_function("""() => {
                 const t=document.getElementById('log').innerText;
