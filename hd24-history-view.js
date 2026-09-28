@@ -17,8 +17,9 @@ function buildRows(){
     const rs=replies.filter(x=>keyOf(x)===key).sort((a,b)=>String(eventTime(b,'reply')).localeCompare(String(eventTime(a,'reply'))));
     const base=rs[0]||ms[0]||{},latestMail=ms[0]||{},latestReply=rs[0]||{};
     const cause=norm(latestReply.rootCause||latestReply.reason||'');
-    const same=cause?rs.filter(x=>{const c=norm(x.rootCause||x.reason||'');return c&&(c===cause||c.includes(cause)||cause.includes(c))}).length:0;
-    out.push({plant:base.plant,targetMonth:base.targetMonth,kpi:base.kpi||'',kpiEn:base.kpiEn||'',preparedAt:latestMail.preparedAt||'',sentAt:latestMail.sentAt||'',openedAt:latestMail.mailOpenedAt||'',mailStatus:latestMail.status||'',replyAt:latestReply.replyReceivedAt||'',replySequence:latestReply.replySequence||rs.length||0,responder:latestReply.responder||'',reason:latestReply.reason||'',rootCause:latestReply.rootCause||'',plan:latestReply.recoveryPlan||'',owner:latestReply.actionOwner||'',due:latestReply.plannedCompletionDate||'',nextTarget:latestReply.nextMonthRecoveryTarget||'',replyFile:latestReply.replyFileName||'',recurrence:same>=2?`Repeated x${same}`:'',mailCount:ms.length,replyCount:rs.length});
+    const same=Number.isFinite(Number(latestReply.sameCauseCount))?Number(latestReply.sameCauseCount):(cause?rs.filter(x=>{const c=norm(x.rootCause||x.reason||'');return c&&(c===cause||c.includes(cause)||cause.includes(c))}).length:0);
+    const recurrence=latestReply.isRecurrence===true||same>=2;
+    out.push({plant:base.plant,targetMonth:base.targetMonth,kpi:base.kpi||'',kpiEn:base.kpiEn||'',preparedAt:latestMail.preparedAt||'',sentAt:latestMail.sentAt||'',openedAt:latestMail.mailOpenedAt||'',mailStatus:latestMail.status||'',replyAt:latestReply.replyReceivedAt||'',replySequence:latestReply.replySequence||rs.length||0,responder:latestReply.responder||'',reason:latestReply.reason||'',rootCause:latestReply.rootCause||'',plan:latestReply.recoveryPlan||'',owner:latestReply.actionOwner||'',due:latestReply.plannedCompletionDate||'',nextTarget:latestReply.nextMonthRecoveryTarget||'',replyFile:latestReply.replyFileName||'',recurrence:recurrence?`Repeated Issue x${same}`:'',mailCount:ms.length,replyCount:rs.length});
   }
   return out.sort((a,b)=>String(b.replyAt||b.sentAt||b.openedAt||b.preparedAt).localeCompare(String(a.replyAt||a.sentAt||a.openedAt||a.preparedAt)));
 }
