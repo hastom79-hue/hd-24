@@ -1729,7 +1729,12 @@ function setupTabs(){
     Object.entries(groups).forEach(([name, els]) => {
       els.forEach(el => el.classList.toggle('hd24-tab-hidden', !(name === tab || (el === resultCard && (tab === 'results' || tab === 'mail')))));
     });
-    if (tab === 'results' || tab === 'mail') applyResultCardSubVisibility(tab);
+    if (tab === 'results' || tab === 'mail') {
+      // resultCard는 판정 전환 과정에서 inline display:none이 남을 수 있다.
+      // 실제 판정 데이터가 있으면 메일/판정 탭 클릭 시 이를 복구해 탭이 빈 화면처럼 먹통이 되지 않게 한다.
+      try { if ((allResults||[]).length) resultCard.style.display='block'; } catch(_){}
+      applyResultCardSubVisibility(tab);
+    }
     bar.querySelectorAll('.hd24-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   }
   bar.querySelectorAll('.hd24-tab').forEach(btn => {
