@@ -52,6 +52,8 @@ console.log('PASS updated final-master auto-download invariant');
 
 const html=fs.readFileSync('index.html','utf8');
 assert(html.includes('사업장 실적파일 + 최종관리파일 업로드 완료 시 자동 처리'),'upload-driven UI contract missing');
-assert(html.includes('id="btnReflect" disabled aria-hidden="true" tabindex="-1"'),'manual reflect button must remain hidden but available to auto-run');
-assert(!html.includes('실적 반영 다시 실행 → 총괄파일 다운로드'),'legacy manual extraction button must not be exposed');
-console.log('PASS upload-driven manual button hidden');
+assert(html.includes('<details class="hd24-manual-tools"'),'manual rerun controls must be collapsed as fallback tools');
+assert(html.includes('실적 반영 재실행 · 업데이트 최종관리파일 다운로드'),'manual reflect fallback must explicitly download updated final master');
+assert(html.includes('판정 · 추세 다시 보기'),'manual judgment fallback must remain available');
+assert(!html.includes('실적 반영 다시 실행 → 총괄파일 다운로드'),'legacy primary manual extraction wording must not return');
+console.log('PASS upload-driven flow + collapsed manual fallback');
