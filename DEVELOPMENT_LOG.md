@@ -16,3 +16,15 @@
 - Added `X-Unsent: 1` so Outlook can treat the opened message as an unsent draft where supported.
 - No sender/account/server is embedded; Outlook continues to choose the local default sending account.
 - Production follow-up runtime advanced to v58. Action Cycle Regression and Runtime Regression Gate passed on HEAD `55396e9e...`; Pages deployment was still in progress at the time of this log entry.
+
+
+## 2026-09-28 — Outlook fallback hardening, refresh-state protection, and browser E2E alignment
+- Hardened the mail button async boundary so package-generation failures surface in the UI and duplicate clicks are blocked.
+- Added staged validation/status for reply Excel, KPI PNG captures, Outlook EML construction, and browser download request.
+- Hardened EML download by validating non-empty files and using a DOM-attached hidden download anchor with cleanup.
+- Production follow-up runtime advanced through v60/v61; loader and refresh runtime were kept aligned.
+- Refresh tab handling restores the last valid HD-24 tab from session storage instead of unconditionally forcing upload.
+- India and Brazil browser E2E now explicitly return to the upload tab before manual safe-reflect clicks.
+- India Browser E2E and Brazil Browser E2E passed after alignment; Runtime Regression, Action Cycle Regression, approved UI application, and latest Pages deployment also passed.
+- Corrected stale mail guidance/history wording: API-free fallback is recorded as Outlook .eml package download; legacy mail-client-open history remains distinguishable.
+- Strict local Classic Outlook auto-open/send-button E2E remains outside the browser-only GitHub Pages boundary and is not marked complete.
