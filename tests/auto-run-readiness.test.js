@@ -42,3 +42,10 @@ setTimeout(()=>{
   console.log('PASS auto-run v27 global readiness + missing-dataset recovery + duplicate suppression');
   process.exit(0);
 },700);
+
+const safe=fs.readFileSync('safe-kpi-mapping.js','utf8');
+assert(safe.includes('window.hd24CurrentMasterFile=outFile'),'final download must promote updated master file');
+assert(safe.includes("a.download=outName"),'download must use updated master output name');
+assert(safe.includes("신규 '+horizon+'월 실적 포함"),'download log must explicitly identify updated performance month');
+assert(safe.indexOf('window.hd24CurrentMasterFile=outFile') < safe.indexOf("a.download=outName"),'updated master must be promoted before automatic download');
+console.log('PASS updated final-master auto-download invariant');
