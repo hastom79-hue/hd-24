@@ -70,3 +70,4 @@ jobs:
           node tests/reply-import-dedupe.test.js
           node tests/direct-reply-guard.test.js
           node tests/history-view.test.js
+          node tests/followup-import.test.js
