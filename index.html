@@ -1709,6 +1709,7 @@ function setupTabs(){
     mail: [resultCard, contactPanel].filter(Boolean),
     spotcheck: [spotCheckPanel].filter(Boolean),
     history: [historyPanel, timelinePanel].filter(Boolean),
+    log: [logPanel].filter(Boolean),
   };
   function applyResultCardSubVisibility(tab){
     resultsSubEls.forEach(el => el.classList.toggle('hd24-tab-hidden', tab !== 'results'));
@@ -1738,7 +1739,7 @@ function setupTabs(){
   });
   // 새로고침 시 무조건 업로드 탭으로 강제하지 않는다.
   // 사용자가 마지막으로 보고 있던 탭을 복원하되, 저장값이 없거나 유효하지 않으면 upload로 시작한다.
-  const validTabs = new Set(['upload','results','mail','spotcheck','history']);
+  const validTabs = new Set(['upload','results','mail','spotcheck','history','log']);
   let initialTab = 'upload';
   try {
     const savedTab = sessionStorage.getItem('hd24_active_tab');
