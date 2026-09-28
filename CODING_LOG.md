@@ -30,3 +30,13 @@
 - hd24-browser-e2e.yml: explicitly activate upload before safe-reflect clicks.
 - hd24-browser-e2e-brazil.yml: same visible-tab alignment for Brazil negative/positive reflect scenarios.
 - Validated sequence: India Browser E2E PASS, Brazil Browser E2E PASS, Runtime Regression PASS, Action Cycle Regression PASS, approved UI PASS, latest Pages deployment PASS.
+
+
+## 2026-09-28 — Followup v70 integrity hardening
+- Added KPI×month dedupe before reply workbook generation.
+- Added stale workbook snapshot/recheck fail-closed guard.
+- Changed multi-sheet reply import from first-sheet-only to all worksheets.
+- Staged imports in pending[] and commit only after every worksheet validates.
+- Added prev + pending duplicate detection and sequence calculation.
+- Updated followup regression assertions for atomic staging and legitimate changed second replies.
+- Production loader/refresh now reference hd24-followup.js?v=70.
