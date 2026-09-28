@@ -335,6 +335,8 @@
 </main>
 
 <script>
+try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch(_) {}
+window.addEventListener('pageshow', () => { try { window.scrollTo(0, 0); } catch(_) {} }, { once:true });
 window.hd24SafeReflectReady = false;
 const PLANT_CONFIG = {
   india: { label:'인도', labelEn:'India', mappingFile:'mapping_india.json', srcSheet:'Final With HQ Suggestion', masterSheet:'인도법인 KPI(26년 보고용)', srcMonthStartCol:15, masterTargetCol:25, masterMonthStartCol:27, hasSource:true },
