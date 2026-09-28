@@ -50,3 +50,7 @@ ok(src.includes("lastMailFor(r,Number(r.month)||month())"),'follow-up reply work
 ok(src.includes("replySequence:prev.length+1"),'new non-duplicate reply must advance reply sequence');
 ok(src.includes("sameCauseCount:same")&&src.includes("isRecurrence:same>=2"),'second same-cause reply must drive recurrence state');
 ok(src.includes("last.rootCause||last.reason||''")&&src.includes("last.recoveryPlan||''"),'follow-up workbook must carry previous cause and countermeasure');
+
+ok(src.includes("const seen=new Set(),uniqueItems=items.filter"),'KPI x target-month workbook dedupe missing');
+ok(src.includes("회신 Excel KPI×월 중복 차단"),'KPI x target-month duplicate diagnostic missing');
+ok(src.includes("r.unit||''")&&src.includes("r.target")&&src.includes("r.actual"),'reply workbook must preserve unit target actual');
