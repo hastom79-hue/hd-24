@@ -3,10 +3,12 @@ const src=fs.readFileSync('hd24-followup.js','utf8');
 const ui=fs.readFileSync('hd24-ui-v3.js','utf8');
 const refresh=fs.readFileSync('refresh-runtime.html','utf8');
 function ok(x,m){if(!x)throw new Error(m)}
-ok(src.includes("const mailtoUrl=\`mailto:"),'mailto draft construction missing');
-ok(src.includes("window.location.assign(mailtoUrl)"),'mailto draft must delegate to OS default mail client');
-ok(src.includes("mailto에는 발신계정 정보를 넣지 않는다"),'default-sender delegation invariant missing');
+ok(src.includes("buildOutlookEml({to,cc,subject:previewState.subject,body:previewState.body,attachments})"),'Outlook EML package construction missing');
+ok(src.includes("'X-Unsent: 1'"),'Outlook unsent draft marker missing');
+ok(src.includes("'Content-Disposition: attachment; filename="),'EML attachment MIME block missing');
+ok(src.includes("status:'outlook-package-downloaded'"),'Outlook package history status missing');
 ok(!/from=|sender=|hastom79@gmail\.com|imap\.naver\.com/i.test(src),'follow-up runtime must not force sender/account/server');
+ok(!src.includes("shots.forEach(x=>downloadFile(x.file))"),'fallback must not require manual attachment downloads');
 ok(src.includes("viewportH=900,scale=1,pageCount=Math.max(1,Math.ceil(fullH/viewportH))"),'100 percent paged screenshot sizing missing');
 ok(src.includes("for(let page=0;page<pageCount;page++)"),'scroll-page screenshot loop missing');
 ok(src.includes("const y=page*viewportH,h=Math.min(viewportH,fullH-y)"),'scroll-page boundary calculation missing');
