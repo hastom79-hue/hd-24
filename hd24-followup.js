@@ -33,9 +33,10 @@ function missSummary(items){const months=[...new Set(items.map(r=>Number(r.month
 function subject(items){
   const en=isEn();
   const monthsText = (typeof itemsMonthLabel==='function') ? itemsMonthLabel(items, en) : (en?`${month()}M`:`${month()}월`);
+  const ms=missSummary(items);
   return en
-    ? `[HDPS KPI Action Required] ${pname()} - ${monthsText} (${items.length} item${items.length===1?'':'s'})`
-    : `[HDPS KPI 조치필요] ${pnameKo()} - ${monthsText} (${items.length}건)`;
+    ? `[HDPS KPI Action Required] ${pname()} - ${monthsText} (${ms.unique} unique missed KPI${ms.unique===1?'':'s'})`
+    : `[HDPS KPI 조치필요] ${pnameKo()} - ${monthsText} (중복제거 미달성 KPI ${ms.unique}개)`;
 }
 function body(items){
   const en=isEn();
@@ -62,7 +63,7 @@ function body(items){
     `안녕하세요,`,'',
     `${pnameKo()} 사업장 ${monthsText} HDPS KPI 결과를 첨부 엑셀 파일로 안내드립니다. 목표 미달성/연속 미달성/악화로 표시된 지표별로 사유·근본원인·만회대책을 회신 부탁드립니다.`,
     '',
-    ms.months.length>1?`요약: 선택월 기준 중복 지표를 포함한 총 ${miss}개 지표 미달성 (공통지표: ${ms.common}개, 개별지표: ${ms.individual}개)`:`요약: 미달성 KPI ${miss}건 (반복 재발 ${repeated}건)`,
+    ms.months.length>1?`요약: 선택월 전체에서 중복을 제거한 미달성 KPI ${miss}개 (모든 선택월 공통 미달성: ${ms.common}개, 특정 월 미달성: ${ms.individual}개)`:`요약: 미달성 KPI ${miss}건 (반복 재발 ${repeated}건)`,
     '',
     `필수 회신 \u2014 첨부 파일에 아래 내용을 작성하여 회신 부탁드립니다:`,
     `1. 미달성/악화 사유`,
