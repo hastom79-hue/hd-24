@@ -58,3 +58,7 @@ ok(src.includes("r.unit||''")&&src.includes("r.target")&&src.includes("r.actual"
 ok(src.includes("const buildPlant=pkey(),buildMonth=month(),buildState="),'follow-up workbook stale snapshot missing');
 ok(src.includes("pkey()!==buildPlant||month()!==buildMonth||currentState!==buildState"),'follow-up workbook stale comparison missing');
 ok(src.includes("회신 Excel stale 생성 차단"),'follow-up workbook stale diagnostic missing');
+
+ok(src.includes("for(const ws of wb.worksheets)"),'multi-month reply import must iterate every worksheet');
+ok(!src.includes("const ws=wb.worksheets[0]"),'first-sheet-only reply import regression');
+ok(src.includes("KPI column not found: ${ws.name}")&&src.includes("Response columns not found: ${ws.name}"),'each reply worksheet must validate its own headers');
