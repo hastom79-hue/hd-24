@@ -6,6 +6,10 @@ function ok(x,m){if(!x)throw new Error(m)}
 ok(src.includes("buildOutlookEml({to,cc,subject:previewState.subject,body:previewState.body,attachments})"),'Outlook EML package construction missing');
 ok(src.includes("'X-Unsent: 1'"),'Outlook unsent draft marker missing');
 ok(src.includes("'Content-Disposition: attachment; filename="),'EML attachment MIME block missing');
+ok(src.includes("filename*=UTF-8\\'\\'"),'Unicode attachment filename RFC5987 parameter missing');
+ok(src.includes("name*=UTF-8\\'\\'"),'Unicode attachment name RFC5987 parameter missing');
+ok(src.includes("function asciiFileName"),'Unicode filename ASCII fallback missing');
+ok(src.includes("function rfc5987"),'Unicode filename encoder missing');
 ok(src.includes("status:'outlook-package-downloaded'"),'Outlook package history status missing');
 ok(!/from=|sender=|hastom79@gmail\.com|imap\.naver\.com/i.test(src),'follow-up runtime must not force sender/account/server');
 ok(!src.includes("shots.forEach(x=>downloadFile(x.file))"),'fallback must not require manual attachment downloads');
