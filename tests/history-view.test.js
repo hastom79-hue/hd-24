@@ -8,4 +8,7 @@ ok(src.includes("latestReply.isRecurrence===true||same>=2"),'latest recurrence s
 ok(src.includes("Repeated Issue x"),'Repeated Issue wording missing');
 ok(src.includes("r.isRecurrence===true||same>=2"),'timeline recurrence state missing');
 ok(src.includes("Outlook .eml 생성·다운로드 · 실제 발송 여부 미확인"),'package must not imply actual send');
+ok(src.includes("mails.slice().sort((a,b)=>String(eventTime(a,'mail')).localeCompare(String(eventTime(b,'mail')))"),'mail timeline must sequence chronologically per KPI');
+ok(src.includes("replies.slice().sort((a,b)=>String(eventTime(a,'reply')).localeCompare(String(eventTime(b,'reply')))"),'reply timeline must sequence chronologically per KPI');
+ok(src.includes("return events.sort((a,b)=>String(b.time).localeCompare(String(a.time)))"),'combined timeline must display newest event first without changing sequence numbers');
 console.log('HD24 HISTORY VIEW REGRESSION PASS');
