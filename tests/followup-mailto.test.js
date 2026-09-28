@@ -54,3 +54,7 @@ ok(src.includes("last.rootCause||last.reason||''")&&src.includes("last.recoveryP
 ok(src.includes("const seen=new Set(),uniqueItems=items.filter"),'KPI x target-month workbook dedupe missing');
 ok(src.includes("회신 Excel KPI×월 중복 차단"),'KPI x target-month duplicate diagnostic missing');
 ok(src.includes("r.unit||''")&&src.includes("r.target")&&src.includes("r.actual"),'reply workbook must preserve unit target actual');
+
+ok(src.includes("const buildPlant=pkey(),buildMonth=month(),buildState="),'follow-up workbook stale snapshot missing');
+ok(src.includes("pkey()!==buildPlant||month()!==buildMonth||currentState!==buildState"),'follow-up workbook stale comparison missing');
+ok(src.includes("회신 Excel stale 생성 차단"),'follow-up workbook stale diagnostic missing');
