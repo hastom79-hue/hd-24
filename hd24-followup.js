@@ -80,14 +80,14 @@ function body(items){
 function lastMailFor(r,targetMonth=month()){return load(MAIL_KEY).filter(x=>x.plant===pkey()&&x.targetMonth===targetMonth&&norm(x.kpiEn||x.kpi)===norm(r.kpiEn||r.kpi)).sort((a,b)=>String(b.sentAt||b.mailOpenedAt||b.preparedAt||'').localeCompare(String(a.sentAt||a.mailOpenedAt||a.preparedAt||'')))[0]||{};}
 async function buildReplyFile(items){if(typeof ExcelJS==='undefined')throw new Error('ExcelJS unavailable');
   const isKo = typeof currentLang!=='undefined' && currentLang==='ko';
-  const wb=new ExcelJS.Workbook();const months=[...new Set(items.map(r=>Number(r.month)))].sort((a,b)=>a-b);const hasPrevious=items.some(r=>{const x=recurrenceFor(r)?.latest||{};return !!String(x.rootCause||x.reason||x.recoveryPlan||'').trim()});
+  const wb=new ExcelJS.Workbook();const months=[...new Set(items.map(r=>Number(r.month)))].sort((a,b)=>a-b);const hasReplyHistory=items.some(r=>replyHistoryFor(r).length>0);const hasPrevious=items.some(r=>{const x=recurrenceFor(r)?.latest||{};return !!String(x.rootCause||x.reason||x.recoveryPlan||'').trim()});
   // 언어 설정에 맞춰 KPI명 칸을 하나만 두고(한글 or 영문), 나머지 헤더도 그 언어로 통일한다
   const cols = isKo
     ? ['사업장','대상월','KPI','단위','목표','실적','상태/추세','반복이슈',...(hasPrevious?['이전 사유/근본원인','이전 만회대책']:[]),'미달성 사유','근본원인','만회대책','담당자','완료예정일']
-    : ['Plant','Target Month','KPI','Unit','Target','Actual','Status / Trend','Repeated Issue',...(hasPrevious?['Previous Reason / Root Cause','Previous Countermeasure']:[]),'Reason for Miss / Deterioration','Root Cause','Recovery / Catch-up Plan','Action Owner','Planned Completion Date'];
+    : ['Plant','Target Month','KPI','Unit','Target','Actual','Status / Trend',...(hasReplyHistory?['반복이슈']:[]),...(hasPrevious?['Previous Reason / Root Cause','Previous Countermeasure']:[]),'Reason for Miss / Deterioration','Root Cause','Recovery / Catch-up Plan','Action Owner','Planned Completion Date'];
   for(const m of months){const ws=wb.addWorksheet(String(m).padStart(2,'0')+' Month');const monthItems=items.filter(r=>Number(r.month)===m);
   ws.columns=cols.map((h,i)=>({header:h,key:'c'+i,width:[12,12,36,10,12,12,24,18,32,32,22,22,22,34,34,36,20,22,24,20][i]}));const hr=ws.getRow(1);hr.font={bold:true,color:{argb:'FFFFFFFF'}};hr.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF2B4A63'}};hr.alignment={vertical:'middle',horizontal:'center',wrapText:true};hr.height=32;
-  monthItems.forEach((r,idx)=>{const rec=recurrenceFor(r),last=rec?.latest||{},mh=lastMailFor(r);const isPct=r.unit==='%';const kpiName = isKo ? (r.kpi||r.kpiEn||'') : (r.kpiEn||r.kpi||'');const row=ws.addRow([plantLabelForFile(),r.month,kpiName,r.unit||'',isPct?(typeof r.target==='number'?r.target:null):(r.target??''),isPct?(typeof r.actual==='number'?r.actual:null):(r.actual??''),tags(r,isKo).join(' / '),rec?.isRecurrence?(isKo?`예 (동일사유 x${rec.sameCauseCount})`:`YES (same cause x${rec.sameCauseCount})`):(isKo?'아니오':'NO'),...(hasPrevious?[last.rootCause||last.reason||'',last.recoveryPlan||'']:[]), '', '', '', '', '']);
+  monthItems.forEach((r,idx)=>{const rec=recurrenceFor(r),last=rec?.latest||{},mh=lastMailFor(r);const isPct=r.unit==='%';const kpiName = isKo ? (r.kpi||r.kpiEn||'') : (r.kpiEn||r.kpi||'');const row=ws.addRow([plantLabelForFile(),r.month,kpiName,r.unit||'',isPct?(typeof r.target==='number'?r.target:null):(r.target??''),isPct?(typeof r.actual==='number'?r.actual:null):(r.actual??''),tags(r,isKo).join(' / '),...(hasReplyHistory?[rec?.isRecurrence?(isKo?`예 (동일사유 x${rec.sameCauseCount})`:`YES (same cause x${rec.sameCauseCount})`):(isKo?'아니오':'NO')]:[]),...(hasPrevious?[last.rootCause||last.reason||'',last.recoveryPlan||'']:[]), '', '', '', '', '']);
     if(isPct){row.getCell(5).numFmt='0.0%';row.getCell(6).numFmt='0.0%'}else{row.getCell(5).numFmt='0.00';row.getCell(6).numFmt='0.00'}
     for(let ci=1;ci<=cols.length;ci++)row.getCell(ci).fill={type:'pattern',pattern:'solid',fgColor:{argb:MISS_FILL}};
     // 웹 화면의 "7개월 연속 미달성"/"최근 악화" 배지처럼, 심각한 상태는 셀 자체를 굵은 진한
@@ -99,7 +99,7 @@ async function buildReplyFile(items){if(typeof ExcelJS==='undefined')throw new E
       statusCell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFB0362B'}};
       statusCell.font = {bold:true, color:{argb:'FFFFFFFF'}};
     }
-    Array.from({length:7},(_,i)=>9+(hasPrevious?2:0)+i).forEach(ci=>{row.getCell(ci).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFFF99'}};row.getCell(ci).alignment={wrapText:true,vertical:'top'}});
+    Array.from({length:5},(_,i)=>8+(hasReplyHistory?1:0)+(hasPrevious?2:0)+i).forEach(ci=>{row.getCell(ci).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFFF99'}};row.getCell(ci).alignment={wrapText:true,vertical:'top'}});
   });
   const lastRow = monthItems.length + 1;
   if (lastRow > 1) {
