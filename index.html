@@ -259,7 +259,8 @@
           <option value="">— 직접 입력 —</option>
         </select>
       </div>
-      <div class="field-row"><label>담당자 이메일</label><input type="email" id="mailTo" placeholder="hemant.kadam@hd.com"></div>
+      <div class="field-row"><label>수신자(To)</label><input type="text" id="mailTo" placeholder="isaac.martins@hhib.com.br"></div>
+      <div class="field-row"><label>참조(CC)</label><input type="text" id="mailCc" placeholder="dylee07@hd.com, hastom@hd.com"></div>
       <div class="field-row"><label>담당자 이름</label><input type="text" id="mailToName" placeholder="Hemant Kadam (미입력 시 생략)"></div>
       <div class="field-row"><label>보내는 사람</label><input type="text" id="mailFromName" placeholder="예: 홍길동 / 글로벌생산전략팀"></div>
       <p class="hint" style="margin-top:4px;">위 담당자 드롭다운에서 고르면 이메일/이름이 자동 입력됩니다. 새 담당자는 아래 "담당자 관리"에서 등록하세요.</p>
@@ -1010,16 +1011,20 @@ function replyRecurrenceFor(r){
 
 // ---------- 메일 초안 (mailto) ----------
 const mailToInput = document.getElementById('mailTo');
+const mailCcInput = document.getElementById('mailCc');
 const mailToNameInput = document.getElementById('mailToName');
 const mailFromNameInput = document.getElementById('mailFromName');
 mailToInput.value = localStorage.getItem('hdps_mail_to_' + currentPlant) || '';
+mailCcInput.value = localStorage.getItem('hdps_mail_cc_' + currentPlant) || '';
 mailToNameInput.value = localStorage.getItem('hdps_mail_toname_' + currentPlant) || '';
 mailFromNameInput.value = localStorage.getItem('hdps_mail_from') || '';
 mailToInput.addEventListener('change', () => { localStorage.setItem('hdps_mail_to_' + currentPlant, mailToInput.value.trim()); });
+mailCcInput.addEventListener('change', () => { localStorage.setItem('hdps_mail_cc_' + currentPlant, mailCcInput.value.trim()); });
 mailToNameInput.addEventListener('change', () => { localStorage.setItem('hdps_mail_toname_' + currentPlant, mailToNameInput.value.trim()); });
 mailFromNameInput.addEventListener('change', () => { localStorage.setItem('hdps_mail_from', mailFromNameInput.value.trim()); });
 document.getElementById('plantSelect').addEventListener('change', () => {
   mailToInput.value = localStorage.getItem('hdps_mail_to_' + currentPlant) || '';
+  mailCcInput.value = localStorage.getItem('hdps_mail_cc_' + currentPlant) || '';
   mailToNameInput.value = localStorage.getItem('hdps_mail_toname_' + currentPlant) || '';
   renderContactSelect();
   document.getElementById('contactPlant').value = currentPlant;
