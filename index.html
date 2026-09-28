@@ -1658,7 +1658,7 @@ function setupTabs(){
   const bar = document.createElement('div');
   bar.id = 'hd24TabBar';
   bar.className = 'hd24-tab-bar';
-  bar.innerHTML = `<button type="button" class="hd24-tab active" data-tab="upload">업로드 · 실행</button><button type="button" class="hd24-tab" data-tab="results">판정 결과<span class="hd24-tab-badge" id="hd24TabMissBadge" hidden>0</span></button><button type="button" class="hd24-tab" data-tab="mail">메일</button><button type="button" class="hd24-tab" data-tab="spotcheck">집중점검</button><button type="button" class="hd24-tab" data-tab="history">실행 이력</button>`;
+  bar.innerHTML = `<button type="button" class="hd24-tab active" data-tab="upload">업로드 · 실행</button><button type="button" class="hd24-tab" data-tab="results">판정 결과<span class="hd24-tab-badge" id="hd24TabMissBadge" hidden>0</span></button><button type="button" class="hd24-tab" data-tab="mail">메일</button><button type="button" class="hd24-tab" data-tab="spotcheck">집중점검</button><button type="button" class="hd24-tab" data-tab="history">실행 이력</button><button type="button" class="hd24-tab" data-tab="log">실행 로그</button>`;
 
   const barWrap = document.createElement('div');
   barWrap.className = 'hd24-tab-bar-wrap';
@@ -1671,24 +1671,8 @@ function setupTabs(){
   const anchor = workGrid || topPanels[0];
   if (anchor) anchor.before(barWrap); else main.prepend(barWrap); // 새 엘리먼트만 삽입, 기존 엘리먼트는 옮기지 않음
 
-  // 실행 로그: 탭이 아니라 접었다 펼 수 있는 상시노출 패널로 전환하고, 문제를 바로
-  // 알아챌 수 있도록 탭 바로 아래(맨 위)로 옮긴다. input[type=file] 같은 특수 엘리먼트가
-  // 아니라 평범한 텍스트 div라 재배치에 따른 부작용 위험이 없다.
-  if (logPanel){
-    const h2 = logPanel.querySelector('h2');
-    const logToggleBtn = document.createElement('button');
-    logToggleBtn.type = 'button';
-    logToggleBtn.className = 'hd24-log-toggle';
-    logToggleBtn.id = 'hd24LogToggle';
-    logToggleBtn.textContent = '실행 로그 ▾';
-    if (h2) h2.replaceWith(logToggleBtn); else logPanel.prepend(logToggleBtn);
-    logPanel.classList.add('hd24-log-panel', 'collapsed');
-    logToggleBtn.addEventListener('click', ()=>{
-      const collapsed = logPanel.classList.toggle('collapsed');
-      logToggleBtn.textContent = '실행 로그 ' + (collapsed ? '▾' : '▴');
-    });
-    barWrap.after(logPanel);
-  }
+  // 실행 로그는 독립 탭에서만 표시한다. 다른 업무 탭 상단에는 노출하지 않는다.
+  if (logPanel) logPanel.classList.add('hd24-log-panel');
 
   // 담당자 관리: 설정성 항목이라 기본은 접어두고 필요할 때만 펼치도록 전환
   if (contactPanel){
