@@ -49,3 +49,9 @@ assert(safe.includes("a.download=outName"),'download must use updated master out
 assert(safe.includes("신규 '+horizon+'월 실적 포함"),'download log must explicitly identify updated performance month');
 assert(safe.indexOf('window.hd24CurrentMasterFile=outFile') < safe.indexOf("a.download=outName"),'updated master must be promoted before automatic download');
 console.log('PASS updated final-master auto-download invariant');
+
+const html=fs.readFileSync('index.html','utf8');
+assert(html.includes('사업장 실적파일 + 최종관리파일 업로드 완료 시 자동 처리'),'upload-driven UI contract missing');
+assert(html.includes('id="btnReflect" disabled aria-hidden="true" tabindex="-1"'),'manual reflect button must remain hidden but available to auto-run');
+assert(!html.includes('실적 반영 다시 실행 → 총괄파일 다운로드'),'legacy manual extraction button must not be exposed');
+console.log('PASS upload-driven manual button hidden');
