@@ -37,7 +37,7 @@ ok(src.includes("회신 파일 미래/비정상 월 차단"),'future-month reply
 ok(src.includes("sameCauseCount:same")&&src.includes("isRecurrence:same>=2"),'same-cause recurrence threshold missing');
 ok(src.includes("Repeated Issue x")&&src.includes("반복 이슈 x"),'repeated-issue follow-up tags missing');
 ok(src.includes("Previous Reason / Root Cause")&&src.includes("Previous Countermeasure"),'previous reply carry-forward columns missing');
-ok(src.includes("replySequence:prev.length+1"),'reply sequence increment missing');
+ok(src.includes("replySequence:prev.length+pending.filter")&&src.includes(".length+1"),'reply sequence increment missing');
 ok(src.includes("x.plant===plant&&x.targetMonth===targetMonth"),'reply sequence must be scoped by plant and target month');
 
 ok(src.includes("targetMonth:Number(r.month)||month()"),'mail history must persist each KPI row target month');
