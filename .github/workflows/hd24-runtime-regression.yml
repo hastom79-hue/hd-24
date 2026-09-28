@@ -52,7 +52,7 @@ jobs:
           for token in required: assert token in safe, f'missing safety invariant: {token}'
           assert '기존 총괄값 보존, 당월 반영 계속' in safe
           assert 'historyDrift.push(...historyMismatch)' in safe
-          assert '총괄파일 생성 중단' not in safe
+          assert 'throw new Error(`직전월 원천↔총괄 불일치' not in safe
 
           assert len(india)==76 and len(brazil)==76
           for plant,data in [('India',india),('Brazil',brazil)]:
