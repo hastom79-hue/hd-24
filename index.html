@@ -1711,12 +1711,13 @@ function setupTabs(){
   const resultsSubEls = [resultTitleBar, monthStripEl, trendNoteEl, resultTagEl, resultColsEl].filter(Boolean);
   const mailSubEls = [quickMailBoxEl].filter(Boolean);
 
+  const timelinePanel = document.getElementById('hd24TimelinePanel');
   const groups = {
     upload: [workGrid].filter(Boolean),
     results: [resultCard].filter(Boolean),
     mail: [resultCard, contactPanel].filter(Boolean),
     spotcheck: [spotCheckPanel].filter(Boolean),
-    history: [historyPanel].filter(Boolean),
+    history: [historyPanel, timelinePanel].filter(Boolean),
   };
   function applyResultCardSubVisibility(tab){
     resultsSubEls.forEach(el => el.classList.toggle('hd24-tab-hidden', tab !== 'results'));
