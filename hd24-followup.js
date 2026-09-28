@@ -27,6 +27,7 @@ function tags(r, ko){const out=[];if(ko){if(!r.achieved)out.push('목표 미달'
 function statusRich(r){const xs=tags(r,false),richText=[];xs.forEach((v,i)=>{if(i)richText.push({text:' / ',font:{color:{argb:'FF64748B'}}});let color='FF334155';if(v.includes('Current Month: Target Miss'))color='FFB42318';else if(v.includes('Consecutive Months Missed'))color='FFB54708';else if(v.includes('Current Month: Worsening'))color='FF7A3E9D';else if(v.startsWith('Repeated Issue'))color='FF0F6B78';richText.push({text:v,font:{bold:true,color:{argb:color}}})});return {richText}}
 function isEn(){try{return currentLang==='en'}catch(_){return false}}
 function pnameKo(){return pkey()==='india'?'인도':pkey()==='brazil'?'브라질':pkey()==='ulsan'?'울산':pname()}
+function missSummary(items){const months=[...new Set(items.map(r=>Number(r.month)))].sort((a,b)=>a-b),by=new Map();for(const r of items){if(r.achieved)continue;const k=norm(r.kpiEn||r.kpi);if(!k)continue;if(!by.has(k))by.set(k,new Set());by.get(k).add(Number(r.month))}const unique=by.size,common=[...by.values()].filter(ms=>months.length>1&&months.every(m=>ms.has(m))).length,individual=unique-common;return {months,unique,common,individual}}
 function subject(items){
   const en=isEn();
   const monthsText = (typeof itemsMonthLabel==='function') ? itemsMonthLabel(items, en) : (en?`${month()}M`:`${month()}월`);
@@ -38,12 +39,12 @@ function body(items){
   const en=isEn();
   const monthsText = (typeof itemsMonthLabel==='function') ? itemsMonthLabel(items, en) : (en?`${month()}M`:`${month()}월`);
   const repeated=items.filter(r=>recurrenceFor(r)?.isRecurrence).length;
-  const miss=items.filter(r=>!r.achieved).length;
+  const ms=missSummary(items),miss=ms.unique;
   const lines=en?[
     `Dear Team,`,'',
     `Please review the ${pname()} HDPS KPI results for ${monthsText} in the attached Excel file, and reply with the reason, root cause, and recovery plan for each KPI marked as Target Miss / Consecutive Miss / Worsening.`,
     '',
-    `Summary: ${items.length} KPI(s) require attention (${miss} not achieved, ${repeated} repeated issue${repeated===1?'':'s'}).`,
+    ms.months.length>1?`Summary: ${miss} unique KPI(s) not achieved across the selected months (common KPIs: ${ms.common}, month-specific KPIs: ${ms.individual}).`:`Summary: ${miss} KPI(s) not achieved (${repeated} repeated issue${repeated===1?'':'s'}).`,
     '',
     `REQUIRED \u2014 please fill in and return the attached file with:`,
     `1. Reason for the miss / deterioration`,
@@ -57,7 +58,7 @@ function body(items){
     `안녕하세요,`,'',
     `${pnameKo()} 사업장 ${monthsText} HDPS KPI 결과를 첨부 엑셀 파일로 안내드립니다. 목표 미달성/연속 미달성/악화로 표시된 지표별로 사유·근본원인·만회대책을 회신 부탁드립니다.`,
     '',
-    `요약: 조치 필요 KPI ${items.length}건 (미달성 ${miss}건, 반복 재발 ${repeated}건)`,
+    ms.months.length>1?`요약: 선택월 기준 중복 지표를 포함한 총 ${miss}개 지표 미달성 (공통지표: ${ms.common}개, 개별지표: ${ms.individual}개)`:`요약: 미달성 KPI ${miss}건 (반복 재발 ${repeated}건)`,
     '',
     `필수 회신 \u2014 첨부 파일에 아래 내용을 작성하여 회신 부탁드립니다:`,
     `1. 미달성/악화 사유`,
