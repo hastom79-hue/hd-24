@@ -11,10 +11,10 @@ ok(src.includes("JSON.stringify(months())!==JSON.stringify(c.ms)"),'post-write s
 ok(src.includes("lastMail(r,c.p,Number(r.month))"),'per-row month mail-history anchor missing');
 ok(src.includes("Number(r.month),r.kpi||''"),'reply workbook row must preserve each KPI month');
 ok(src.includes("const monthLabel=c.ms.join('-')"),'multi-month filename label missing');
-ok(src.includes("const STATUS_FILL='FFE2E8F0'")&&src.includes("row.getCell(7).fill"),'Status / Trend fixed shading missing');
+ok(src.includes("STATUS_FILL='FFE2E8F0'")&&src.includes("row.getCell(7).fill"),'Status / Trend fixed shading missing');
 ok(src.includes("c.ms.join(',')+'|'+c.mode"),'multi-month inflight dedupe key missing');
 ok(src.includes("return token(items,c.p,0)===c.tok"),'post-write KPI/history token gate missing');
 ok(src.includes("if(inflight.has(key))"),'duplicate generation gate missing');
-ok(ui.includes('hd24-direct-reply-guard.js?v=4'),'production loader missing direct reply guard v3');
-ok(refresh.includes('hd24-direct-reply-guard.js?v=4'),'refresh preload missing direct reply guard v3');
+ok(ui.includes('hd24-direct-reply-guard.js?v=8'),'production loader missing direct reply guard v3');
+ok(refresh.includes('hd24-direct-reply-guard.js?v=8'),'refresh preload missing direct reply guard v3');
 console.log('HD24 DIRECT REPLY GUARD MULTI-MONTH PASS');
