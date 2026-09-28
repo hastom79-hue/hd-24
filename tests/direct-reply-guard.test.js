@@ -17,3 +17,8 @@ ok(src.includes("return token(items,c.p,0)===c.tok"),'post-write KPI/history tok
 ok(src.includes("if(inflight.has(key))"),'duplicate generation gate missing');
 const vm=ui.match(/hd24-direct-reply-guard\.js\?v=(\d+)/);ok(vm,'production loader missing direct reply guard');ok(refresh.includes('hd24-direct-reply-guard.js?v='+vm[1]),'refresh/direct reply guard cache version mismatch');
 console.log('HD24 DIRECT REPLY GUARD MULTI-MONTH PASS');
+
+ok(src.includes("m>month()"),'future selected month fail-closed gate missing');
+ok(src.includes("회신 Excel 미래/비정상 선택월 차단"),'future selected month diagnostic missing');
+ok(src.includes("lastMail(r,c.p,Number(r.month))"),'each KPI row must anchor mail history to its own target month');
+ok(src.includes("filter(x=>x.plant===p&&Number(x.targetMonth)===m"),'mail-history lookup must scope plant + target month');
