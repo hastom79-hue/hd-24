@@ -15,5 +15,5 @@ ok(src.includes("STATUS_FILL='FFE2E8F0'")&&src.includes("row.getCell(7).fill"),'
 ok(src.includes("c.ms.join(',')+'|'+c.mode"),'multi-month inflight dedupe key missing');
 ok(src.includes("return token(items,c.p,0)===c.tok"),'post-write KPI/history token gate missing');
 ok(src.includes("if(inflight.has(key))"),'duplicate generation gate missing');
-const vm=ui.match(/hd24-direct-reply-guard\\.js\\?v=(\\d+)/);ok(vm,'production loader missing direct reply guard');ok(refresh.includes('hd24-direct-reply-guard.js?v='+vm[1]),'refresh/direct reply guard cache version mismatch');
+const vm=ui.match(/hd24-direct-reply-guard\.js\?v=(\d+)/);ok(vm,'production loader missing direct reply guard');ok(refresh.includes('hd24-direct-reply-guard.js?v='+vm[1]),'refresh/direct reply guard cache version mismatch');
 console.log('HD24 DIRECT REPLY GUARD MULTI-MONTH PASS');
