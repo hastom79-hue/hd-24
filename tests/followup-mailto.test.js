@@ -62,3 +62,6 @@ ok(src.includes("회신 Excel stale 생성 차단"),'follow-up workbook stale di
 ok(src.includes("for(const ws of wb.worksheets)"),'multi-month reply import must iterate every worksheet');
 ok(!src.includes("const ws=wb.worksheets[0]"),'first-sheet-only reply import regression');
 ok(src.includes("KPI column not found: ${ws.name}")&&src.includes("Response columns not found: ${ws.name}"),'each reply worksheet must validate its own headers');
+
+ok(src.includes("const list=load(REPLY_KEY),pending=[]"),'reply import atomic staging buffer missing');
+ok(src.includes("pending.push({plant,targetMonth")&&src.includes("list.unshift(...pending.reverse());save(REPLY_KEY"),'reply import must commit only after all worksheets finish');
