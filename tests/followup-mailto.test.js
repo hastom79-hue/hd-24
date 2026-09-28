@@ -30,3 +30,6 @@ ok(src.includes("3/6 KPI PNG 생성 완료"),'PNG stage completion diagnostic mi
 ok(src.includes("4/6 Outlook EML 생성 완료"),'EML stage completion diagnostic missing');
 ok(src.includes("5/6 Outlook EML 다운로드 시작..."),'EML download stage diagnostic missing');
 ok(src.includes("메일 패키지 생성 실패:"),'top-level send pipeline error diagnostic missing');
+
+ok(src.includes("targetMonth>month()"),'future-month reply history fail-closed guard missing');
+ok(src.includes("회신 파일 미래/비정상 월 차단"),'future-month reply rejection diagnostic missing');
