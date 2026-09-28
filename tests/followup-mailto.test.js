@@ -41,3 +41,6 @@ ok(src.includes("replySequence:prev.length+1"),'reply sequence increment missing
 ok(src.includes("x.plant===plant&&x.targetMonth===targetMonth"),'reply sequence must be scoped by plant and target month');
 
 ok(src.includes("targetMonth:Number(r.month)||month()"),'mail history must persist each KPI row target month');
+
+ok(src.includes("const duplicate=prev.some"),'persistent reply import idempotency guard missing');
+ok(src.includes("동일 회신 재Import 차단"),'persistent duplicate reply diagnostic missing');
