@@ -10,4 +10,10 @@ ok(!src.includes("targetMonth=Number(val(cMonth))||month()"),'invalid month must
 ok(src.includes("!Number.isInteger(targetMonth)"),'target month must be integer');
 ok(src.includes("targetMonth>month()"),'future target month must be blocked');
 ok(src.includes("pending.some(x=>x.plant===plant&&x.targetMonth===targetMonth"),'same-file staged duplicate must be blocked');
-console.log('HD24 FOLLOWUP IMPORT FAIL-CLOSED PASS');
+ok(src.includes("const pending=[]"),'multi-sheet replies must stage before commit');
+ok(src.includes("list.unshift(...pending.reverse());save(REPLY_KEY,list.slice(0,4000))"),'staged replies must commit once after workbook validation');
+ok(src.includes("replySequence:prev.length+pending.filter(y=>y.plant===plant&&y.targetMonth===targetMonth&&norm(y.kpiEn||y.kpi)===key).length+1"),'second replies must increment sequence within plant/month/KPI');
+ok(src.includes("const duplicate=prev.some(sameReply)||pending.some"),'duplicate reply must check persisted and staged rows');
+ok(src.includes("function replyHistoryFor(r)")&&src.includes("norm(h.kpiEn||h.kpi)===k"),'recurrence history must remain KPI scoped');
+ok(src.includes("isRecurrence:same>=2"),'Repeated Issue requires at least two similar causes');
+console.log('HD24 FOLLOWUP IMPORT FAIL-CLOSED + ATOMIC/SEQUENCE PASS');
