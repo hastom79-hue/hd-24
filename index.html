@@ -1744,10 +1744,26 @@ function setupTabs(){
     bar.querySelectorAll('.hd24-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   }
   bar.querySelectorAll('.hd24-tab').forEach(btn => {
-    btn.addEventListener('click', () => activate(btn.dataset.tab));
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      try { sessionStorage.setItem('hd24_active_tab', tab); } catch(_){}
+      activate(tab);
+    });
   });
-  activate('upload');
-  window.hd24SwitchTab = activate;
+  // 새로고침 시 무조건 업로드 탭으로 강제하지 않는다.
+  // 사용자가 마지막으로 보고 있던 탭을 복원하되, 저장값이 없거나 유효하지 않으면 upload로 시작한다.
+  const validTabs = new Set(['upload','results','mail','spotcheck','history']);
+  let initialTab = 'upload';
+  try {
+    const savedTab = sessionStorage.getItem('hd24_active_tab');
+    if (validTabs.has(savedTab)) initialTab = savedTab;
+  } catch(_){}
+  activate(initialTab);
+  window.hd24SwitchTab = (tab)=>{
+    if (!validTabs.has(tab)) return;
+    try { sessionStorage.setItem('hd24_active_tab', tab); } catch(_){}
+    activate(tab);
+  };
 
   // 메일 미리보기 패널은 판정 이후 나중에(비동기로) 생성되므로, 생성되는 순간을 감지해서
   // 그 시점의 활성 탭 기준으로 보이기/숨기기를 한 번 더 맞춰준다.
