@@ -28,3 +28,14 @@
 - India Browser E2E and Brazil Browser E2E passed after alignment; Runtime Regression, Action Cycle Regression, approved UI application, and latest Pages deployment also passed.
 - Corrected stale mail guidance/history wording: API-free fallback is recorded as Outlook .eml package download; legacy mail-client-open history remains distinguishable.
 - Strict local Classic Outlook auto-open/send-button E2E remains outside the browser-only GitHub Pages boundary and is not marked complete.
+
+
+## 2026-09-28 — Follow-up / Reply cycle release-lock candidate
+- Followup runtime v70 production gates: Runtime, Action Cycle, approved UI, GitHub Pages PASS.
+- Multi-month reply workbook: all worksheets imported; future/invalid month blocked.
+- Import is atomic via pending staging; no partial save on later-sheet failure.
+- Persistent + in-file duplicate replies are blocked without blocking changed legitimate second replies.
+- KPI×target-month workbook rows are deduplicated; Unit/Target/Actual preserved.
+- Stale reply workbook generation fails closed when plant/analysis month/KPI values/reply history changes during async generation.
+- Reply sequence, recurrence/Repeated Issue, previous cause/countermeasure and per-row mail anchor are regression-locked.
+- Browser-only GitHub Pages still does not prove strict local Classic Outlook auto-open/Send-button E2E; that remains a separate local integration frontier.
