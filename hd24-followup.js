@@ -121,37 +121,28 @@ async function sendPreview(){if(!previewState)return;const to=$('mailTo')?.value
  downloadFile(file);shots.forEach(x=>downloadFile(x.file));const openedAt=nowIso();mailHistoryRecord(previewState.items,{status:'mail-client-opened',mailOpenedAt:openedAt});window.location.href=`mailto:${encodeURIComponent(to)}?${cc?'cc='+encodeURIComponent(cc)+'&':''}subject=${encodeURIComponent(previewState.subject)}&body=${encodeURIComponent(`[Attachments downloaded: ${fname} + KPI Missed/Achieved screenshots. Please attach all files before sending.]\n\n${previewState.body}`)}`;$('hd24MailStatus').textContent=`메일 앱 열림 · ${new Date(openedAt).toLocaleString()} · 실제 발송완료 여부는 미확인`;}
 async function resultScreenshots(){
   if(typeof html2canvas!=='function')throw new Error('Screenshot renderer unavailable');
-  const cols=[...document.querySelectorAll('.result-cols .result-col')].slice(0,2),names=['Missed','Achieved'],out=[];
-  if(cols.length<2)throw new Error('판정결과 영역을 찾을 수 없습니다.');
-  const months=[...new Set((previewState?.items||[]).map(r=>Number(r.month)).filter(Boolean))].sort((a,b)=>a-b);
-  const captureMonths=months.length?months:[month()],originalMonth=month();
+  const months=[...new Set((previewState?.items||[]).map(r=>Number(r.month)).filter(Boolean))].sort((a,b)=>a-b),captureMonths=months.length?months:[month()],originalMonth=month(),out=[],names=['Missed','Achieved'];
+  const host=document.createElement('div');host.id='hd24CaptureHost';host.style.cssText='position:fixed;left:-20000px;top:0;width:1400px;background:#fff;color:#17324d;z-index:-1;display:block;visibility:visible;opacity:1;padding:16px;';document.body.appendChild(host);
   try{
     for(const mo of captureMonths){
-      // 월별 확정 allResults를 기존 판정 렌더러로 다시 그린 뒤 캡처한다.
-      // previewState.items만으로 표를 재구성하지 않아 달성 KPI 누락/다른 월 stale 화면을 방지한다.
-      if(typeof selectedMonth!=='undefined') selectedMonth=mo;
-      if(typeof renderTable==='function') renderTable();
-      if(typeof updateStripActive==='function') updateStripActive();
+      if(typeof selectedMonth!=='undefined')selectedMonth=mo;
+      if(typeof renderTable==='function')renderTable();
+      if(typeof updateStripActive==='function')updateStripActive();
       await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-      for(let i=0;i<cols.length;i++){
-        const el=cols[i],wasHidden=el.classList.contains('hd24-tab-hidden'),prevDisplay=el.style.display,prevVisibility=el.style.visibility,prevPosition=el.style.position;
-        try{
-          el.classList.remove('hd24-tab-hidden');el.style.display='block';el.style.visibility='visible';el.style.position='relative';
-          await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-          const w=Math.max(el.scrollWidth,el.offsetWidth,1),h=Math.max(el.scrollHeight,el.offsetHeight,1),maxPixels=16000000,scale=Math.max(1,Math.min(2,Math.sqrt(maxPixels/(w*h))));
-          const canvas=await html2canvas(el,{backgroundColor:'#ffffff',scale,useCORS:true,logging:false,width:w,height:h,windowWidth:w,windowHeight:h,scrollX:0,scrollY:0});
-          if(!canvas.width||!canvas.height)throw new Error('empty screenshot canvas');
-          const blob=await new Promise((resolve,reject)=>{try{canvas.toBlob(b=>b?resolve(b):reject(new Error('PNG encoder returned empty blob')),'image/png')}catch(e){reject(e)}});
-          const file=new File([blob],`HDPS_KPI_${pname()}_${String(mo).padStart(2,'0')}M_${names[i]}.png`,{type:'image/png'});
-          out.push({file,name:file.name,base64:await fileToBase64(file),month:mo,type:names[i]});
-        }finally{if(wasHidden)el.classList.add('hd24-tab-hidden');el.style.display=prevDisplay;el.style.visibility=prevVisibility;el.style.position=prevPosition}
+      const live=[...document.querySelectorAll('.result-cols .result-col')].slice(0,2);
+      if(live.length<2)throw new Error('판정결과 영역을 찾을 수 없습니다.');
+      for(let i=0;i<2;i++){
+        host.innerHTML='';const clone=live[i].cloneNode(true);clone.classList.remove('hd24-tab-hidden');clone.style.cssText+=';display:block!important;visibility:visible!important;opacity:1!important;width:1320px!important;max-width:none!important;height:auto!important;overflow:visible!important;background:#fff!important;color:#17324d!important;';host.appendChild(clone);
+        await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+        const w=Math.max(clone.scrollWidth,clone.offsetWidth,1),h=Math.max(clone.scrollHeight,clone.offsetHeight,1),maxPixels=16000000,scale=Math.max(1,Math.min(2,Math.sqrt(maxPixels/(w*h))));
+        const canvas=await html2canvas(clone,{backgroundColor:'#ffffff',scale,useCORS:true,logging:false,width:w,height:h,windowWidth:w,windowHeight:h,scrollX:0,scrollY:0});
+        if(!canvas.width||!canvas.height)throw new Error('empty screenshot canvas');
+        const ctx=canvas.getContext('2d',{willReadFrequently:true});if(ctx){const d=ctx.getImageData(0,0,Math.min(canvas.width,64),Math.min(canvas.height,64)).data;let opaque=0;for(let k=3;k<d.length;k+=4)if(d[k]>0)opaque++;if(!opaque)throw new Error('transparent screenshot canvas');}
+        const blob=await new Promise((resolve,reject)=>{try{canvas.toBlob(b=>b&&b.size>1000?resolve(b):reject(new Error('PNG encoder returned empty image')),'image/png')}catch(e){reject(e)}});
+        const file=new File([blob],`HDPS_KPI_${pname()}_${String(mo).padStart(2,'0')}M_${names[i]}.png`,{type:'image/png'});out.push({file,name:file.name,base64:await fileToBase64(file),month:mo,type:names[i]});
       }
     }
-  }finally{
-    if(typeof selectedMonth!=='undefined') selectedMonth=originalMonth;
-    if(typeof renderTable==='function') renderTable();
-    if(typeof updateStripActive==='function') updateStripActive();
-  }
+  }finally{host.remove();if(typeof selectedMonth!=='undefined')selectedMonth=originalMonth;if(typeof renderTable==='function')renderTable();if(typeof updateStripActive==='function')updateStripActive();}
   return out;
 }
 function fileToBase64(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result).split(',')[1]||'');r.onerror=()=>reject(r.error);r.readAsDataURL(file)})}
