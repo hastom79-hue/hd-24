@@ -3,10 +3,11 @@ $ErrorActionPreference='Stop'
 $pattern='HDPS_KPI_*_Outlook.eml'
 Write-Host "HD-24 Outlook Bridge active: $Downloads"
 $seen=@{}
+$started=[DateTime]::UtcNow
 while($true){
   Get-ChildItem -LiteralPath $Downloads -Filter $pattern -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime | ForEach-Object {
     $key=$_.FullName+'|'+$_.LastWriteTimeUtc.Ticks+'|'+$_.Length
-    if(!$seen.ContainsKey($key)){
+    if($_.LastWriteTimeUtc -ge $started.AddSeconds(-2) -and !$seen.ContainsKey($key)){
       $seen[$key]=$true
       try{
         $outlook=New-Object -ComObject Outlook.Application
