@@ -69,3 +69,4 @@ jobs:
           node tests/auto-run-readiness.test.js
           node tests/reply-import-dedupe.test.js
           node tests/direct-reply-guard.test.js
+          node tests/history-view.test.js
