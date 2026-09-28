@@ -39,3 +39,5 @@ ok(src.includes("Repeated Issue x")&&src.includes("반복 이슈 x"),'repeated-i
 ok(src.includes("Previous Reason / Root Cause")&&src.includes("Previous Countermeasure"),'previous reply carry-forward columns missing');
 ok(src.includes("replySequence:prev.length+1"),'reply sequence increment missing');
 ok(src.includes("x.plant===plant&&x.targetMonth===targetMonth"),'reply sequence must be scoped by plant and target month');
+
+ok(src.includes("targetMonth:Number(r.month)||month()"),'mail history must persist each KPI row target month');
