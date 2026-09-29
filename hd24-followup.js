@@ -167,7 +167,7 @@ function escapeMailHtml(s){return String(s??'').replace(/&/g,'&amp;').replace(/<
 function highlightedMailBody(s){
   const keys=['Dark red:','Target Miss:','Consecutive Miss:','Recurring cause:','No change:','진한 붉은색:','당월 미달:','연속 미달:','동일 사유 반복:','변화 없음:','Reason / Root Cause / Recovery Plan','미달 사유·근본원인·만회대책','Confirm KPI recovery','KPI 실적 회복'];
   const emphasis=v=>'<span style="background-color:#FFF2A8;font-style:italic;font-weight:700;text-decoration:underline;padding:0 2px">'+v+'</span>';
-  return String(s).split('\\n').map(line=>{
+  return String(s).split('\n').map(line=>{
     if(!line)return '<div style="height:10px"></div>';
     let safe=escapeMailHtml(line);
     if(['STATUS / TREND (Excel):','상태/추세 기준(첨부 Excel):','REQUIRED — please fill in and return the attached file with:','필수 회신 — 첨부 파일에 아래 내용을 작성하여 회신 부탁드립니다:'].includes(line)){
