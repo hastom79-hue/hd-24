@@ -21,6 +21,10 @@ ok(src.includes("unitForFile(r.unit,isKo)"),'Excel Unit column must use localize
 for(const unit of ["MH/unit","days","cases/year","persons/case","turns","points"]){
   ok(src.includes(unit),'English unit conversion missing: '+unit);
 }
+ok(src.includes("statusCell.alignment = {vertical:'top',wrapText:true}"),'multi-category status must wrap inside Excel cells');
+ok(src.includes("row.height = Math.max(26,18*tags(r,isKo).length+8)"),'row height must fit every status category');
+ok(src.includes("12,12,48,18"),'status column must be wide enough for cumulative labels');
+ok(src.includes("text:'\\n'"),'status categories must use line breaks instead of clipped slash-separated text');
 console.log('HD24 FOLLOWUP DEFAULT-SENDER PASS');
 
 ok(src.includes("메일 패키지 준비 시작..."),'send button must expose pipeline start');
