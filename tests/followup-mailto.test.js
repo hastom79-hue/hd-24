@@ -31,6 +31,10 @@ ok(src.includes("hr.getCell(ci).border="),'header cells must have complete grid 
 ok(src.includes("STATUS / TREND LEGEND")&&src.includes("상태/추세 분류 기준"),'both language emails must define KPI status colors');
 ok(src.includes("similarity threshold 0.6")&&src.includes("유사도 기준 0.6"),'repeat-issue definition must match imported reply history');
 ok(src.includes("latest up-to-3 reported months")&&src.includes("최근 최대 3개 실적월"),'worsening definition must match 3-month trend calculation');
+ok(src.includes("No change vs last month")&&src.includes("전월과 동일(변화없음"),'reply Excel must include unchanged KPI status in both languages');
+ok(src.includes("Cumulative KPI · No change")&&src.includes("누적형 지표 ·"),'cumulative KPI flat trend must match dashboard');
+ok(src.includes("Recurring same cause")&&src.includes("동일 사유 반복"),'recurrence status must match dashboard');
+ok(src.includes("if(r.streak>=2)out.push("),'consecutive misses must show exact streak from two months');
 console.log('HD24 FOLLOWUP DEFAULT-SENDER PASS');
 
 ok(src.includes("메일 패키지 준비 시작..."),'send button must expose pipeline start');
