@@ -35,9 +35,11 @@ ok(src.includes("No change vs last month")&&src.includes("전월과 동일(변�
 ok(src.includes("Cumulative KPI · No change")&&src.includes("누적형 지표 ·"),'cumulative KPI flat trend must match dashboard');
 ok(src.includes("Recurring same cause")&&src.includes("동일 사유 반복"),'recurrence status must match dashboard');
 ok(src.includes("if(r.streak>=2)out.push("),'consecutive misses must show exact streak from two months');
-ok(src.includes("font-family:")&&src.includes("Malgun Gothic")&&src.includes("font-size:11pt"),'Outlook HTML mail must use Malgun Gothic 11pt');
+ok(src.includes("font-family:")&&src.includes("selectedMailStyle()")&&src.includes("style.size+'pt"),'Outlook HTML mail must use user-selected font and point size');
 ok(src.includes("Content-Type: multipart/alternative")&&src.includes("Content-Type: text/html"),'EML must include styled HTML and plain-text fallback');
-ok(src.includes("bodyHtml:styledMailHtml(previewState.body)")&&src.includes("fontSizePt:11"),'mail API payload must include styled HTML and font metadata');
+ok(src.includes("bodyHtml:styledMailHtml(previewState.body)")&&src.includes("fontSizePt:selectedMailStyle().size"),'mail API payload must include selected HTML font and size');
+ok(src.includes('id="hd24MailFont"')&&src.includes('id="hd24MailFontSize"'),'mail font and size controls missing');
+ok(src.includes("addEventListener('change',applyMailStyle)"),'font changes must update preview');
 console.log('HD24 FOLLOWUP DEFAULT-SENDER PASS');
 
 ok(src.includes("메일 패키지 준비 시작..."),'send button must expose pipeline start');
