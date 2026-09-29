@@ -28,6 +28,9 @@ ok(src.includes("text:'\\n'"),'status categories must use line breaks instead of
 ok(src.includes("cell.border={top:{style:'medium'"),'every KPI row must have a visible strong top border');
 ok(src.includes("left:{style:'thin'")&&src.includes("right:{style:'thin'"),'every Excel column must have visible vertical borders');
 ok(src.includes("hr.getCell(ci).border="),'header cells must have complete grid borders');
+ok(src.includes("STATUS / TREND LEGEND")&&src.includes("상태/추세 분류 기준"),'both language emails must define KPI status colors');
+ok(src.includes("similarity threshold 0.6")&&src.includes("유사도 기준 0.6"),'repeat-issue definition must match imported reply history');
+ok(src.includes("latest up-to-3 reported months")&&src.includes("최근 최대 3개 실적월"),'worsening definition must match 3-month trend calculation');
 console.log('HD24 FOLLOWUP DEFAULT-SENDER PASS');
 
 ok(src.includes("메일 패키지 준비 시작..."),'send button must expose pipeline start');
