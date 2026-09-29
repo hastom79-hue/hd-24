@@ -56,22 +56,26 @@ function reset(reason){
   gateJudge();
   logSafe('안전반영 Gate RESET: '+reason+' — 새 파일쌍 감지 (판정은 별도로 바로 가능)');
 }
+function ensureHistoryHook(){
+  if(wrapAddHistory()||window.addHistory?.__hd24PipelineWrapped)return;
+  if(!signature())return;
+  [50,150,400,1000,2500].forEach(ms=>setTimeout(()=>{
+    if(!signature()||window.addHistory?.__hd24PipelineWrapped)return;
+    wrapAddHistory();
+  },ms));
+}
 function wire(){
-  // Plain refresh has no browser File objects. Do not keep waking the pipeline gate
-  // for 2.5 seconds when there is nothing to process; this was a visible refresh jank source.
-  wrapAddHistory();
+  // Do not schedule startup retries on a plain refresh with empty file inputs.
+  ensureHistoryHook();
   gateJudge();
-  // addHistory is normally already defined. Only retry wrapping when an actual upload pair
-  // exists and the hook was not available yet.
-  if(signature() && !wrapAddHistory()){
-    [50,150,400,1000,2500].forEach(ms=>setTimeout(()=>{
-      if(!signature())return;
-      wrapAddHistory();
-      gateJudge();
-    },ms));
-  }
-  ['srcFile','masterFile'].forEach(id=>el(id)?.addEventListener('change',()=>reset(id+' change'),true));
-  el('plantSelect')?.addEventListener('change',()=>reset('plant change'),true);
+  ['srcFile','masterFile'].forEach(id=>el(id)?.addEventListener('change',()=>{
+    reset(id+' change');
+    ensureHistoryHook();
+  },true));
+  el('plantSelect')?.addEventListener('change',()=>{
+    reset('plant change');
+    ensureHistoryHook();
+  },true);
   const btn=el('btnJudge');
   if(btn)new MutationObserver(()=>{if(!resetting)gateJudge()}).observe(btn,{attributes:true,attributeFilter:['disabled']});
   window.addEventListener('hd24-safe-reflect-complete',()=>gateJudge());
