@@ -15,6 +15,12 @@ ok(!/from=|sender=|hastom79@gmail\.com|imap\.naver\.com/i.test(src),'follow-up r
 ok(!src.includes("shots.forEach(x=>downloadFile(x.file))"),'fallback must not require manual attachment downloads');
 const vm=ui.match(/hd24-followup\.js\?v=(\d+)/);ok(vm,'production loader missing followup');
 ok(refresh.includes('hd24-followup.js?v='+vm[1]),'refresh/followup cache version mismatch');
+ok(src.includes("statusRich(r,isKo,darkStatus)"),'status font must follow selected language and dark background');
+ok(src.includes("if(dark)color='FFFFFFFF'"),'every dark-red status category must use white rich-text runs');
+ok(src.includes("unitForFile(r.unit,isKo)"),'Excel Unit column must use localized units');
+for(const unit of ["MH/unit","days","cases/year","persons/case","turns","points"]){
+  ok(src.includes(unit),'English unit conversion missing: '+unit);
+}
 console.log('HD24 FOLLOWUP DEFAULT-SENDER PASS');
 
 ok(src.includes("메일 패키지 준비 시작..."),'send button must expose pipeline start');
