@@ -18,6 +18,19 @@ while($true){
       }catch{Write-Warning ("Failed to open "+$_.Name+": "+$_.Exception.Message)}
     }
   }
-  if($seen.Count -gt 200){$seen=@{}}
+  if($seen.Count -gt 200){
+    # Do not clear the whole dedupe set: that can reopen a recent draft.
+    # Keep only entries whose encoded file timestamp is within the last 6 hours.
+    $cutoff=[DateTime]::UtcNow.AddHours(-6).Ticks
+    $fresh=@{}
+    foreach($k in @($seen.Keys)){
+      $parts=$k -split '\\|'
+      if($parts.Count -ge 3){
+        [long]$ticks=0
+        if([long]::TryParse($parts[$parts.Count-2],[ref]$ticks) -and $ticks -ge $cutoff){$fresh[$k]=$true}
+      }
+    }
+    $seen=$fresh
+  }
   Start-Sleep -Milliseconds 750
 }
