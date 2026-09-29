@@ -148,7 +148,7 @@ async function resultScreenshots(){
         // 전체를 한 장으로 축소하지 않으므로 각 PNG의 글자 크기는 실제 화면과 동일하게 유지된다.
         for(let page=0;page<pageCount;page++){
           const y=page*viewportH,h=Math.min(viewportH,fullH-y);
-          const canvas=await html2canvas(clone,{backgroundColor:'#ffffff',scale,useCORS:true,logging:false,width:w,height:h,windowWidth:w,windowHeight:viewportH,scrollX:0,scrollY:-y,y});
+          const canvas=await html2canvas(clone,{backgroundColor:'#ffffff',scale,useCORS:true,logging:false,width:w,height:h,windowWidth:w,windowHeight:viewportH,scrollX:0,scrollY:-y,y,ignoreElements:el=>el.tagName==='IMG'&&!(el.complete&&el.naturalWidth>0)});
           if(!canvas.width||!canvas.height)throw new Error('empty screenshot canvas');
           const ctx=canvas.getContext('2d',{willReadFrequently:true});if(ctx){const d=ctx.getImageData(0,0,Math.min(canvas.width,64),Math.min(canvas.height,64)).data;let opaque=0;for(let k=3;k<d.length;k+=4)if(d[k]>0)opaque++;if(!opaque)throw new Error('transparent screenshot canvas');}
           const blob=await new Promise((resolve,reject)=>{try{canvas.toBlob(b=>b&&b.size>1000?resolve(b):reject(new Error('PNG encoder returned empty image')),'image/png')}catch(e){reject(e)}});
