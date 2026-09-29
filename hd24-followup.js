@@ -76,7 +76,8 @@ function body(items){
     '',
     `Confirm KPI recovery after implementing corrective actions.`,
     '',
-    `Thank you for your cooperation.`,
+    `Best Regards,`,
+    `Mr.Seoh`,
   ]:[
     `안녕하세요,`,'',
     `${pnameKo()} 사업장 ${monthsText} HDPS KPI 결과를 확인하시고 첨부 Excel에 작성하여 회신 부탁드립니다.`,
@@ -98,7 +99,8 @@ function body(items){
     '',
     `조치 완료 후에도 KPI 실적 회복 여부를 확인해 주십시오.`,
     '',
-    `협조 부탁드립니다. 감사합니다.`,
+    `감사합니다.`,
+    `서지철 드림`,
   ];
   return lines.join('\n');
 }
