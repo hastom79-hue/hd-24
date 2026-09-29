@@ -57,7 +57,7 @@ function body(items){
   const ms=missSummary(items),miss=ms.unique;
   const lines=en?[
     `Dear Team,`,'',
-    `Please review the ${pname()} HDPS KPI results for ${monthsText} in the attached Excel file, and reply with the reason, root cause, and recovery plan for each KPI marked as Target Miss / Consecutive Miss / Worsening.`,
+    `Please review the attached ${pname()} HDPS KPI results for ${monthsText} and return the completed Excel.`,
     '',
     ms.months.length>1?`Summary: ${miss} unique KPI(s) not achieved across the selected months (common KPIs: ${ms.common}, month-specific KPIs: ${ms.individual}).`:`Summary: ${miss} KPI(s) not achieved (${repeated} repeated issue${repeated===1?'':'s'}).`,
     '',
@@ -72,14 +72,14 @@ function body(items){
     `2. Root cause`,
     `3. Recovery / catch-up plan (with target completion date)`,
     '',
-    `The attached Excel already lists every KPI with its target, actual, and status \u2014 the Reason / Root Cause / Recovery Plan columns there are pre-created and highlighted for your input.`,
+    `Complete the highlighted Excel columns: Reason / Root Cause / Recovery Plan (with due date).`,
     '',
-    `NOTE — Lean KPI daily management monitoring is not limited to tracking actual results or whether targets were missed. Proper management requires an integrated cycle: root-cause analysis, establishment of recovery actions, actual elimination of the root cause, and continued monitoring of the KPI trend to verify that performance has changed and recovered.`,
+    `Confirm KPI recovery after implementing corrective actions.`,
     '',
     `Thank you for your cooperation.`,
   ]:[
     `안녕하세요,`,'',
-    `${pnameKo()} 사업장 ${monthsText} HDPS KPI 결과를 첨부 엑셀 파일로 안내드립니다. 목표 미달성/연속 미달성/악화로 표시된 지표별로 사유·근본원인·만회대책을 회신 부탁드립니다.`,
+    `${pnameKo()} 사업장 ${monthsText} HDPS KPI 결과를 확인하시고 첨부 Excel에 작성하여 회신 부탁드립니다.`,
     '',
     ms.months.length>1?`요약: 선택월 전체에서 중복을 제거한 미달성 KPI ${miss}개 (모든 선택월 공통 미달성: ${ms.common}개, 특정 월 미달성: ${ms.individual}개)`:`요약: 미달성 KPI ${miss}건 (반복 재발 ${repeated}건)`,
     '',
@@ -94,9 +94,9 @@ function body(items){
     `2. 근본 원인`,
     `3. 만회대책 (완료 목표일 포함)`,
     '',
-    `첨부된 엑셀 파일에는 KPI별 목표/실적/판정이 이미 정리되어 있고, 사유·근본원인·만회대책을 입력하실 칸도 미리 만들어져 있습니다(노란색 표시).`,
+    `Excel의 강조된 입력란에 미달 사유·근본원인·만회대책(완료예정일)을 작성해 주십시오.`,
     '',
-    `특기사항 — Lean 성과지표 일상관리 모니터링은 단순히 지표의 실적 및 미달성 여부만 관리하는 것을 의미하지 않습니다. 근본원인 분석 → 만회대책 수립 → 실제 근본원인 제거 → 이후 KPI 트렌드 변화 및 회복 여부 확인까지 하나의 사이클로 통합 관리되어야 제대로 된 일상관리가 이루어진다고 판단합니다.`,
+    `조치 완료 후에도 KPI 실적 회복 여부를 확인해 주십시오.`,
     '',
     `협조 부탁드립니다. 감사합니다.`,
   ];
