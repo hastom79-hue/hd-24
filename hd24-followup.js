@@ -89,10 +89,15 @@ async function buildReplyFile(items){if(typeof ExcelJS==='undefined')throw new E
     ? ['사업장','대상월','KPI','단위','목표','실적','상태/추세','반복이슈',...(hasPrevious?['이전 사유/근본원인','이전 만회대책']:[]),'미달성 사유','근본원인','만회대책','담당자','완료예정일']
     : ['Plant','Target Month','KPI','Unit','Target','Actual','Status / Trend',...(hasReplyHistory?['반복이슈']:[]),...(hasPrevious?['Previous Reason / Root Cause','Previous Countermeasure']:[]),'Reason for Miss / Deterioration','Root Cause','Recovery / Catch-up Plan','Action Owner','Planned Completion Date'];
   for(const m of months){const ws=wb.addWorksheet(String(m).padStart(2,'0')+' Month');const monthItems=uniqueItems.filter(r=>Number(r.month)===m);
-  ws.columns=cols.map((h,i)=>({header:h,key:'c'+i,width:[12,12,36,14,12,12,48,18,32,32,22,22,22,34,34,36,20,22,24,20][i]}));const hr=ws.getRow(1);hr.font={bold:true,color:{argb:'FFFFFFFF'}};hr.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF2B4A63'}};hr.alignment={vertical:'middle',horizontal:'center',wrapText:true};hr.height=32;
+  ws.columns=cols.map((h,i)=>({header:h,key:'c'+i,width:[12,12,36,14,12,12,48,18,32,32,22,22,22,34,34,36,20,22,24,20][i]}));const hr=ws.getRow(1);hr.font={bold:true,color:{argb:'FFFFFFFF'}};hr.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF2B4A63'}};hr.alignment={vertical:'middle',horizontal:'center',wrapText:true};hr.height=32;for(let ci=1;ci<=cols.length;ci++)hr.getCell(ci).border={top:{style:'thin',color:{argb:'FFCBD5E1'}},bottom:{style:'medium',color:{argb:'FF718096'}},left:{style:'thin',color:{argb:'FFCBD5E1'}},right:{style:'thin',color:{argb:'FFCBD5E1'}}};
   monthItems.forEach((r,idx)=>{const rec=recurrenceFor(r),last=rec?.latest||{},mh=lastMailFor(r,Number(r.month)||month());const isPct=r.unit==='%';const kpiName = isKo ? (r.kpi||r.kpiEn||'') : (r.kpiEn||r.kpi||'');const row=ws.addRow([plantLabelForFile(),r.month,kpiName,unitForFile(r.unit,isKo),isPct?(typeof r.target==='number'?r.target:null):(r.target??''),isPct?(typeof r.actual==='number'?r.actual:null):(r.actual??''),tags(r,isKo).join(' / '),...(hasReplyHistory?[rec?.isRecurrence?(isKo?`예 (동일사유 x${rec.sameCauseCount})`:`YES (same cause x${rec.sameCauseCount})`):(isKo?'아니오':'NO')]:[]),...(hasPrevious?[last.rootCause||last.reason||'',last.recoveryPlan||'']:[]), '', '', '', '', '']);
     if(isPct){row.getCell(5).numFmt='0.0%';row.getCell(6).numFmt='0.0%'}else{row.getCell(5).numFmt='0.00';row.getCell(6).numFmt='0.00'}
-    for(let ci=1;ci<=cols.length;ci++)row.getCell(ci).fill={type:'pattern',pattern:'solid',fgColor:{argb:MISS_FILL}};
+    for(let ci=1;ci<=cols.length;ci++){
+      const cell=row.getCell(ci);
+      cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:MISS_FILL}};
+      cell.border={top:{style:'medium',color:{argb:'FF718096'}},bottom:{style:'thin',color:{argb:'FF9AA7B4'}},left:{style:'thin',color:{argb:'FFCBD5E1'}},right:{style:'thin',color:{argb:'FFCBD5E1'}}};
+      cell.alignment={...(cell.alignment||{}),vertical:'top'};
+    }
     // 웹 화면의 "7개월 연속 미달성"/"최근 악화" 배지처럼, 심각한 상태는 셀 자체를 굵은 진한
     // 빨강 배경+흰 글씨로 강조해서 표에서 바로 눈에 띄게 한다 (그냥 평범한 텍스트면 놓치기 쉬움)
     const statusCell = row.getCell(7);
