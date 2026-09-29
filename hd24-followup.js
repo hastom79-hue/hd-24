@@ -5,8 +5,9 @@ const REPLY_KEY='hd24_kpi_reply_history_v2';
 const MAIL_KEY='hd24_kpi_mail_history_v2';
 const CONFIG_KEY='hd24_mail_endpoint_v1';
 const REQUIRED_CC=['dylee07@hd.com','hastom@hd.com'];
-function requiredCc(value){const addresses=String(value||'').split(/[;,\s]+/).map(s=>s.trim()).filter(Boolean);const seen=new Set();return [...REQUIRED_CC,...(pkey()==='india'?INDIA_REQUIRED_CC:[]),...addresses].filter(address=>{const key=address.toLowerCase();if(seen.has(key))return false;seen.add(key);return true}).join('; ')}
+function requiredCc(value){const addresses=String(value||'').split(/[;,\s]+/).map(s=>s.trim()).filter(Boolean);const seen=new Set();return [...REQUIRED_CC,...(pkey()==='india'?INDIA_REQUIRED_CC:pkey()==='brazil'?BRAZIL_REQUIRED_CC:[]),...addresses].filter(address=>{const key=address.toLowerCase();if(seen.has(key))return false;seen.add(key);return true}).join('; ')}
 const INDIA_REQUIRED_CC=['minsu.kim01@hd.com','deokho.kim@hd.com'];
+const BRAZIL_REQUIRED_CC=["antos2082@hd.com","yhchoi@hd.com"];
 const MISS_FILL='FFFBE9E7', STATUS_FILL='FFE2E8F0';
 function plantLabelForFile(){return isEn()?pname():pnameKo();}
 let previewState=null;
