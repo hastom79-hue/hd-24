@@ -94,3 +94,24 @@ ok(src.includes("const sameReply=x=>")&&src.includes("prev.some(sameReply)||pend
 
 ok(src.includes("String(x.reason||'')===reason")&&src.includes("String(x.rootCause||'')===rootCause")&&src.includes("String(x.recoveryPlan||'')===recoveryPlan"),'dedupe must require identical reply content so changed second replies remain valid');
 ok(src.includes("replySequence:prev.length+pending.filter")&&src.includes("sameCauseCount:same")&&src.includes("isRecurrence:same>=2"),'valid second reply must advance sequence and remain recurrence-eligible');
+
+// Mandatory CC: execute the production helper for both plants and another plant.
+const vmModule=require('vm');
+const helper=src.match(/function requiredCc\(value\)\{[^\n]+\}/);
+ok(helper,'mandatory CC helper missing');
+for(const [plant,extra,absent] of [
+ ['india',['minsu.kim01@hd.com','deokho.kim@hd.com'],['antos2082@hd.com','yhchoi@hd.com']],
+ ['brazil',['antos2082@hd.com','yhchoi@hd.com'],['minsu.kim01@hd.com','deokho.kim@hd.com']],
+ ['ulsan',[],['minsu.kim01@hd.com','deokho.kim@hd.com','antos2082@hd.com','yhchoi@hd.com']]
+]){
+ const context={pkey:()=>plant,REQUIRED_CC:['dylee07@hd.com','hastom@hd.com'],INDIA_REQUIRED_CC:['minsu.kim01@hd.com','deokho.kim@hd.com'],BRAZIL_REQUIRED_CC:['antos2082@hd.com','yhchoi@hd.com']};
+ vmModule.createContext(context);vmModule.runInContext(helper[0]+';this.applyCc=requiredCc;',context);
+ const actual=context.applyCc('HASTOM@HD.COM;other@hd.com;other@hd.com').toLowerCase().split('; ');
+ for(const email of [...context.REQUIRED_CC,...extra,'other@hd.com'])ok(actual.includes(email),plant+' missing '+email);
+ for(const email of absent)ok(!actual.includes(email),plant+' incorrectly contains '+email);
+ ok(actual.length===new Set(actual).size,plant+' duplicate CC');
+}
+ok(src.includes("cc=requiredCc($('mailCc')?.value)"),'preview must enforce CC');
+ok(src.includes("cc=requiredCc($('mailCc')?.value.trim()||previewState.cc)"),'send API must enforce CC');
+ok(src.includes('function buildOutlookEml({to,cc,subject,body,attachments}){cc=requiredCc(cc)'),'EML must enforce CC');
+console.log('HD24 INDIA/BRAZIL MANDATORY CC PASS');
