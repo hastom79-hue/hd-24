@@ -18,9 +18,10 @@ ok(refresh.includes('hd24-followup.js?v='+vm[1]),'refresh/followup cache version
 console.log('HD24 FOLLOWUP DEFAULT-SENDER PASS');
 
 ok(src.includes("메일 패키지 준비 시작..."),'send button must expose pipeline start');
-ok(src.includes("2/5 회신 Excel 생성 완료"),'Excel stage completion diagnostic missing');
-ok(src.includes("3/5 Outlook EML 생성 완료"),'EML stage completion diagnostic missing');
-ok(src.includes("4/5 Outlook EML 다운로드 시작..."),'EML download stage diagnostic missing');
+ok(src.includes("2/6 회신 Excel 생성 완료"),'Excel stage completion diagnostic missing');
+ok(src.includes("3/6 단일 Excel 첨부 모드 준비 완료"),'single-Excel attachment stage diagnostic missing');
+ok(src.includes("4/6 Outlook EML 생성 완료"),'EML stage completion diagnostic missing');
+ok(src.includes("5/6 Outlook EML 다운로드 시작..."),'EML download stage diagnostic missing');
 ok(!src.includes("resultScreenshots()"),'approved single-Excel mail package must not capture KPI PNGs');
 ok(src.includes("const seen=new Set(),rows=[]")&&src.includes("if(seen.has(k))continue"),'send-history UI must deduplicate KPI-level records into one attempt row');
 ok(src.includes("메일 패키지 생성 실패:"),'top-level send pipeline error diagnostic missing');
