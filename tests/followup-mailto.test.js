@@ -25,6 +25,9 @@ ok(src.includes("statusCell.alignment = {vertical:'top',wrapText:true}"),'multi-
 ok(src.includes("row.height = Math.max(26,18*tags(r,isKo).length+8)"),'row height must fit every status category');
 ok(src.includes("12,12,48,18"),'status column must be wide enough for cumulative labels');
 ok(src.includes("text:'\\n'"),'status categories must use line breaks instead of clipped slash-separated text');
+ok(src.includes("cell.border={top:{style:'medium'"),'every KPI row must have a visible strong top border');
+ok(src.includes("left:{style:'thin'")&&src.includes("right:{style:'thin'"),'every Excel column must have visible vertical borders');
+ok(src.includes("hr.getCell(ci).border="),'header cells must have complete grid borders');
 console.log('HD24 FOLLOWUP DEFAULT-SENDER PASS');
 
 ok(src.includes("메일 패키지 준비 시작..."),'send button must expose pipeline start');
