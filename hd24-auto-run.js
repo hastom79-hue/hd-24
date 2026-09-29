@@ -87,7 +87,7 @@ function tryAutoRun(reason){
   }
   lastWaitState='';
   const now=Date.now();
-  if(runningSignature===sig&&now-runningSince<3000)return;
+  if(runningSignature===sig&&now-runningSince<15000)return;
   runningSignature=sig;
   runningSince=now;
   writeLog('자동 실행 시작: '+reason+' — 업로드 완료 즉시 안전검증/실적반영');
@@ -102,7 +102,7 @@ function resetAndRun(reason){
   lastWaitState='';
   // A plain refresh has no browser File objects, so repeated startup retries only create needless work.
   if(!getSignature())return;
-  [0,80,200,500,1000,2000,4000,8000].forEach(ms=>setTimeout(()=>tryAutoRun(reason),ms));
+  [100,600,1800,4000].forEach(ms=>setTimeout(()=>{if(getSignature())tryAutoRun(reason)},ms));
 }
 
 function wire(){
@@ -115,7 +115,7 @@ function wire(){
   if(btn)new MutationObserver(()=>tryAutoRun('readiness enabled')).observe(btn,{attributes:true,attributeFilter:['disabled','data-safe-reflect-ready']});
   document.addEventListener('hd24-safe-reflect-success',syncSuccess);
   window.addEventListener('hd24-safe-reflect-complete',syncSuccess);
-  watchdog=setInterval(()=>{if(getSignature())tryAutoRun('watchdog')},3000);
+  watchdog=setInterval(()=>{const sig=getSignature();if(!sig||sig===completedSignature)return;if(runningSignature===sig&&Date.now()-runningSince<15000)return;tryAutoRun('watchdog')},15000);
   window.addEventListener('beforeunload',()=>watchdog&&clearInterval(watchdog),{once:true});
   resetAndRun('startup');
 }
