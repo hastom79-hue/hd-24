@@ -25,8 +25,19 @@ function replyHistoryFor(r){const k=norm(r.kpiEn||r.kpi);return load(REPLY_KEY).
 function recurrenceFor(r){const h=replyHistoryFor(r);if(h.length<2)return h.length?{history:h,latest:h[0],sameCauseCount:1,total:h.length,isRecurrence:false}:null;const latest=h[0],cause=latest.rootCause||latest.reason||'';const same=h.filter(x=>similarity(cause,x.rootCause||x.reason||'')>=0.6).length;return {history:h,latest,sameCauseCount:same,total:h.length,isRecurrence:same>=2};}
 function isActionTarget(r){const rec=recurrenceFor(r);return !r.achieved||r.streak>=2||r.trend==='down'||!!rec?.isRecurrence;}
 function selectItems(mode){const items=current();if(mode==='all')return items;if(mode==='month')return items.filter(r=>!r.achieved);return items.filter(isActionTarget);}
-function tags(r, ko){const out=[];if(ko){if(!r.achieved)out.push('목표 미달');if(r.streak>=3)out.push(`${r.streak}개월 연속 미달성`);else if(r.streak>=2)out.push('일시적/연속 미달성');if(r.trend==='down')out.push('악화 추세');const rec=recurrenceFor(r);if(rec?.isRecurrence)out.push(`반복 이슈 x${rec.sameCauseCount}`);}else{if(!r.achieved)out.push('Current Month: Target Miss');if(r.streak>=3)out.push(`Cumulative: ${r.streak} Consecutive Months Missed`);else if(r.streak>=2)out.push('Cumulative: 2 Consecutive Months Missed');if(r.trend==='down')out.push('Current Month: Worsening');const rec=recurrenceFor(r);if(rec?.isRecurrence)out.push(`Repeated Issue x${rec.sameCauseCount}`);}return out;}
-function statusRich(r,ko=false,dark=false){const xs=tags(r,ko),richText=[];xs.forEach((v,i)=>{if(i)richText.push({text:'\n',font:{color:{argb:dark?'FFFFFFFF':'FF64748B'}}});let color='FF334155';if(dark)color='FFFFFFFF';else if(v.includes('Target Miss')||v.includes('목표 미달'))color='FF9C251D';else if(v.includes('Consecutive')||v.includes('연속 미달'))color='FF8C4C00';else if(v.includes('Worsening')||v.includes('악화'))color='FF65358B';else if(v.includes('Repeated')||v.includes('반복 이슈'))color='FF075E67';richText.push({text:v,font:{bold:true,color:{argb:color}}})});return {richText}}
+function tags(r, ko){
+  const out=[];
+  if(!r.achieved)out.push(ko?'목표 미달':'Current Month: Target Miss');
+  if(r.streak>=2)out.push(ko?`${r.streak}개월 연속 미달성`:`Cumulative: ${r.streak} Consecutive Months Missed`);
+  if(r.trend==='down')out.push(ko?'최근 악화':'Recent decline');
+  const rec=recurrenceFor(r);
+  if(rec?.isRecurrence)out.push(ko?`동일 사유 반복(${rec.sameCauseCount}회) · 중점관리`:`Recurring same cause (x${rec.sameCauseCount}) · Focus`);
+  if(r.flatStreak>=1)out.push(r.isCumulative
+    ?(ko?`누적형 지표 · ${r.flatStreak+1}개월째 변화없음`:`Cumulative KPI · No change for ${r.flatStreak+1}mo`)
+    :(ko?`전월과 동일(변화없음 ${r.flatStreak+1}개월째)`:`No change vs last month (${r.flatStreak+1}mo flat)`));
+  return out;
+}
+function statusRich(r,ko=false,dark=false){const xs=tags(r,ko),richText=[];xs.forEach((v,i)=>{if(i)richText.push({text:'\n',font:{color:{argb:dark?'FFFFFFFF':'FF64748B'}}});let color='FF334155';if(dark)color='FFFFFFFF';else if(v.includes('Target Miss')||v.includes('목표 미달'))color='FF9C251D';else if(v.includes('Consecutive')||v.includes('연속 미달'))color='FF8C4C00';else if(v.includes('Recent decline')||v.includes('악화'))color='FF65358B';else if(v.includes('Recurring')||v.includes('동일 사유'))color='FF075E67';richText.push({text:v,font:{bold:true,color:{argb:color}}})});return {richText}}
 function unitForFile(unit,ko){const raw=String(unit??'').trim();if(ko)return raw;const compact=raw.replace(/\\s+/g,'');const translated={'MH/대':'MH/unit','일':'days','건/년':'cases/year','명/년':'persons/year','인/건':'persons/case','회전':'turns','점':'points','명':'persons','건':'cases','대분':'unit-min','시간':'hours','분':'minutes','원':'KRW','대':'units'};return translated[compact]||raw}
 function isEn(){try{return currentLang==='en'}catch(_){return false}}
 function pnameKo(){return pkey()==='india'?'인도':pkey()==='brazil'?'브라질':pkey()==='ulsan'?'울산':pname()}
