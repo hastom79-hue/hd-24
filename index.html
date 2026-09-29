@@ -414,10 +414,33 @@ document.getElementById('hd24KpiChangeBannerBtn').addEventListener('click', () =
 });
 function cfg(){ return PLANT_CONFIG[currentPlant]; }
 
+const mappingCache = new Map();
+const mappingPending = new Map();
 async function loadMapping(){
-  const res = await fetch(cfg().mappingFile + '?v=' + Date.now(), {cache:'no-store'});
-  mappingData = await res.json();
-  log(cfg().label + ' 매핑 로드: ' + mappingData.length + '건');
+  const key = currentPlant;
+  const file = cfg().mappingFile;
+  if (mappingCache.has(key)){
+    mappingData = mappingCache.get(key);
+    return mappingData;
+  }
+  if (mappingPending.has(key)){
+    mappingData = await mappingPending.get(key);
+    return mappingData;
+  }
+  const request = fetch(file + '?v=24', {cache:'force-cache'})
+    .then(res => {
+      if(!res.ok) throw new Error(file + ' HTTP ' + res.status);
+      return res.json();
+    })
+    .then(data => {
+      mappingCache.set(key, data);
+      log(cfg().label + ' 매핑 로드: ' + data.length + '건');
+      return data;
+    })
+    .finally(() => mappingPending.delete(key));
+  mappingPending.set(key, request);
+  mappingData = await request;
+  return mappingData;
 }
 loadMapping();
 // 과거이력은 사업장 선택만으로 자동 표시하지 않는다. 업로드/실행 완료 후 판정 결과로 이동한다.
