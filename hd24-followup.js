@@ -172,6 +172,8 @@ function highlightedMailBody(s){
   return String(s).split('\n').map(line=>{
     if(!line)return '<div style="height:10px"></div>';
     let safe=escapeMailHtml(line);
+    if(/^Please review the attached .* HDPS KPI results for /.test(line))return '<div style="font-style:italic;line-height:1.5;margin:3px 0">'+safe+'</div>';
+    if(/^Summary:/.test(line))return '<div style="font-weight:700;background-color:#FFF2A8;display:inline-block;padding:3px 5px;line-height:1.5;margin:5px 0">'+safe+'</div>';
     if(['STATUS / TREND (Excel):','상태/추세 기준(첨부 Excel):','REQUIRED — please fill in and return the attached file with:','필수 회신 — 첨부 파일에 아래 내용을 작성하여 회신 부탁드립니다:'].includes(line)){
       return '<div style="font-weight:700;color:#193e61;border-bottom:1px solid #cbd5e1;margin-top:10px;margin-bottom:5px">'+safe+'</div>';
     }
