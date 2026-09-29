@@ -40,6 +40,10 @@ ok(src.includes("Content-Type: multipart/alternative")&&src.includes("Content-Ty
 ok(src.includes("bodyHtml:styledMailHtml(previewState.body)")&&src.includes("fontSizePt:selectedMailStyle().size"),'mail API payload must include selected HTML font and size');
 ok(src.includes('id="hd24MailFont"')&&src.includes('id="hd24MailFontSize"'),'mail font and size controls missing');
 ok(src.includes("addEventListener('change',applyMailStyle)"),'font changes must update preview');
+ok(src.includes("function highlightedMailBody(s)")&&src.includes("background-color:#FFF2A8"),'key email phrases must receive yellow highlighting');
+ok(src.includes("font-style:italic")&&src.includes("text-decoration:underline"),'key email phrases must be italic and underlined');
+ok(src.includes("innerHTML=highlightedMailBody(previewState.body)"),'preview must display same highlights as outgoing HTML');
+ok(src.includes("Confirm KPI recovery after implementing corrective actions.")&&src.includes("KPI 실적 회복 여부"),'bilingual mail must retain concise recovery instruction');
 console.log('HD24 FOLLOWUP DEFAULT-SENDER PASS');
 
 ok(src.includes("메일 패키지 준비 시작..."),'send button must expose pipeline start');
