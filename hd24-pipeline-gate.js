@@ -57,7 +57,19 @@ function reset(reason){
   logSafe('안전반영 Gate RESET: '+reason+' — 새 파일쌍 감지 (판정은 별도로 바로 가능)');
 }
 function wire(){
-  [0,50,150,400,1000,2500].forEach(ms=>setTimeout(()=>{wrapAddHistory();gateJudge()},ms));
+  // Plain refresh has no browser File objects. Do not keep waking the pipeline gate
+  // for 2.5 seconds when there is nothing to process; this was a visible refresh jank source.
+  wrapAddHistory();
+  gateJudge();
+  // addHistory is normally already defined. Only retry wrapping when an actual upload pair
+  // exists and the hook was not available yet.
+  if(signature() && !wrapAddHistory()){
+    [50,150,400,1000,2500].forEach(ms=>setTimeout(()=>{
+      if(!signature())return;
+      wrapAddHistory();
+      gateJudge();
+    },ms));
+  }
   ['srcFile','masterFile'].forEach(id=>el(id)?.addEventListener('change',()=>reset(id+' change'),true));
   el('plantSelect')?.addEventListener('change',()=>reset('plant change'),true);
   const btn=el('btnJudge');
