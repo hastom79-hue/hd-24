@@ -100,7 +100,9 @@ function resetAndRun(reason){
   runningSignature='';
   runningSince=0;
   lastWaitState='';
-  [0,50,120,250,500,900,1500,2500,4000,6500,10000,15000,25000,40000,60000].forEach(ms=>setTimeout(()=>tryAutoRun(reason),ms));
+  // A plain refresh has no browser File objects, so repeated startup retries only create needless work.
+  if(!getSignature())return;
+  [0,80,200,500,1000,2000,4000,8000].forEach(ms=>setTimeout(()=>tryAutoRun(reason),ms));
 }
 
 function wire(){
@@ -113,7 +115,7 @@ function wire(){
   if(btn)new MutationObserver(()=>tryAutoRun('readiness enabled')).observe(btn,{attributes:true,attributeFilter:['disabled','data-safe-reflect-ready']});
   document.addEventListener('hd24-safe-reflect-success',syncSuccess);
   window.addEventListener('hd24-safe-reflect-complete',syncSuccess);
-  watchdog=setInterval(()=>tryAutoRun('watchdog'),1000);
+  watchdog=setInterval(()=>{if(getSignature())tryAutoRun('watchdog')},3000);
   window.addEventListener('beforeunload',()=>watchdog&&clearInterval(watchdog),{once:true});
   resetAndRun('startup');
 }
