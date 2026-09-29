@@ -71,3 +71,5 @@ jobs:
           node tests/direct-reply-guard.test.js
           node tests/history-view.test.js
           node tests/followup-import.test.js
+          node tests/followup-mailto.test.js
+          node tests/outlook-bridge.test.js
