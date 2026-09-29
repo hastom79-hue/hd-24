@@ -24,7 +24,7 @@ while($true){
     $cutoff=[DateTime]::UtcNow.AddHours(-6).Ticks
     $fresh=@{}
     foreach($k in @($seen.Keys)){
-      $parts=$k -split '\\|'
+      $parts=$k -split '\|'
       if($parts.Count -ge 3){
         [long]$ticks=0
         if([long]::TryParse($parts[$parts.Count-2],[ref]$ticks) -and $ticks -ge $cutoff){$fresh[$k]=$true}
