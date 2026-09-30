@@ -125,3 +125,18 @@ for(const [name,expected] of [['Hemant Kadam','Dear Hemant Kadam,'],['','Dear Te
  const context={$:()=>({value:name})};vmModule.createContext(context);vmModule.runInContext(greeting[0]+';this.greeting=recipientGreeting;',context);ok(context.greeting()===expected,'greeting mismatch: '+name);
 }
 console.log('HD24 RECIPIENT GREETING PASS');
+
+const reminder=fs.readFileSync('hd24-seven-day-reminder.js','utf8');
+ok(reminder.includes('const DAY=86400000,DELAY=7*DAY'),'seven-day delay missing');
+ok(reminder.includes("m.status!=='sent'"),'reminder must require confirmed API send');
+ok(reminder.includes("Date.parse(r.replyReceivedAt)>=sent"),'uploaded reply must suppress reminder');
+ok(reminder.includes("x.status==='seven-day-reminder-sent'"),'repeat reminder suppression missing');
+ok(reminder.includes("localStorage.getItem(ENDPOINT_KEY)"),'automatic reminder must require configured API');
+ok(reminder.includes("status:'seven-day-reminder-sent'"),'reminder sent history missing');
+ok(reminder.includes("GLOBAL=['dylee07@hd.com','hastom@hd.com']"),'global reminder CC missing');
+ok(reminder.includes("india:['minsu.kim01@hd.com','deokho.kim@hd.com']"),'India reminder CC missing');
+ok(reminder.includes("brazil:['antos2082@hd.com','yhchoi@hd.com']"),'Brazil reminder CC missing');
+ok(reminder.includes("short-, medium-, and long-term trend management"),'requested Lean KPI follow-up message missing');
+ok(ui.includes('hd24-seven-day-reminder.js?v=1'),'reminder loader missing');
+ok(refresh.includes('hd24-seven-day-reminder.js?v=1'),'reminder refresh preload missing');
+console.log('HD24 SEVEN-DAY REMINDER CONTRACT PASS');
