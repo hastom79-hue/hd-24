@@ -145,3 +145,9 @@ ok(src.includes("id='hd24MailTypeTabs'")&&src.includes('최초 발송메일')&&s
 ok(reminder.includes('hd24ReminderMailList')&&reminder.includes('리마인드 발송 이력'),'D+7 tab queue/history missing');
 ok(reminder.includes('const answered=batch.every('),'all sent KPI replies must be uploaded to suppress reminder');
 console.log('HD24 MAIL TWO-TAB PASS');
+
+const dashboard=fs.readFileSync('index.html','utf8');
+ok(dashboard.includes("if(tab==='mail') resultCard.style.display='block'"),'mail tab must remain accessible before KPI analysis');
+ok(src.includes("id='hd24MailTypeTabs'")&&src.includes('hd24InitialMailContent')&&src.includes('hd24ReminderMailContent'),'mail tab subpanels must exist');
+ok(reminder.includes('hd24ReminderMailList')&&reminder.includes('리마인드 발송 이력'),'D+7 reminder list must render');
+console.log('HD24 MAIL TAB VISIBILITY PASS');
