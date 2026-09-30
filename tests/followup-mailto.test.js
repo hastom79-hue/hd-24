@@ -115,3 +115,13 @@ ok(src.includes("cc=requiredCc($('mailCc')?.value)"),'preview must enforce CC');
 ok(src.includes("cc=requiredCc($('mailCc')?.value.trim()||previewState.cc)"),'send API must enforce CC');
 ok(src.includes('function buildOutlookEml({to,cc,subject,body,attachments}){cc=requiredCc(cc)'),'EML must enforce CC');
 console.log('HD24 INDIA/BRAZIL MANDATORY CC PASS');
+
+// Recipient greeting uses the contact dropdown's populated name, not the email local part.
+ok(src.includes("$('mailToName')?.value"),'recipient name field must drive greeting');
+ok(src.includes("recipientGreeting(),''"),'English mail body must use recipient greeting');
+ok(src.includes("previewState.body=body(previewState.items)"),'send must refresh greeting if recipient changed');
+const greeting=src.match(/function recipientGreeting\(\)\{[^\n]+\}/);ok(greeting,'recipient greeting helper missing');
+for(const [name,expected] of [['Hemant Kadam','Dear Hemant Kadam,'],['','Dear Team,'],['Jane,','Dear Jane,']]){
+ const context={$:()=>({value:name})};vmModule.createContext(context);vmModule.runInContext(greeting[0]+';this.greeting=recipientGreeting;',context);ok(context.greeting()===expected,'greeting mismatch: '+name);
+}
+console.log('HD24 RECIPIENT GREETING PASS');
