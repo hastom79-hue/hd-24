@@ -137,6 +137,11 @@ ok(reminder.includes("GLOBAL=['dylee07@hd.com','hastom@hd.com']"),'global remind
 ok(reminder.includes("india:['minsu.kim01@hd.com','deokho.kim@hd.com']"),'India reminder CC missing');
 ok(reminder.includes("brazil:['antos2082@hd.com','yhchoi@hd.com']"),'Brazil reminder CC missing');
 ok(reminder.includes("short-, medium-, and long-term trend management"),'requested Lean KPI follow-up message missing');
-ok(ui.includes('hd24-seven-day-reminder.js?v=1'),'reminder loader missing');
-ok(refresh.includes('hd24-seven-day-reminder.js?v=1'),'reminder refresh preload missing');
+ok(ui.includes('hd24-seven-day-reminder.js?v=2'),'reminder loader missing');
+ok(refresh.includes('hd24-seven-day-reminder.js?v=2'),'reminder refresh preload missing');
 console.log('HD24 SEVEN-DAY REMINDER CONTRACT PASS');
+
+ok(src.includes("id='hd24MailTypeTabs'")&&src.includes('최초 발송메일')&&src.includes('리마인드 메일 [D+7 경과]'),'initial and D+7 mail tabs missing');
+ok(reminder.includes('hd24ReminderMailList')&&reminder.includes('리마인드 발송 이력'),'D+7 tab queue/history missing');
+ok(reminder.includes('const answered=batch.every('),'all sent KPI replies must be uploaded to suppress reminder');
+console.log('HD24 MAIL TWO-TAB PASS');
