@@ -147,7 +147,7 @@ ok(reminder.includes('const answered=batch.every('),'all sent KPI replies must b
 console.log('HD24 MAIL TWO-TAB PASS');
 
 const dashboard=fs.readFileSync('index.html','utf8');
-ok(dashboard.includes("if(tab==='mail') resultCard.style.display='block'"),'mail tab must remain accessible before KPI analysis');
+ok(dashboard.includes("mail: [resultCard, contactPanel, document.getElementById('hd24FollowupPanel')]"),'mail tab must remain accessible before KPI analysis');
 ok(src.includes("id='hd24MailTypeTabs'")&&src.includes('hd24InitialMailContent')&&src.includes('hd24ReminderMailContent'),'mail tab subpanels must exist');
 ok(reminder.includes('hd24ReminderMailList')&&reminder.includes('리마인드 발송 이력'),'D+7 reminder list must render');
 console.log('HD24 MAIL TAB VISIBILITY PASS');
@@ -163,3 +163,7 @@ ok(reminder.includes("lang==='ko'"),'Korean reminder template missing');
 ok(reminder.includes('hd24ReminderKo')&&reminder.includes('hd24ReminderEn'),'reminder language selection missing');
 ok(reminder.includes('const cc=required(m.plant,m.cc),body=reminderText(m.recipientName),subject=reminderSubject(m.plant)'),'actual reminder send must match selected language');
 console.log('HD24 BILINGUAL REMINDER PASS');
+
+ok(src.includes("const host=document.querySelector('main')||$('resultCard')"),'reply upload must mount outside hidden KPI results');
+ok(dashboard.includes("followupWatcher.observe(main, {childList:true,subtree:true})"),'independent mail panel visibility observer missing');
+console.log('HD24 STANDALONE REPLY UPLOAD PASS');
