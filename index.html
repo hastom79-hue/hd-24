@@ -1727,7 +1727,7 @@ function setupTabs(){
   const groups = {
     upload: [workGrid].filter(Boolean),
     results: [resultCard].filter(Boolean),
-    mail: [resultCard, contactPanel].filter(Boolean),
+    mail: [resultCard, contactPanel, document.getElementById('hd24FollowupPanel')].filter(Boolean),
     spotcheck: [spotCheckPanel].filter(Boolean),
     history: [historyPanel, timelinePanel].filter(Boolean),
     log: [logPanel].filter(Boolean),
@@ -1746,7 +1746,7 @@ function setupTabs(){
     if (tab === 'results' || tab === 'mail') {
       // resultCard는 판정 전환 과정에서 inline display:none이 남을 수 있다.
       // 실제 판정 데이터가 있으면 메일/판정 탭 클릭 시 이를 복구해 탭이 빈 화면처럼 먹통이 되지 않게 한다.
-      if(tab==='mail') resultCard.style.display='block'; else try { if ((allResults||[]).length) resultCard.style.display='block'; } catch(_){}
+      if(tab==='mail') { try { resultCard.style.display=(allResults||[]).length?'block':'none'; } catch(_) {resultCard.style.display='none'} } else try { if ((allResults||[]).length) resultCard.style.display='block'; } catch(_){}
       applyResultCardSubVisibility(tab);
     }
     bar.querySelectorAll('.hd24-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
@@ -1780,7 +1780,7 @@ function setupTabs(){
     followupPanel.classList.toggle('hd24-tab-hidden', activeTab !== 'mail');
     followupWatcher.disconnect();
   });
-  followupWatcher.observe(resultCard, {childList:true});
+  followupWatcher.observe(main, {childList:true,subtree:true});
 
   // 판정결과 탭에 미달성 건수 배지 표시, 판정이 다시 돌 때마다 갱신
   window.hd24UpdateTabBadge = (missCount)=>{
@@ -1793,6 +1793,6 @@ function setupTabs(){
 if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', ()=>setTimeout(setupTabs, 100));
 else setTimeout(setupTabs, 100);
 </script>
-<script src="./hd24-ui-v3.js?v=35"></script>
+<script src="./hd24-ui-v3.js?v=36"></script>
 </body>
 </html>
