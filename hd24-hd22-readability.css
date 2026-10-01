@@ -1,0 +1,50 @@
+/* HD-24 readability refresh: visual language benchmarked against HD-22.
+   Presentation only: no tab routing, visibility, data or mail behavior changes. */
+:root{
+ --hd24-navy:#14304c;--hd24-blue:#2c5f8a;--hd24-line:#dfe6ec;--hd24-bg:#f4f6f8;
+ --hd24-ink:#22303f;--hd24-muted:#5c6b7a;
+ --hd24-font:'Pretendard','Noto Sans KR','Malgun Gothic',-apple-system,BlinkMacSystemFont,sans-serif;
+}
+html{font-size:16px}
+body{font-family:var(--hd24-font)!important;background:var(--hd24-bg)!important;color:var(--hd24-ink)!important;font-size:16px!important;line-height:1.55!important;-webkit-font-smoothing:antialiased}
+header{background:linear-gradient(115deg,#14304c,#1e4468)!important}
+header h1{font-family:var(--hd24-font)!important;font-size:clamp(24px,2vw,30px)!important;letter-spacing:-.035em}
+header p{font-size:14px!important;line-height:1.55!important}
+main{max-width:1520px!important;width:calc(100% - 48px)!important;padding:0!important;margin:24px auto 64px!important}
+section.panel{border-color:#dfe6ec!important;border-radius:12px!important;box-shadow:0 2px 12px rgba(20,48,76,.045)!important;padding:24px 28px!important}
+section.panel>h2{font-size:20px!important;font-weight:800!important;letter-spacing:-.025em!important;color:#14304c!important;padding-bottom:13px!important;border-bottom:1px solid #dfe6ec!important}
+section.panel h3,#hd24Feedback h3{font-size:19px!important;font-weight:800!important;letter-spacing:-.02em;color:#14304c}
+section.panel h4,#hd24Feedback h4{font-size:17px!important;font-weight:750!important;color:#1e4468}
+.hint,.note,section.panel p{line-height:1.65!important}
+.hint,.note{font-size:14px!important;color:#5c6b7a!important}
+.field-row label,section.panel label{font-size:14px!important;font-weight:700!important;color:#34495e!important}
+button,input,select,textarea{font-family:var(--hd24-font)!important;font-size:15px!important}
+button{min-height:42px;border-radius:8px!important;font-weight:700!important;letter-spacing:-.01em}
+button:not(:disabled){transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid rgba(44,95,138,.35)!important;outline-offset:2px}
+input[type=file],input:not([type=checkbox]):not([type=radio]),select,textarea{border:1px solid #c9d5df!important;border-radius:8px!important;background:#fff!important;color:#22303f!important}
+input[type=file],select{min-height:44px!important}
+textarea{line-height:1.7!important;padding:14px!important;letter-spacing:0!important}
+#hd24Feedback{margin-top:22px!important;padding:22px!important;border:1px solid #dfe6ec;border-radius:12px;background:#fff}
+#hd24Feedback>p{font-size:15px!important}
+#hd24FeedbackFindings p{font-size:14px!important;line-height:1.6!important}
+#hd24FeedbackDraft{font-family:var(--hd24-font)!important;font-size:15px!important;line-height:1.8!important;min-height:330px!important;resize:vertical}
+#hd24FeedbackSubject{font-size:15px!important;min-height:44px!important}
+#hd24FeedbackKo,#hd24FeedbackEn{padding:10px 18px!important}
+#hd24ReplyPanel>h2{font-size:21px!important}
+#hd24ReplyPanel>.hint{font-size:14px!important}
+.hd24-summary{border-radius:12px!important;box-shadow:0 2px 10px rgba(20,48,76,.045)!important}
+.hd24-summary .hd24-label{font-size:13px!important;letter-spacing:.025em!important}
+.hd24-summary h3{font-size:17px!important}
+.hd24-summary p{font-size:14px!important}
+.hd24-kpi-mini span{font-size:13px!important}
+.hd24-tab{font-size:15px!important;font-weight:750!important;padding:12px 16px!important}
+table{font-size:15px!important}
+table th{font-size:14px!important;font-weight:800!important;line-height:1.45!important}
+table td{font-size:14.5px!important;line-height:1.55!important}
+.result-col table.results{font-size:14px!important}
+.result-col table.results thead th{font-size:13.5px!important}
+.result-col table.results tbody td{font-size:14px!important}
+#log{font-size:13px!important;line-height:1.65!important}
+@media(max-width:1100px){main{width:calc(100% - 32px)!important}.hd24-summary-grid{gap:10px}}
+@media(max-width:700px){main{width:calc(100% - 20px)!important;margin-top:12px!important}section.panel{padding:18px 15px!important}.hd24-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}#hd24Feedback{padding:16px!important}#hd24FeedbackDraft{min-height:270px!important}.hd24-tab{font-size:14px!important;padding:10px 12px!important}}
