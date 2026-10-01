@@ -6,12 +6,20 @@ const read=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch(_){ret
 const norm=v=>String(v||'').toLowerCase().replace(/[^a-z0-9가-힣]/g,'');
 const plant=()=>{try{return currentPlant||document.getElementById('plantSelect')?.value||''}catch(_){return document.getElementById('plantSelect')?.value||''}};
 const required=(p,cc)=>[...new Set([...GLOBAL,...(EXTRA[p]||[]),...String(cc||'').split(/[;,\s]+/).filter(Boolean)].map(s=>s.trim().toLowerCase()))].join('; ');
-const greeting=n=>n?'Dear '+String(n).replace(/[\r\n<>]/g,' ').trim().replace(/,+$/,'')+',':'Dear Team,';
-const reminderText=n=>[greeting(n),'',
-'This is a follow-up regarding the HDPS KPI results previously shared. No reply results have been uploaded to the KPI monitoring system within seven days of the original email. Please upload your completed response and reply to this email.','',
-'Daily management and utilization of Lean performance indicators does not merely mean setting KPIs and tracking actual results. It encompasses short-, medium-, and long-term trend management and the corresponding response activities by operational departments and shop-floor teams.','',
-'Please recognize that each plant is required to manage these activities independently as part of its daily operations, and confirm your understanding by replying to this email.','',
-'Best Regards,','Mr.Seoh'].join('\n');
+const greeting=n=>n?'Dear '+String(n).replace(/[\\r\\n<>]/g,' ').trim().replace(/,+$/,'')+',':'Dear Team,';
+let reminderLang='en';
+const reminderText=(n,lang=reminderLang)=>lang==='ko'?
+[String(n||'담당자')+'님,','',
+'기존 HDPS KPI 메일 발송 후 7일이 지났으나 회신 결과가 업로드되지 않았습니다. 회신 파일을 업로드하고 본 메일에 회신해 주시기 바랍니다.','',
+'Lean 성과지표의 일상관리는 목표 설정과 실적 확인에 그치지 않습니다. 단기·중장기 추세를 관리하고, 현업 및 현장 팀이 그에 맞춰 대응하는 활동까지 포함합니다.','',
+'각 사업장에서 이를 일상적으로 자체 관리해야 함을 인지하시고, 조치 현황과 함께 회신 바랍니다.','',
+'감사합니다.','서지철 드림'].join('\\n'):
+[greeting(n),'',
+'Seven days have passed since our HDPS KPI email, but your response has not been uploaded. Please upload the completed response and reply to this email.','',
+'Daily Lean KPI management goes beyond setting targets and tracking results. It requires short- and long-term trend reviews and corresponding actions by operational and shop-floor teams.','',
+'Each plant must manage these activities as part of its daily operations. Please confirm your understanding and share your action status in your reply.','',
+'Best Regards,','Mr.Seoh'].join('\\n');
+const reminderSubject=(p,lang=reminderLang)=>lang==='ko'?'[HDPS KPI] D+7 미회신 안내 및 Lean 성과지표 일상관리 회신 요청 - '+(p==='india'?'인도':p==='brazil'?'브라질':'사업장'):'[HDPS KPI] D+7 Reminder: Reply & Daily Lean KPI Management - '+(p==='india'?'India':p==='brazil'?'Brazil':'Plant');
 const status=s=>{const el=document.getElementById('hd24SevenDayStatus');if(el)el.textContent=s};
 function pending(now=Date.now()){
  const mails=read(MAIL_KEY),replies=read(REPLY_KEY),seen=new Set(),out=[];
@@ -35,10 +43,10 @@ function render(){
  const name=current?.recipientName||document.getElementById('mailToName')?.value.trim()||'';
  const to=current?.to||document.getElementById('mailTo')?.value.trim()||'';
  const cc=required(p,current?.cc||document.getElementById('mailCc')?.value||'');
- const subject='[HDPS KPI] 7-Day Follow-up: Reply and Daily Lean KPI Management - '+(p==='india'?'India':p==='brazil'?'Brazil':'Plant');
+ const subject=reminderSubject(p);
  const body=reminderText(name);
  const preview='<section id="hd24ReminderPreview" style="border:1px solid #cad7e4;border-radius:8px;padding:16px;margin:14px 0;background:#fff">'+
- '<h3 style="margin:0 0 12px">리마인드 메일 미리보기</h3>'+
+ '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><h3 style="margin:0 0 12px">리마인드 메일 미리보기</h3><div style="display:flex;gap:6px"><button type="button" id="hd24ReminderKo" aria-pressed="'+(reminderLang==='ko')+'" style="padding:7px 14px;'+(reminderLang==='ko'?'background:#23547b;color:white;':'')+'">한글</button><button type="button" id="hd24ReminderEn" aria-pressed="'+(reminderLang==='en')+'" style="padding:7px 14px;'+(reminderLang==='en'?'background:#23547b;color:white;':'')+'">English</button></div></div>'+
  (current?'':'<p style="color:#7a5614;background:#fff8e7;padding:9px;border-radius:5px">현재 D+7 발송 대상이 없어 예시 본문을 표시합니다. 자동 발송되지 않습니다.</p>')+
  '<div style="margin:6px 0"><b>To:</b> '+escape(to||'(대상 발생 시 자동 반영)')+'</div>'+
  '<div style="margin:6px 0"><b>CC:</b> '+escape(cc)+'</div>'+
@@ -49,6 +57,8 @@ function render(){
  '<div style="display:flex;gap:12px;flex-wrap:wrap;margin:12px 0"><strong>미회신 D+7: '+items.length+'건</strong><span>재안내 발송완료: '+sent.length+'건</span></div>'+
  (items.length?items.map(x=>'<div style="padding:12px;margin:8px 0;border:1px solid #d3dce5;border-radius:8px"><b>'+escape(x.mail.to)+'</b><div>최초 발송: '+new Date(x.mail.sentAt).toLocaleString()+' · 미회신 KPI '+x.batch.length+'건</div><div style="color:#a14b00">D+7 경과 · 회신 결과 미업로드</div></div>').join(''):'<p>현재 미회신 D+7 대상이 없습니다.</p>')+
  (sent.length?'<h4>리마인드 발송 이력</h4>'+sent.slice(0,10).map(x=>'<div style="padding:6px 0;border-bottom:1px solid #e5e7eb">'+escape(x.to)+' · '+new Date(x.sentAt).toLocaleString()+'</div>').join(''):'');
+ document.getElementById('hd24ReminderKo')?.addEventListener('click',()=>{reminderLang='ko';render()});
+ document.getElementById('hd24ReminderEn')?.addEventListener('click',()=>{reminderLang='en';render()});
 }
 let busy=false;
 async function check(){
@@ -64,10 +74,10 @@ async function check(){
    try{
     // Re-read replies immediately before dispatch to prevent stale reminder sends.
     if(!pending().some(x=>x.id===item.id)){localStorage.removeItem(lock);continue}
-    const cc=required(m.plant,m.cc),body=reminderText(m.recipientName),subject='[HDPS KPI] 7-Day Follow-up: Reply and Daily Lean KPI Management - '+(m.plant==='india'?'India':'Brazil');
-    const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:m.to,cc,subject,body,bodyHtml:'<html><body style="font-family:Arial,sans-serif;white-space:pre-line">'+body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</body></html>',plant:m.plant,reminder:true,originalSentAt:m.sentAt,originalMailId:item.id})});
+    const cc=required(m.plant,m.cc),body=reminderText(m.recipientName),subject=reminderSubject(m.plant);
+    const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:m.to,cc,subject,body,bodyHtml:'<html><body style="font-family:Arial,sans-serif;white-space:pre-line">'+body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</body></html>',plant:m.plant,reminder:true,originalSentAt:m.sentAt,originalMailId:item.id,language:reminderLang})});
     if(!res.ok)throw new Error('HTTP '+res.status);
-    const history=read(MAIL_KEY);history.unshift({plant:m.plant,status:'seven-day-reminder-sent',to:m.to,cc,recipientName:m.recipientName||'',originalSentAt:m.sentAt,originalMailId:item.id,sentAt:new Date().toISOString()});localStorage.setItem(MAIL_KEY,JSON.stringify(history.slice(0,3000)));
+    const history=read(MAIL_KEY);history.unshift({plant:m.plant,status:'seven-day-reminder-sent',to:m.to,cc,recipientName:m.recipientName||'',originalSentAt:m.sentAt,originalMailId:item.id,language:reminderLang,sentAt:new Date().toISOString()});localStorage.setItem(MAIL_KEY,JSON.stringify(history.slice(0,3000)));
     localStorage.removeItem(lock);status('7일 미회신 재안내 발송 완료: '+m.to);
    }catch(e){localStorage.removeItem(lock);status('7일 재안내 발송 실패: '+String(e.message||e));}
   }
