@@ -26,12 +26,35 @@ function pending(now=Date.now()){
  }
  return out;
 }
-function render(){const el=document.getElementById('hd24ReminderMailList');if(!el)return;const p=plant(),items=pending().filter(x=>x.mail.plant===p);const sent=read(MAIL_KEY).filter(x=>x.plant===p&&x.status==='seven-day-reminder-sent');const escape=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');el.innerHTML='<div style="display:flex;gap:12px;flex-wrap:wrap;margin:12px 0"><strong>미회신 D+7: '+items.length+'건</strong><span>재안내 발송완료: '+sent.length+'건</span></div>'+(items.length?items.map(x=>'<div style="padding:12px;margin:8px 0;border:1px solid #d3dce5;border-radius:8px"><b>'+escape(x.mail.to)+'</b><div>최초 발송: '+new Date(x.mail.sentAt).toLocaleString()+' · 미회신 KPI '+x.batch.length+'건</div><div style="color:#a14b00">D+7 경과 · 회신 결과 미업로드</div></div>').join(''):'<p>현재 미회신 D+7 대상이 없습니다.</p>')+(sent.length?'<h4>리마인드 발송 이력</h4>'+sent.slice(0,10).map(x=>'<div style="padding:6px 0;border-bottom:1px solid #e5e7eb">'+escape(x.to)+' · '+new Date(x.sentAt).toLocaleString()+'</div>').join(''):'');}
+function render(){
+ const el=document.getElementById('hd24ReminderMailList');if(!el)return;
+ const p=plant(),items=pending().filter(x=>x.mail.plant===p);
+ const sent=read(MAIL_KEY).filter(x=>x.plant===p&&x.status==='seven-day-reminder-sent');
+ const escape=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+ const current=items[0]?.mail;
+ const name=current?.recipientName||document.getElementById('mailToName')?.value.trim()||'';
+ const to=current?.to||document.getElementById('mailTo')?.value.trim()||'';
+ const cc=required(p,current?.cc||document.getElementById('mailCc')?.value||'');
+ const subject='[HDPS KPI] 7-Day Follow-up: Reply and Daily Lean KPI Management - '+(p==='india'?'India':p==='brazil'?'Brazil':'Plant');
+ const body=reminderText(name);
+ const preview='<section id="hd24ReminderPreview" style="border:1px solid #cad7e4;border-radius:8px;padding:16px;margin:14px 0;background:#fff">'+
+ '<h3 style="margin:0 0 12px">리마인드 메일 미리보기</h3>'+
+ (current?'':'<p style="color:#7a5614;background:#fff8e7;padding:9px;border-radius:5px">현재 D+7 발송 대상이 없어 예시 본문을 표시합니다. 자동 발송되지 않습니다.</p>')+
+ '<div style="margin:6px 0"><b>To:</b> '+escape(to||'(대상 발생 시 자동 반영)')+'</div>'+
+ '<div style="margin:6px 0"><b>CC:</b> '+escape(cc)+'</div>'+
+ '<div style="margin:6px 0"><b>Subject:</b> '+escape(subject)+'</div>'+
+ '<div style="margin:14px 0 4px"><b>Body</b></div>'+
+ '<div id="hd24ReminderPreviewBody" style="white-space:pre-wrap;line-height:1.65;background:#f7f9fc;border-radius:6px;padding:16px;overflow-wrap:anywhere">'+escape(body)+'</div></section>';
+ el.innerHTML=preview+
+ '<div style="display:flex;gap:12px;flex-wrap:wrap;margin:12px 0"><strong>미회신 D+7: '+items.length+'건</strong><span>재안내 발송완료: '+sent.length+'건</span></div>'+
+ (items.length?items.map(x=>'<div style="padding:12px;margin:8px 0;border:1px solid #d3dce5;border-radius:8px"><b>'+escape(x.mail.to)+'</b><div>최초 발송: '+new Date(x.mail.sentAt).toLocaleString()+' · 미회신 KPI '+x.batch.length+'건</div><div style="color:#a14b00">D+7 경과 · 회신 결과 미업로드</div></div>').join(''):'<p>현재 미회신 D+7 대상이 없습니다.</p>')+
+ (sent.length?'<h4>리마인드 발송 이력</h4>'+sent.slice(0,10).map(x=>'<div style="padding:6px 0;border-bottom:1px solid #e5e7eb">'+escape(x.to)+' · '+new Date(x.sentAt).toLocaleString()+'</div>').join(''):'');
+}
 let busy=false;
 async function check(){
  if(busy)return;const p=plant(),due=pending().filter(x=>x.mail.plant===p);if(!due.length){status('7일 미회신 재안내 대상 없음');render();return}
  const endpoint=String(window.HD24_MAIL_ENDPOINT||localStorage.getItem(ENDPOINT_KEY)||'').trim();
- if(!endpoint){status('7일 미회신 '+due.length+'건: 자동 발송 API 미설정. 발송하려면 메일 API를 설정하세요.');return}
+ if(!endpoint){status('7일 미회신 '+due.length+'건: 자동 발송 API 미설정. 발송하려면 메일 API를 설정하세요.');render();return}
  busy=true;
  try{
   for(const item of due){
@@ -55,6 +78,7 @@ function init(){
  render();check();setInterval(check,60*60*1000);
  document.getElementById('plantSelect')?.addEventListener('change',()=>setTimeout(check,200));
  document.getElementById('hd24ReplyFile')?.addEventListener('change',()=>setTimeout(check,3000));
+ ['mailTo','mailToName','mailCc'].forEach(id=>document.getElementById(id)?.addEventListener('input',render));
 }
 window.hd24SevenDayReminder={pending,check,render,reminderText,required};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
