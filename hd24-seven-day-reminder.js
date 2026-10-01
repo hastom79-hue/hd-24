@@ -6,19 +6,19 @@ const read=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch(_){ret
 const norm=v=>String(v||'').toLowerCase().replace(/[^a-z0-9가-힣]/g,'');
 const plant=()=>{try{return currentPlant||document.getElementById('plantSelect')?.value||''}catch(_){return document.getElementById('plantSelect')?.value||''}};
 const required=(p,cc)=>[...new Set([...GLOBAL,...(EXTRA[p]||[]),...String(cc||'').split(/[;,\s]+/).filter(Boolean)].map(s=>s.trim().toLowerCase()))].join('; ');
-const greeting=n=>n?'Dear '+String(n).replace(/[\\r\\n<>]/g,' ').trim().replace(/,+$/,'')+',':'Dear Team,';
+const greeting=n=>n?'Dear '+String(n).replace(/[\r\n<>]/g,' ').trim().replace(/,+$/,'')+',':'Dear Team,';
 let reminderLang='en';
 const reminderText=(n,lang=reminderLang)=>lang==='ko'?
 [String(n||'담당자')+'님,','',
 '기존 HDPS KPI 메일 발송 후 7일이 지났으나 회신 결과가 업로드되지 않았습니다. 회신 파일을 업로드하고 본 메일에 회신해 주시기 바랍니다.','',
 'Lean 성과지표의 일상관리는 목표 설정과 실적 확인에 그치지 않습니다. 단기·중장기 추세를 관리하고, 현업 및 현장 팀이 그에 맞춰 대응하는 활동까지 포함합니다.','',
 '각 사업장에서 이를 일상적으로 자체 관리해야 함을 인지하시고, 조치 현황과 함께 회신 바랍니다.','',
-'감사합니다.','서지철 드림'].join('\\n'):
+'감사합니다.','서지철 드림'].join('\n'):
 [greeting(n),'',
 'Seven days have passed since our HDPS KPI email, but your response has not been uploaded. Please upload the completed response and reply to this email.','',
 'Daily Lean KPI management goes beyond setting targets and tracking results. It requires short- and long-term trend reviews and corresponding actions by operational and shop-floor teams.','',
 'Each plant must manage these activities as part of its daily operations. Please confirm your understanding and share your action status in your reply.','',
-'Best Regards,','Mr.Seoh'].join('\\n');
+'Best Regards,','Mr.Seoh'].join('\n');
 const reminderSubject=(p,lang=reminderLang)=>lang==='ko'?'[HDPS KPI] D+7 미회신 안내 및 Lean 성과지표 일상관리 회신 요청 - '+(p==='india'?'인도':p==='brazil'?'브라질':'사업장'):'[HDPS KPI] D+7 Reminder: Reply & Daily Lean KPI Management - '+(p==='india'?'India':p==='brazil'?'Brazil':'Plant');
 const status=s=>{const el=document.getElementById('hd24SevenDayStatus');if(el)el.textContent=s};
 function pending(now=Date.now()){
