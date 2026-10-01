@@ -167,3 +167,8 @@ console.log('HD24 BILINGUAL REMINDER PASS');
 ok(src.includes("const host=document.querySelector('main')||$('resultCard')"),'reply upload must mount outside hidden KPI results');
 ok(dashboard.includes("followupWatcher.observe(main, {childList:true,subtree:true})"),'independent mail panel visibility observer missing');
 console.log('HD24 STANDALONE REPLY UPLOAD PASS');
+
+ok(src.includes("replyPanel.id='hd24ReplyPanel'")&&src.includes("sec.after(replyPanel)"),'reply import panel must be independent of mail');
+ok(dashboard.includes('data-tab="reply">회신 이력 반영')&&dashboard.includes("tab!=='reply'"),'separate reply tab routing missing');
+ok(src.includes("$('hd24ReplyFile')?.closest('.field-row')"),'reply Excel input must move to independent tab');
+console.log('HD24 STANDALONE REPLY TAB PASS');
