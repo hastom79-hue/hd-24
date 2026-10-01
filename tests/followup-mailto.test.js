@@ -137,8 +137,8 @@ ok(reminder.includes("GLOBAL=['dylee07@hd.com','hastom@hd.com']"),'global remind
 ok(reminder.includes("india:['minsu.kim01@hd.com','deokho.kim@hd.com']"),'India reminder CC missing');
 ok(reminder.includes("brazil:['antos2082@hd.com','yhchoi@hd.com']"),'Brazil reminder CC missing');
 ok(reminder.includes("short-, medium-, and long-term trend management"),'requested Lean KPI follow-up message missing');
-ok(ui.includes('hd24-seven-day-reminder.js?v=2'),'reminder loader missing');
-ok(refresh.includes('hd24-seven-day-reminder.js?v=2'),'reminder refresh preload missing');
+ok(ui.includes('hd24-seven-day-reminder.js?v=3'),'reminder loader missing');
+ok(refresh.includes('hd24-seven-day-reminder.js?v=3'),'reminder refresh preload missing');
 console.log('HD24 SEVEN-DAY REMINDER CONTRACT PASS');
 
 ok(src.includes("id='hd24MailTypeTabs'")&&src.includes('최초 발송메일')&&src.includes('리마인드 메일 [D+7 경과]'),'initial and D+7 mail tabs missing');
@@ -151,3 +151,9 @@ ok(dashboard.includes("if(tab==='mail') resultCard.style.display='block'"),'mail
 ok(src.includes("id='hd24MailTypeTabs'")&&src.includes('hd24InitialMailContent')&&src.includes('hd24ReminderMailContent'),'mail tab subpanels must exist');
 ok(reminder.includes('hd24ReminderMailList')&&reminder.includes('리마인드 발송 이력'),'D+7 reminder list must render');
 console.log('HD24 MAIL TAB VISIBILITY PASS');
+
+ok(reminder.includes('hd24ReminderPreviewBody'),'reminder body preview element missing');
+ok(reminder.includes('const body=reminderText(name)'),'reminder preview must use actual send body');
+ok(reminder.includes("current?'':'<p"),'reminder preview must remain visible when no D+7 recipient exists');
+ok(reminder.includes('required(p,current?.cc'),'reminder preview must show required CC');
+console.log('HD24 D+7 REMINDER PREVIEW PASS');
