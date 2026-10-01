@@ -160,6 +160,12 @@ const initial=document.createElement('div');initial.id='hd24InitialMailContent';
 const reminder=document.createElement('div');reminder.id='hd24ReminderMailContent';reminder.setAttribute('role','tabpanel');reminder.hidden=true;reminder.style.display='none';
 reminder.innerHTML='<h3 style="margin:8px 0">D+7 미회신 리마인드</h3><p class="hint">최초 메일 발송 후 7일이 경과했으나 회신 결과가 업로드되지 않은 건을 표시합니다. 자동 발송은 메일 API가 설정되어 있고 웹이 열려 있을 때만 실행됩니다.</p><div id="hd24ReminderMailList">대상 확인 중...</div>';
 const heading=sec.firstElementChild;heading.after(tabs);while(tabs.nextSibling)initial.appendChild(tabs.nextSibling);sec.append(initial,reminder);
+// Reply upload/history is a separate top-level tab, independent of KPI analysis and mail composition.
+const replyPanel=document.createElement('section');replyPanel.id='hd24ReplyPanel';replyPanel.className='panel hd24-tab-hidden';replyPanel.style.marginTop='16px';
+replyPanel.innerHTML='<h2>회신 이력 반영</h2><p class="hint">해외사업장 회신 Excel을 바로 등록합니다. 최초 KPI 파일 재업로드는 필요하지 않습니다.</p>';
+const replyRow=$('hd24ReplyFile')?.closest('.field-row');
+if(replyRow){const separator=replyRow.previousElementSibling;if(separator?.tagName==='HR')separator.remove();while(replyRow.nextSibling)replyPanel.appendChild(replyRow.nextSibling);replyPanel.insertBefore(replyRow,replyPanel.children[2]||null);}
+sec.after(replyPanel);
 function selectMailType(which){const isReminder=which==='reminder';initial.hidden=isReminder;initial.style.display=isReminder?'none':'';reminder.hidden=!isReminder;reminder.style.display=isReminder?'':'none';for(const [id,active] of [['hd24InitialMailTab',!isReminder],['hd24ReminderMailTab',isReminder]]){const btn=$(id);btn.setAttribute('aria-selected',String(active));btn.style.borderBottom=active?'3px solid #185b88':'3px solid transparent';}if(isReminder)window.hd24SevenDayReminder?.render?.();}
 $('hd24InitialMailTab').addEventListener('click',()=>selectMailType('initial'));$('hd24ReminderMailTab').addEventListener('click',()=>selectMailType('reminder'));
 try{const font=localStorage.getItem(MAIL_FONT_KEY),size=localStorage.getItem(MAIL_SIZE_KEY);if(MAIL_FONTS.includes(font))$('hd24MailFont').value=font;if([9,10,11,12,14,16,18].includes(Number(size)))$('hd24MailFontSize').value=size}catch(_){}['hd24MailFont','hd24MailFontSize'].forEach(id=>$(id)?.addEventListener('change',applyMailStyle));applyMailStyle();wireUi();}
