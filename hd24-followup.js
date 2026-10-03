@@ -70,11 +70,22 @@ function managementMailBody(items){
   en?`The review identified ${key.length} management-focus KPI(s), ${clusters.length} cross-KPI finding(s), and ${questions.length} point(s) requiring confirmation.`:`관리 중점 KPI ${key.length}건, Cross-KPI 분석 ${clusters.length}건, 확인이 필요한 논리 Gap ${questions.length}건이 도출되었습니다.`
  ]);
  section(en?'2. POSITIVE / RECOVERY FINDINGS':'2. Positive / Recovery Findings',positives.slice(0,6).map(x=>`${kpiOfMail(x.record)}: ${x.trend.state}`));
+ const clusteredKpis=new Set(clusters.flatMap(x=>x.kpis||[]).map(norm));
+ const issueKeys=new Map();
+ key.filter(x=>!positives.includes(x)).forEach(x=>{const ik=engine.issueKeyFor?engine.issueKeyFor(x.record):'KPI:'+norm(kpiOfMail(x.record));if(!issueKeys.has(ik))issueKeys.set(ik,[]);issueKeys.get(ik).push(x)});
+ const issueFindings=[...issueKeys.entries()].filter(([ik,xs])=>!xs.every(x=>clusteredKpis.has(norm(kpiOfMail(x.record))))).map(([ik,xs])=>{
+   const names=[...new Set(xs.map(x=>kpiOfMail(x.record)))], states=[...new Set(xs.flatMap(x=>x.findings.map(f=>f.statement)))];
+   return `[${names.join(' / ')}] ${states.join(' / ')}`;
+ });
  section(en?'3. KEY ANALYTICAL FINDINGS':'3. Key Analytical Findings',[
   ...clusters.map(x=>`${x.cluster} — ${x.state}: ${x.statement}`),
-  ...key.filter(x=>!positives.includes(x)).slice(0,8).map(x=>`${kpiOfMail(x.record)} — ${x.managementState}: ${x.findings.map(f=>f.statement).join(' / ')}`)
+  ...issueFindings.slice(0,8)
  ]);
- section(en?'4. MANAGEMENT IMPLICATIONS':'4. Management Implications',clusters.map(x=>x.statement).slice(0,5));
+ const implications=[...new Set([
+  ...clusters.map(x=>x.statement),
+  ...issueFollowups.map(x=>en?`Management validation remains open for ${x.kpis.join(' / ')} until the stated logic gap is clarified.`:`${x.kpis.join(' / ')}는 해당 논리 Gap이 확인될 때까지 Management Validation 대상으로 유지합니다.`)
+ ])];
+ section(en?'4. MANAGEMENT IMPLICATIONS':'4. Management Implications',implications.slice(0,6));
  section(en?'5. POINTS TO CONFIRM':'5. Points to Confirm',issueFollowups.length?issueFollowups.map(x=>`[${x.kpis.join(' / ')}] ${x.question}`):questions);
  section(en?'6. NEXT-MONTH FOLLOW-UP':'6. Next-Month Follow-up',[en?'Please update the existing reply/action fields only where the above confirmation points remain open. We will revalidate recovery, action effect and recurrence in the next monthly review.':'상기 확인 필요사항이 남아 있는 항목만 기존 회신/조치 필드를 갱신해 주시기 바랍니다. 차월 Review에서 실적 회복, 대책 효과 및 재발 여부를 재검증하겠습니다.']);
  lines.push(en?'Best Regards,':'감사합니다.',en?'Mr.Seoh':'서지철 드림');return lines.join('\n');
