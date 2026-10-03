@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const API={version:'1.7.0',frozenAt:'2026-10-03'};
+const API={version:'1.8.0',frozenAt:'2026-10-03'};
 const norm=s=>String(s??'').toLowerCase().replace(/\s+/g,' ').trim();
 const num=v=>{const n=Number(String(v??'').replace(/[% ,]/g,''));return Number.isFinite(n)?n:null};
 const pct=(a,b)=>b?((a-b)/Math.abs(b))*100:null;
@@ -243,9 +243,16 @@ function auditSummary(rows){
  out.masterCoveragePct=out.rows?Math.round(out.masterCovered/out.rows*1000)/10:0;
  return out;
 }
+function integrityGate(r){
+ const d=direction(r),t=num(r.target),a=num(r.actual),si=sourceIntegrity(r);
+ if(d==='UNKNOWN')return {state:'BLOCK',confidence:'LOW',reason:'DIRECTION_UNKNOWN'};
+ if(t===null||a===null)return {state:'BLOCK',confidence:'LOW',reason:'TARGET_ACTUAL_UNCALCULABLE'};
+ if(si)return {state:'REVIEW',confidence:'MEDIUM',reason:'SOURCE_STATUS_MISMATCH'};
+ return {state:'PASS',confidence:'HIGH',reason:'CALCULATION_VERIFIED'};
+}
 function analyzeAll(rows){
  return rows.map(r=>{const findings=analyze(r,rows);return {record:r,direction:direction(r),target:targetState(r),trend:trend(r,rows),findings,managementState:managementState(findings),questions:consolidateQuestions(findings)}})
 }
-window.HD24_RULE_MATRIX_V1={...API,KPI_DIRECTION_MASTER,masterDirection,direction,auditSummary,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,issueKeyFor,consolidateIssueFollowups,analysisDate,dueDate,effectState,actionDetail,analyze,analyzeAll,consolidateQuestions};
+window.HD24_RULE_MATRIX_V1={...API,KPI_DIRECTION_MASTER,masterDirection,direction,auditSummary,integrityGate,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,issueKeyFor,consolidateIssueFollowups,analysisDate,dueDate,effectState,actionDetail,analyze,analyzeAll,consolidateQuestions};
 document.dispatchEvent(new CustomEvent('hd24:rule-matrix-ready',{detail:API}));
 })();
