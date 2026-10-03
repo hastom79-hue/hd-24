@@ -35,5 +35,7 @@ function run(){
  return {passed:results.filter(x=>x.ok).length,failed:results.filter(x=>!x.ok).length,results};
 }
 window.HD24_GOLDEN_TESTS={run};
+function report(){const r=run();window.HD24_GOLDEN_TEST_RESULT=r;const el=document.getElementById('log');if(el)el.textContent+='\n[Golden Regression] '+r.passed+' passed / '+r.failed+' failed'+(r.failed?' · '+r.results.filter(x=>!x.ok).map(x=>x.name).join(', '):' · ALL PASS');}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',report,{once:true});else setTimeout(report,0);
 document.dispatchEvent(new CustomEvent('hd24:golden-tests-ready'));
 })();
