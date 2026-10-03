@@ -61,6 +61,7 @@ function render(){
    const related=analyzed.filter(a=>(x.kpis||[]).map(v=>String(v).toLowerCase().trim()).includes(String(a.record.kpiEn||a.record.kpi||'').toLowerCase().trim()));
    const evidence=[...new Set(related.flatMap(a=>a.findings.map(f=>f.evidence)).filter(Boolean))].slice(0,3);
    const actions=[...new Set(related.map(a=>{const d=a.actionDetail||{};return [d.text,d.owner&&('Owner '+d.owner),d.due&&('Due '+d.due),d.completed?'Completed':''].filter(Boolean).join(' · ')}).filter(Boolean))];
+   const standards=[...new Set(related.map(a=>a.standardControl?.state).filter(Boolean))];
    const effects=[...new Set(related.map(a=>{const at=a.actionAttribution;return at&&at.state!=='NO_RECOVERY_SIGNAL'?at.state+' ('+at.reason+')':(a.actionDetail?.effect||a.trend?.state)}).filter(Boolean))];
    const followups=engine.consolidateIssueFollowups?engine.consolidateIssueFollowups(related,[x]):[];
    return '<div style="background:#fff;border:1px solid var(--line);border-radius:8px;padding:11px 12px">'+
@@ -70,8 +71,8 @@ function render(){
       '<div><b style="font-size:11px">② 근거</b><div>'+esc(evidence.join(' / ')||x.statement)+'</div></div>'+
       '<div><b style="font-size:11px">③ 기존대책</b><div>'+esc(actions.join(' / ')||'확인 필요')+'</div></div>'+
       '<div><b style="font-size:11px">④ 효과판정</b><div>'+esc(effects.join(' / ')||'효과 검증 대기')+'</div></div>'+
-      '<div><b style="font-size:11px">⑤ Management Implication</b><div>'+esc(x.statement)+'</div></div>'+
-      '<div><b style="font-size:11px">⑥ Follow-up</b><div>'+esc(followups.map(v=>v.question).join(' / ')||'추가 회신요구 없음')+'</div></div>'+
+      '<div><b style="font-size:11px">⑤ Standard / Recurrence</b><div>'+esc(standards.join(' / ')||'STANDARD CONTROL NOT TRIGGERED')+'</div></div>'+
+      '<div><b style="font-size:11px">⑥ Management Implication / Follow-up</b><div>'+esc(followups.map(v=>v.question).join(' / ')||'추가 회신요구 없음')+'</div></div>'+
     '</div><div style="font-size:11px;color:var(--muted);margin-top:8px">Related KPI: '+esc((x.kpis||[]).join(' / '))+'</div></div>';
  }).join(''):'<div style="font-size:12px;color:var(--muted)">Issue-level 특이사항 없음</div>')+'</div>'+
   '<div style="font-size:12px;font-weight:800;margin:10px 0 6px">KPI-Level Full Analytical Findings <span style="font-weight:500;color:var(--muted)">· 내부 분석 전체 보존</span></div>'+
