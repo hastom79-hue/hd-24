@@ -21,6 +21,7 @@ function matchDashboard(x,key){
 }
 function render(){
  const engine=window.HD24_RULE_MATRIX_V1,rows=getRows(),box=ensure();if(!engine||!box||!rows.length){if(box)box.style.display='none';return}
+ const audit=engine.auditSummary?engine.auditSummary(rows):null;
  const mo=currentMonth()||Math.max(...rows.map(r=>Number(r.month||r.targetMonth||0))), analyzed=engine.analyzeAll(rows).filter(x=>Number(x.record.month??x.record.targetMonth)===mo);
  const visibleAnalyzed=analyzed.filter(x=>matchDashboard(x,dashboardFilter)).filter(x=>!clusterFilter||clusterFilter.kpis.map(v=>String(v).toLowerCase().trim()).includes(String(x.record.kpiEn||x.record.kpi||'').toLowerCase().trim()));
  const integrityRows=analyzed.filter(x=>x.findings.some(f=>f.type==='DATA_INTEGRITY'));
@@ -37,7 +38,10 @@ function render(){
  const clusters=(engine.clusterFindings?engine.clusterFindings(rows):[]).filter(x=>Number(x.month)===mo);
  box.style.display='block';
  box.innerHTML='<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap"><div><div style="font-size:11px;font-weight:900;letter-spacing:.1em;color:#6c8da3">FULL ANALYTICAL FINDINGS · RULE MATRIX v'+esc(engine.version)+'</div><h3 style="margin:5px 0 3px;font-size:16px">'+mo+'월 관리분석</h3><div style="font-size:12px;color:var(--muted)">분석결과는 모두 표시하고, 법인 확인질문만 별도로 최소화합니다.</div></div><div style="font-size:12px;color:var(--muted)">Findings <b>'+findings+'</b> · Follow-up Issue <b>'+follow.length+'</b></div></div>'+
- '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:8px;margin:14px 0">'+[
+ (audit?'<div style="margin:12px 0 4px"><div style="font-size:11px;font-weight:900;letter-spacing:.06em;color:#6c8da3;margin-bottom:6px">UPLOAD DATA AUDIT</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:7px">'+[
+ ['검증행',audit.rows],['정상',audit.valid],['Status 불일치',audit.statusMismatch],['Direction 미등록',audit.directionUnregistered],['계산불가',audit.uncalculable],['Master Coverage',audit.masterCoveragePct+'%']
+ ].map(v=>'<div style="background:#fff;border:1px solid var(--line);border-radius:7px;padding:8px 10px"><div style="font-size:10.5px;color:var(--muted)">'+v[0]+'</div><b style="font-size:17px">'+v[1]+'</b></div>').join('')+'</div></div>':'')+
+  '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:8px;margin:14px 0">'+[
  ['전체 KPI',metrics.total,'분석 대상','ALL'],
  ['Recovery',metrics.recovery,'회복/회복확인','RECOVERY'],
  ['Persistent Miss',metrics.persistent,'지속 미달','PERSISTENT'],
