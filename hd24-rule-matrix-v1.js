@@ -1,27 +1,63 @@
 (()=>{'use strict';
-const API={version:'1.5.0',frozenAt:'2026-10-03'};
+const API={version:'1.6.0',frozenAt:'2026-10-03'};
 const norm=s=>String(s??'').toLowerCase().replace(/\s+/g,' ').trim();
 const num=v=>{const n=Number(String(v??'').replace(/[% ,]/g,''));return Number.isFinite(n)?n:null};
 const pct=(a,b)=>b?((a-b)/Math.abs(b))*100:null;
 const monthOf=r=>Number(r.targetMonth??r.month??0);
 const kpiOf=r=>String(r.kpiEn||r.kpi||'').trim();
 const KPI_DIRECTION_MASTER={
- 'initial quality':'LOWER','warranty quality':'LOWER','iq200 production responsibility':'LOWER',
- 'parts inventory turnover':'HIGHER','shipment lead time':'LOWER','5s audit score':'HIGHER',
- 'w+3 mix variation rate':'LOWER','m+1 production volume variation':'LOWER',
- 'inbound material delivery compliance':'HIGHER','domestic incoming plan compliance':'HIGHER',
- 'long-term inventory value':'LOWER','long term inventory value':'LOWER',
- 'min/max compliance input materials':'HIGHER','lead time by production line':'LOWER',
- 'wip compliance fabrication':'HIGHER','input mh per machine assembly':'LOWER',
- 'fabrication weighted average lob efficiency':'HIGHER','ot mh per unit':'LOWER',
- 'process defect':'LOWER','problem-solving personnel':'HIGHER','problem solving personnel':'HIGHER',
- 'coaching problem-solving':'HIGHER','coaching problem solving':'HIGHER',
- 'important problem identification':'HIGHER','nva reduction':'HIGHER',
- 'small-group improvements/person':'HIGHER','small group improvements/person':'HIGHER',
- 'qir':'HIGHER','mttd':'LOWER','equipment downtime':'LOWER',
- 'production instruction':'HIGHER','incident count':'LOWER','order intake fulfillment':'HIGHER',
- 'dio':'LOWER','days inventory outstanding':'LOWER','inventory days':'LOWER'
-};
+ '"cost" kpi achievement rate':'HIGHER',
+ '3 process achievement rate per person':'HIGHER',
+ '5s audit score':'HIGHER',
+ 'average vtb improvement lead time':'LOWER',
+ 'balancing efficiency':'HIGHER',
+ 'dio (days inventory outstanding)':'LOWER','dio':'LOWER','days inventory outstanding':'LOWER','inventory days':'LOWER',
+ 'domestic incoming plan compliance rate':'HIGHER',
+ 'equipment downtime loss':'LOWER','equipment downtime':'LOWER',
+ 'fabrication - weighted average actual lob efficiency':'HIGHER','fabrication weighted average lob efficiency':'HIGHER',
+ 'iq 200 (initial quality)':'LOWER','initial quality':'LOWER',
+ 'iq 200 issues with production responsibility':'LOWER','iq200 production responsibility':'LOWER',
+ 'important problem identification cases (supplier & inhouse)':'HIGHER','important problem identification':'HIGHER',
+ 'improvements collection rate (team & self)':'HIGHER',
+ 'inbound material delivery compliance rate':'HIGHER','inbound material delivery compliance':'HIGHER',
+ 'incident/accident count':'LOWER','incident count':'LOWER',
+ 'input mh per machine assembly':'LOWER','input mh per machine fabrication':'LOWER',
+ 'issue recurrence rate':'LOWER',
+ 'lead time by production line (cutting to dispatch)':'LOWER','lead time by production line':'LOWER',
+ 'line wise sqdcei kpis achievement rate':'HIGHER',
+ 'long-term inventory value (6 month basis)':'LOWER','long-term inventory value':'LOWER','long term inventory value':'LOWER',
+ 'm+1 production volume variation rate':'LOWER','m+1 production volume variation':'LOWER',
+ 'mtbf (mean time between failure)':'HIGHER',
+ 'mttd : mean time to detect':'LOWER','mttd':'LOWER',
+ 'mttr (mean time to repair)':'LOWER',
+ 'manufacturing lead time (fab tacking to fdi out)':'LOWER',
+ 'material-induced downtime mh':'LOWER',
+ 'min/max compliance rate of input materials by process':'HIGHER','min/max compliance input materials':'HIGHER',
+ 'monthly shipment plan compliance rate (export)':'HIGHER',
+ 'nva reduction cases reflecting from swc & swct':'HIGHER','nva reduction':'HIGHER',
+ 'ot mh per unit':'LOWER',
+ 'option planning forecast accuracy':'HIGHER',
+ 'order intake fulfillment (w+4 - rolling plan) domestic + export production plan':'HIGHER','order intake fulfillment':'HIGHER',
+ 'ppm':'LOWER',
+ 'parts inventory turnover':'HIGHER',
+ 'pending action lead time (issues closure time/machine)':'LOWER',
+ 'personnel coaching problem-solving techniques':'HIGHER','coaching problem-solving':'HIGHER','coaching problem solving':'HIGHER',
+ 'personnel using problem-solving techniques':'HIGHER','problem-solving personnel':'HIGHER','problem solving personnel':'HIGHER',
+ 'process defect rate (basic quality, leakage, fdi, ndt, isa)':'LOWER','process defect':'LOWER',
+ 'production incoming plan compliance rate':'HIGHER',
+ 'production instruction compliance rate (against fdi out plan)':'HIGHER','production instruction':'HIGHER',
+ 'qir (ppr) improvement completion rate (r210e)':'HIGHER','qir':'HIGHER',
+ 'quality (mh loss ) line downtime':'LOWER',
+ 'sequence compliance rate by line':'HIGHER',
+ 'shipment lead time (wait time)':'LOWER','shipment lead time':'LOWER',
+ 'small-group improvements per person':'HIGHER','small group improvements/person':'HIGHER',
+ 'unsafe act & condition identification':'HIGHER',
+ 'vtb (/improvements) completion rate (against suggestions from suggestion box, 3\'g walk, sip)':'HIGHER',
+ 'w+3 mix variation rate':'LOWER',
+ 'w.q. (warranty quality)':'LOWER','warranty quality':'LOWER',
+ 'wip compliance rate (fabrication)':'HIGHER','wip compliance fabrication':'HIGHER',
+ 'wip compliance rate(assy line on- line-out )':'HIGHER'
+}
 function masterDirection(k){
  const n=norm(k);if(KPI_DIRECTION_MASTER[n])return KPI_DIRECTION_MASTER[n];
  const exact=Object.entries(KPI_DIRECTION_MASTER).find(([name])=>n===name);return exact?.[1]||null;
