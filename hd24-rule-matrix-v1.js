@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const API={version:'1.0.0',frozenAt:'2026-10-03'};
+const API={version:'1.1.0',frozenAt:'2026-10-03'};
 const norm=s=>String(s??'').toLowerCase().replace(/\s+/g,' ').trim();
 const num=v=>{const n=Number(String(v??'').replace(/[% ,]/g,''));return Number.isFinite(n)?n:null};
 const pct=(a,b)=>b?((a-b)/Math.abs(b))*100:null;
@@ -43,8 +43,35 @@ function actionState(r){
  return {structural,activity,attachment,due,owner:String(r.actionOwner||'').trim()};
 }
 function finding(rule,type,statement,evidence,confidence='MEDIUM',question=false){return {rule,type,statement,evidence,confidence,questionRequired:question,evidenceRequired:false}}
+function sourceIntegrity(r){
+ const ts=targetState(r); if(ts.state==='UNKNOWN'||typeof r.achieved!=='boolean')return null;
+ const source=r.achieved?'ACHIEVED':'TARGET_MISS';
+ return source===ts.state?null:finding('R28','DATA_INTEGRITY','SOURCE_STATUS_MISMATCH',\`System=\${ts.state}, Source=\${source}; Direction=\${direction(r)}\`,'HIGH',false);
+}
+function clusterFindings(rows){
+ const out=[], byMonth=new Map(); rows.forEach(r=>{const m=monthOf(r);if(!byMonth.has(m))byMonth.set(m,[]);byMonth.get(m).push(r)});
+ const has=(r,terms)=>terms.some(t=>norm(kpiOf(r)).includes(t));
+ for(const [month,rs] of byMonth){
+  const inv=rs.filter(r=>has(r,['dio','inventory','turnover','material delivery','inbound material','long-term inventory','long term inventory']));
+  if(inv.length>=2){
+   const dio=inv.find(r=>/\bdio\b|inventory days/.test(norm(kpiOf(r)))), aging=inv.find(r=>/long.?term inventory|aging inventory/.test(norm(kpiOf(r)))), turn=inv.find(r=>/inventory turnover/.test(norm(kpiOf(r))));
+   if(dio&&trend(dio,rows).state==='RECOVERING'&&((aging&&targetState(aging).state==='TARGET_MISS')||(turn&&targetState(turn).state==='TARGET_MISS')))
+    out.push({month,cluster:'INVENTORY / MOH',state:'PARTIAL EFFECT · INVENTORY TRADE-OFF',confidence:'HIGH',kpis:inv.map(kpiOf),statement:'Overall inventory-days gap is recovering, while aging inventory and/or parts turnover remain problematic. Total-flow recovery does not prove inventory structure recovery.',questionRequired:false});
+  }
+  const q=rs.filter(r=>has(r,['process defect','initial quality','production responsibility','production attributable','warranty']));
+  const process=q.find(r=>/process defect/.test(norm(kpiOf(r)))), result=q.find(r=>/initial quality|production responsibility|production attributable/.test(norm(kpiOf(r))));
+  if(process&&result&&targetState(process).state==='ACHIEVED'&&targetState(result).state==='TARGET_MISS')
+   out.push({month,cluster:'QUALITY / PROCESS',state:'RESULT–PROCESS GAP',confidence:'HIGH',kpis:[kpiOf(process),kpiOf(result)],statement:'Process KPI is achieved while production/customer quality result remains missed; validate denominator, inspection scope and whether process control translates to result quality.',questionRequired:true});
+  const ps=rs.filter(r=>has(r,['problem-solving personnel','problem solving personnel','coaching problem-solving','coaching problem solving','important problem identification','nva reduction']));
+  if(ps.length>=2){
+   const achieved=ps.some(r=>targetState(r).state==='ACHIEVED'), missed=ps.some(r=>targetState(r).state==='TARGET_MISS');
+   if(achieved&&missed)out.push({month,cluster:'PROBLEM SOLVING / PDCA',state:'ACTIVITY–RESULT GAP',confidence:'HIGH',kpis:ps.map(kpiOf),statement:'Participation/headcount achievement coexists with weak problem-selection/coaching/NVA execution. Treat this as a problem-solving execution-funnel gap, not a simple participation failure.',questionRequired:true});
+  }
+ }
+ return out;
+}
 function analyze(r,all){
- const fs=[],ts=targetState(r),tr=trend(r,all),act=actionState(r),txt=textFields(r),s=seriesFor(r,all),idx=s.findIndex(x=>x===r),prev=idx>0?s[idx-1]:null;
+ const fs=[],ts=targetState(r),tr=trend(r,all),act=actionState(r),txt=textFields(r),s=seriesFor(r,all),idx=s.findIndex(x=>x===r),prev=idx>0?s[idx-1]:null; const integrity=sourceIntegrity(r); if(integrity)fs.push(integrity);
  fs.push(finding('R01','PERFORMANCE',ts.state,\`Target=\${r.target??'-'}, Actual=\${r.actual??'-'}, Direction=\${direction(r)}\`,'HIGH'));
  if(tr.state!=='NO_TREND'&&tr.state!=='STABLE')fs.push(finding(tr.state==='RECOVERING'?'R02':tr.state==='RECOVERY_CONFIRMED'?'R04':tr.state==='NEW_REGRESSION'?'R05':'R03','TREND',tr.state,\`Target-gap change=\${tr.deltaGap??'-'}\`,'HIGH',tr.state==='NEW_REGRESSION'));
  if(act.attachment)fs.push(finding('R15','REPLY_VALIDATION','REPLY_TRACEABILITY_GAP','Attachment-only reply; structured root/action/owner/due is not traceable','HIGH',true));
@@ -82,6 +109,6 @@ function consolidateQuestions(findings){
 function analyzeAll(rows){
  return rows.map(r=>{const findings=analyze(r,rows);return {record:r,direction:direction(r),target:targetState(r),trend:trend(r,rows),findings,managementState:managementState(findings),questions:consolidateQuestions(findings)}})
 }
-window.HD24_RULE_MATRIX_V1={...API,direction,targetState,trend,analyze,analyzeAll,consolidateQuestions};
+window.HD24_RULE_MATRIX_V1={...API,direction,targetState,trend,sourceIntegrity,clusterFindings,analyze,analyzeAll,consolidateQuestions};
 document.dispatchEvent(new CustomEvent('hd24:rule-matrix-ready',{detail:API}));
 })();
