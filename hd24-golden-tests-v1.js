@@ -68,6 +68,7 @@ function run(){
   assert('Cause shift blocks action attribution',attrShift.actionAttribution.state.includes('ATTRIBUTION UNCERTAIN'),attrShift.actionAttribution.state),
   assert('Stable cause completed action yields effect signal only',attrStable.actionAttribution.state==='EFFECT SIGNAL OBSERVED',attrStable.actionAttribution.state),
   assert('Fabrication 6→7 cause shift',fab7.causeDynamics.state==='CAUSE_SHIFT',fab7.causeDynamics.state),
+  assert('Cause shift preserves issue timeline',E.issueTimeline(A).some(x=>(x.kpis||[]).includes('Fabrication Cause Golden')&&x.months.length===3&&x.causeShift===true),JSON.stringify(E.issueTimeline(A).filter(x=>(x.kpis||[]).includes('Fabrication Cause Golden')))),
   assert('Fabrication 7→8 recurring cause',fab8.causeDynamics.state==='RECURRING_CAUSE',fab8.causeDynamics.state),
   assert('DIO Aug gap recovery',dio.trend.state==='RECOVERING',dio.trend.state),
   assert('DIO source-status mismatch preserved',dio.findings.some(f=>f.statement==='SOURCE_STATUS_MISMATCH'),'Aug source says no Current Month miss while recalculation is miss'),
