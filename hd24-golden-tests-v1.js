@@ -53,6 +53,7 @@ function run(){
   assert('O-ring PDCA candidate',o.findings.some(f=>f.statement==='PDCA_PROJECT_CANDIDATE')),
   assert('O-ring standard eligible',o.findings.some(f=>f.statement==='STANDARD_CONTROL_ELIGIBLE')),
   assert('O-ring one consolidated question',q.filter(x=>x.issueKey==='QUALITY_O_RING').length===1),
+  assert('O-ring same issue carries across 6-8M',E.issueTimeline(A).some(x=>x.issueId.startsWith('QUALITY_O_RING::')&&x.months.length===3&&x.firstMonth===6&&x.latestMonth===8),JSON.stringify(E.issueTimeline(A).filter(x=>x.issueId.startsWith('QUALITY_O_RING::')))),
   assert('Standard eligibility does not create duplicate question',o.findings.filter(f=>f.type==='STANDARD_CONTROL'&&f.questionRequired).length===0,o.findings.filter(f=>f.type==='STANDARD_CONTROL'&&f.questionRequired).length),
   assert('W+3 strong recovery',w.trend.state==='RECOVERING',w.trend.state),
   assert('W+3 recovery creates no follow-up question',!q.some(x=>(x.kpis||[]).includes('W+3 Mix Variation Rate'))),
