@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const API={version:'2.7.0',frozenAt:'2026-10-03'};
+const API={version:'2.8.0',frozenAt:'2026-10-03'};
 const norm=s=>String(s??'').toLowerCase().replace(/\s+/g,' ').trim();
 const num=v=>{const n=Number(String(v??'').replace(/[% ,]/g,''));return Number.isFinite(n)?n:null};
 const pct=(a,b)=>b?((a-b)/Math.abs(b))*100:null;
@@ -206,10 +206,11 @@ function issueKeyFor(r){
  return 'KPI:'+k;
 }
 function issueIdentity(r){
- const base=issueKeyFor(r);
- const mech=actionMechanism(r);
+ const base=issueKeyFor(r),mech=actionMechanism(r);
+ // Stable identity is problem-family + intended action mechanism. Cause text is metadata:
+ // a later verified cause shift must not silently create a brand-new issue and erase history.
  const cd=norm(r.rootCause||r.reason||'').split(' ').filter(x=>x.length>3).slice(0,4).join('_');
- return {issueId:[base,mech,cd||'UNSPECIFIED'].join('::'),base,mechanism:mech,causeSignature:cd||'UNSPECIFIED'};
+ return {issueId:[base,mech].join('::'),base,mechanism:mech,causeSignature:cd||'UNSPECIFIED'};
 }
 function issueTimeline(analyzed){
  const m=new Map();
@@ -221,7 +222,11 @@ function issueTimeline(analyzed){
  return [...m.entries()].map(([issueId,xs])=>{
   xs.sort((a,b)=>(monthOf(a.record)||0)-(monthOf(b.record)||0));
   const latest=xs[xs.length-1];
-  return {issueId,months:xs.map(x=>monthOf(x.record)),firstMonth:monthOf(xs[0].record),latestMonth:monthOf(latest.record),status:latest.pdcaClosure?.state||latest.managementState,closed:latest.pdcaClosure?.closed===true,kpis:[...new Set(xs.map(x=>kpiOf(x.record)))]};
+  const causeShift=xs.some((x,i)=>i>0&&x.causeDynamics?.state==='CAUSE_SHIFT');
+  const priorClosed=xs.slice(0,-1).some(x=>x.pdcaClosure?.closed===true);
+  const latestOpen=latest.pdcaClosure?.closed!==true;
+  const reopened=priorClosed&&latestOpen;
+  return {issueId,months:xs.map(x=>monthOf(x.record)),firstMonth:monthOf(xs[0].record),latestMonth:monthOf(latest.record),status:reopened?'RECURRENCE_REOPENED':(latest.pdcaClosure?.state||latest.managementState),closed:latest.pdcaClosure?.closed===true,reopened,causeShift,kpis:[...new Set(xs.map(x=>kpiOf(x.record)))]};
  });
 }
 function consolidateIssueFollowups(analyzed,clusters=[]){
