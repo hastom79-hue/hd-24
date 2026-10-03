@@ -993,25 +993,11 @@ function round(v){
 
 // ---------- KPI 간 논리 교차검증: 목표 달성 여부와 별개로 관리체계 모순 감지 ----------
 function kpiLogicalContradictions(rows){
-  const n=s=>String(s||'').toLowerCase().replace(/\s+/g,'');
-  const find=(terms)=>rows.filter(r=>terms.some(t=>n(r.kpiEn||r.kpi).includes(n(t))));
-  const neg=find(['기초품질','basicquality','조립품질','assemblyquality','생산귀책','productionattributable']);
-  const std=find(['표준작업준수율','standardworkcompliance','standardworkadherence']);
-  const recur=find(['표준미준수재발율','표준미준수재발률','standardnoncompliancerecurrence','standardviolationrecurrence']);
-  const badNeg=neg.filter(r=>!r.achieved || r.trend==='down' || r.streak>=1);
-  const zeroLike=r=>typeof r.actual==='number' && Math.abs(r.actual)<=0.000001;
-  const perfectStd=std.filter(r=>r.achieved && ((typeof r.actual==='number'&&r.actual>=99.999)||zeroLike(r)));
-  const zeroRecur=recur.filter(r=>r.achieved&&zeroLike(r));
-  const flags=[];
-  if(badNeg.length&&(perfectStd.length||zeroRecur.length)){
-    const controls=[...perfectStd,...zeroRecur];
-    flags.push({type:'quality-standard-gap',severity:'critical',kpis:[...badNeg,...controls],ko:'품질 결과지표는 네거티브한데 표준작업 준수/재발 관리지표는 완전 달성으로 나타납니다. 준수점검 기준·표본·판정방식이 실제 품질불량 발생조건을 포착하지 못할 가능성이 있으므로, 달성으로 종결하지 말고 관리기준의 유효성을 재검증해야 합니다.',en:'Quality outcome KPIs are negative while standard-work compliance/recurrence controls show perfect achievement. The audit criteria, sampling, or judgment method may not capture the actual defect conditions; validate the effectiveness of the control standard rather than closing the KPI as achieved.'});
-  }
-  return flags;
+  const E=window.HD24_RULE_MATRIX_V1;
+  if(!E?.clusterFindings)return [];
+  return E.clusterFindings(rows).filter(x=>/RESULT–PROCESS GAP|STANDARD AUDIT COVERAGE GAP|RECURRENCE DEFINITION CHECK/.test(x.state||'')).map(x=>({type:'rule-matrix',severity:'review',kpis:rows.filter(r=>(x.kpis||[]).includes(r.kpiEn||r.kpi)),ko:x.statement,en:x.statement}));
 }
-function logicalFlagsFor(r,rows){
-  return kpiLogicalContradictions(rows).filter(f=>f.kpis.includes(r));
-}
+function logicalFlagsFor(r,rows){return kpiLogicalContradictions(rows).filter(f=>f.kpis.includes(r));}
 
 // ---------- 회신 이력 기반 재발(동일 미달사유 반복) 감지 ----------
 const REPLY_HISTORY_KEY = 'hd24_kpi_reply_history_v2';
