@@ -68,7 +68,10 @@ function run(){
   assert('Problem-solving activity-result gap',E.clusterFindings(rs).some(x=>x.cluster==='PROBLEM SOLVING / PDCA'&&x.state==='ACTIVITY–RESULT GAP')),
   assert('Source status mismatch detected',si.findings.some(f=>f.statement==='SOURCE_STATUS_MISMATCH')),
   assert('Equipment issue excluded from standard-control eligibility',eq.standardControl?.eligible===false&&eq.standardControl?.state==='STANDARD_CONTROL_NA',eq.standardControl?.state),
-  assert('O-ring recurring human-method issue standard eligible',o.standardControl?.eligible===true&&o.standardControl?.state==='STANDARD_CONTROL_ELIGIBLE',o.standardControl?.state)
+  assert('O-ring recurring human-method issue standard eligible',o.standardControl?.eligible===true&&o.standardControl?.state==='STANDARD_CONTROL_ELIGIBLE',o.standardControl?.state),
+  assert('O-ring audit target selection required',o.standardControl?.auditTarget==='SELECT_RISK_BASED_WORK',o.standardControl?.auditTarget),
+  assert('O-ring recurrence criteria required',o.standardControl?.recurrenceCriteria==='DEFINE_DIRECT_AND_SIMILAR',o.standardControl?.recurrenceCriteria),
+  assert('O-ring closure requires standard and recurrence verification',/STANDARD_CONTROL_VERIFIED/.test(o.standardControl?.closureGate||'')&&/RECURRENCE_MONITORED/.test(o.standardControl?.closureGate||''),o.standardControl?.closureGate)
  ];
  return {passed:results.filter(x=>x.ok).length,failed:results.filter(x=>!x.ok).length,results};
 }
