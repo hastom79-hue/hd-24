@@ -39,8 +39,8 @@ function render(){
  box.style.display='block';
  box.innerHTML='<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap"><div><div style="font-size:11px;font-weight:900;letter-spacing:.1em;color:#6c8da3">FULL ANALYTICAL FINDINGS · RULE MATRIX v'+esc(engine.version)+'</div><h3 style="margin:5px 0 3px;font-size:16px">'+mo+'월 관리분석</h3><div style="font-size:12px;color:var(--muted)">분석결과는 모두 표시하고, 법인 확인질문만 별도로 최소화합니다.</div></div><div style="font-size:12px;color:var(--muted)">Findings <b>'+findings+'</b> · Follow-up Issue <b>'+follow.length+'</b></div></div>'+
  (audit?'<div style="margin:12px 0 4px"><div style="font-size:11px;font-weight:900;letter-spacing:.06em;color:#6c8da3;margin-bottom:6px">UPLOAD DATA AUDIT</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:7px">'+[
- ['검증행',audit.rows],['정상',audit.valid],['Status 불일치',audit.statusMismatch],['Direction 미등록',audit.directionUnregistered],['계산불가',audit.uncalculable],['Master Coverage',audit.masterCoveragePct+'%']
- ].map(v=>'<div style="background:#fff;border:1px solid var(--line);border-radius:7px;padding:8px 10px"><div style="font-size:10.5px;color:var(--muted)">'+v[0]+'</div><b style="font-size:17px">'+v[1]+'</b></div>').join('')+'</div></div>':'')+
+ ['검증행',audit.rows,'ALL'],['정상',audit.valid,'VALID'],['Status 불일치',audit.statusMismatch,'MISMATCH'],['Direction 미등록',audit.directionUnregistered,'DIRECTION'],['계산불가',audit.uncalculable,'UNCALC'],['Master Coverage',audit.masterCoveragePct+'%','COVERAGE']
+ ].map(v=>'<button type="button" data-hd24-audit="'+v[2]+'" style="text-align:left;background:#fff;border:1px solid var(--line);border-radius:7px;padding:8px 10px;cursor:pointer"><div style="font-size:10.5px;color:var(--muted)">'+v[0]+'</div><b style="font-size:17px">'+v[1]+'</b></button>').join('')+'</div></div>':'')+
   '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:8px;margin:14px 0">'+[
  ['전체 KPI',metrics.total,'분석 대상','ALL'],
  ['Recovery',metrics.recovery,'회복/회복확인','RECOVERY'],
@@ -84,6 +84,14 @@ document.addEventListener('DOMContentLoaded',schedule);
 document.addEventListener('hd24:reply-imported',schedule);
 document.addEventListener('hd24:rule-matrix-ready',schedule);
 document.addEventListener('click',e=>{
+ const audit=e.target?.closest?.('[data-hd24-audit]');
+ if(audit&&audit.dataset.hd24Audit!=='COVERAGE'){
+  const E=window.HD24_RULE_MATRIX_V1,kind=audit.dataset.hd24Audit,rows=getRows();
+  const detail=rows.filter(r=>{const md=E.masterDirection(r.kpiEn||r.kpi),d=E.direction(r),t=Number(r.target),a=Number(r.actual),ok=Number.isFinite(t)&&Number.isFinite(a)&&d!=='UNKNOWN',si=ok?E.sourceIntegrity(r):null;if(kind==='ALL')return true;if(kind==='VALID')return ok&&!si;if(kind==='MISMATCH')return !!si;if(kind==='DIRECTION')return !md&&!r.direction;if(kind==='UNCALC')return !ok;return false});
+  const root=$('hd24FullAnalysis');let box=$('hd24AuditDrill');if(!box){box=document.createElement('div');box.id='hd24AuditDrill';root.prepend(box)}
+  box.innerHTML='<div style="margin:8px 0 12px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px"><div style="display:flex;justify-content:space-between"><b>Data Audit Drill-down · '+kind+' ('+detail.length+')</b><button type="button" data-audit-close>닫기</button></div><div style="overflow:auto;max-height:260px;margin-top:7px"><table style="width:100%;font-size:11px;border-collapse:collapse"><thead><tr><th>KPI</th><th>월</th><th>Target</th><th>Actual</th><th>Direction</th><th>Source</th><th>System</th></tr></thead><tbody>'+detail.map(r=>{const ts=E.targetState(r);return '<tr><td>'+esc(r.kpiEn||r.kpi)+'</td><td>'+esc(r.month)+'</td><td>'+esc(r.target)+'</td><td>'+esc(r.actual)+'</td><td>'+esc(E.direction(r))+'</td><td>'+esc(typeof r.achieved==='boolean'?(r.achieved?'ACHIEVED':'TARGET_MISS'):'-')+'</td><td>'+esc(ts.state)+'</td></tr>'}).join('')+'</tbody></table></div></div>';box.scrollIntoView({behavior:'smooth',block:'start'});return
+ }
+ if(e.target?.closest?.('[data-audit-close]')){$('hd24AuditDrill')?.remove();return}
  const cluster=e.target?.closest?.('[data-cluster-index]');
  if(cluster){const rows=getRows(),mo=currentMonth()||Math.max(...rows.map(r=>Number(r.month||r.targetMonth||0))),cs=(window.HD24_RULE_MATRIX_V1?.clusterFindings?.(rows)||[]).filter(x=>Number(x.month)===mo);clusterFilter=cs[Number(cluster.dataset.clusterIndex)]||null;dashboardFilter='ALL';render();setTimeout(()=>$('hd24FullAnalysis')?.querySelector('table')?.scrollIntoView({behavior:'smooth',block:'start'}),30);return}
  if(e.target?.closest?.('[data-cluster-clear]')){clusterFilter=null;render();return}
