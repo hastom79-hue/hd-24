@@ -53,6 +53,7 @@ function run(){
   assert('O-ring PDCA candidate',o.findings.some(f=>f.statement==='PDCA_PROJECT_CANDIDATE')),
   assert('O-ring standard eligible',o.findings.some(f=>f.statement==='STANDARD_CONTROL_ELIGIBLE')),
   assert('O-ring one consolidated question',q.filter(x=>x.issueKey==='QUALITY_O_RING').length===1),
+  assert('Standard eligibility does not create duplicate question',o.findings.filter(f=>f.type==='STANDARD_CONTROL'&&f.questionRequired).length===0,o.findings.filter(f=>f.type==='STANDARD_CONTROL'&&f.questionRequired).length),
   assert('W+3 strong recovery',w.trend.state==='RECOVERING',w.trend.state),
   assert('Fabrication WIP effect pending before Sep W3',fw.findings.some(f=>f.statement==='EXISTING_ACTION · EFFECT_PENDING')),
   assert('Assembly MH completed requires effect verification',mh.findings.some(f=>f.statement==='EFFECT VERIFICATION REQUIRED')),
