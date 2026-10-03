@@ -353,7 +353,7 @@ const MASTER_MONTH_START_COL = 27;
 
 let currentPlant = 'india';
 let mappingData = [];
-let srcWorkbook = null, masterWorkbook = null, masterZip = null, masterFileName = '';
+let srcWorkbook = null, masterWorkbook = null, masterZip = null, masterFileBuffer = null, masterFileName = '';
 let srcWorkbookRaw = null, masterWorkbookRaw = null; // cellDates:false 버전 — 날짜/시간 셀의 원본 시리얼 숫자(타임존 영향 없음)
 let lastFileInputChangeAt = 0; // 사용자가 파일 input을 마지막으로 건드린 시각 — 자동판정 탭전환의 "충분히 지났나" 판단용
 let autoSwitchedForSignature = null; // 같은 파일쌍에 대해 자동전환을 한 번만 하도록(자동파이프라인 재시도마다 매번 넘어가지 않게)
@@ -451,7 +451,7 @@ renderKpiChangeLog();
 document.getElementById('plantSelect').addEventListener('change', async (e) => {
   currentPlant = e.target.value;
   document.getElementById('srcLabel').textContent = cfg().label + ' 원본 KPI 파일';
-  srcWorkbook = masterWorkbook = masterZip = null;
+  srcWorkbook = masterWorkbook = masterZip = masterFileBuffer = null;
   document.getElementById('srcFile').value = '';
   document.getElementById('masterFile').value = '';
   document.getElementById('resultCard').style.display = 'none';
@@ -541,6 +541,7 @@ document.getElementById('masterFile').addEventListener('change', async (e) => {
   const f = e.target.files[0]; if (!f) return;
   lastFileInputChangeAt = Date.now();
   const buf = await f.arrayBuffer();
+  masterFileBuffer = buf;
   masterFileName = f.name;
   masterWorkbook = XLSX.read(buf, {type:'array', cellDates:true});
   masterWorkbookRaw = masterWorkbook; // 동일 파일 이중 파싱 제거
