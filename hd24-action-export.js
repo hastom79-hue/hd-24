@@ -119,11 +119,13 @@ async function makeFinalActionWorkbook(reason){
     const buf=await wb.xlsx.writeBuffer();
     if(workCycle!==currentCycle()||signature()!==sig)throw new Error('stale action-export cycle after workbook write');
     const file=new File([buf],safeName(capturedSafe.name)+'_분석후속조치본.xlsx',{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-    const u=URL.createObjectURL(file),a=document.createElement('a');a.href=u;a.download=file.name;originalClick.call(a);setTimeout(()=>URL.revokeObjectURL(u),30000);
+    // 분석후속조치본은 내부 분석 파이프라인용으로만 생성한다. 자동 다운로드는 금지한다.
+    // 사용자가 명시적으로 요청한 다운로드/메일 첨부 흐름에서만 파일을 외부로 추출해야 한다.
     processedSignature=sig;
     const abnormal=out.results.filter(x=>x.result&&x.result.label!=='정상/개선').length;
-    logSafe(`최종 분석파일 자동 추출 완료: ${file.name} / 후속조치열 ${out.actionCol}열 / 관리대상 ${abnormal}건 / 분석스냅샷 ${analysisSnapshot.length}건 고정 / cycle=${workCycle}`);
-    window.dispatchEvent(new CustomEvent('hd24-action-export-complete',{detail:{signature:sig,cycle:workCycle,fileName:file.name,actionCol:out.actionCol,abnormalCount:abnormal,reason,month:horizon,items:analysisSnapshot}}));
+    logSafe(`최종 분석파일 내부 생성 완료(자동 다운로드 없음): ${file.name} / 후속조치열 ${out.actionCol}열 / 관리대상 ${abnormal}건 / 분석스냅샷 ${analysisSnapshot.length}건 고정 / cycle=${workCycle}`);
+    window.hd24LatestActionFile={signature:sig,cycle:workCycle,file,month:horizon,items:analysisSnapshot};
+    window.dispatchEvent(new CustomEvent('hd24-action-export-complete',{detail:{signature:sig,cycle:workCycle,fileName:file.name,actionCol:out.actionCol,abnormalCount:abnormal,reason,month:horizon,items:analysisSnapshot,downloaded:false}}));
   }catch(e){if(workCycle===currentCycle())processedSignature='';logSafe('최종 분석파일 생성 차단: '+(e?.message||e));console.error(e);}
 }
 
