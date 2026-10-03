@@ -50,7 +50,7 @@ function reviewGapFor(r,a,history=[]){
  if(!a.plan)gaps.push('대책수립 미흡: 확인된 근인을 제거하는 Recovery Action이 없음');
  else if(a.plan.length<12)gaps.push('대책수립 구체성 부족: 실행방법·완료조건·검증방법이 불명확함');
  if(!a.owner||!a.due)gaps.push('실행관리 미흡: 대책의 책임자 또는 완료기한이 없어 추적관리가 어려움');
- if(!a.target)gaps.push('지표 연계관계 미흡: 활동→차월 회복목표→KPI 결과로 이어지는 정량 검증기준이 없음');
+ if(!a.target)gaps.push('지표 연계관계 미흡: 활동→회복판단→KPI 결과의 연결기준이 불명확함. 단, 모든 활동에 별도 수치자료를 요구하기보다 기존 KPI 또는 확인 가능한 완료조건을 우선 활용');
  else if(!a.plan)gaps.push('지표-활동 연계 미흡: 회복목표는 있으나 이를 달성할 실행대책이 연결되지 않음');
  const prev=history.length>1?analyze(history[history.length-2]):null;
  if(prev&&a.root&&prev.root&&a.root.trim()===prev.root.trim())gaps.push('재발방지 미흡: 이전 회신과 동일 근인이 반복되었으나 재발방지 관점의 추가 분석이 없음');
@@ -61,11 +61,11 @@ function reviewGapFor(r,a,history=[]){
 
 function finalRequestFor(r,a,history=[]){
  const req=[];
- if(!a.root||a.root.length<8)req.push('근본원인 발생 메커니즘과 객관적 근거 추가');
- if(!a.plan||a.plan.length<12)req.push('근인 제거 대책의 실행방법·완료조건·효과검증 방법 보완');
+ if(!a.root||a.root.length<8)req.push('근본원인 판단근거 보완(추가 자료 제출 자체보다 현상→원인의 논리와 확인근거 중심)');
+ if(!a.plan||a.plan.length<12)req.push('근인 제거 대책의 실행방법·완료조건·효과확인 방법 보완(필요 최소한의 근거만 제시)');
  if(!a.owner)req.push('Action Owner 지정');
  if(!a.due)req.push('완료예정일 확정');
- if(!a.target)req.push('차월 KPI 회복목표를 정량값으로 설정');
+ if(!a.target)req.push('차월 회복의 판단기준을 제시(정량 KPI가 적합하면 수치목표, 그렇지 않으면 확인 가능한 정성 기준/완료조건)');
  const prev=history.length>1?analyze(history[history.length-2]):null;
  if(prev&&a.root&&prev.root&&a.root.trim()===prev.root.trim())req.push('반복 근인에 대한 재발방지 대책 및 추가 근인분석 제출');
  if(prev&&a.plan&&prev.plan&&a.plan.trim()===prev.plan.trim())req.push('기존 대책의 진척·효과·미흡원인 회고 및 변경/추가조치 제출');
@@ -81,7 +81,7 @@ function feedbackFor(r,a){
  else if(a.plan.length<12)out.push(`${k}: Specify the recovery action, execution method and completion criteria in measurable terms.`);
  if(!a.owner)out.push(`${k}: Assign one accountable action owner for the recovery action.`);
  if(!a.due)out.push(`${k}: Set a committed completion date for the recovery action.`);
- if(!a.target)out.push(`${k}: Set the next-month KPI recovery target so action effectiveness can be verified against the KPI result.`);
+ if(!a.target)out.push(`${k}: Define a practical recovery criterion linked to the KPI result. Use a numeric target where meaningful; otherwise use a clear observable completion/effect criterion without creating unnecessary reporting data.`);
  if(a.reason&&a.root&&a.reason.toLowerCase()===a.root.toLowerCase())out.push(`${k}: Separate the observed reason/symptom from the underlying root cause and explain why the issue occurred.`);
  if(a.root&&a.plan&&a.plan.toLowerCase().includes(a.root.toLowerCase()))out.push(`${k}: Replace the repeated cause statement with a specific cause-removal action and verification method.`);
  return out.length?out.join(' '):`${k}: Response structure is complete. Confirm execution evidence and verify whether the next KPI result achieves the stated recovery target.`;
