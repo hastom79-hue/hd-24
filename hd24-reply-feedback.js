@@ -25,13 +25,27 @@ function analyze(r){
  return {missing,flags,score,level,reason,root,plan,owner,due,target};
 }
 
+function feedbackFor(r,a){
+ const k=txt(r.kpiEn||r.kpi)||'KPI', out=[];
+ if(!a.root)out.push(`${k}: Identify the verified root cause with evidence, not only the symptom or result.`);
+ if(a.root&&a.root.length<8)out.push(`${k}: Expand the root cause to explain the failure mechanism and supporting evidence.`);
+ if(!a.plan)out.push(`${k}: Define a concrete recovery action linked directly to the verified root cause.`);
+ else if(a.plan.length<12)out.push(`${k}: Specify the recovery action, execution method and completion criteria in measurable terms.`);
+ if(!a.owner)out.push(`${k}: Assign one accountable action owner for the recovery action.`);
+ if(!a.due)out.push(`${k}: Set a committed completion date for the recovery action.`);
+ if(!a.target)out.push(`${k}: Set the next-month KPI recovery target so action effectiveness can be verified against the KPI result.`);
+ if(a.reason&&a.root&&a.reason.toLowerCase()===a.root.toLowerCase())out.push(`${k}: Separate the observed reason/symptom from the underlying root cause and explain why the issue occurred.`);
+ if(a.root&&a.plan&&a.plan.toLowerCase().includes(a.root.toLowerCase()))out.push(`${k}: Replace the repeated cause statement with a specific cause-removal action and verification method.`);
+ return out.length?out.join(' '):`${k}: Response structure is complete. Confirm execution evidence and verify whether the next KPI result achieves the stated recovery target.`;
+}
+
 async function exportFeedbackWorkbook(rows,plant){
  if(typeof ExcelJS==='undefined'||!rows.length)return;
  const wb=new ExcelJS.Workbook(),ws=wb.addWorksheet('Reply Feedback');
  const headers=['Plant','Target Month','KPI','Reason for Miss / Deterioration','Root Cause','Recovery / Catch-up Plan','Action Owner','Planned Completion Date','Next-Month Recovery Target','HDPS Review Result','HDPS Feedback / Required Follow-up'];
  ws.columns=headers.map((h,i)=>({header:h,key:'c'+i,width:[14,14,34,34,34,38,20,22,24,22,58][i]}));
  const hr=ws.getRow(1);hr.font={bold:true,color:{argb:'FFFFFFFF'}};hr.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1D4E7D'}};hr.alignment={vertical:'middle',horizontal:'center',wrapText:true};
- rows.forEach(r=>{const a=analyze(r),feedback=a.flags.length?a.flags.map(x=>x[1]).join(' | '):'Required response fields are complete. Verify recovery effectiveness in the next KPI result.';const row=ws.addRow([plant,r.targetMonth,r.kpiEn||r.kpi||'',a.reason,a.root,a.plan,a.owner,a.due,a.target,a.level,feedback]);row.alignment={vertical:'top',wrapText:true};row.getCell(10).font={bold:true};row.getCell(11).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF2CC'}}});
+ rows.forEach(r=>{const a=analyze(r),feedback=feedbackFor(r,a);const row=ws.addRow([plant,r.targetMonth,r.kpiEn||r.kpi||'',a.reason,a.root,a.plan,a.owner,a.due,a.target,a.level,feedback]);row.alignment={vertical:'top',wrapText:true};row.getCell(10).font={bold:true};row.getCell(11).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF2CC'}}});
  ws.views=[{state:'frozen',ySplit:1,xSplit:3}];ws.autoFilter={from:'A1',to:'K1'};
  const buf=await wb.xlsx.writeBuffer(),name=`HDPS_KPI_Reply_Feedback_${plant}_${new Date().toISOString().slice(0,10)}.xlsx`,file=new File([buf],name,{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),u=URL.createObjectURL(file),a=document.createElement('a');a.href=u;a.download=name;a.style.display='none';document.body.appendChild(a);try{a.click()}finally{a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000)}
  const st=get('hd24FeedbackExportStatus');if(st)st.textContent='피드백 Excel 자동 추출 완료 · '+name;
