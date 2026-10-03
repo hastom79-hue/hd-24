@@ -42,6 +42,23 @@ function analysisResultFor(r,a,history=[]){
  return parts.join('. ')+'.';
 }
 
+function reviewGapFor(r,a,history=[]){
+ const gaps=[];
+ if(!a.reason)gaps.push('회고분석 미흡: KPI 미달/악화 결과에 대한 사실기반 원인 회고가 없음');
+ if(!a.root)gaps.push('근인분석 미흡: 현상에서 근본원인까지의 인과관계가 정의되지 않음');
+ else if(a.reason&&a.reason.toLowerCase()===a.root.toLowerCase())gaps.push('근인분석 오류: 현상/미달사유를 근본원인으로 반복 기재함');
+ if(!a.plan)gaps.push('대책수립 미흡: 확인된 근인을 제거하는 Recovery Action이 없음');
+ else if(a.plan.length<12)gaps.push('대책수립 구체성 부족: 실행방법·완료조건·검증방법이 불명확함');
+ if(!a.owner||!a.due)gaps.push('실행관리 미흡: 대책의 책임자 또는 완료기한이 없어 추적관리가 어려움');
+ if(!a.target)gaps.push('지표 연계관계 미흡: 활동→차월 회복목표→KPI 결과로 이어지는 정량 검증기준이 없음');
+ else if(!a.plan)gaps.push('지표-활동 연계 미흡: 회복목표는 있으나 이를 달성할 실행대책이 연결되지 않음');
+ const prev=history.length>1?analyze(history[history.length-2]):null;
+ if(prev&&a.root&&prev.root&&a.root.trim()===prev.root.trim())gaps.push('재발방지 미흡: 이전 회신과 동일 근인이 반복되었으나 재발방지 관점의 추가 분석이 없음');
+ if(prev&&a.plan&&prev.plan&&a.plan.trim()===prev.plan.trim())gaps.push('활동결과 회고 미흡: 이전과 동일 대책을 유지하면서 진척·효과·실패원인에 대한 회고가 없음');
+ const due=a.due?new Date(a.due):null;if(due&&!isNaN(due)&&due<new Date()&&!/완료|complete|done/i.test(a.plan||''))gaps.push('기한관리 미흡: 완료예정일이 경과했으나 완료근거 또는 지연원인/재계획이 없음');
+ return gaps.length?gaps.join(' | '):'주요 관리요소(회고분석·근인·대책·책임/기한·차월목표)가 연결되어 있음. 차월 실적으로 대책 효과를 검증할 것';
+}
+
 function feedbackFor(r,a){
  const k=txt(r.kpiEn||r.kpi)||'KPI', out=[];
  if(!a.root)out.push(`${k}: Identify the verified root cause with evidence, not only the symptom or result.`);
@@ -59,11 +76,11 @@ function feedbackFor(r,a){
 async function exportFeedbackWorkbook(rows,plant){
  if(typeof ExcelJS==='undefined'||!rows.length)return;
  const wb=new ExcelJS.Workbook(),ws=wb.addWorksheet('Reply Feedback');
- const headers=['Plant','Target Month','KPI','Reason for Miss / Deterioration','Root Cause','Recovery / Catch-up Plan','Action Owner','Planned Completion Date','Next-Month Recovery Target','HDPS Analysis Result','HDPS Feedback / Required Follow-up'];
- ws.columns=headers.map((h,i)=>({header:h,key:'c'+i,width:[14,14,34,34,34,38,20,22,24,22,58][i]}));
+ const headers=['Plant','Target Month','KPI','Reason for Miss / Deterioration','Root Cause','Recovery / Catch-up Plan','Action Owner','Planned Completion Date','Next-Month Recovery Target','HDPS Analysis Result','What Was Wrong / Management Review Gap','HDPS Feedback / Required Follow-up'];
+ ws.columns=headers.map((h,i)=>({header:h,key:'c'+i,width:[14,14,34,34,34,38,20,22,24,48,62,58][i]}));
  const hr=ws.getRow(1);hr.font={bold:true,color:{argb:'FFFFFFFF'}};hr.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1D4E7D'}};hr.alignment={vertical:'middle',horizontal:'center',wrapText:true};
- rows.forEach(r=>{const a=analyze(r),history=[];feedback=feedbackFor(r,a);const row=ws.addRow([plant,r.targetMonth,r.kpiEn||r.kpi||'',a.reason,a.root,a.plan,a.owner,a.due,a.target,analysisResultFor(r,a,history),feedback]);row.alignment={vertical:'top',wrapText:true};row.getCell(10).font={bold:true};row.getCell(11).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF2CC'}}});
- ws.views=[{state:'frozen',ySplit:1,xSplit:3}];ws.autoFilter={from:'A1',to:'K1'};
+ rows.forEach(r=>{const a=analyze(r),history=[];feedback=feedbackFor(r,a);const row=ws.addRow([plant,r.targetMonth,r.kpiEn||r.kpi||'',a.reason,a.root,a.plan,a.owner,a.due,a.target,analysisResultFor(r,a,history),reviewGapFor(r,a,history),feedback]);row.alignment={vertical:'top',wrapText:true};row.getCell(10).font={bold:true};row.getCell(11).font={bold:true};row.getCell(11).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFE2E2'}};row.getCell(12).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF2CC'}}});
+ ws.views=[{state:'frozen',ySplit:1,xSplit:3}];ws.autoFilter={from:'A1',to:'L1'};
  const buf=await wb.xlsx.writeBuffer(),name=`HDPS_KPI_Reply_Feedback_${plant}_${new Date().toISOString().slice(0,10)}.xlsx`,file=new File([buf],name,{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),u=URL.createObjectURL(file),a=document.createElement('a');a.href=u;a.download=name;a.style.display='none';document.body.appendChild(a);try{a.click()}finally{a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000)}
  const st=get('hd24FeedbackExportStatus');if(st)st.textContent='피드백 Excel 자동 추출 완료 · '+name;
 }
