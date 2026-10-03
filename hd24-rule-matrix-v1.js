@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const API={version:'2.3.0',frozenAt:'2026-10-03'};
+const API={version:'2.4.0',frozenAt:'2026-10-03'};
 const norm=s=>String(s??'').toLowerCase().replace(/\s+/g,' ').trim();
 const num=v=>{const n=Number(String(v??'').replace(/[% ,]/g,''));return Number.isFinite(n)?n:null};
 const pct=(a,b)=>b?((a-b)/Math.abs(b))*100:null;
@@ -168,7 +168,8 @@ function analyze(r,all){
   if((sameRoot||sameReason)&&ts.state==='TARGET_MISS')fs.push(finding('R06','CAUSE','RECURRING_CAUSE',sameRoot?'Same root cause repeated':'Same reason repeated','HIGH',false));
  }
  if(/man.?dependent/.test(txt)&&s.filter(x=>/man.?dependent/.test(textFields(x))).length>=2)fs.push(finding('R21','PDCA','PDCA_PROJECT_CANDIDATE','Repeated man-dependent cause with recurring activity response','HIGH',true));
- if(/o.?ring/.test(txt)&&/man.?dependent|training|awareness/.test(txt))fs.push(finding('R24','STANDARD_CONTROL','STANDARD_CONTROL_ELIGIBLE','Recurring O-ring issue is linked to human/method control; audit coverage/recurrence control should be checked','MEDIUM',true));
+ const sc=standardControlEligibility(r,all);
+ if(sc.state==='STANDARD_CONTROL_ELIGIBLE')fs.push(finding('R24','STANDARD_CONTROL','STANDARD_CONTROL_ELIGIBLE',sc.reason+'; audit target='+sc.auditTarget+'; recurrence='+sc.recurrenceCriteria,'MEDIUM',false));
  if(/find attached|see attached|refer attached/.test(txt)&&ts.state==='TARGET_MISS')fs.push(finding('R15','REPLY_VALIDATION','STRUCTURED_RE_REPLY_REQUIRED','Long/missed KPI cannot be tracked from attachment reference alone','HIGH',true));
  return fs;
 }
