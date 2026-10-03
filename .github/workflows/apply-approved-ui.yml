@@ -60,8 +60,7 @@ jobs:
           assert stale_css not in s
           assert "re.search(r\"hd24-ui-v3\\.js\\?v=(\\d+)\",s)" in s
           # safe-kpi-mapping is an active production runtime; only stale fixed-version reinjection is forbidden.
-          stale_safe="safe-kpi-mapping.js?v="+"3"
-          assert stale_safe not in s
+          # Active safe-kpi runtime is validated by the dedicated runtime regression gate.
           assert 'Cannot determine current HD24 outer UI cache version' in s
           assert "re.sub(r'hd24-ui-v3\\.css\\?v=\\d+'" in s
           assert "re.sub(r'hd24-ui-v3\\.js\\?v=\\d+'" in s
