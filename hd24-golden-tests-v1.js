@@ -37,6 +37,9 @@ function run(){
  // Attribution: stable cause + completed structural action = effect signal only
  rs.push(row('Attribution Stable Golden',7,10,14,{direction:'LOWER',reason:'capacity shortage',recoveryPlan:'equipment expansion',completed:true}));
  rs.push(row('Attribution Stable Golden',8,10,9,{direction:'LOWER',reason:'capacity shortage',recoveryPlan:'equipment expansion',completed:true}));
+ // explicit closure then recurrence reopen
+ rs.push(row('Closure Reopen Golden',7,10,9,{direction:'LOWER',reason:'operator method',effectVerified:true,sustainedResultVerified:true,standardControlVerified:true,recurrenceMonitored:true}));
+ rs.push(row('Closure Reopen Golden',8,10,14,{direction:'LOWER',reason:'operator method recurrence'}));
  // attachment-only quality
  rs.push(row('Initial Quality',8,24,35,{direction:'LOWER',reason:'Find attached'}));
  // DIO lower is better + recovery
@@ -44,6 +47,7 @@ function run(){
  const A=E.analyzeAll(rs),find=k=>A.find(x=>x.record.kpiEn===k&&x.record.month===8);
  const attrShift=E.analyzeAll(rs).find(x=>x.record.kpi==='Attribution Shift Golden'&&x.record.month===8),attrStable=E.analyzeAll(rs).find(x=>x.record.kpi==='Attribution Stable Golden'&&x.record.month===8),fab7=E.analyzeAll(rs).find(x=>x.record.kpi==='Fabrication Cause Golden'&&x.record.month===7),fab8=E.analyzeAll(rs).find(x=>x.record.kpi==='Fabrication Cause Golden'&&x.record.month===8),o=find('IQ200 Production responsibility'),w=find('W+3 Mix Variation Rate'),fw=find('WIP compliance Fabrication'),mh=find('Input MH per machine Assembly'),iq=find('Initial Quality'),dio=find('DIO'),down=find('Equipment Downtime'),si=find('Status Integrity KPI'),eq=find('Equipment Structural Loss');
  const q=E.consolidateIssueFollowups(A,[]);
+ const cr7=A.find(x=>x.record.kpi==='Closure Reopen Golden'&&x.record.month===7),crTimeline=E.issueTimeline(A).find(x=>(x.kpis||[]).includes('Closure Reopen Golden'));
  const india52=[
  '"Cost" KPI Achievement Rate','3 process achievement rate per person','5S Audit Score','Average VTB Improvement Lead Time','Balancing Efficiency','DIO (Days Inventory Outstanding)','Domestic Incoming Plan Compliance Rate','Equipment Downtime Loss','Fabrication - Weighted Average ACTUAL LOB Efficiency','IQ 200 (Initial Quality)','IQ 200 Issues with Production responsibility','Important Problem Identification Cases  (Supplier & Inhouse)','Improvements Collection Rate (Team & Self)','Inbound Material Delivery Compliance Rate','Incident/Accident Count','Input MH per machine Assembly','Input MH per machine Fabrication','Issue Recurrence Rate','Lead Time by Production Line (Cutting To Dispatch)','Line wise SQDCEI KPIs Achievement Rate','Long-Term Inventory Value (6 month basis)','M+1 Production Volume Variation Rate','MTBF (Mean Time  Between Failure)','MTTD : Mean Time To Detect','MTTR (Mean Time To Repair)','Manufacturing Lead Time (Fab Tacking to FDI out)','Material-Induced Downtime MH','Min/Max compliance rate of     input materials by process','Monthly Shipment Plan Compliance Rate (Export)','NVA reduction cases reflecting from SWC & SWCT','OT MH per Unit','Option Planning Forecast Accuracy','Order Intake Fulfillment (W+4 - Rolling Plan)  Domestic + Export Production Plan','PPM','Parts Inventory Turnover','Pending Action Lead Time  (Issues closure time/machine)','Personnel Coaching Problem-Solving Techniques','Personnel Using Problem-Solving Techniques','Process Defect Rate (Basic Quality, Leakage, FDI, NDT, ISA)','Production Incoming Plan Compliance Rate','Production Instruction Compliance Rate  (against FDI out plan)','QIR (PPR) Improvement Completion Rate (R210E)','Quality (MH Loss ) Line Downtime','Sequence Compliance Rate by Line','Shipment Lead Time (Wait Time)','Small-Group Improvements per Person','Unsafe Act & Condition Identification',"VTB (/Improvements) Completion Rate  (against suggestions from Suggestion box, 3'G walk, SIP)",'W+3 Mix Variation Rate','W.Q. (Warranty Quality)','WIP compliance rate (Fabrication)','WIP compliance rate(Assy Line On- Line-Out )'
  ];
@@ -74,6 +78,8 @@ function run(){
   assert('DIO source-status mismatch preserved',dio.findings.some(f=>f.statement==='SOURCE_STATUS_MISMATCH'),'Aug source says no Current Month miss while recalculation is miss'),
   assert('Equipment Downtime recovery confirmed',down.trend.state==='RECOVERY_CONFIRMED',down.trend.state),
   assert('Recovery confirmed still requires sustainment',down.pdcaClosure?.closed===false&&down.pdcaClosure?.state==='SUSTAINMENT_MONITORING',down.pdcaClosure?.state),
+  assert('Closure requires explicit evidence and can close',cr7?.pdcaClosure?.closed===true&&cr7?.pdcaClosure?.state==='CLOSED_SUSTAINED',cr7?.pdcaClosure?.state),
+  assert('Closed issue recurrence reopens timeline',crTimeline?.reopened===true&&crTimeline?.status==='RECURRENCE_REOPENED',crTimeline?.status),
   assert('Inventory/MOH trade-off cluster',E.clusterFindings(rs).some(x=>x.cluster==='INVENTORY / MOH'&&x.state.includes('TRADE-OFF'))),
   assert('Inventory trade-off finding alone creates no question',!E.consolidateIssueFollowups(A,E.clusterFindings(rs)).some(x=>x.issueKey==='CLUSTER:INVENTORY / MOH')),
   assert('Problem-solving activity-result gap',E.clusterFindings(rs).some(x=>x.cluster==='PROBLEM SOLVING / PDCA'&&x.state==='ACTIVITY–RESULT GAP')),
