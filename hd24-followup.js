@@ -62,7 +62,7 @@ function managementMailBody(items){
  const clusters=(engine.clusterFindings?engine.clusterFindings(all):[]).filter(x=>[...new Set(items.map(r=>Number(r.month)))].includes(Number(x.month)));
  const positives=analyzed.filter(x=>['RECOVERING','RECOVERY_CONFIRMED'].includes(x.trend.state));
  const key=analyzed.filter(x=>x.managementState!=='WATCH'||x.findings.some(f=>['DATA_INTEGRITY','PDCA','REPLY_VALIDATION'].includes(f.type)));
- const questions=[...new Set(analyzed.flatMap(x=>x.questions))];
+ const issueFollowups=engine.consolidateIssueFollowups?engine.consolidateIssueFollowups(analyzed,clusters):[]; const questions=issueFollowups.length?issueFollowups.map(x=>x.question):[...new Set(analyzed.flatMap(x=>x.questions))];
  const en=isEn(), greet=en?recipientGreeting():'안녕하세요,', monthsText=(typeof itemsMonthLabel==='function')?itemsMonthLabel(items,en):(en?month()+'M':month()+'월');
  const lines=[greet,'',en?`Please find below the management review of ${pname()} HDPS KPI results for ${monthsText}.`:`${pnameKo()} 사업장 ${monthsText} HDPS KPI에 대한 Management Review 결과를 공유드립니다.`,''];
  const section=(title,arr)=>{lines.push(title);if(arr.length)arr.forEach((v,i)=>lines.push((i+1)+'. '+v));else lines.push(en?'• No exceptional item requiring separate comment.':'• 별도 회신이 필요한 특이사항은 없습니다.');lines.push('')};
@@ -75,7 +75,7 @@ function managementMailBody(items){
   ...key.filter(x=>!positives.includes(x)).slice(0,8).map(x=>`${kpiOfMail(x.record)} — ${x.managementState}: ${x.findings.map(f=>f.statement).join(' / ')}`)
  ]);
  section(en?'4. MANAGEMENT IMPLICATIONS':'4. Management Implications',clusters.map(x=>x.statement).slice(0,5));
- section(en?'5. POINTS TO CONFIRM':'5. Points to Confirm',questions);
+ section(en?'5. POINTS TO CONFIRM':'5. Points to Confirm',issueFollowups.length?issueFollowups.map(x=>`[${x.kpis.join(' / ')}] ${x.question}`):questions);
  section(en?'6. NEXT-MONTH FOLLOW-UP':'6. Next-Month Follow-up',[en?'Please update the existing reply/action fields only where the above confirmation points remain open. We will revalidate recovery, action effect and recurrence in the next monthly review.':'상기 확인 필요사항이 남아 있는 항목만 기존 회신/조치 필드를 갱신해 주시기 바랍니다. 차월 Review에서 실적 회복, 대책 효과 및 재발 여부를 재검증하겠습니다.']);
  lines.push(en?'Best Regards,':'감사합니다.',en?'Mr.Seoh':'서지철 드림');return lines.join('\n');
 }
