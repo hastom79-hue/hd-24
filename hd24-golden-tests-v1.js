@@ -68,6 +68,7 @@ function run(){
   assert('Equipment Downtime recovery confirmed',down.trend.state==='RECOVERY_CONFIRMED',down.trend.state),
   assert('Inventory/MOH trade-off cluster',E.clusterFindings(rs).some(x=>x.cluster==='INVENTORY / MOH'&&x.state.includes('TRADE-OFF'))),
   assert('Problem-solving activity-result gap',E.clusterFindings(rs).some(x=>x.cluster==='PROBLEM SOLVING / PDCA'&&x.state==='ACTIVITY–RESULT GAP')),
+  assert('Problem-solving issue and cluster produce one follow-up',E.consolidateIssueFollowups(E.analyzeAll(rs),E.clusterFindings(rs)).filter(x=>(x.kpis||[]).some(k=>/Problem-Solving Personnel|Coaching Problem-Solving|Important Problem Identification/.test(k))).length===1),
   assert('Source status mismatch detected',si.findings.some(f=>f.statement==='SOURCE_STATUS_MISMATCH')),
   assert('Equipment issue excluded from standard-control eligibility',eq.standardControl?.eligible===false&&eq.standardControl?.state==='STANDARD_CONTROL_NA',eq.standardControl?.state),
   assert('O-ring recurring human-method issue standard eligible',o.standardControl?.eligible===true&&o.standardControl?.state==='STANDARD_CONTROL_ELIGIBLE',o.standardControl?.state),
