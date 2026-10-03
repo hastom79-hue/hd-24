@@ -59,10 +59,11 @@ function managementMailBody(items){
  const engine=window.HD24_RULE_MATRIX_V1;if(!engine)return null;
  let all=[];try{all=Array.isArray(allResults)?allResults:items}catch(_){all=items}
  const analyzed=engine.analyzeAll(all).filter(x=>items.includes(x.record));
+ const trustedAnalyzed=analyzed.filter(x=>x.integrityGate?.state!=='BLOCK');
  const clusters=(engine.clusterFindings?engine.clusterFindings(all):[]).filter(x=>[...new Set(items.map(r=>Number(r.month)))].includes(Number(x.month)));
- const positives=analyzed.filter(x=>['RECOVERING','RECOVERY_CONFIRMED'].includes(x.trend.state));
- const key=analyzed.filter(x=>x.managementState!=='WATCH'||x.findings.some(f=>['DATA_INTEGRITY','PDCA','REPLY_VALIDATION'].includes(f.type)));
- const issueFollowups=engine.consolidateIssueFollowups?engine.consolidateIssueFollowups(analyzed,clusters):[]; const questions=issueFollowups.length?issueFollowups.map(x=>x.question):[...new Set(analyzed.flatMap(x=>x.questions))];
+ const positives=trustedAnalyzed.filter(x=>['RECOVERING','RECOVERY_CONFIRMED'].includes(x.trend.state));
+ const key=trustedAnalyzed.filter(x=>x.managementState!=='WATCH'||x.findings.some(f=>['DATA_INTEGRITY','PDCA','REPLY_VALIDATION'].includes(f.type)));
+ const issueFollowups=engine.consolidateIssueFollowups?engine.consolidateIssueFollowups(trustedAnalyzed,clusters):[]; const questions=issueFollowups.length?issueFollowups.map(x=>x.question):[...new Set(trustedAnalyzed.flatMap(x=>x.questions))];
  const en=isEn(), greet=en?recipientGreeting():'안녕하세요,', monthsText=(typeof itemsMonthLabel==='function')?itemsMonthLabel(items,en):(en?month()+'M':month()+'월');
  const lines=[greet,'',en?`Please find below the management review of ${pname()} HDPS KPI results for ${monthsText}.`:`${pnameKo()} 사업장 ${monthsText} HDPS KPI에 대한 Management Review 결과를 공유드립니다.`,''];
  const section=(title,arr)=>{lines.push(title);if(arr.length)arr.forEach((v,i)=>lines.push((i+1)+'. '+v));else lines.push(en?'• No exceptional item requiring separate comment.':'• 별도 회신이 필요한 특이사항은 없습니다.');lines.push('')};
