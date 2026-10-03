@@ -46,6 +46,12 @@ function run(){
  rs.push(row('DIO',7,38.42,44.19));rs.push(row('DIO',8,46.79,48.03));
  const A=E.analyzeAll(rs),find=k=>A.find(x=>x.record.kpiEn===k&&x.record.month===8);
  const attrShift=E.analyzeAll(rs).find(x=>x.record.kpi==='Attribution Shift Golden'&&x.record.month===8),attrStable=E.analyzeAll(rs).find(x=>x.record.kpi==='Attribution Stable Golden'&&x.record.month===8),fab7=E.analyzeAll(rs).find(x=>x.record.kpi==='Fabrication Cause Golden'&&x.record.month===7),fab8=E.analyzeAll(rs).find(x=>x.record.kpi==='Fabrication Cause Golden'&&x.record.month===8),o=find('IQ200 Production responsibility'),w=find('W+3 Mix Variation Rate'),fw=find('WIP compliance Fabrication'),mh=find('Input MH per machine Assembly'),iq=find('Initial Quality'),dio=find('DIO'),down=find('Equipment Downtime'),si=find('Status Integrity KPI'),eq=find('Equipment Structural Loss');
+ const closedRows=[
+  row('Closure Golden',7,10,9,{direction:'LOWER',reason:'operator method issue',rootCause:'work method',recoveryPlan:'standard work update',effectVerified:true,sustainedResultVerified:true,standardControlVerified:true,recurrenceMonitored:true}),
+  row('Closure Golden',8,10,9,{direction:'LOWER',reason:'operator method issue',rootCause:'work method',recoveryPlan:'standard work update',effectVerified:true,sustainedResultVerified:true,standardControlVerified:true,recurrenceMonitored:true})
+ ];
+ const closedA=E.analyzeAll(closedRows),closedLatest=closedA.find(x=>x.record.month===8);
+ const reopenA=E.analyzeAll([...closedRows,row('Closure Golden',9,10,14,{direction:'LOWER',reason:'operator method issue',rootCause:'work method',recoveryPlan:'standard work update'})]);
  const q=E.consolidateIssueFollowups(A,[]);
  const cr7=A.find(x=>x.record.kpi==='Closure Reopen Golden'&&x.record.month===7),crTimeline=E.issueTimeline(A).find(x=>(x.kpis||[]).includes('Closure Reopen Golden'));
  const india52=[
@@ -78,6 +84,8 @@ function run(){
   assert('DIO source-status mismatch preserved',dio.findings.some(f=>f.statement==='SOURCE_STATUS_MISMATCH'),'Aug source says no Current Month miss while recalculation is miss'),
   assert('Equipment Downtime recovery confirmed',down.trend.state==='RECOVERY_CONFIRMED',down.trend.state),
   assert('Recovery confirmed still requires sustainment',down.pdcaClosure?.closed===false&&down.pdcaClosure?.state==='SUSTAINMENT_MONITORING',down.pdcaClosure?.state),
+  assert('Closure requires explicit verified evidence',closedLatest.pdcaClosure?.closed===true&&closedLatest.pdcaClosure?.state==='CLOSED_SUSTAINED',closedLatest.pdcaClosure?.state),
+  assert('Closed issue recurrence reopens timeline',E.issueTimeline(reopenA).some(x=>(x.kpis||[]).includes('Closure Golden')&&x.reopened===true&&x.status==='RECURRENCE_REOPENED'),JSON.stringify(E.issueTimeline(reopenA))),
   assert('Closure requires explicit evidence and can close',cr7?.pdcaClosure?.closed===true&&cr7?.pdcaClosure?.state==='CLOSED_SUSTAINED',cr7?.pdcaClosure?.state),
   assert('Closed issue recurrence reopens timeline',crTimeline?.reopened===true&&crTimeline?.status==='RECURRENCE_REOPENED',crTimeline?.status),
   assert('Inventory/MOH trade-off cluster',E.clusterFindings(rs).some(x=>x.cluster==='INVENTORY / MOH'&&x.state.includes('TRADE-OFF'))),
