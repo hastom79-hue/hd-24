@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const API={version:'2.4.0',frozenAt:'2026-10-03'};
+const API={version:'2.5.0',frozenAt:'2026-10-03'};
 const norm=s=>String(s??'').toLowerCase().replace(/\s+/g,' ').trim();
 const num=v=>{const n=Number(String(v??'').replace(/[% ,]/g,''));return Number.isFinite(n)?n:null};
 const pct=(a,b)=>b?((a-b)/Math.abs(b))*100:null;
@@ -205,8 +205,13 @@ function consolidateIssueFollowups(analyzed,clusters=[]){
   out.push({issueKey:key,kpis:[...new Set(xs.map(x=>kpiOf(x.record)))],question,confidence:xs.some(x=>x.findings.some(f=>f.confidence==='HIGH'))?'HIGH':'MEDIUM'});
  }
  for(const cl of clusters.filter(x=>x.questionRequired)){
+  const covered=out.some(x=>(x.kpis||[]).some(k=>(cl.kpis||[]).includes(k)));
+  if(covered)continue;
   const key='CLUSTER:'+cl.cluster;if(out.some(x=>x.issueKey===key))continue;
-  out.push({issueKey:key,kpis:cl.kpis,question:cl.statement,confidence:cl.confidence||'MEDIUM'});
+  let question=cl.statement;
+  if(cl.cluster==='QUALITY / PROCESS')question='Please clarify whether the achieved process-defect KPI and the missed production/initial-quality KPI use the same defect mechanism, denominator, inspection scope and sampling basis, and how process control is expected to translate to result quality.';
+  if(cl.cluster==='PROBLEM SOLVING / PDCA')question='Please confirm how recurring priority problems are selected, projectized, followed through root-cause removal, and verified for effect in daily management.';
+  out.push({issueKey:key,kpis:cl.kpis,question,confidence:cl.confidence||'MEDIUM'});
  }
  return out;
 }
