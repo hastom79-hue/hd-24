@@ -61,7 +61,7 @@ function render(){
    const related=analyzed.filter(a=>(x.kpis||[]).map(v=>String(v).toLowerCase().trim()).includes(String(a.record.kpiEn||a.record.kpi||'').toLowerCase().trim()));
    const evidence=[...new Set(related.flatMap(a=>a.findings.map(f=>f.evidence)).filter(Boolean))].slice(0,3);
    const actions=[...new Set(related.map(a=>{const d=a.actionDetail||{};return [d.text,d.owner&&('Owner '+d.owner),d.due&&('Due '+d.due),d.completed?'Completed':''].filter(Boolean).join(' · ')}).filter(Boolean))];
-   const effects=[...new Set(related.map(a=>a.actionDetail?.effect||a.trend?.state).filter(Boolean))];
+   const effects=[...new Set(related.map(a=>{const at=a.actionAttribution;return at&&at.state!=='NO_RECOVERY_SIGNAL'?at.state+' ('+at.reason+')':(a.actionDetail?.effect||a.trend?.state)}).filter(Boolean))];
    const followups=engine.consolidateIssueFollowups?engine.consolidateIssueFollowups(related,[x]):[];
    return '<div style="background:#fff;border:1px solid var(--line);border-radius:8px;padding:11px 12px">'+
     '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><b>'+esc(x.cluster)+' · '+esc(x.state)+'</b><span style="font-size:11px;color:var(--muted)">Confidence '+esc(x.confidence||'MEDIUM')+'</span></div>'+
