@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const API={version:'1.3.0',frozenAt:'2026-10-03'};
+const API={version:'1.4.0',frozenAt:'2026-10-03'};
 const norm=s=>String(s??'').toLowerCase().replace(/\s+/g,' ').trim();
 const num=v=>{const n=Number(String(v??'').replace(/[% ,]/g,''));return Number.isFinite(n)?n:null};
 const pct=(a,b)=>b?((a-b)/Math.abs(b))*100:null;
@@ -35,7 +35,17 @@ function trend(r,all){
  return {state:'STABLE',deltaGap:dg};
 }
 function textFields(r){return norm([r.reason,r.rootCause,r.recoveryPlan].filter(Boolean).join(' '))}
-function dueDate(r){const raw=String(r.plannedCompletionDate||'').trim();if(!raw)return null;const d=new Date(raw);return Number.isNaN(d.getTime())?null:d}
+function analysisDate(r){
+ const y=Number(r.year||2026),m=monthOf(r);return m?new Date(y,m,0,23,59,59):null;
+}
+function dueDate(r){
+ const raw=String(r.plannedCompletionDate||r.dueDate||'').trim();if(!raw)return null;
+ let d=new Date(raw);if(!Number.isNaN(d.getTime()))return d;
+ const mon={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+ const m=raw.toLowerCase().match(/w\s*([1-5]).*?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/);
+ if(m){const year=Number(r.year||2026),month=mon[m[2]],week=Number(m[1]);return new Date(year,month-1,Math.min(week*7,new Date(year,month,0).getDate()),23,59,59)}
+ return null;
+}
 function actionState(r){
  const txt=textFields(r), due=String(r.plannedCompletionDate||'').trim();
  const structural=/(robot|vmc|fixture|design|source chang|capacity|equipment|jig|process chang|work method|installation|modify|modification)/.test(txt);
@@ -89,7 +99,7 @@ function analyze(r,all){
  if(tr.state!=='NO_TREND'&&tr.state!=='STABLE')fs.push(finding(tr.state==='RECOVERING'?'R02':tr.state==='RECOVERY_CONFIRMED'?'R04':tr.state==='NEW_REGRESSION'?'R05':'R03','TREND',tr.state,\`Target-gap change=\${tr.deltaGap??'-'}\`,'HIGH',tr.state==='NEW_REGRESSION'));
  if(act.attachment)fs.push(finding('R15','REPLY_VALIDATION','REPLY_TRACEABILITY_GAP','Attachment-only reply; structured root/action/owner/due is not traceable','HIGH',true));
  if(act.structural&&act.due){
-  const now=new Date(), future=act.dueDate&&act.dueDate>now;
+  const asOf=analysisDate(r)||new Date(), future=act.dueDate&&act.dueDate>asOf;
   if(future)fs.push(finding('R11','ACTION','EXISTING_ACTION · EFFECT_PENDING',\`Structural action is in progress; due \${act.due}. Do not classify as action failure before due.\`,'HIGH',false));
   else if(act.completed)fs.push(finding('R14','ACTION','EFFECT VERIFICATION REQUIRED',\`Structural action is reported complete; verify subsequent KPI/loss response before closure.\`,'HIGH',false));
   else fs.push(finding('R12','ACTION','DUE CHECK REQUIRED',\`Action due date \${act.due} has been reached/passed; completion/effect requires validation.\`,'MEDIUM',true));
@@ -152,9 +162,21 @@ function consolidateQuestions(findings){
  if(types.has('TREND'))out.push('Please clarify the key driver of the new regression and the current recovery action.');
  return [...new Set(out)];
 }
+function effectState(x){
+ const fs=x.findings||[],act=x.action||{},tr=x.trend||{};
+ if(fs.some(f=>f.statement==='EXISTING_ACTION · EFFECT_PENDING'))return 'EFFECT PENDING';
+ if(act.completed&&['RECOVERING','RECOVERY_CONFIRMED'].includes(tr.state))return 'RECOVERY OBSERVED · ATTRIBUTION UNCERTAIN';
+ if(act.completed&&['WORSENING_MISS','STABLE','NO_TREND'].includes(tr.state))return 'ACTION COMPLETED · EFFECT VERIFICATION PENDING';
+ if(['RECOVERING','RECOVERY_CONFIRMED'].includes(tr.state))return 'RECOVERY OBSERVED';
+ return 'NOT YET VERIFIED';
+}
+function actionDetail(x){
+ const r=x.record||{},a=x.action||{};const txt=String(r.recoveryPlan||r.action||r.countermeasure||r.plan||'').trim();
+ return {text:txt||'No structured action text',owner:a.owner||'',due:a.due||'',completed:!!a.completed,state:a.structural?'STRUCTURAL':a.activity?'ACTIVITY':'UNCLASSIFIED',effect:effectState(x)};
+}
 function analyzeAll(rows){
  return rows.map(r=>{const findings=analyze(r,rows);return {record:r,direction:direction(r),target:targetState(r),trend:trend(r,rows),findings,managementState:managementState(findings),questions:consolidateQuestions(findings)}})
 }
-window.HD24_RULE_MATRIX_V1={...API,direction,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,issueKeyFor,consolidateIssueFollowups,analyze,analyzeAll,consolidateQuestions};
+window.HD24_RULE_MATRIX_V1={...API,direction,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,issueKeyFor,consolidateIssueFollowups,analysisDate,dueDate,effectState,actionDetail,analyze,analyzeAll,consolidateQuestions};
 document.dispatchEvent(new CustomEvent('hd24:rule-matrix-ready',{detail:API}));
 })();
