@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const API={version:'1.1.0',frozenAt:'2026-10-03'};
+const API={version:'1.2.0',frozenAt:'2026-10-03'};
 const norm=s=>String(s??'').toLowerCase().replace(/\s+/g,' ').trim();
 const num=v=>{const n=Number(String(v??'').replace(/[% ,]/g,''));return Number.isFinite(n)?n:null};
 const pct=(a,b)=>b?((a-b)/Math.abs(b))*100:null;
@@ -35,18 +35,28 @@ function trend(r,all){
  return {state:'STABLE',deltaGap:dg};
 }
 function textFields(r){return norm([r.reason,r.rootCause,r.recoveryPlan].filter(Boolean).join(' '))}
+function dueDate(r){const raw=String(r.plannedCompletionDate||'').trim();if(!raw)return null;const d=new Date(raw);return Number.isNaN(d.getTime())?null:d}
 function actionState(r){
  const txt=textFields(r), due=String(r.plannedCompletionDate||'').trim();
  const structural=/(robot|vmc|fixture|design|source chang|capacity|equipment|jig|process chang|work method|installation|modify|modification)/.test(txt);
  const activity=/(training|awareness|meeting|tracking|follow.?up|motivation|reward)/.test(txt);
  const attachment=/(find attached|see attached|refer attached)/.test(norm(r.reason));
- return {structural,activity,attachment,due,owner:String(r.actionOwner||'').trim()};
+ const completed=/(completed|complete|implemented|installed|done)/.test(txt);
+ return {structural,activity,attachment,due,dueDate:dueDate(r),completed,owner:String(r.actionOwner||'').trim()};
 }
 function finding(rule,type,statement,evidence,confidence='MEDIUM',question=false){return {rule,type,statement,evidence,confidence,questionRequired:question,evidenceRequired:false}}
 function sourceIntegrity(r){
  const ts=targetState(r); if(ts.state==='UNKNOWN'||typeof r.achieved!=='boolean')return null;
  const source=r.achieved?'ACHIEVED':'TARGET_MISS';
  return source===ts.state?null:finding('R28','DATA_INTEGRITY','SOURCE_STATUS_MISMATCH',\`System=\${ts.state}, Source=\${source}; Direction=\${direction(r)}\`,'HIGH',false);
+}
+function actionMechanism(r){
+ const t=textFields(r);
+ if(/robot|capacity|4th robot|2 vmc|machining vmc/.test(t)&&/capacity|wip|input mh|bottleneck|production/.test(t))return 'CAPACITY_EXPANSION';
+ if(/ndt|weld|welding|root gap|precision|feeding/.test(t))return 'QUALITY_ROOT_REMOVAL';
+ if(/inventory|moh|shortage/.test(t))return 'INVENTORY_BUFFER';
+ if(/training|awareness/.test(t))return 'HUMAN_ACTIVITY';
+ return 'OTHER';
 }
 function clusterFindings(rows){
  const out=[], byMonth=new Map(); rows.forEach(r=>{const m=monthOf(r);if(!byMonth.has(m))byMonth.set(m,[]);byMonth.get(m).push(r)});
@@ -58,6 +68,9 @@ function clusterFindings(rows){
    if(dio&&trend(dio,rows).state==='RECOVERING'&&((aging&&targetState(aging).state==='TARGET_MISS')||(turn&&targetState(turn).state==='TARGET_MISS')))
     out.push({month,cluster:'INVENTORY / MOH',state:'PARTIAL EFFECT · INVENTORY TRADE-OFF',confidence:'HIGH',kpis:inv.map(kpiOf),statement:'Overall inventory-days gap is recovering, while aging inventory and/or parts turnover remain problematic. Total-flow recovery does not prove inventory structure recovery.',questionRequired:false});
   }
+  const fab=rs.filter(r=>/vmc|ndt|weld|fabrication|balancing|wip|input mh|ot mh/.test(textFields(r)+' '+norm(kpiOf(r))));
+  const cap=fab.filter(r=>actionMechanism(r)==='CAPACITY_EXPANSION'), qual=fab.filter(r=>actionMechanism(r)==='QUALITY_ROOT_REMOVAL');
+  if(cap.length&&qual.length)out.push({month,cluster:'FABRICATION',state:'SEPARATE ACTION MECHANISMS',confidence:'HIGH',kpis:[...new Set([...cap,...qual].map(kpiOf))],statement:'VMC-related actions are separated by intended mechanism: capacity expansion versus NDT/welding quality-root removal. Shared equipment terminology alone must not merge the issues.',questionRequired:false});
   const q=rs.filter(r=>has(r,['process defect','initial quality','production responsibility','production attributable','warranty']));
   const process=q.find(r=>/process defect/.test(norm(kpiOf(r)))), result=q.find(r=>/initial quality|production responsibility|production attributable/.test(norm(kpiOf(r))));
   if(process&&result&&targetState(process).state==='ACHIEVED'&&targetState(result).state==='TARGET_MISS')
@@ -75,7 +88,12 @@ function analyze(r,all){
  fs.push(finding('R01','PERFORMANCE',ts.state,\`Target=\${r.target??'-'}, Actual=\${r.actual??'-'}, Direction=\${direction(r)}\`,'HIGH'));
  if(tr.state!=='NO_TREND'&&tr.state!=='STABLE')fs.push(finding(tr.state==='RECOVERING'?'R02':tr.state==='RECOVERY_CONFIRMED'?'R04':tr.state==='NEW_REGRESSION'?'R05':'R03','TREND',tr.state,\`Target-gap change=\${tr.deltaGap??'-'}\`,'HIGH',tr.state==='NEW_REGRESSION'));
  if(act.attachment)fs.push(finding('R15','REPLY_VALIDATION','REPLY_TRACEABILITY_GAP','Attachment-only reply; structured root/action/owner/due is not traceable','HIGH',true));
- if(act.structural&&act.due)fs.push(finding('R11','ACTION','EXISTING_ACTION · EFFECT_PENDING',\`Structural action with due \${act.due}\`,'HIGH',false));
+ if(act.structural&&act.due){
+  const now=new Date(), future=act.dueDate&&act.dueDate>now;
+  if(future)fs.push(finding('R11','ACTION','EXISTING_ACTION · EFFECT_PENDING',\`Structural action is in progress; due \${act.due}. Do not classify as action failure before due.\`,'HIGH',false));
+  else if(act.completed)fs.push(finding('R14','ACTION','EFFECT VERIFICATION REQUIRED',\`Structural action is reported complete; verify subsequent KPI/loss response before closure.\`,'HIGH',false));
+  else fs.push(finding('R12','ACTION','DUE CHECK REQUIRED',\`Action due date \${act.due} has been reached/passed; completion/effect requires validation.\`,'MEDIUM',true));
+ }
  if(act.activity&&!act.structural&&ts.state==='TARGET_MISS')fs.push(finding('R10','ACTION','ACTIVITY_ACTION','Training/awareness/meeting/tracking action without structural countermeasure evidence','MEDIUM',false));
  if(prev){
   const sameRoot=norm(prev.rootCause)&&norm(prev.rootCause)===norm(r.rootCause);
@@ -109,6 +127,6 @@ function consolidateQuestions(findings){
 function analyzeAll(rows){
  return rows.map(r=>{const findings=analyze(r,rows);return {record:r,direction:direction(r),target:targetState(r),trend:trend(r,rows),findings,managementState:managementState(findings),questions:consolidateQuestions(findings)}})
 }
-window.HD24_RULE_MATRIX_V1={...API,direction,targetState,trend,sourceIntegrity,clusterFindings,analyze,analyzeAll,consolidateQuestions};
+window.HD24_RULE_MATRIX_V1={...API,direction,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,analyze,analyzeAll,consolidateQuestions};
 document.dispatchEvent(new CustomEvent('hd24:rule-matrix-ready',{detail:API}));
 })();
