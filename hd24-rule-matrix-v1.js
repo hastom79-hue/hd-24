@@ -1,15 +1,36 @@
 (()=>{'use strict';
-const API={version:'1.4.0',frozenAt:'2026-10-03'};
+const API={version:'1.5.0',frozenAt:'2026-10-03'};
 const norm=s=>String(s??'').toLowerCase().replace(/\s+/g,' ').trim();
 const num=v=>{const n=Number(String(v??'').replace(/[% ,]/g,''));return Number.isFinite(n)?n:null};
 const pct=(a,b)=>b?((a-b)/Math.abs(b))*100:null;
 const monthOf=r=>Number(r.targetMonth??r.month??0);
 const kpiOf=r=>String(r.kpiEn||r.kpi||'').trim();
+const KPI_DIRECTION_MASTER={
+ 'initial quality':'LOWER','warranty quality':'LOWER','iq200 production responsibility':'LOWER',
+ 'parts inventory turnover':'HIGHER','shipment lead time':'LOWER','5s audit score':'HIGHER',
+ 'w+3 mix variation rate':'LOWER','m+1 production volume variation':'LOWER',
+ 'inbound material delivery compliance':'HIGHER','domestic incoming plan compliance':'HIGHER',
+ 'long-term inventory value':'LOWER','long term inventory value':'LOWER',
+ 'min/max compliance input materials':'HIGHER','lead time by production line':'LOWER',
+ 'wip compliance fabrication':'HIGHER','input mh per machine assembly':'LOWER',
+ 'fabrication weighted average lob efficiency':'HIGHER','ot mh per unit':'LOWER',
+ 'process defect':'LOWER','problem-solving personnel':'HIGHER','problem solving personnel':'HIGHER',
+ 'coaching problem-solving':'HIGHER','coaching problem solving':'HIGHER',
+ 'important problem identification':'HIGHER','nva reduction':'HIGHER',
+ 'small-group improvements/person':'HIGHER','small group improvements/person':'HIGHER',
+ 'qir':'HIGHER','mttd':'LOWER','equipment downtime':'LOWER',
+ 'production instruction':'HIGHER','incident count':'LOWER','order intake fulfillment':'HIGHER',
+ 'dio':'LOWER','days inventory outstanding':'LOWER','inventory days':'LOWER'
+};
+function masterDirection(k){
+ const n=norm(k);if(KPI_DIRECTION_MASTER[n])return KPI_DIRECTION_MASTER[n];
+ const exact=Object.entries(KPI_DIRECTION_MASTER).find(([name])=>n===name);return exact?.[1]||null;
+}
 const lowerHints=['dio','inventory days','downtime','defect','lead time','mh','overtime','ot mh','incident','recurrence','variation','loss','ppm'];
 const higherHints=['compliance','efficiency','score','turnover','availability','fulfillment','coaching','problem identification','nva reduction'];
 function direction(r){
  const k=norm(kpiOf(r));
- if(/\bdio\b|days inventory outstanding|inventory days/.test(k))return 'LOWER';
+ const md=masterDirection(k);if(md)return md;
  if(r.direction)return String(r.direction).toUpperCase().includes('LOW')?'LOWER':'HIGHER';
  if(lowerHints.some(x=>k.includes(x)))return 'LOWER';
  if(higherHints.some(x=>k.includes(x)))return 'HIGHER';
@@ -177,6 +198,6 @@ function actionDetail(x){
 function analyzeAll(rows){
  return rows.map(r=>{const findings=analyze(r,rows);return {record:r,direction:direction(r),target:targetState(r),trend:trend(r,rows),findings,managementState:managementState(findings),questions:consolidateQuestions(findings)}})
 }
-window.HD24_RULE_MATRIX_V1={...API,direction,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,issueKeyFor,consolidateIssueFollowups,analysisDate,dueDate,effectState,actionDetail,analyze,analyzeAll,consolidateQuestions};
+window.HD24_RULE_MATRIX_V1={...API,KPI_DIRECTION_MASTER,masterDirection,direction,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,issueKeyFor,consolidateIssueFollowups,analysisDate,dueDate,effectState,actionDetail,analyze,analyzeAll,consolidateQuestions};
 document.dispatchEvent(new CustomEvent('hd24:rule-matrix-ready',{detail:API}));
 })();
