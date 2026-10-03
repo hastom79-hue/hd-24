@@ -63,6 +63,7 @@ function run(){
   assert('Fabrication 6→7 cause shift',fab7.causeDynamics.state==='CAUSE_SHIFT',fab7.causeDynamics.state),
   assert('Fabrication 7→8 recurring cause',fab8.causeDynamics.state==='RECURRING_CAUSE',fab8.causeDynamics.state),
   assert('DIO Aug gap recovery',dio.trend.state==='RECOVERING',dio.trend.state),
+  assert('DIO source-status mismatch preserved',dio.findings.some(f=>f.statement==='SOURCE_STATUS_MISMATCH'),'Aug source says no Current Month miss while recalculation is miss'),
   assert('Equipment Downtime recovery confirmed',down.trend.state==='RECOVERY_CONFIRMED',down.trend.state),
   assert('Inventory/MOH trade-off cluster',E.clusterFindings(rs).some(x=>x.cluster==='INVENTORY / MOH'&&x.state.includes('TRADE-OFF'))),
   assert('Problem-solving activity-result gap',E.clusterFindings(rs).some(x=>x.cluster==='PROBLEM SOLVING / PDCA'&&x.state==='ACTIVITY–RESULT GAP')),
