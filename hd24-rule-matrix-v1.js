@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const API={version:'2.1.0',frozenAt:'2026-10-03'};
+const API={version:'2.2.0',frozenAt:'2026-10-03'};
 const norm=s=>String(s??'').toLowerCase().replace(/\s+/g,' ').trim();
 const num=v=>{const n=Number(String(v??'').replace(/[% ,]/g,''));return Number.isFinite(n)?n:null};
 const pct=(a,b)=>b?((a-b)/Math.abs(b))*100:null;
@@ -219,6 +219,16 @@ function consolidateQuestions(findings){
  if(types.has('TREND'))out.push('Please clarify the key driver of the new regression and the current recovery action.');
  return [...new Set(out)];
 }
+function standardControlEligibility(r,all){
+ const text=norm([r.reason,r.rootCause,r.recoveryPlan,r.action].filter(Boolean).join(' '));
+ const structural=/(supplier|vendor|design|drawing|component|bearing|equipment breakdown|machine breakdown|hardware failure)/.test(text);
+ const humanMethod=/(man-dependent|operator|human|method|work method|standard work|standard|sop|swc|swct|training|awareness|procedure|instruction|o-ring|oring)/.test(text);
+ const cd=causeDynamics(r,all),recurring=cd.state==='RECURRING_CAUSE'||Number(r.streak||0)>=2;
+ if(structural&&!humanMethod)return {eligible:false,state:'STANDARD_CONTROL_NA',reason:'Supplier/Design/Equipment structural issue without Human/Method/Standard linkage'};
+ if(humanMethod&&recurring)return {eligible:true,state:'STANDARD_CONTROL_ELIGIBLE',reason:'Recurring issue with Human/Method/Standard linkage',auditPriority:'HIGH',recurrenceLevel:'DIRECT_OR_SIMILAR_REVIEW'};
+ if(humanMethod)return {eligible:true,state:'STANDARD_CONTROL_WATCH',reason:'Human/Method/Standard linkage detected; recurrence not yet established',auditPriority:'MEDIUM',recurrenceLevel:'DEFINE_IF_REPEATED'};
+ return {eligible:false,state:'STANDARD_CONTROL_NOT_TRIGGERED',reason:'Human/Method/Standard linkage not evidenced'};
+}
 function causeDynamics(r,all){
  const s=seriesFor(r,all),i=s.findIndex(x=>x===r);
  const raw=String(r.rootCause||r.reason||'').trim(),cur=norm(raw);
@@ -287,6 +297,6 @@ function integrityGate(r){
 function analyzeAll(rows){
  return rows.map(r=>{const findings=analyze(r,rows);return {record:r,direction:direction(r),target:targetState(r),trend:trend(r,rows),findings,managementState:managementState(findings),questions:consolidateQuestions(findings)}})
 }
-window.HD24_RULE_MATRIX_V1={...API,KPI_DIRECTION_MASTER,masterDirection,direction,auditSummary,integrityGate,causeDynamics,actionAttribution,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,issueKeyFor,consolidateIssueFollowups,analysisDate,dueDate,effectState,actionDetail,analyze,analyzeAll,consolidateQuestions};
+window.HD24_RULE_MATRIX_V1={...API,KPI_DIRECTION_MASTER,masterDirection,direction,auditSummary,integrityGate,causeDynamics,standardControlEligibility,actionAttribution,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,issueKeyFor,consolidateIssueFollowups,analysisDate,dueDate,effectState,actionDetail,analyze,analyzeAll,consolidateQuestions};
 document.dispatchEvent(new CustomEvent('hd24:rule-matrix-ready',{detail:API}));
 })();
