@@ -21,9 +21,10 @@ function coreReady(){
     const hasSrc=typeof srcWorkbook!=='undefined'&&!!srcWorkbook;
     const hasMaster=typeof masterWorkbook!=='undefined'&&!!masterWorkbook;
     const hasZip=typeof masterZip!=='undefined'&&!!masterZip;
+    const hasBuffer=typeof masterFileBuffer!=='undefined'&&!!masterFileBuffer;
     const hasMapping=typeof mappingData!=='undefined'&&Array.isArray(mappingData)&&mappingData.length>0;
-    return {hasSrc,hasMaster,hasZip,hasMapping,ok:hasSrc&&hasMaster&&hasZip&&hasMapping};
-  }catch(_){return {hasSrc:false,hasMaster:false,hasZip:false,hasMapping:false,ok:false};}
+    return {hasSrc,hasMaster,hasZip,hasBuffer,hasMapping,ok:hasSrc&&hasMaster&&hasBuffer&&hasMapping};
+  }catch(_){return {hasSrc:false,hasMaster:false,hasZip:false,hasBuffer:false,hasMapping:false,ok:false};}
 }
 
 function readiness(){
@@ -72,7 +73,7 @@ function syncSuccess(){
 }
 
 function waitStateText(s){
-  return `disabled=${s.disabled} / safe=${s.globalReady} / dataset=${s.datasetReady||'-'} / src=${s.core.hasSrc} / master=${s.core.hasMaster} / zip=${s.core.hasZip} / mapping=${s.core.hasMapping}`;
+  return `disabled=${s.disabled} / safe=${s.globalReady} / dataset=${s.datasetReady||'-'} / src=${s.core.hasSrc} / master=${s.core.hasMaster} / buffer=${s.core.hasBuffer} / zip(lazy)=${s.core.hasZip} / mapping=${s.core.hasMapping}`;
 }
 
 function tryAutoRun(reason){
