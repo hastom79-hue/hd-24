@@ -73,7 +73,7 @@ function finalRequestFor(r,a,history=[]){
  return req.length?req.map((x,i)=>`${i+1}. ${x}`).join(' / '):'추가 필수 보완사항 없음. 차월 KPI 실적으로 Recovery Action 효과를 확인하고 결과를 회신';
 }
 
-function feedbackFor(r,a){
+function feedbackFor(r,a,history=[]){
  const k=txt(r.kpiEn||r.kpi)||'KPI', out=[];
  if(!a.root)out.push(`${k}: Identify the verified root cause with evidence, not only the symptom or result.`);
  if(a.root&&a.root.length<8)out.push(`${k}: Expand the root cause to explain the failure mechanism and supporting evidence.`);
@@ -93,7 +93,7 @@ async function exportFeedbackWorkbook(rows,plant){
  const headers=['Plant','Target Month','KPI','Reason for Miss / Deterioration','Root Cause','Recovery / Catch-up Plan','Action Owner','Planned Completion Date','Next-Month Recovery Target','HDPS Analysis Result','What Was Wrong / Management Review Gap','HDPS Feedback / Required Follow-up','Final Additional Request / Points to Supplement'];
  ws.columns=headers.map((h,i)=>({header:h,key:'c'+i,width:[14,14,34,34,34,38,20,22,24,48,62,58,58][i]}));
  const hr=ws.getRow(1);hr.font={bold:true,color:{argb:'FFFFFFFF'}};hr.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1D4E7D'}};hr.alignment={vertical:'middle',horizontal:'center',wrapText:true};
- rows.forEach(r=>{const a=analyze(r),history=[];feedback=feedbackFor(r,a);const row=ws.addRow([plant,r.targetMonth,r.kpiEn||r.kpi||'',a.reason,a.root,a.plan,a.owner,a.due,a.target,analysisResultFor(r,a,history),reviewGapFor(r,a,history),feedback,finalRequestFor(r,a,history)]);row.alignment={vertical:'top',wrapText:true};row.getCell(10).font={bold:true};row.getCell(11).font={bold:true};row.getCell(11).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFE2E2'}};row.getCell(12).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF2CC'}};row.getCell(13).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE2F0D9'}};row.getCell(13).font={bold:true}});
+ let saved=[];try{saved=JSON.parse(localStorage.getItem(KEY)||'[]').filter(x=>x.plant===plant)}catch{};saved.sort((a,b)=>String(b.replyReceivedAt||'').localeCompare(String(a.replyReceivedAt||'')));rows.forEach(r=>{const a=analyze(r),k=txt(r.kpiEn||r.kpi).toLowerCase(),history=saved.filter(x=>txt(x.kpiEn||x.kpi).toLowerCase()===k&&x!==r),feedback=feedbackFor(r,a,history);const row=ws.addRow([plant,r.targetMonth,r.kpiEn||r.kpi||'',a.reason,a.root,a.plan,a.owner,a.due,a.target,analysisResultFor(r,a,history),reviewGapFor(r,a,history),feedback,finalRequestFor(r,a,history)]);row.alignment={vertical:'top',wrapText:true};row.getCell(10).font={bold:true};row.getCell(11).font={bold:true};row.getCell(11).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFE2E2'}};row.getCell(12).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF2CC'}};row.getCell(13).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE2F0D9'}};row.getCell(13).font={bold:true}});
  ws.views=[{state:'frozen',ySplit:1,xSplit:3}];ws.autoFilter={from:'A1',to:'M1'};ws.getRow(1).height=34;ws.eachRow((row,n)=>{if(n>1)row.height=72});
  const buf=await wb.xlsx.writeBuffer(),name=`HDPS_KPI_Reply_Feedback_${plant}_${new Date().toISOString().slice(0,10)}.xlsx`,file=new File([buf],name,{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),u=URL.createObjectURL(file),a=document.createElement('a');a.href=u;a.download=name;a.style.display='none';document.body.appendChild(a);try{a.click()}finally{a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000)}
  const st=get('hd24FeedbackExportStatus');if(st)st.textContent='피드백 Excel 자동 추출 완료 · '+name;
