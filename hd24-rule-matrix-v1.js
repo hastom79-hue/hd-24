@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const API={version:'1.6.1',frozenAt:'2026-10-03'};
+const API={version:'1.7.0',frozenAt:'2026-10-03'};
 const norm=s=>String(s??'').toLowerCase().replace(/\s+/g,' ').trim();
 const num=v=>{const n=Number(String(v??'').replace(/[% ,]/g,''));return Number.isFinite(n)?n:null};
 const pct=(a,b)=>b?((a-b)/Math.abs(b))*100:null;
@@ -231,9 +231,21 @@ function actionDetail(x){
  const r=x.record||{},a=x.action||{};const txt=String(r.recoveryPlan||r.action||r.countermeasure||r.plan||'').trim();
  return {text:txt||'No structured action text',owner:a.owner||'',due:a.due||'',completed:!!a.completed,state:a.structural?'STRUCTURAL':a.activity?'ACTIVITY':'UNCLASSIFIED',effect:effectState(x)};
 }
+function auditSummary(rows){
+ const out={rows:rows.length,valid:0,statusMismatch:0,directionUnregistered:0,uncalculable:0,masterCovered:0};
+ for(const r of rows){
+  const k=kpiOf(r),md=masterDirection(k),d=direction(r),t=num(r.target),a=num(r.actual);
+  if(md)out.masterCovered++;
+  if(!md&&!r.direction)out.directionUnregistered++;
+  if(t===null||a===null||d==='UNKNOWN'){out.uncalculable++;continue}
+  const si=sourceIntegrity(r);if(si)out.statusMismatch++;else out.valid++;
+ }
+ out.masterCoveragePct=out.rows?Math.round(out.masterCovered/out.rows*1000)/10:0;
+ return out;
+}
 function analyzeAll(rows){
  return rows.map(r=>{const findings=analyze(r,rows);return {record:r,direction:direction(r),target:targetState(r),trend:trend(r,rows),findings,managementState:managementState(findings),questions:consolidateQuestions(findings)}})
 }
-window.HD24_RULE_MATRIX_V1={...API,KPI_DIRECTION_MASTER,masterDirection,direction,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,issueKeyFor,consolidateIssueFollowups,analysisDate,dueDate,effectState,actionDetail,analyze,analyzeAll,consolidateQuestions};
+window.HD24_RULE_MATRIX_V1={...API,KPI_DIRECTION_MASTER,masterDirection,direction,auditSummary,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,issueKeyFor,consolidateIssueFollowups,analysisDate,dueDate,effectState,actionDetail,analyze,analyzeAll,consolidateQuestions};
 document.dispatchEvent(new CustomEvent('hd24:rule-matrix-ready',{detail:API}));
 })();
