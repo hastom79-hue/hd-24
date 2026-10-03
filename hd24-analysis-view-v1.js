@@ -23,6 +23,7 @@ function render(){
  const engine=window.HD24_RULE_MATRIX_V1,rows=getRows(),box=ensure();if(!engine||!box||!rows.length){if(box)box.style.display='none';return}
  const mo=currentMonth()||Math.max(...rows.map(r=>Number(r.month||r.targetMonth||0))), analyzed=engine.analyzeAll(rows).filter(x=>Number(x.record.month??x.record.targetMonth)===mo);
  const visibleAnalyzed=analyzed.filter(x=>matchDashboard(x,dashboardFilter)).filter(x=>!clusterFilter||clusterFilter.kpis.map(v=>String(v).toLowerCase().trim()).includes(String(x.record.kpiEn||x.record.kpi||'').toLowerCase().trim()));
+ const integrityRows=analyzed.filter(x=>x.findings.some(f=>f.type==='DATA_INTEGRITY'));
  const counts={};analyzed.forEach(x=>counts[x.managementState]=(counts[x.managementState]||0)+1);
  const follow=analyzed.filter(x=>x.questions.length), findings=analyzed.reduce((n,x)=>n+x.findings.length,0);
  const metrics={
@@ -44,7 +45,11 @@ function render(){
  ['Data / Reply Gap',metrics.integrity,'무결성·회신','INTEGRITY'],
  ['Follow-up',metrics.follow,'확인 필요','FOLLOW']
  ].map(v=>'<button type="button" data-analysis-filter="'+v[3]+'" style="text-align:left;background:'+(dashboardFilter===v[3]?'#eef6fb':'#fff')+';border:'+(dashboardFilter===v[3]?'2px solid var(--accent)':'1px solid var(--line)')+';border-radius:8px;padding:10px 11px;cursor:pointer"><div style="font-size:11px;color:var(--muted);font-weight:700">'+v[0]+'</div><div style="font-size:22px;font-weight:900;line-height:1.25;margin:3px 0">'+v[1]+'</div><div style="font-size:10.5px;color:var(--muted)">'+v[2]+'</div></button>').join('')+'</div>'+
- '<div style="display:flex;gap:7px;flex-wrap:wrap;margin:8px 0 12px">'+Object.entries(counts).map(([k,v])=>'<span class="tag tag-flat">'+esc(koState(k))+' '+v+'</span>').join('')+'</div>'+
+ '<div style="margin:4px 0 12px">'+(integrityRows.length?
+ '<div style="background:#fff8ed;border:1px solid #e7c98a;border-radius:8px;padding:10px 12px"><div style="font-size:12px;font-weight:900">Data Integrity · Source Status Recalculation</div><div style="font-size:11px;color:var(--muted);margin:3px 0 7px">Direction Master + Target/Actual 재계산 결과와 원본 Status를 대조합니다. 불일치가 있어도 원본을 임의 수정하지 않고 검증 대상으로 분리합니다.</div>'+
+ integrityRows.map(x=>'<div style="padding:4px 0;border-top:1px solid #f0dfbd"><b>'+esc(x.record.kpiEn||x.record.kpi)+' · '+esc(x.record.month)+'월</b> — '+esc(x.findings.filter(f=>f.type==='DATA_INTEGRITY').map(f=>f.evidence).join(' / '))+'</div>').join('')+'</div>':
+ '<div style="background:#f7faf8;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:12px"><b>Data Integrity</b> · 해당 월 Source Status 불일치 없음</div>')+'</div>'+
+  '<div style="display:flex;gap:7px;flex-wrap:wrap;margin:8px 0 12px">'+Object.entries(counts).map(([k,v])=>'<span class="tag tag-flat">'+esc(koState(k))+' '+v+'</span>').join('')+'</div>'+
  '<div style="margin:8px 0 14px">'+(clusters.length?'<div style="font-size:12px;font-weight:800;margin-bottom:6px">Cross-KPI Management Findings</div>'+clusters.map((x,i)=>'<button type="button" data-cluster-index="'+i+'" style="display:block;width:100%;text-align:left;padding:9px 10px;margin:5px 0;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:4px;background:'+(clusterFilter&&clusterFilter.cluster===x.cluster?'#eef6fb':'#fff')+';cursor:pointer"><b>'+esc(x.cluster)+' · '+esc(x.state)+'</b> <span style="color:var(--muted)">['+esc(x.confidence)+']</span><br><span>'+esc(x.statement)+'</span><br><span style="font-size:11.5px;color:var(--muted)">Related KPI: '+esc(x.kpis.join(' / '))+'</span></button>').join(''):'<span style="font-size:12px;color:var(--muted)">해당 월 Cross-KPI 특이사항 없음</span>')+(clusterFilter?'<div style="margin-top:6px"><button type="button" data-cluster-clear="1" class="ghost" style="font-size:11px;padding:4px 8px">Cross-KPI 필터 해제</button></div>':'')+'</div>'+
  '<div style="font-size:12px;font-weight:800;margin:12px 0 6px">Issue Detail · Management Review Flow</div>'+
  '<div style="display:grid;gap:8px;margin-bottom:14px">'+
