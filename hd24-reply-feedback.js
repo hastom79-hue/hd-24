@@ -16,6 +16,10 @@ function analyze(r){
  if(reason&&root&&reason.toLowerCase()===root.toLowerCase())flags.push(['현상/사유와 근본원인이 동일 문구입니다. 근인 분석의 구체화가 필요','Reason and root cause are identical; please clarify the underlying cause']);
  if(plan&&plan.length<12)flags.push(['만회계획이 매우 짧아 실행방법·완료조건 확인 필요','Recovery plan is too brief; clarify execution method and completion criteria']);
  if(root&&root.length<8)flags.push(['근본원인 설명이 짧아 발생 메커니즘/근거 확인 필요','Root-cause description is brief; clarify mechanism and evidence']);
+ if(plan&&!owner)flags.push(['만회계획은 있으나 실행 담당자가 없어 책임주체 지정 필요','Recovery plan exists but no action owner is assigned']);
+ if(plan&&!due)flags.push(['만회계획은 있으나 완료예정일이 없어 실행기한 지정 필요','Recovery plan exists but no completion date is assigned']);
+ if(plan&&!target)flags.push(['만회계획은 있으나 차월 회복목표가 없어 효과검증 기준 필요','Recovery plan exists but no next-month recovery target is defined']);
+ if(root&&plan&&root.length>7&&plan.toLowerCase().includes(root.toLowerCase()))flags.push(['근본원인을 만회계획에 반복 기재했습니다. 원인 제거를 위한 구체적 실행조치 확인 필요','Recovery plan repeats the root cause; specify the concrete action that removes the cause']);
  const complete=fields.length-missing.length,score=Math.round(complete/fields.length*100);
  const level=score===100&&flags.length===0?'충분':score>=67?'보완 필요':'중점 보완';
  return {missing,flags,score,level,reason,root,plan,owner,due,target};
