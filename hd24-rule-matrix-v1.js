@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const API={version:'1.8.0',frozenAt:'2026-10-03'};
+const API={version:'1.9.0',frozenAt:'2026-10-03'};
 const norm=s=>String(s??'').toLowerCase().replace(/\s+/g,' ').trim();
 const num=v=>{const n=Number(String(v??'').replace(/[% ,]/g,''));return Number.isFinite(n)?n:null};
 const pct=(a,b)=>b?((a-b)/Math.abs(b))*100:null;
@@ -219,6 +219,20 @@ function consolidateQuestions(findings){
  if(types.has('TREND'))out.push('Please clarify the key driver of the new regression and the current recovery action.');
  return [...new Set(out)];
 }
+function actionAttribution(r,all){
+ const s=seriesFor(r,all),i=s.findIndex(x=>x===r),tr=trend(r,all),ad=actionDetail(r);
+ if(!['RECOVERING','RECOVERY_CONFIRMED'].includes(tr.state))return {state:'NO_RECOVERY_SIGNAL',confidence:'LOW',reason:'No KPI recovery signal'};
+ if(!ad.action||ad.action==='-')return {state:'RECOVERY OBSERVED · ATTRIBUTION UNCERTAIN',confidence:'LOW',reason:'No attributable action recorded'};
+ const curDate=analysisDate(r),due=ad.dueDate;
+ if(due&&curDate&&due>curDate)return {state:'RECOVERY OBSERVED · ATTRIBUTION UNCERTAIN',confidence:'MEDIUM',reason:'Recovery precedes action due/effect window'};
+ const mech=actionMechanism(r),cause=norm(r.rootCause||r.reason||'');
+ const plausible=mech!=='OTHER'||/(capacity|quality|inventory|human|training|equipment|weld|vmc|moh)/.test(cause);
+ const prev=i>0?s[i-1]:null,causeShift=prev&&norm(prev.rootCause||prev.reason||'')&&cause&&norm(prev.rootCause||prev.reason||'')!==cause;
+ if(!plausible)return {state:'RECOVERY OBSERVED · ATTRIBUTION UNCERTAIN',confidence:'LOW',reason:'Action mechanism linkage not established'};
+ if(causeShift)return {state:'RECOVERY OBSERVED · ATTRIBUTION UNCERTAIN',confidence:'MEDIUM',reason:'Cause changed across recovery period'};
+ if(ad.completed)return {state:'EFFECT SIGNAL OBSERVED',confidence:'MEDIUM',reason:'Completed action temporally/mechanistically aligns; causal proof still pending'};
+ return {state:'RECOVERY OBSERVED · ATTRIBUTION UNCERTAIN',confidence:'MEDIUM',reason:'Action completion/effect verification pending'};
+}
 function effectState(x){
  const fs=x.findings||[],act=x.action||{},tr=x.trend||{};
  if(fs.some(f=>f.statement==='EXISTING_ACTION · EFFECT_PENDING'))return 'EFFECT PENDING';
@@ -253,6 +267,6 @@ function integrityGate(r){
 function analyzeAll(rows){
  return rows.map(r=>{const findings=analyze(r,rows);return {record:r,direction:direction(r),target:targetState(r),trend:trend(r,rows),findings,managementState:managementState(findings),questions:consolidateQuestions(findings)}})
 }
-window.HD24_RULE_MATRIX_V1={...API,KPI_DIRECTION_MASTER,masterDirection,direction,auditSummary,integrityGate,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,issueKeyFor,consolidateIssueFollowups,analysisDate,dueDate,effectState,actionDetail,analyze,analyzeAll,consolidateQuestions};
+window.HD24_RULE_MATRIX_V1={...API,KPI_DIRECTION_MASTER,masterDirection,direction,auditSummary,integrityGate,actionAttribution,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,issueKeyFor,consolidateIssueFollowups,analysisDate,dueDate,effectState,actionDetail,analyze,analyzeAll,consolidateQuestions};
 document.dispatchEvent(new CustomEvent('hd24:rule-matrix-ready',{detail:API}));
 })();
