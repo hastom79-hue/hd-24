@@ -1708,7 +1708,7 @@ function setupTabs(){
   const bar = document.createElement('div');
   bar.id = 'hd24TabBar';
   bar.className = 'hd24-tab-bar';
-  bar.innerHTML = `<button type="button" class="hd24-tab active" data-tab="upload">업로드 · 실행</button><button type="button" class="hd24-tab" data-tab="results">분석<span class="hd24-tab-badge" id="hd24TabMissBadge" hidden>0</span></button><button type="button" class="hd24-tab" data-tab="mail">메일</button><button type="button" class="hd24-tab" data-tab="reply">회신 이력 반영</button><button type="button" class="hd24-tab" data-tab="spotcheck">집중점검</button><button type="button" class="hd24-tab" data-tab="history">실행 이력</button><button type="button" class="hd24-tab" data-tab="log">실행 로그</button>`;
+  bar.innerHTML = `<button type="button" class="hd24-tab active" data-tab="upload">업로드 · 실행</button><button type="button" class="hd24-tab" data-tab="results">분석<span class="hd24-tab-badge" id="hd24TabMissBadge" hidden>0</span></button><button type="button" class="hd24-tab" data-tab="mail">메일</button><button type="button" class="hd24-tab" data-tab="reply">회신 이력 반영</button><button type="button" class="hd24-tab" data-tab="replyanalysis">회신 상세분석</button><button type="button" class="hd24-tab" data-tab="replymail">회신 피드백 메일</button><button type="button" class="hd24-tab" data-tab="spotcheck">집중점검</button><button type="button" class="hd24-tab" data-tab="history">실행 이력</button><button type="button" class="hd24-tab" data-tab="log">실행 로그</button>`;
 
   const barWrap = document.createElement('div');
   barWrap.className = 'hd24-tab-bar-wrap';
@@ -1782,7 +1782,7 @@ function setupTabs(){
       if(tab==='mail') { try { resultCard.style.display=(allResults||[]).length?'block':'none'; } catch(_) {resultCard.style.display='none'} } else try { if ((allResults||[]).length) resultCard.style.display='block'; } catch(_){}
       applyResultCardSubVisibility(tab);
     }
-    const replyPanel=document.getElementById('hd24ReplyPanel');if(replyPanel)replyPanel.classList.toggle('hd24-tab-hidden',tab!=='reply');
+    const replyPanel=document.getElementById('hd24ReplyPanel');if(replyPanel)replyPanel.classList.toggle('hd24-tab-hidden',tab!=='reply');const ra=document.getElementById('hd24ReplyAnalysisPanel');if(ra)ra.classList.toggle('hd24-tab-hidden',tab!=='replyanalysis');const rm=document.getElementById('hd24ReplyMailPanel');if(rm)rm.classList.toggle('hd24-tab-hidden',tab!=='replymail');
     bar.querySelectorAll('.hd24-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   }
   bar.querySelectorAll('.hd24-tab').forEach(btn => {
