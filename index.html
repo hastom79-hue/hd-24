@@ -646,7 +646,7 @@ function deriveDioValue(turnover){ const v=Number(turnover); return Number.isFin
 function appendDerivedDio(byRow, turnoverInfo, masterRow){
   if(!turnoverInfo||!Array.isArray(turnoverInfo.months)||!turnoverInfo.months.length)return;
   const months=turnoverInfo.months.map(x=>{const target=deriveDioValue(x.target),actual=deriveDioValue(x.actual);return target===null||actual===null?null:makeHistEntry(x.month,target,actual,'하향')}).filter(Boolean);
-  if(months.length)byRow[masterRow]={kpi:'DIO(재고회전일수, Days)',kpiEn:'DIO (Days Inventory Outstanding)',direction:'하향',unit:'일',months,isCumulative:false,derived:true};
+  if(months.length){byRow[masterRow]={kpi:'DIO(재고회전일수, Days)',kpiEn:'DIO (Days Inventory Outstanding)',direction:'하향',unit:'일',months,isCumulative:false,derived:true};log(`DIO 자동계산: ${months.length}개월 · 365/부품재고회전율 · 목표/실적 동시 파생 · Lower is better`);}
 }
 
 // 매핑표의 고정 행번호를, KPI명 텍스트로 실제 위치를 재확인해서 보정된 매핑을 만든다
