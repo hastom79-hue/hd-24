@@ -59,6 +59,20 @@ function reviewGapFor(r,a,history=[]){
  return gaps.length?gaps.join(' | '):'주요 관리요소(회고분석·근인·대책·책임/기한·차월목표)가 연결되어 있음. 차월 실적으로 대책 효과를 검증할 것';
 }
 
+function finalRequestFor(r,a,history=[]){
+ const req=[];
+ if(!a.root||a.root.length<8)req.push('근본원인 발생 메커니즘과 객관적 근거 추가');
+ if(!a.plan||a.plan.length<12)req.push('근인 제거 대책의 실행방법·완료조건·효과검증 방법 보완');
+ if(!a.owner)req.push('Action Owner 지정');
+ if(!a.due)req.push('완료예정일 확정');
+ if(!a.target)req.push('차월 KPI 회복목표를 정량값으로 설정');
+ const prev=history.length>1?analyze(history[history.length-2]):null;
+ if(prev&&a.root&&prev.root&&a.root.trim()===prev.root.trim())req.push('반복 근인에 대한 재발방지 대책 및 추가 근인분석 제출');
+ if(prev&&a.plan&&prev.plan&&a.plan.trim()===prev.plan.trim())req.push('기존 대책의 진척·효과·미흡원인 회고 및 변경/추가조치 제출');
+ const due=a.due?new Date(a.due):null;if(due&&!isNaN(due)&&due<new Date()&&!/완료|complete|done/i.test(a.plan||''))req.push('기한초과 사유, 현재 진척률 및 재설정 완료일 회신');
+ return req.length?req.map((x,i)=>`${i+1}. ${x}`).join(' / '):'추가 필수 보완사항 없음. 차월 KPI 실적으로 Recovery Action 효과를 확인하고 결과를 회신';
+}
+
 function feedbackFor(r,a){
  const k=txt(r.kpiEn||r.kpi)||'KPI', out=[];
  if(!a.root)out.push(`${k}: Identify the verified root cause with evidence, not only the symptom or result.`);
@@ -76,11 +90,11 @@ function feedbackFor(r,a){
 async function exportFeedbackWorkbook(rows,plant){
  if(typeof ExcelJS==='undefined'||!rows.length)return;
  const wb=new ExcelJS.Workbook(),ws=wb.addWorksheet('Reply Feedback');
- const headers=['Plant','Target Month','KPI','Reason for Miss / Deterioration','Root Cause','Recovery / Catch-up Plan','Action Owner','Planned Completion Date','Next-Month Recovery Target','HDPS Analysis Result','What Was Wrong / Management Review Gap','HDPS Feedback / Required Follow-up'];
- ws.columns=headers.map((h,i)=>({header:h,key:'c'+i,width:[14,14,34,34,34,38,20,22,24,48,62,58][i]}));
+ const headers=['Plant','Target Month','KPI','Reason for Miss / Deterioration','Root Cause','Recovery / Catch-up Plan','Action Owner','Planned Completion Date','Next-Month Recovery Target','HDPS Analysis Result','What Was Wrong / Management Review Gap','HDPS Feedback / Required Follow-up','Final Additional Request / Points to Supplement'];
+ ws.columns=headers.map((h,i)=>({header:h,key:'c'+i,width:[14,14,34,34,34,38,20,22,24,48,62,58,58][i]}));
  const hr=ws.getRow(1);hr.font={bold:true,color:{argb:'FFFFFFFF'}};hr.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1D4E7D'}};hr.alignment={vertical:'middle',horizontal:'center',wrapText:true};
- rows.forEach(r=>{const a=analyze(r),history=[];feedback=feedbackFor(r,a);const row=ws.addRow([plant,r.targetMonth,r.kpiEn||r.kpi||'',a.reason,a.root,a.plan,a.owner,a.due,a.target,analysisResultFor(r,a,history),reviewGapFor(r,a,history),feedback]);row.alignment={vertical:'top',wrapText:true};row.getCell(10).font={bold:true};row.getCell(11).font={bold:true};row.getCell(11).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFE2E2'}};row.getCell(12).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF2CC'}}});
- ws.views=[{state:'frozen',ySplit:1,xSplit:3}];ws.autoFilter={from:'A1',to:'L1'};
+ rows.forEach(r=>{const a=analyze(r),history=[];feedback=feedbackFor(r,a);const row=ws.addRow([plant,r.targetMonth,r.kpiEn||r.kpi||'',a.reason,a.root,a.plan,a.owner,a.due,a.target,analysisResultFor(r,a,history),reviewGapFor(r,a,history),feedback,finalRequestFor(r,a,history)]);row.alignment={vertical:'top',wrapText:true};row.getCell(10).font={bold:true};row.getCell(11).font={bold:true};row.getCell(11).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFE2E2'}};row.getCell(12).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF2CC'}};row.getCell(13).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE2F0D9'}};row.getCell(13).font={bold:true}});
+ ws.views=[{state:'frozen',ySplit:1,xSplit:3}];ws.autoFilter={from:'A1',to:'M1'};
  const buf=await wb.xlsx.writeBuffer(),name=`HDPS_KPI_Reply_Feedback_${plant}_${new Date().toISOString().slice(0,10)}.xlsx`,file=new File([buf],name,{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),u=URL.createObjectURL(file),a=document.createElement('a');a.href=u;a.download=name;a.style.display='none';document.body.appendChild(a);try{a.click()}finally{a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000)}
  const st=get('hd24FeedbackExportStatus');if(st)st.textContent='피드백 Excel 자동 추출 완료 · '+name;
 }
