@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const API={version:'2.5.0',frozenAt:'2026-10-03'};
+const API={version:'2.6.0',frozenAt:'2026-10-03'};
 const norm=s=>String(s??'').toLowerCase().replace(/\s+/g,' ').trim();
 const num=v=>{const n=Number(String(v??'').replace(/[% ,]/g,''));return Number.isFinite(n)?n:null};
 const pct=(a,b)=>b?((a-b)/Math.abs(b))*100:null;
@@ -173,6 +173,19 @@ function analyze(r,all){
  if(/find attached|see attached|refer attached/.test(txt)&&ts.state==='TARGET_MISS')fs.push(finding('R15','REPLY_VALIDATION','STRUCTURED_RE_REPLY_REQUIRED','Long/missed KPI cannot be tracked from attachment reference alone','HIGH',true));
  return fs;
 }
+function pdcaClosure(r,all){
+ const act=actionState(r), sc=standardControlEligibility(r,all), tr=trend(r,all), ts=targetState(r);
+ if(act.structural&&act.due){
+  const asOf=analysisDate(r)||new Date(),future=act.dueDate&&act.dueDate>asOf;
+  if(future)return {state:'ACTION_IMPLEMENTATION',closed:false,next:'EFFECT_VERIFICATION'};
+  if(!act.completed)return {state:'ACTION_OVERDUE_OR_UNCONFIRMED',closed:false,next:'CONFIRM_COMPLETION'};
+  if(tr.state!=='RECOVERY_CONFIRMED'&&tr.state!=='RECOVERING')return {state:'EFFECT_VERIFICATION_PENDING',closed:false,next:'VERIFY_EFFECT'};
+  if(sc.eligible)return {state:'STANDARDIZATION_AND_RECURRENCE_MONITORING',closed:false,next:'VERIFY_STANDARD_CONTROL_AND_RECURRENCE'};
+  return {state:'SUSTAINMENT_MONITORING',closed:false,next:'VERIFY_SUSTAINED_RESULT'};
+ }
+ if(ts.state==='ACHIEVED'&&tr.state==='RECOVERY_CONFIRMED')return {state:'SUSTAINMENT_MONITORING',closed:false,next:'VERIFY_SUSTAINED_RESULT'};
+ return {state:'OPEN',closed:false,next:'CONTINUE_MANAGEMENT_REVIEW'};
+}
 function managementState(fs){
  const has=x=>fs.some(f=>f.statement.includes(x)||f.type===x);
  if(has('REPLY_TRACEABILITY_GAP'))return 'DATA/REPLY VALIDATION';
@@ -303,6 +316,6 @@ function integrityGate(r){
 function analyzeAll(rows){
  return rows.map(r=>{const findings=analyze(r,rows);return {record:r,direction:direction(r),target:targetState(r),trend:trend(r,rows),findings,managementState:managementState(findings),questions:consolidateQuestions(findings)}})
 }
-window.HD24_RULE_MATRIX_V1={...API,KPI_DIRECTION_MASTER,masterDirection,direction,auditSummary,integrityGate,causeDynamics,standardControlEligibility,actionAttribution,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,issueKeyFor,consolidateIssueFollowups,analysisDate,dueDate,effectState,actionDetail,analyze,analyzeAll,consolidateQuestions};
+window.HD24_RULE_MATRIX_V1={...API,KPI_DIRECTION_MASTER,masterDirection,direction,auditSummary,integrityGate,causeDynamics,standardControlEligibility,actionAttribution,pdcaClosure,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,issueKeyFor,consolidateIssueFollowups,analysisDate,dueDate,effectState,actionDetail,analyze,analyzeAll,consolidateQuestions};
 document.dispatchEvent(new CustomEvent('hd24:rule-matrix-ready',{detail:API}));
 })();
