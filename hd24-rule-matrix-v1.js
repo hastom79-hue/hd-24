@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const API={version:'1.9.0',frozenAt:'2026-10-03'};
+const API={version:'2.0.0',frozenAt:'2026-10-03'};
 const norm=s=>String(s??'').toLowerCase().replace(/\s+/g,' ').trim();
 const num=v=>{const n=Number(String(v??'').replace(/[% ,]/g,''));return Number.isFinite(n)?n:null};
 const pct=(a,b)=>b?((a-b)/Math.abs(b))*100:null;
@@ -219,6 +219,25 @@ function consolidateQuestions(findings){
  if(types.has('TREND'))out.push('Please clarify the key driver of the new regression and the current recovery action.');
  return [...new Set(out)];
 }
+function causeDynamics(r,all){
+ const s=seriesFor(r,all),i=s.findIndex(x=>x===r);
+ const raw=String(r.rootCause||r.reason||'').trim(),cur=norm(raw);
+ if(!cur||/^(na|n\/a|-|none|unknown)$/.test(cur))return {state:'CAUSE_UNKNOWN',confidence:'LOW',evidence:'Root cause/reason not established'};
+ const parts=raw.split(/;|\n|\+|\/|,|\band\b|&/i).map(x=>x.trim()).filter(x=>x.length>2);
+ const multi=parts.length>=2;
+ if(i<1)return {state:multi?'MULTIPLE_CAUSE':'CAUSE_IDENTIFIED',confidence:multi?'MEDIUM':'LOW',evidence:raw};
+ const prevRaw=String(s[i-1].rootCause||s[i-1].reason||'').trim(),prev=norm(prevRaw);
+ if(!prev)return {state:multi?'MULTIPLE_CAUSE':'CAUSE_IDENTIFIED',confidence:'MEDIUM',evidence:raw};
+ const tokens=x=>new Set(norm(x).replace(/[^a-z0-9가-힣 ]/g,' ').split(/\s+/).filter(w=>w.length>2&&!['the','and','with','due','from','issue','issues'].includes(w)));
+ const a=tokens(prevRaw),b=tokens(raw),inter=[...a].filter(x=>b.has(x)).length,union=new Set([...a,...b]).size,sim=union?inter/union:0;
+ const same=cur===prev||sim>=0.45;
+ if(same){
+  const recurring=targetState(r).state==='TARGET_MISS'&&targetState(s[i-1]).state==='TARGET_MISS';
+  return {state:recurring?'RECURRING_CAUSE':'SAME_CAUSE',confidence:cur===prev?'HIGH':'MEDIUM',evidence:'Prev: '+prevRaw+' / Current: '+raw};
+ }
+ if(multi)return {state:'MULTIPLE_CAUSE',confidence:'MEDIUM',evidence:'Prev: '+prevRaw+' / Current: '+raw};
+ return {state:'CAUSE_SHIFT',confidence:'MEDIUM',evidence:'Prev: '+prevRaw+' / Current: '+raw};
+}
 function actionAttribution(r,all){
  const s=seriesFor(r,all),i=s.findIndex(x=>x===r),tr=trend(r,all),ad=actionDetail(r);
  if(!['RECOVERING','RECOVERY_CONFIRMED'].includes(tr.state))return {state:'NO_RECOVERY_SIGNAL',confidence:'LOW',reason:'No KPI recovery signal'};
@@ -267,6 +286,6 @@ function integrityGate(r){
 function analyzeAll(rows){
  return rows.map(r=>{const findings=analyze(r,rows);return {record:r,direction:direction(r),target:targetState(r),trend:trend(r,rows),findings,managementState:managementState(findings),questions:consolidateQuestions(findings)}})
 }
-window.HD24_RULE_MATRIX_V1={...API,KPI_DIRECTION_MASTER,masterDirection,direction,auditSummary,integrityGate,actionAttribution,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,issueKeyFor,consolidateIssueFollowups,analysisDate,dueDate,effectState,actionDetail,analyze,analyzeAll,consolidateQuestions};
+window.HD24_RULE_MATRIX_V1={...API,KPI_DIRECTION_MASTER,masterDirection,direction,auditSummary,integrityGate,causeDynamics,actionAttribution,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,issueKeyFor,consolidateIssueFollowups,analysisDate,dueDate,effectState,actionDetail,analyze,analyzeAll,consolidateQuestions};
 document.dispatchEvent(new CustomEvent('hd24:rule-matrix-ready',{detail:API}));
 })();
