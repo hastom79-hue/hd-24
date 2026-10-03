@@ -533,7 +533,7 @@ document.getElementById('srcFile').addEventListener('change', async (e) => {
   lastFileInputChangeAt = Date.now();
   const buf = await f.arrayBuffer();
   srcWorkbook = XLSX.read(buf, {type:'array', cellDates:true});
-  srcWorkbookRaw = XLSX.read(buf, {type:'array', cellDates:false}); // 날짜/시간 셀의 원본 시리얼 숫자 보존용 (타임존 영향 없음)
+  srcWorkbookRaw = srcWorkbook; // 동일 파일 이중 파싱 제거: raw 값은 XLSX 셀의 .v에서 그대로 사용
   log('원본 로드: ' + f.name);
   checkReady();
 });
@@ -543,8 +543,9 @@ document.getElementById('masterFile').addEventListener('change', async (e) => {
   const buf = await f.arrayBuffer();
   masterFileName = f.name;
   masterWorkbook = XLSX.read(buf, {type:'array', cellDates:true});
-  masterWorkbookRaw = XLSX.read(buf, {type:'array', cellDates:false});
-  masterZip = await JSZip.loadAsync(buf);
+  masterWorkbookRaw = masterWorkbook; // 동일 파일 이중 파싱 제거
+  // ZIP은 실적반영 시점에만 필요하다. 업로드/새로고침 직후 전체 압축 해제를 하지 않는다.
+  masterZip = null;
   log('총괄 로드: ' + f.name);
   checkReady();
 });
@@ -553,8 +554,8 @@ function checkReady(){
   // 판정은 총괄파일만 있어도 가능하다 — 원본파일 없이 총괄파일에 이미 반영된 과거
   // 이력(목표/월별 실적)만으로도 판정·집중점검을 볼 수 있게 한다. 실적반영은 원본의
   // "이번 달 새 실적"이 있어야 하는 작업이라 원본파일이 반드시 필요하다.
-  const judgeOk = !!(masterWorkbook && masterZip && mappingData.length);
-  const reflectOk = !!(needSrc && srcWorkbook && masterWorkbook && masterZip && mappingData.length);
+  const judgeOk = !!(masterWorkbook && mappingData.length);
+  const reflectOk = !!(needSrc && srcWorkbook && masterWorkbook && mappingData.length);
   document.getElementById('btnReflect').disabled = !(window.hd24SafeReflectReady && reflectOk);
   document.getElementById('btnJudge').disabled = !judgeOk;
 }
