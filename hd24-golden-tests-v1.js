@@ -27,12 +27,16 @@ function run(){
  rs.push(row('Status Integrity KPI',8,100,90,{direction:'HIGHER',achieved:true}));
  // equipment structural issue must not become standard-control eligible
  rs.push(row('Equipment Structural Loss',8,10,14,{direction:'LOWER',reason:'equipment breakdown',rootCause:'bearing failure',recoveryPlan:'equipment replacement'}));
+ // Fabrication LOB cause dynamics: 6->7 shift, 7->8 recurrence
+ rs.push(row('Fabrication Cause Golden',6,74,73.6,{direction:'HIGHER',reason:'odd model demand and capacity'}));
+ rs.push(row('Fabrication Cause Golden',7,75,73.1,{direction:'HIGHER',reason:'NDT welding root gap'}));
+ rs.push(row('Fabrication Cause Golden',8,75,73.9,{direction:'HIGHER',reason:'NDT welding root gap'}));
  // attachment-only quality
  rs.push(row('Initial Quality',8,24,35,{direction:'LOWER',reason:'Find attached'}));
  // DIO lower is better + recovery
  rs.push(row('DIO',7,38.42,44.19));rs.push(row('DIO',8,46.79,48.03));
  const A=E.analyzeAll(rs),find=k=>A.find(x=>x.record.kpiEn===k&&x.record.month===8);
- const o=find('IQ200 Production responsibility'),w=find('W+3 Mix Variation Rate'),fw=find('WIP compliance Fabrication'),mh=find('Input MH per machine Assembly'),iq=find('Initial Quality'),dio=find('DIO'),down=find('Equipment Downtime'),si=find('Status Integrity KPI'),eq=find('Equipment Structural Loss');
+ const fab7=E.analyzeAll(rs).find(x=>x.record.kpi==='Fabrication Cause Golden'&&x.record.month===7),fab8=E.analyzeAll(rs).find(x=>x.record.kpi==='Fabrication Cause Golden'&&x.record.month===8),o=find('IQ200 Production responsibility'),w=find('W+3 Mix Variation Rate'),fw=find('WIP compliance Fabrication'),mh=find('Input MH per machine Assembly'),iq=find('Initial Quality'),dio=find('DIO'),down=find('Equipment Downtime'),si=find('Status Integrity KPI'),eq=find('Equipment Structural Loss');
  const q=E.consolidateIssueFollowups(A,[]);
  const india52=[
  '"Cost" KPI Achievement Rate','3 process achievement rate per person','5S Audit Score','Average VTB Improvement Lead Time','Balancing Efficiency','DIO (Days Inventory Outstanding)','Domestic Incoming Plan Compliance Rate','Equipment Downtime Loss','Fabrication - Weighted Average ACTUAL LOB Efficiency','IQ 200 (Initial Quality)','IQ 200 Issues with Production responsibility','Important Problem Identification Cases  (Supplier & Inhouse)','Improvements Collection Rate (Team & Self)','Inbound Material Delivery Compliance Rate','Incident/Accident Count','Input MH per machine Assembly','Input MH per machine Fabrication','Issue Recurrence Rate','Lead Time by Production Line (Cutting To Dispatch)','Line wise SQDCEI KPIs Achievement Rate','Long-Term Inventory Value (6 month basis)','M+1 Production Volume Variation Rate','MTBF (Mean Time  Between Failure)','MTTD : Mean Time To Detect','MTTR (Mean Time To Repair)','Manufacturing Lead Time (Fab Tacking to FDI out)','Material-Induced Downtime MH','Min/Max compliance rate of     input materials by process','Monthly Shipment Plan Compliance Rate (Export)','NVA reduction cases reflecting from SWC & SWCT','OT MH per Unit','Option Planning Forecast Accuracy','Order Intake Fulfillment (W+4 - Rolling Plan)  Domestic + Export Production Plan','PPM','Parts Inventory Turnover','Pending Action Lead Time  (Issues closure time/machine)','Personnel Coaching Problem-Solving Techniques','Personnel Using Problem-Solving Techniques','Process Defect Rate (Basic Quality, Leakage, FDI, NDT, ISA)','Production Incoming Plan Compliance Rate','Production Instruction Compliance Rate  (against FDI out plan)','QIR (PPR) Improvement Completion Rate (R210E)','Quality (MH Loss ) Line Downtime','Sequence Compliance Rate by Line','Shipment Lead Time (Wait Time)','Small-Group Improvements per Person','Unsafe Act & Condition Identification',"VTB (/Improvements) Completion Rate  (against suggestions from Suggestion box, 3'G walk, SIP)",'W+3 Mix Variation Rate','W.Q. (Warranty Quality)','WIP compliance rate (Fabrication)','WIP compliance rate(Assy Line On- Line-Out )'
@@ -48,6 +52,8 @@ function run(){
   assert('Assembly MH completed requires effect verification',mh.findings.some(f=>f.statement==='EFFECT VERIFICATION REQUIRED')),
   assert('Attachment-only quality traceability gap',iq.findings.some(f=>f.statement==='REPLY_TRACEABILITY_GAP')),
   assert('DIO lower-is-better',E.direction(dio.record)==='LOWER'),
+  assert('Fabrication 6→7 cause shift',fab7.causeDynamics.state==='CAUSE_SHIFT',fab7.causeDynamics.state),
+  assert('Fabrication 7→8 recurring cause',fab8.causeDynamics.state==='RECURRING_CAUSE',fab8.causeDynamics.state),
   assert('DIO Aug gap recovery',dio.trend.state==='RECOVERING',dio.trend.state),
   assert('Equipment Downtime recovery confirmed',down.trend.state==='RECOVERY_CONFIRMED',down.trend.state),
   assert('Inventory/MOH trade-off cluster',E.clusterFindings(rs).some(x=>x.cluster==='INVENTORY / MOH'&&x.state.includes('TRADE-OFF'))),
