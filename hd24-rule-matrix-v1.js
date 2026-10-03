@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const API={version:'2.2.0',frozenAt:'2026-10-03'};
+const API={version:'2.3.0',frozenAt:'2026-10-03'};
 const norm=s=>String(s??'').toLowerCase().replace(/\s+/g,' ').trim();
 const num=v=>{const n=Number(String(v??'').replace(/[% ,]/g,''));return Number.isFinite(n)?n:null};
 const pct=(a,b)=>b?((a-b)/Math.abs(b))*100:null;
@@ -225,8 +225,8 @@ function standardControlEligibility(r,all){
  const humanMethod=/(man-dependent|operator|human|method|work method|standard work|standard|sop|swc|swct|training|awareness|procedure|instruction|o-ring|oring)/.test(text);
  const cd=causeDynamics(r,all),recurring=cd.state==='RECURRING_CAUSE'||Number(r.streak||0)>=2;
  if(structural&&!humanMethod)return {eligible:false,state:'STANDARD_CONTROL_NA',reason:'Supplier/Design/Equipment structural issue without Human/Method/Standard linkage'};
- if(humanMethod&&recurring)return {eligible:true,state:'STANDARD_CONTROL_ELIGIBLE',reason:'Recurring issue with Human/Method/Standard linkage',auditPriority:'HIGH',recurrenceLevel:'DIRECT_OR_SIMILAR_REVIEW'};
- if(humanMethod)return {eligible:true,state:'STANDARD_CONTROL_WATCH',reason:'Human/Method/Standard linkage detected; recurrence not yet established',auditPriority:'MEDIUM',recurrenceLevel:'DEFINE_IF_REPEATED'};
+ if(humanMethod&&recurring)return {eligible:true,state:'STANDARD_CONTROL_ELIGIBLE',reason:'Recurring issue with Human/Method/Standard linkage',auditPriority:'HIGH',auditTarget:'SELECT_RISK_BASED_WORK',recurrenceLevel:'DIRECT_OR_SIMILAR_REVIEW',recurrenceCriteria:'DEFINE_DIRECT_AND_SIMILAR',complianceVerification:'REQUIRED',closureGate:'EFFECT_VERIFIED + STANDARD_CONTROL_VERIFIED + RECURRENCE_MONITORED'};
+ if(humanMethod)return {eligible:true,state:'STANDARD_CONTROL_WATCH',reason:'Human/Method/Standard linkage detected; recurrence not yet established',auditPriority:'MEDIUM',auditTarget:'REVIEW_IF_HIGH_RISK',recurrenceLevel:'DEFINE_IF_REPEATED',recurrenceCriteria:'PREDEFINE_IF_CRITICAL',complianceVerification:'CONDITIONAL',closureGate:'EFFECT_VERIFIED'};
  return {eligible:false,state:'STANDARD_CONTROL_NOT_TRIGGERED',reason:'Human/Method/Standard linkage not evidenced'};
 }
 function causeDynamics(r,all){
