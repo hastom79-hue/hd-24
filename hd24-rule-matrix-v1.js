@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const API={version:'1.6.0',frozenAt:'2026-10-03'};
+const API={version:'1.6.1',frozenAt:'2026-10-03'};
 const norm=s=>String(s??'').toLowerCase().replace(/\s+/g,' ').trim();
 const num=v=>{const n=Number(String(v??'').replace(/[% ,]/g,''));return Number.isFinite(n)?n:null};
 const pct=(a,b)=>b?((a-b)/Math.abs(b))*100:null;
@@ -115,7 +115,7 @@ function finding(rule,type,statement,evidence,confidence='MEDIUM',question=false
 function sourceIntegrity(r){
  const ts=targetState(r); if(ts.state==='UNKNOWN'||typeof r.achieved!=='boolean')return null;
  const source=r.achieved?'ACHIEVED':'TARGET_MISS';
- return source===ts.state?null:finding('R28','DATA_INTEGRITY','SOURCE_STATUS_MISMATCH',\`System=\${ts.state}, Source=\${source}; Direction=\${direction(r)}\`,'HIGH',false);
+ return source===ts.state?null:finding('R28','DATA_INTEGRITY','SOURCE_STATUS_MISMATCH',`System=${ts.state}, Source=${source}; Direction=${direction(r)}; Target=${r.target??'-'}; Actual=${r.actual??'-'}`,'HIGH',false);
 }
 function actionMechanism(r){
  const t=textFields(r);
