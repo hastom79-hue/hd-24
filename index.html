@@ -639,6 +639,16 @@ function normalizeValue(v, rawV){
 }
 function isCumulativeCell(v){ return typeof v==='string' && /누적/.test(v); }
 
+// DIO is a derived KPI: Days Inventory Outstanding = 365 / Parts Inventory Turnover.
+// The monthly DIO target is derived from the same month's inventory-turnover target.
+function isInventoryTurnoverKpi(m){ return /Parts Inventory Turnover/i.test(String(m?.kpiEn||'')) || /부품재고\s*회전율/.test(String(m?.kpiKr||'')); }
+function deriveDioValue(turnover){ const v=Number(turnover); return Number.isFinite(v)&&v>0 ? 365/v : null; }
+function appendDerivedDio(byRow, turnoverInfo, masterRow){
+  if(!turnoverInfo||!Array.isArray(turnoverInfo.months)||!turnoverInfo.months.length)return;
+  const months=turnoverInfo.months.map(x=>{const target=deriveDioValue(x.target),actual=deriveDioValue(x.actual);return target===null||actual===null?null:makeHistEntry(x.month,target,actual,'하향')}).filter(Boolean);
+  if(months.length)byRow[masterRow]={kpi:'DIO(재고회전일수, Days)',kpiEn:'DIO (Days Inventory Outstanding)',direction:'하향',unit:'일',months,isCumulative:false,derived:true};
+}
+
 // 매핑표의 고정 행번호를, KPI명 텍스트로 실제 위치를 재확인해서 보정된 매핑을 만든다
 function resolveMappings(srcWs, masterWs){
   let movedSrc=0, movedMaster=0, low=[];
@@ -742,6 +752,9 @@ document.getElementById('btnJudge').addEventListener('click', (clickEvent) => {
         }
         if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, kpiEn:m.kpiEn||m.kpiKr, direction:m.direction, unit:m.unit||"", months:hist, isCumulative};
       }
+      const turnEntry=Object.values(byRow).find(x=>/Parts Inventory Turnover/i.test(String(x.kpiEn||''))||/부품재고\s*회전율/.test(String(x.kpi||'')));
+      const existingDio=Object.entries(byRow).find(([,x])=>/DIO \(Days Inventory Outstanding\)/i.test(String(x.kpiEn||'')));
+      if(turnEntry) appendDerivedDio(byRow,turnEntry,existingDio?Number(existingDio[0]):(currentPlant==='india'?93:currentPlant==='brazil'?97:102));
     } else {
       // 원본파일 없이 총괄파일만 있는 경우(울산은 원래 구조가 이렇고, 인도/브라질도 원본을
       // 아직 안 올렸으면 이 경로로) — 총괄파일 안의 (연간 고정)목표와 월별 실적을 그대로 사용.
@@ -764,6 +777,9 @@ document.getElementById('btnJudge').addEventListener('click', (clickEvent) => {
         }
         if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, kpiEn:m.kpiEn||m.kpiKr, direction:m.direction, unit:m.unit||"", months:hist, isCumulative};
       }
+      const turnEntry=Object.values(byRow).find(x=>/Parts Inventory Turnover/i.test(String(x.kpiEn||''))||/부품재고\s*회전율/.test(String(x.kpi||'')));
+      const existingDio=Object.entries(byRow).find(([,x])=>/DIO \(Days Inventory Outstanding\)/i.test(String(x.kpiEn||'')));
+      if(turnEntry) appendDerivedDio(byRow,turnEntry,existingDio?Number(existingDio[0]):(currentPlant==='india'?93:currentPlant==='brazil'?97:102));
       if (!cfg().hasSource) {
         log('⚠ 울산은 월별 목표가 아닌 연간 고정목표로 판정합니다 (원본파일이 없어 인도/브라질과 정확도가 다를 수 있음)');
       } else {
