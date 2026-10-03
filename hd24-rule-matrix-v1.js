@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const API={version:'2.0.0',frozenAt:'2026-10-03'};
+const API={version:'2.1.0',frozenAt:'2026-10-03'};
 const norm=s=>String(s??'').toLowerCase().replace(/\s+/g,' ').trim();
 const num=v=>{const n=Number(String(v??'').replace(/[% ,]/g,''));return Number.isFinite(n)?n:null};
 const pct=(a,b)=>b?((a-b)/Math.abs(b))*100:null;
@@ -246,10 +246,11 @@ function actionAttribution(r,all){
  if(due&&curDate&&due>curDate)return {state:'RECOVERY OBSERVED · ATTRIBUTION UNCERTAIN',confidence:'MEDIUM',reason:'Recovery precedes action due/effect window'};
  const mech=actionMechanism(r),cause=norm(r.rootCause||r.reason||'');
  const plausible=mech!=='OTHER'||/(capacity|quality|inventory|human|training|equipment|weld|vmc|moh)/.test(cause);
- const prev=i>0?s[i-1]:null,causeShift=prev&&norm(prev.rootCause||prev.reason||'')&&cause&&norm(prev.rootCause||prev.reason||'')!==cause;
+ const cd=causeDynamics(r,all);
  if(!plausible)return {state:'RECOVERY OBSERVED · ATTRIBUTION UNCERTAIN',confidence:'LOW',reason:'Action mechanism linkage not established'};
- if(causeShift)return {state:'RECOVERY OBSERVED · ATTRIBUTION UNCERTAIN',confidence:'MEDIUM',reason:'Cause changed across recovery period'};
- if(ad.completed)return {state:'EFFECT SIGNAL OBSERVED',confidence:'MEDIUM',reason:'Completed action temporally/mechanistically aligns; causal proof still pending'};
+ if(cd.state==='CAUSE_SHIFT')return {state:'RECOVERY OBSERVED · ATTRIBUTION UNCERTAIN',confidence:'MEDIUM',reason:'Cause shifted across recovery period; prior action attribution withheld'};
+ if(cd.state==='MULTIPLE_CAUSE'||cd.state==='CAUSE_UNKNOWN')return {state:'RECOVERY OBSERVED · ATTRIBUTION UNCERTAIN',confidence:'LOW',reason:'Cause structure is multiple/uncertain; causal attribution withheld'};
+ if(ad.completed&&['SAME_CAUSE','RECURRING_CAUSE','CAUSE_IDENTIFIED'].includes(cd.state))return {state:'EFFECT SIGNAL OBSERVED',confidence:'MEDIUM',reason:'Completed structural/action mechanism aligns with stable cause and recovery timing; causal proof still requires effect verification'};
  return {state:'RECOVERY OBSERVED · ATTRIBUTION UNCERTAIN',confidence:'MEDIUM',reason:'Action completion/effect verification pending'};
 }
 function effectState(x){
