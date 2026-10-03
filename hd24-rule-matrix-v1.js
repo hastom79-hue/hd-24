@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const API={version:'2.8.0',frozenAt:'2026-10-03'};
+const API={version:'2.9.0',frozenAt:'2026-10-03'};
 const norm=s=>String(s??'').toLowerCase().replace(/\s+/g,' ').trim();
 const num=v=>{const n=Number(String(v??'').replace(/[% ,]/g,''));return Number.isFinite(n)?n:null};
 const pct=(a,b)=>b?((a-b)/Math.abs(b))*100:null;
@@ -175,6 +175,10 @@ function analyze(r,all){
 }
 function pdcaClosure(r,all){
  const act=actionState(r), sc=standardControlEligibility(r,all), tr=trend(r,all), ts=targetState(r);
+ const sustained=!!(r.sustainedResultVerified||r.sustainmentVerified), effectVerified=!!r.effectVerified;
+ const standardVerified=!sc.eligible||!!r.standardControlVerified, recurrenceVerified=!sc.eligible||!!r.recurrenceMonitored;
+ if(effectVerified&&sustained&&standardVerified&&recurrenceVerified&&ts.state==='ACHIEVED')
+  return {state:'CLOSED_SUSTAINED',closed:true,next:'MONITOR_FOR_RECURRENCE',closureEvidence:{effectVerified,sustained,standardVerified,recurrenceVerified}};
  if(act.structural&&act.due){
   const asOf=analysisDate(r)||new Date(),future=act.dueDate&&act.dueDate>asOf;
   if(future)return {state:'ACTION_IMPLEMENTATION',closed:false,next:'EFFECT_VERIFICATION'};
