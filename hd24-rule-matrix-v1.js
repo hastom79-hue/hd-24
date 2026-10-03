@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const API={version:'1.2.0',frozenAt:'2026-10-03'};
+const API={version:'1.3.0',frozenAt:'2026-10-03'};
 const norm=s=>String(s??'').toLowerCase().replace(/\s+/g,' ').trim();
 const num=v=>{const n=Number(String(v??'').replace(/[% ,]/g,''));return Number.isFinite(n)?n:null};
 const pct=(a,b)=>b?((a-b)/Math.abs(b))*100:null;
@@ -114,6 +114,34 @@ function managementState(fs){
  if(fs.some(f=>f.questionRequired))return 'FOLLOW-UP REQUIRED';
  return 'WATCH';
 }
+function issueKeyFor(r){
+ const t=textFields(r),k=norm(kpiOf(r));
+ if(/o.?ring/.test(t))return 'QUALITY_O_RING';
+ if(/find attached|see attached|refer attached/.test(t)&&/initial quality|warranty/.test(k))return 'QUALITY_ATTACHMENT_TRACEABILITY';
+ if(actionMechanism(r)==='CAPACITY_EXPANSION')return 'FAB_CAPACITY';
+ if(actionMechanism(r)==='QUALITY_ROOT_REMOVAL')return 'FAB_NDT_WELDING';
+ if(/dio|inventory|turnover|material delivery|shortage|moh/.test(k+' '+t))return 'INVENTORY_MOH';
+ if(/problem.?solving|coaching|nva|important problem/.test(k))return 'PROBLEM_SOLVING_PDCA';
+ return 'KPI:'+k;
+}
+function consolidateIssueFollowups(analyzed,clusters=[]){
+ const groups=new Map();
+ for(const x of analyzed){const key=issueKeyFor(x.record);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(x)}
+ const out=[];
+ for(const [key,xs] of groups){
+  const raw=[...new Set(xs.flatMap(x=>x.questions))]; if(!raw.length)continue;
+  let question=raw.join(' ');
+  if(key==='QUALITY_O_RING')question='Please confirm the root-cause removal and recurrence-prevention control for the recurring O-ring issue, how effectiveness is verified, and whether the relevant work is included in standard-compliance/recurrence management.';
+  if(key==='QUALITY_ATTACHMENT_TRACEABILITY')question='Please state Root Cause / Action / Owner / Due explicitly in the reply table for the Initial Quality/Warranty issue so that the same issue can be tracked and revalidated next month.';
+  if(key==='PROBLEM_SOLVING_PDCA')question='Please confirm how recurring priority problems are selected, projectized, followed through root-cause removal, and verified for effect in daily management.';
+  out.push({issueKey:key,kpis:[...new Set(xs.map(x=>kpiOf(x.record)))],question,confidence:xs.some(x=>x.findings.some(f=>f.confidence==='HIGH'))?'HIGH':'MEDIUM'});
+ }
+ for(const cl of clusters.filter(x=>x.questionRequired)){
+  const key='CLUSTER:'+cl.cluster;if(out.some(x=>x.issueKey===key))continue;
+  out.push({issueKey:key,kpis:cl.kpis,question:cl.statement,confidence:cl.confidence||'MEDIUM'});
+ }
+ return out;
+}
 function consolidateQuestions(findings){
  const qs=findings.filter(f=>f.questionRequired);
  if(!qs.length)return [];
@@ -127,6 +155,6 @@ function consolidateQuestions(findings){
 function analyzeAll(rows){
  return rows.map(r=>{const findings=analyze(r,rows);return {record:r,direction:direction(r),target:targetState(r),trend:trend(r,rows),findings,managementState:managementState(findings),questions:consolidateQuestions(findings)}})
 }
-window.HD24_RULE_MATRIX_V1={...API,direction,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,analyze,analyzeAll,consolidateQuestions};
+window.HD24_RULE_MATRIX_V1={...API,direction,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,issueKeyFor,consolidateIssueFollowups,analyze,analyzeAll,consolidateQuestions};
 document.dispatchEvent(new CustomEvent('hd24:rule-matrix-ready',{detail:API}));
 })();
