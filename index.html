@@ -1704,7 +1704,7 @@ function setupTabs(){
   const bar = document.createElement('div');
   bar.id = 'hd24TabBar';
   bar.className = 'hd24-tab-bar';
-  bar.innerHTML = `<button type="button" class="hd24-tab active" data-tab="upload">업로드 · 실행</button><button type="button" class="hd24-tab" data-tab="results">판정 결과<span class="hd24-tab-badge" id="hd24TabMissBadge" hidden>0</span></button><button type="button" class="hd24-tab" data-tab="mail">메일</button><button type="button" class="hd24-tab" data-tab="reply">회신 이력 반영</button><button type="button" class="hd24-tab" data-tab="spotcheck">집중점검</button><button type="button" class="hd24-tab" data-tab="history">실행 이력</button><button type="button" class="hd24-tab" data-tab="log">실행 로그</button>`;
+  bar.innerHTML = `<button type="button" class="hd24-tab active" data-tab="upload">업로드 · 실행</button><button type="button" class="hd24-tab" data-tab="results">분석<span class="hd24-tab-badge" id="hd24TabMissBadge" hidden>0</span></button><button type="button" class="hd24-tab" data-tab="mail">메일</button><button type="button" class="hd24-tab" data-tab="reply">회신 이력 반영</button><button type="button" class="hd24-tab" data-tab="spotcheck">집중점검</button><button type="button" class="hd24-tab" data-tab="history">실행 이력</button><button type="button" class="hd24-tab" data-tab="log">실행 로그</button>`;
 
   const barWrap = document.createElement('div');
   barWrap.className = 'hd24-tab-bar-wrap';
@@ -1745,7 +1745,8 @@ function setupTabs(){
   const resultColsEl = resultCard.querySelector(':scope > .result-cols');
   const resultTagEl = resultColsEl ? resultColsEl.previousElementSibling : null; // "판정 상세" 라벨
   const quickMailBoxEl = document.getElementById('quickMailBox');
-  const resultsSubEls = [resultTitleBar, monthStripEl, trendNoteEl, resultTagEl, resultColsEl].filter(Boolean);
+  const analysisEl = document.getElementById('hd24FullAnalysis');
+  const resultsSubEls = [resultTitleBar, monthStripEl, trendNoteEl, resultTagEl, resultColsEl, analysisEl].filter(Boolean);
   const mailSubEls = [quickMailBoxEl].filter(Boolean);
 
   const timelinePanel = document.getElementById('hd24TimelinePanel');
@@ -1764,6 +1765,8 @@ function setupTabs(){
     // hd24-followup.js가 나중에 동적으로 만드는 메일 미리보기 패널도 같은 규칙 적용
     const followupPanel = document.getElementById('hd24FollowupPanel');
     if (followupPanel) followupPanel.classList.toggle('hd24-tab-hidden', tab !== 'mail');
+    const liveAnalysis = document.getElementById('hd24FullAnalysis');
+    if (liveAnalysis) liveAnalysis.classList.toggle('hd24-tab-hidden', tab !== 'results');
   }
   function activate(tab){
     Object.entries(groups).forEach(([name, els]) => {
