@@ -69,3 +69,10 @@
 - Reduced follow-up automatic-analysis retry schedule from 8 attempts to 4 and removed redundant 3-second history polling to reduce refresh/runtime load. Followup deployed as v88.
 - DIO contract verified in source: DIO=365/Parts Inventory Turnover; invalid/zero turnover produces no DIO; direction is lower-is-better; Ulsan uses physical row 102, India row 93, Brazil isolated synthetic row -24001; derived results flow through allResults into analysis/mail/reply workbook.
 - Pages deployments have been succeeding; separate regression workflows remain an infrastructure issue when jobs terminate with no runner steps.
+
+### 2026-10-04 final production closure
+- Current production/refresh runtime alignment: core v22, auto-run v29, pipeline gate v23, followup v88, D+7 v7, direct-reply guard v12, reply-import dedupe v1, history v29, reply-feedback v16.
+- Latest regression-contract commit 9d27be99 was deployed successfully by GitHub Pages.
+- Reply-feedback v16 now rejects HTTP 200 logical failures ({success:false}), persists failedAt/error details, and keeps 30-second timeout/no-auto-download guarantees.
+- DIO edge/routing regression and zero-unsolicited-download contracts are committed.
+- GitHub regression/UI workflows continue to terminate before execution (runner_id 0, blank runner, steps 0); this is tracked separately from application/Pages deployment status.
