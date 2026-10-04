@@ -11,7 +11,7 @@ const KPI_DIRECTION_MASTER={
  '5s audit score':'HIGHER',
  'average vtb improvement lead time':'LOWER',
  'balancing efficiency':'HIGHER',
- 'dio (days inventory outstanding)':'LOWER','dio':'LOWER','days inventory outstanding':'LOWER','inventory days':'LOWER',
+ 'dio (days inventory outstanding)':'LOWER','dio':'LOWER','days inventory outstanding':'LOWER','inventory days':'LOWER','재고회전일수':'LOWER',
  'domestic incoming plan compliance rate':'HIGHER',
  'equipment downtime loss':'LOWER','equipment downtime':'LOWER',
  'fabrication - weighted average actual lob efficiency':'HIGHER','fabrication weighted average lob efficiency':'HIGHER',
