@@ -53,3 +53,10 @@
 - Added reply-feedback to runtime cache synchronization regression coverage.
 - Pages deployments through `86eac67e` verified SUCCESS.
 - Current non-Pages Actions failures occur before any runner step executes (`steps: []`, runner id 0); application assertions are therefore not being executed and these failures are tracked separately as CI infrastructure/runner failures.
+
+## 2026-10-04 Final stabilization pass
+- D+7 reminders are manual-send only; due detection remains automatic. Added click inflight lock, 30s API timeout, network/HTTP/logical failure diagnostics, and success/failure history UI. Runtime deployed as seven-day-reminder v7.
+- Removed unsolicited reply-feedback downloads and locked zero-unsolicited-download regression contract. Refresh/automatic analysis/import do not initiate file downloads; reply Excel and no-endpoint EML remain explicit user actions.
+- Reduced follow-up automatic-analysis retry schedule from 8 attempts to 4 and removed redundant 3-second history polling to reduce refresh/runtime load. Followup deployed as v88.
+- DIO contract verified in source: DIO=365/Parts Inventory Turnover; invalid/zero turnover produces no DIO; direction is lower-is-better; Ulsan uses physical row 102, India row 93, Brazil isolated synthetic row -24001; derived results flow through allResults into analysis/mail/reply workbook.
+- Pages deployments have been succeeding; separate regression workflows remain an infrastructure issue when jobs terminate with no runner steps.
