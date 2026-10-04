@@ -82,7 +82,7 @@ async function sendDue(){
     if(!pending().some(x=>x.id===item.id)){localStorage.removeItem(lock);continue}
     const cc=required(m.plant,m.cc),body=reminderText(m.recipientName),subject=reminderSubject(m.plant);
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);let res;
-    try{res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:m.to,cc,subject,body,bodyHtml:'<html><body style="font-family:Arial,sans-serif;white-space:pre-line">'+body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</body></html>',plant:m.plant,reminder:true,originalSentAt:m.sentAt,originalMailId:item.id,language:reminderLang}),signal:controller.signal})}
+    try{res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({to:m.to,cc,subject,body,bodyHtml:'<html><body style="font-family:Arial,sans-serif;white-space:pre-line">'+body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</body></html>',plant:m.plant,reminder:true,originalSentAt:m.sentAt,originalMailId:item.id,language:reminderLang}),signal:controller.signal})}
     catch(err){if(err?.name==='AbortError')throw new Error('메일 API 응답 시간초과(30초)');throw new Error('메일 API 연결 실패: '+(err?.message||err))}
     finally{clearTimeout(timer)}
     let responseText='';try{responseText=await res.text()}catch(_){}
