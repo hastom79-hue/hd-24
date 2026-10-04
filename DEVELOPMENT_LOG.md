@@ -39,3 +39,17 @@
 - Stale reply workbook generation fails closed when plant/analysis month/KPI values/reply history changes during async generation.
 - Reply sequence, recurrence/Repeated Issue, previous cause/countermeasure and per-row mail anchor are regression-locked.
 - Browser-only GitHub Pages still does not prove strict local Classic Outlook auto-open/Send-button E2E; that remains a separate local integration frontier.
+
+
+## 2026-10-04 — DIO / reply-feedback / runtime stabilization
+- Standardized DIO across Ulsan, India and Brazil as a derived monthly KPI: `365 / Parts Inventory Turnover`; the target is derived from the same month's turnover target and evaluated as Lower-is-better.
+- Zero, blank or invalid turnover values are not estimated. Brazil's derived DIO uses synthetic id `-24001` to avoid collision with physical master rows.
+- Confirmed DIO propagation through result rendering, `allResults`, analytical/action selection and mail scope.
+- Removed unsolicited reply-feedback workbook browser downloads while retaining the workbook in memory for mail attachment.
+- Restricted reply-feedback mail JSON to serializable attachment metadata/base64; the browser `File` object is no longer posted.
+- Hardened guarded manual reply download against duplicate click propagation.
+- Removed duplicate workbook parsing and eager master-ZIP loading; reflect ZIP loading is now lazy.
+- Synchronized forced-refresh runtime with production: UI v43, followup v87 and reply-feedback v13, alongside the other active runtime versions.
+- Added reply-feedback to runtime cache synchronization regression coverage.
+- Pages deployments through `86eac67e` verified SUCCESS.
+- Current non-Pages Actions failures occur before any runner step executes (`steps: []`, runner id 0); application assertions are therefore not being executed and these failures are tracked separately as CI infrastructure/runner failures.
