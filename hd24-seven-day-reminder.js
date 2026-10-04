@@ -37,7 +37,7 @@ function pending(now=Date.now()){
 function render(){
  const el=document.getElementById('hd24ReminderMailList');if(!el)return;
  const p=plant(),items=pending().filter(x=>x.mail.plant===p);
- const sent=read(MAIL_KEY).filter(x=>x.plant===p&&x.status==='seven-day-reminder-sent');
+ const history=read(MAIL_KEY),sent=history.filter(x=>x.plant===p&&x.status==='seven-day-reminder-sent'),failed=history.filter(x=>x.plant===p&&x.status==='seven-day-reminder-failed');
  const escape=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
  const current=items[0]?.mail;
  const name=current?.recipientName||document.getElementById('mailToName')?.value.trim()||'';
@@ -57,7 +57,7 @@ function render(){
  '<div style="display:flex;gap:12px;flex-wrap:wrap;margin:12px 0"><strong>미회신 D+7: '+items.length+'건</strong><span>재안내 발송완료: '+sent.length+'건</span></div>'+
  (items.length?items.map(x=>'<div style="padding:12px;margin:8px 0;border:1px solid #d3dce5;border-radius:8px"><b>'+escape(x.mail.to)+'</b><div>최초 발송: '+new Date(x.mail.sentAt).toLocaleString()+' · 미회신 KPI '+x.batch.length+'건</div><div style="color:#a14b00">D+7 경과 · 회신 결과 미업로드</div></div>').join(''):'<p>현재 미회신 D+7 대상이 없습니다.</p>')+
  (items.length?'<div style="margin:12px 0"><button type="button" id="hd24ReminderSend">D+7 리마인드 발송</button></div>':'')+
- (sent.length?'<h4>리마인드 발송 이력</h4>'+sent.slice(0,10).map(x=>'<div style="padding:6px 0;border-bottom:1px solid #e5e7eb">'+escape(x.to)+' · '+new Date(x.sentAt).toLocaleString()+'</div>').join(''):'');
+ (sent.length||failed.length?'<h4>리마인드 발송 이력</h4>'+[...sent.map(x=>({...x,_ok:true,_time:x.sentAt})),...failed.map(x=>({...x,_ok:false,_time:x.failedAt}))].sort((a,b)=>String(b._time||'').localeCompare(String(a._time||''))).slice(0,10).map(x=>'<div style="padding:6px 0;border-bottom:1px solid #e5e7eb"><b>'+(x._ok?'발송 성공':'발송 실패')+'</b> · '+escape(x.to)+' · '+new Date(x._time).toLocaleString()+(x.error?' · '+escape(x.error):'')+'</div>').join(''):'');
  document.getElementById('hd24ReminderKo')?.addEventListener('click',()=>{reminderLang='ko';render()});
  document.getElementById('hd24ReminderEn')?.addEventListener('click',()=>{reminderLang='en';render()});
  document.getElementById('hd24ReminderSend')?.addEventListener('click',async e=>{const b=e.currentTarget;if(b.disabled)return;b.disabled=true;const old=b.textContent;b.textContent='발송 중...';try{await sendDue()}finally{b.disabled=false;b.textContent=old}});
