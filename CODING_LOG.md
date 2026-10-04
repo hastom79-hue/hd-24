@@ -40,3 +40,25 @@
 - Added prev + pending duplicate detection and sequence calculation.
 - Updated followup regression assertions for atomic staging and legitimate changed second replies.
 - Production loader/refresh now reference hd24-followup.js?v=70.
+
+
+## 2026-10-04 — DIO, mail attachment, download and runtime hardening
+### DIO derivation
+- `index.html`: derive DIO as `365 / Parts Inventory Turnover` for Ulsan, India and Brazil.
+- Derive the monthly DIO target from the same month's inventory-turnover target; direction is `하향` (Lower is better).
+- Invalid/blank/zero turnover is not estimated; the derived month is omitted.
+- Ulsan/India reuse physical DIO rows when present; Brazil uses synthetic row id `-24001` to avoid physical-master collision.
+- Verified propagation path: derived DIO -> results -> `renderResults()` -> `allResults` -> analysis/action selection -> mail scope.
+
+### Reply feedback / download safety
+- `hd24-reply-feedback.js`: feedback workbook is generated and retained in memory without automatic browser download.
+- Mail JSON attachment now sends only serializable filename/MIME/base64/plant/timestamp fields; browser `File` object remains local.
+- `hd24-direct-reply-guard.js`: guarded manual reply download fully isolates the click path to prevent duplicate downloads.
+- `hd24-followup.js`: mail endpoint has 30-second abort, HTTP/logical/network failure diagnostics and send-button trace logging.
+
+### Refresh / cache / performance
+- Removed duplicate workbook parsing and eager master ZIP load; master ZIP is lazy-loaded only when reflect is executed.
+- Production and forced-refresh runtime references synchronized: UI loader v43, auto-run v29, pipeline v23, followup v87, direct-reply v12, import-dedupe v1, history v28, reply-feedback v13.
+- Runtime regression now includes reply-feedback cache-version synchronization.
+- Latest verified Pages deployment through `86eac67e`: SUCCESS.
+- Current GitHub Actions regression jobs terminate before runner steps (`steps: []`, `runner_id: 0`); treat this as CI runner/infrastructure failure rather than an application assertion failure.
