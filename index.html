@@ -1316,7 +1316,7 @@ async function openMailDraft(items, scopeLabelKo, scopeLabelEn, showStatus){
       return;
     } catch(err) {
       if (err && err.name === 'AbortError') { log(en?'Share cancelled by user.':'공유가 취소됐습니다.'); return; }
-      log((en?'Share failed, falling back to download+mailto: ':'공유 실패, 다운로드+메일 방식으로 전환: ') + (err&&err.message||err));
+      log((en?'Share failed; switching to managed mail Preview: ':'공유 실패, 통합 메일 Preview로 전환: ') + (err&&err.message||err));
     }
   }
 
