@@ -1,6 +1,6 @@
 (()=>{'use strict';
 const KEY='hd24_kpi_reply_history_v2',get=id=>document.getElementById(id);
-let lang='ko',drafts={ko:'',en:''},draftKey='',demo=false,lastExportKey=sessionStorage.getItem('hd24_reply_feedback_export_key')||'',latestFeedbackAttachment=null;const SEND_LOG='hd24_reply_feedback_mail_v1';
+let lang='ko',drafts={ko:'',en:''},draftKey='',demo=false,lastExportKey='',latestFeedbackAttachment=null;const SEND_LOG='hd24_reply_feedback_mail_v1';
 const fields=[['reason','미달성 사유','Reason'],['rootCause','근본원인','Root cause'],['recoveryPlan','만회계획','Recovery plan'],['actionOwner','담당자','Action owner'],['plannedCompletionDate','완료예정일','Due date'],['nextMonthRecoveryTarget','차월 회복목표','Next-month target']];
 const txt=v=>String(v??'').trim(), esc=s=>txt(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function analyze(r){
