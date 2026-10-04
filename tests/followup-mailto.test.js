@@ -182,3 +182,13 @@ ok(src.includes("const kpiName = isKo ? (r.kpi||r.kpiEn||'') : (r.kpiEn||r.kpi||
 ok(src.includes("r.target??''")&&src.includes("r.actual??''"),'reply workbook must preserve derived target/actual');
 ok(src.includes("uniqueItems=items.filter")&&src.includes("norm(r.kpiEn||r.kpi)"),'reply workbook must dedupe derived DIO by KPI and month without excluding it');
 console.log('HD24 DERIVED DIO REPLY WORKBOOK CONTRACT PASS');
+
+// Automatic runtime paths must never initiate a browser file download.
+const autoRun=fs.readFileSync('hd24-auto-run.js','utf8');
+const feedback=fs.readFileSync('hd24-reply-feedback.js','utf8');
+ok(!/createObjectURL|\.download\s*=|saveAs\(/.test(autoRun),'auto-run must not contain browser download primitives');
+ok(!/createObjectURL|\.download\s*=|saveAs\(/.test(feedback),'reply feedback generation/import must not contain browser download primitives');
+ok(src.includes("$('hd24DownloadReply')?.addEventListener('click'")&&src.includes('downloadFile((await buildReplyFile(previewState.items)).file)'),'reply Excel download must remain explicit user-click only');
+ok(src.includes("$('hd24SendMail')?.addEventListener('click'")&&src.includes('const dl=downloadFile(emlFile)'),'EML fallback download must remain inside explicit send action');
+ok(src.includes('회신 Excel은 메일 발송 또는 수동 다운로드 시에만 생성'),'automatic analysis must explicitly preserve no-download contract');
+console.log('HD24 ZERO UNSOLICITED DOWNLOAD CONTRACT PASS');
