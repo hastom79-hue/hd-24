@@ -1320,19 +1320,16 @@ async function openMailDraft(items, scopeLabelKo, scopeLabelEn, showStatus){
     }
   }
 
-  downloadFile(file);
-  log((en?'Excel downloaded for attaching: ':'첨부용 엑셀 다운로드: ') + fname);
-  let body = buildMailBody(items, scopeLabelKo, scopeLabelEn, showStatus);
-  body = (en
-    ? `[Attachment: "${fname}" was just downloaded — please drag it into this email before sending]\n\n`
-    : `[첨부파일: "${fname}" 방금 다운로드됨 — 이 메일 창에 끌어다 놓은 후 발송해주세요]\n\n`) + body;
-  const MAX = 3500; // 한/영 병기로 본문이 길어져 여유 있게 상향 (mailto URL 길이 한도 고려)
-  if (body.length > MAX){
-    body = body.slice(0, MAX) + (en ? '\n\n... (truncated — please see the attached Excel for the full list)' : '\n\n... (내용이 길어 일부 생략됨, 첨부 엑셀을 참고해주세요)');
+  // Legacy mailto/download fallback is intentionally disabled.
+  // The current HD-24 mail flow must not trigger an unsolicited browser download.
+  // If the system share sheet is unavailable, prepare the managed Preview instead;
+  // actual send/download remains an explicit user action in the follow-up mail UI.
+  log((en?'System share unavailable; managed mail Preview will be used.':'시스템 공유를 사용할 수 없어 통합 메일 Preview를 사용합니다.'));
+  if (typeof window.hd24PrepareFollowupPreview === 'function') {
+    window.hd24PrepareFollowupPreview(items);
+  } else {
+    document.getElementById('hd24FollowupPanel')?.scrollIntoView({behavior:'smooth',block:'start'});
   }
-  const url = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  window.location.href = url;
-  log((en?'Mail draft created: ':'메일 초안 생성: ') + items.length + (en?' item(s) (':'건 (') + (en?scopeLabelEn:scopeLabelKo) + ')');
 }
 
 document.getElementById('btnMailMonth').addEventListener('click', () => {
