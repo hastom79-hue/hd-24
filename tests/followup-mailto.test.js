@@ -192,3 +192,18 @@ ok(src.includes("$('hd24DownloadReply')?.addEventListener('click'")&&src.include
 ok(src.includes("$('hd24SendMail')?.addEventListener('click'")&&src.includes('const dl=downloadFile(emlFile)'),'EML fallback download must remain inside explicit send action');
 ok(src.includes('회신 Excel은 메일 발송 또는 수동 다운로드 시에만 생성'),'automatic analysis must explicitly preserve no-download contract');
 console.log('HD24 ZERO UNSOLICITED DOWNLOAD CONTRACT PASS');
+
+
+// DIO formula edge cases must remain mathematically and operationally safe.
+const dioSource=fs.readFileSync('index.html','utf8');
+ok(dioSource.includes('Number.isFinite(v)&&v>0 ? 365/v : null'),'DIO must reject zero, negative, blank and nonnumeric turnover');
+ok(dioSource.includes("makeHistEntry(x.month,target,actual,'하향')"),'DIO must remain lower-is-better');
+ok(dioSource.includes("currentPlant==='india'?93:currentPlant==='brazil'?-24001:102"),'DIO plant routing must remain Ulsan 102 / India 93 / Brazil synthetic -24001');
+const dio=v=>Number.isFinite(Number(v))&&Number(v)>0?365/Number(v):null;
+ok(dio(4)===91.25,'DIO valid turnover calculation mismatch');
+ok(dio(0)===null&&dio(-1)===null&&dio('x')===null,'DIO invalid turnover must not fabricate values');
+const achieved=(targetTurnover,actualTurnover)=>dio(actualTurnover)<=dio(targetTurnover);
+ok(achieved(4,4)===true,'equal DIO target/actual must achieve');
+ok(achieved(4,3)===false,'lower actual turnover must produce higher DIO and miss');
+ok(achieved(4,5)===true,'higher actual turnover must produce lower DIO and achieve');
+console.log('HD24 DIO EDGE REGRESSION CONTRACT PASS');
