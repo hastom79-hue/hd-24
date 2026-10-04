@@ -37,7 +37,7 @@ jobs:
 
           # Keep this list synchronized with the actual production loader; do not pin stale versions.
           expected=[]
-          for name in ['hd24-ui-v3-core.js','hd24-auto-run.js','hd24-pipeline-gate.js','hd24-followup.js','hd24-direct-reply-guard.js','hd24-reply-import-dedupe.js','hd24-history-view.js']:
+          for name in ['hd24-ui-v3-core.js','hd24-auto-run.js','hd24-pipeline-gate.js','hd24-followup.js','hd24-direct-reply-guard.js','hd24-reply-import-dedupe.js','hd24-history-view.js','hd24-reply-feedback.js']:
               m=re.search(re.escape(name)+r'\?v=(\d+)',ui)
               assert m, f'production loader missing {name}'
               expected.append(f'{name}?v={m.group(1)}')
