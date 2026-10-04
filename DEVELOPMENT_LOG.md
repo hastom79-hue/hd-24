@@ -68,3 +68,9 @@
 - Current UI guidance now states that automatic processing performs validation/reflection/judgment only; browser file downloads require an explicit user action.
 - Added DIO edge regression contract: valid formula, invalid/zero rejection, lower-is-better boundary behavior, and Ulsan/India/Brazil routing are locked.
 - Closed-loop source verification: KPI/DIO result -> management mail -> reply workbook -> reply import event -> recurrence analysis -> feedback workbook -> explicit feedback mail send. No automatic file download exists in this loop.
+
+## 2026-10-05 — Mail Preview handoff + DIO alias regression lock
+- Wired legacy mail fallback to the managed follow-up Preview via `window.hd24PrepareFollowupPreview`; prepared history, mail-tab switch, and Preview focus are now explicit.
+- Added golden regression coverage for DIO aliases: `DIO`, `DIO (Days Inventory Outstanding)`, `Days Inventory Outstanding`, and Korean `재고회전일수` must all resolve to LOWER-is-better.
+- Added Korean DIO alias to the rule-matrix direction master so Ulsan/Korean labels follow the same DIO judgment logic as India/Brazil.
+- Commits: a8e5eee, f5f9773, 49a2c3d.
