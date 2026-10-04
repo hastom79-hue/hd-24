@@ -75,6 +75,11 @@ function run(){
   assert('Attachment-only chronic quality requires follow-up',q.some(x=>x.issueKey==='QUALITY_ATTACHMENT_TRACEABILITY')),
   assert('New regression requires follow-up',E.analyzeAll([row('Regression Gate',7,100,105,{direction:'HIGHER'}),row('Regression Gate',8,100,90,{direction:'HIGHER'})]).find(x=>x.record.month===8).questions.length>0),
   assert('DIO lower-is-better',E.direction(dio.record)==='LOWER'),
+  assert('DIO canonical aliases lower-is-better',[
+    'DIO','DIO (Days Inventory Outstanding)','Days Inventory Outstanding','재고회전일수'
+  ].every(k=>E.masterDirection(k)==='LOWER'),[
+    'DIO','DIO (Days Inventory Outstanding)','Days Inventory Outstanding','재고회전일수'
+  ].map(k=>k+':'+E.masterDirection(k)).join(' | ')),
   assert('Cause shift blocks action attribution',attrShift.actionAttribution.state.includes('ATTRIBUTION UNCERTAIN'),attrShift.actionAttribution.state),
   assert('Stable cause completed action yields effect signal only',attrStable.actionAttribution.state==='EFFECT SIGNAL OBSERVED',attrStable.actionAttribution.state),
   assert('Fabrication 6→7 cause shift',fab7.causeDynamics.state==='CAUSE_SHIFT',fab7.causeDynamics.state),
