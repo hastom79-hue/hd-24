@@ -60,3 +60,11 @@
 - Reduced follow-up automatic-analysis retry schedule from 8 attempts to 4 and removed redundant 3-second history polling to reduce refresh/runtime load. Followup deployed as v88.
 - DIO contract verified in source: DIO=365/Parts Inventory Turnover; invalid/zero turnover produces no DIO; direction is lower-is-better; Ulsan uses physical row 102, India row 93, Brazil isolated synthetic row -24001; derived results flow through allResults into analysis/mail/reply workbook.
 - Pages deployments have been succeeding; separate regression workflows remain an infrastructure issue when jobs terminate with no runner steps.
+
+### 2026-10-04 closure verification
+- Production history-view v29 deployed and Pages deployment succeeded; redundant 3-second history polling is no longer served by the current loader.
+- Followup v88 reduces automatic analysis retry windows to 4 attempts and keeps D+7 wording consistent with manual-send-only policy.
+- Reply feedback v15 keeps generated feedback Excel in memory for attachment use, never auto-downloads it, and persists API send failures as send-failed history.
+- Current UI guidance now states that automatic processing performs validation/reflection/judgment only; browser file downloads require an explicit user action.
+- Added DIO edge regression contract: valid formula, invalid/zero rejection, lower-is-better boundary behavior, and Ulsan/India/Brazil routing are locked.
+- Closed-loop source verification: KPI/DIO result -> management mail -> reply workbook -> reply import event -> recurrence analysis -> feedback workbook -> explicit feedback mail send. No automatic file download exists in this loop.
