@@ -247,6 +247,24 @@ async function importReply(){const f=$('hd24ReplyFile')?.files?.[0];if(!f){alert
 function uploadSignature(){const a=$('srcFile')?.files?.[0],b=$('masterFile')?.files?.[0];if(!b)return '';if(!a)return [pkey(),'(no-src)',b.name,b.size,b.lastModified].join('|');return [pkey(),a.name,a.size,a.lastModified,b.name,b.size,b.lastModified].join('|')}
 async function tryAutoPackage(reason){if(window.hd24FollowupSyncOwnsAutoPackage){if(!legacyAutoSuppressedLogged){legacyAutoSuppressedLogged=true;logSafe('레거시 자동패키지 비활성화: follow-up sync가 단일 오케스트레이터로 실행');}return}const sig=uploadSignature(),judge=$('btnJudge');if(!sig||sig===lastAutoPackageSignature||!judge||judge.disabled)return;lastAutoPackageSignature=sig;try{logSafe(`자동분석 시작: ${reason}`);judge.click();await new Promise(r=>setTimeout(r,80));const items=selectItems('watch');if(!items.length){$('hd24MailStatus').textContent='자동분석 완료 · 메일 관리대상 KPI 없음';logSafe('자동분석 완료: 관리대상 KPI 없음');return}const preparedAt=nowIso();renderPreview(items,'watch',preparedAt);mailHistoryRecord(items,{status:'prepared',preparedAt,autoPrepared:true});$('hd24MailStatus').textContent=`자동분석/메일 Preview 준비 완료 · ${items.length} KPI`;logSafe(`자동 메일 Preview 준비: ${items.length}건 · 회신 Excel은 메일 발송 또는 수동 다운로드 시에만 생성`)}catch(e){lastAutoPackageSignature='';logSafe('자동분석 패키지 오류: '+(e?.message||e))}}
 function scheduleAutoPackage(reason){if(!uploadSignature())return;[0,250,1000,3000].forEach(ms=>setTimeout(()=>{if(uploadSignature())tryAutoPackage(reason)},ms))}
+// Legacy index.html mail fallback can hand its selected KPI set into the managed Preview.
+// This keeps one visible Preview/send path and prevents any unsolicited download/mailto behavior.
+window.hd24PrepareFollowupPreview = function(items){
+  const safeItems = Array.isArray(items) ? items.filter(Boolean) : [];
+  if (!safeItems.length) {
+    if ($('hd24Preview')) $('hd24Preview').style.display='none';
+    if ($('hd24MailStatus')) $('hd24MailStatus').textContent='메일 Preview 대상 KPI가 없습니다.';
+    logSafe('통합 메일 Preview 준비 생략: 대상 KPI 없음');
+    return false;
+  }
+  const preparedAt=nowIso();
+  renderPreview(safeItems,'watch',preparedAt);
+  mailHistoryRecord(safeItems,{status:'prepared',preparedAt,managedFallback:true});
+  if (window.hd24SwitchTab) window.hd24SwitchTab('mail');
+  $('hd24FollowupPanel')?.scrollIntoView({behavior:'smooth',block:'start'});
+  logSafe(\`통합 메일 Preview 연결 완료: \${safeItems.length}건\`);
+  return true;
+};
 // 메일 발송 대상 월 체크박스가 바뀌었을 때(자동패키지의 파일서명 기준 중복방지 가드에
 // 걸리지 않고) 미리보기를 즉시 다시 계산하기 위해 index.html에서 호출하는 훅.
 window.hd24RefreshMailPreview = function(){
