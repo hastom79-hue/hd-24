@@ -56,15 +56,21 @@ function render(){
  el.innerHTML=preview+
  '<div style="display:flex;gap:12px;flex-wrap:wrap;margin:12px 0"><strong>미회신 D+7: '+items.length+'건</strong><span>재안내 발송완료: '+sent.length+'건</span></div>'+
  (items.length?items.map(x=>'<div style="padding:12px;margin:8px 0;border:1px solid #d3dce5;border-radius:8px"><b>'+escape(x.mail.to)+'</b><div>최초 발송: '+new Date(x.mail.sentAt).toLocaleString()+' · 미회신 KPI '+x.batch.length+'건</div><div style="color:#a14b00">D+7 경과 · 회신 결과 미업로드</div></div>').join(''):'<p>현재 미회신 D+7 대상이 없습니다.</p>')+
+ (items.length?'<div style="margin:12px 0"><button type="button" id="hd24ReminderSend">D+7 리마인드 발송</button></div>':'')+
  (sent.length?'<h4>리마인드 발송 이력</h4>'+sent.slice(0,10).map(x=>'<div style="padding:6px 0;border-bottom:1px solid #e5e7eb">'+escape(x.to)+' · '+new Date(x.sentAt).toLocaleString()+'</div>').join(''):'');
  document.getElementById('hd24ReminderKo')?.addEventListener('click',()=>{reminderLang='ko';render()});
  document.getElementById('hd24ReminderEn')?.addEventListener('click',()=>{reminderLang='en';render()});
+ document.getElementById('hd24ReminderSend')?.addEventListener('click',()=>sendDue());
 }
 let busy=false;
 async function check(){
  if(busy)return;const p=plant(),due=pending().filter(x=>x.mail.plant===p);if(!due.length){status('7일 미회신 재안내 대상 없음');render();return}
+ status('7일 미회신 '+due.length+'건 · 리마인드 탭에서 확인 후 수동 발송');render();
+}
+async function sendDue(){
+ if(busy)return;const p=plant(),due=pending().filter(x=>x.mail.plant===p);if(!due.length){status('7일 미회신 재안내 대상 없음');render();return}
  const endpoint=String(window.HD24_MAIL_ENDPOINT||localStorage.getItem(ENDPOINT_KEY)||'').trim();
- if(!endpoint){status('7일 미회신 '+due.length+'건: 자동 발송 API 미설정. 발송하려면 메일 API를 설정하세요.');render();return}
+ if(!endpoint){status('7일 미회신 '+due.length+'건: 메일 API 미설정. API 설정 후 발송 버튼을 눌러주세요.');render();return}
  busy=true;
  try{
   for(const item of due){
@@ -72,7 +78,6 @@ async function check(){
    if(previous&&now-previous<15*60*1000)continue;
    localStorage.setItem(lock,String(now));
    try{
-    // Re-read replies immediately before dispatch to prevent stale reminder sends.
     if(!pending().some(x=>x.id===item.id)){localStorage.removeItem(lock);continue}
     const cc=required(m.plant,m.cc),body=reminderText(m.recipientName),subject=reminderSubject(m.plant);
     const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:m.to,cc,subject,body,bodyHtml:'<html><body style="font-family:Arial,sans-serif;white-space:pre-line">'+body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</body></html>',plant:m.plant,reminder:true,originalSentAt:m.sentAt,originalMailId:item.id,language:reminderLang})});
@@ -85,11 +90,11 @@ async function check(){
 }
 function init(){
  const panel=document.getElementById('hd24ReminderMailContent')||document.getElementById('hd24FollowupPanel');if(panel&&!document.getElementById('hd24SevenDayStatus')){const el=document.createElement('div');el.id='hd24SevenDayStatus';el.style.cssText='padding:8px 12px;margin:8px 0;border:1px solid #cbd5e1;border-radius:6px;font-size:13px';el.textContent='7일 미회신 재안내 확인 중';panel.appendChild(el)}
- render();check();setInterval(check,60*60*1000);
+ render();check();
  document.getElementById('plantSelect')?.addEventListener('change',()=>setTimeout(check,200));
  document.getElementById('hd24ReplyFile')?.addEventListener('change',()=>setTimeout(check,3000));
  ['mailTo','mailToName','mailCc'].forEach(id=>document.getElementById(id)?.addEventListener('input',render));
 }
-window.hd24SevenDayReminder={pending,check,render,reminderText,required};
+window.hd24SevenDayReminder={pending,check,sendDue,render,reminderText,required};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
