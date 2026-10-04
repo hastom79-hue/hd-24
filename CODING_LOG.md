@@ -76,3 +76,9 @@
 - Reply-feedback v16 now rejects HTTP 200 logical failures ({success:false}), persists failedAt/error details, and keeps 30-second timeout/no-auto-download guarantees.
 - DIO edge/routing regression and zero-unsolicited-download contracts are committed.
 - GitHub regression/UI workflows continue to terminate before execution (runner_id 0, blank runner, steps 0); this is tracked separately from application/Pages deployment status.
+
+## 2026-10-05 — Mail Preview handoff + DIO alias regression lock
+- Wired legacy mail fallback to the managed follow-up Preview via `window.hd24PrepareFollowupPreview`; prepared history, mail-tab switch, and Preview focus are now explicit.
+- Added golden regression coverage for DIO aliases: `DIO`, `DIO (Days Inventory Outstanding)`, `Days Inventory Outstanding`, and Korean `재고회전일수` must all resolve to LOWER-is-better.
+- Added Korean DIO alias to the rule-matrix direction master so Ulsan/Korean labels follow the same DIO judgment logic as India/Brazil.
+- Commits: a8e5eee, f5f9773, 49a2c3d.
