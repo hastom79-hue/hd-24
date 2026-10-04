@@ -26,8 +26,9 @@ function pending(now=Date.now()){
  for(const m of mails){
   if(m.status!=='sent'||!m.sentAt||!m.to||!['india','brazil'].includes(m.plant))continue;
   const sent=Date.parse(m.sentAt);if(!Number.isFinite(sent)||now-sent<DELAY)continue;
-  const id=[m.plant,m.sentAt,m.to.toLowerCase()].join('|');if(seen.has(id))continue;seen.add(id);
   const batch=mails.filter(x=>x.status==='sent'&&x.plant===m.plant&&x.sentAt===m.sentAt&&x.to===m.to);
+  const batchKey=[...new Set(batch.map(x=>[Number(x.targetMonth)||0,norm(x.kpiEn||x.kpi)].join(':')).filter(Boolean))].sort().join(',');
+  const id=[m.plant,m.sentAt,m.to.toLowerCase(),batchKey].join('|');if(seen.has(id))continue;seen.add(id);
   const answered=batch.every(x=>replies.some(r=>r.plant===x.plant&&Number(r.targetMonth)===Number(x.targetMonth)&&norm(r.kpiEn||r.kpi)===norm(x.kpiEn||x.kpi)&&Date.parse(r.replyReceivedAt)>=sent));
   const reminded=mails.some(x=>x.status==='seven-day-reminder-sent'&&x.originalMailId===id);
   if(!answered&&!reminded)out.push({id,mail:m,batch});
