@@ -207,3 +207,14 @@ ok(achieved(4,4)===true,'equal DIO target/actual must achieve');
 ok(achieved(4,3)===false,'lower actual turnover must produce higher DIO and miss');
 ok(achieved(4,5)===true,'higher actual turnover must produce lower DIO and achieve');
 console.log('HD24 DIO EDGE REGRESSION CONTRACT PASS');
+
+
+// Reply-feedback mail must match initial/D+7 failure semantics.
+ok(feedback.includes("api&&api.success===false"),'reply feedback must reject API logical failure');
+ok(feedback.includes("status:'send-failed'"),'reply feedback failure history missing');
+ok(feedback.includes("x.sentAt||x.failedAt"),'reply feedback failure timestamp rendering missing');
+ok(feedback.includes("x.error?' · '+x.error"),'reply feedback failure detail rendering missing');
+ok(feedback.includes("setTimeout(()=>controller.abort(),30000)"),'reply feedback API timeout guard missing');
+ok(ui.includes('hd24-reply-feedback.js?v=16'),'reply feedback production loader must be v16');
+ok(refresh.includes('hd24-reply-feedback.js?v=16'),'reply feedback refresh preload must be v16');
+console.log('HD24 REPLY FEEDBACK MAIL HARDENING CONTRACT PASS');
