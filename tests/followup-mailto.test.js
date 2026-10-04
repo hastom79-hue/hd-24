@@ -131,14 +131,18 @@ ok(reminder.includes('const DAY=86400000,DELAY=7*DAY'),'seven-day delay missing'
 ok(reminder.includes("m.status!=='sent'"),'reminder must require confirmed API send');
 ok(reminder.includes("Date.parse(r.replyReceivedAt)>=sent"),'uploaded reply must suppress reminder');
 ok(reminder.includes("x.status==='seven-day-reminder-sent'"),'repeat reminder suppression missing');
-ok(reminder.includes("localStorage.getItem(ENDPOINT_KEY)"),'automatic reminder must require configured API');
+ok(reminder.includes("localStorage.getItem(ENDPOINT_KEY)"),'manual reminder send must require configured API');
+ok(!reminder.includes('setInterval(check,60*60*1000)'),'D+7 reminder must not auto-send on an interval');
+ok(reminder.includes("id=\"hd24ReminderSend\"")&&reminder.includes("addEventListener('click',async e=>"),'D+7 reminder must require explicit send-button click');
+ok(reminder.includes("status:'seven-day-reminder-failed'")&&reminder.includes("status:'seven-day-reminder-sent'"),'D+7 success/failure history missing');
+ok(reminder.includes("setTimeout(()=>controller.abort(),30000)"),'D+7 API timeout guard missing');
 ok(reminder.includes("status:'seven-day-reminder-sent'"),'reminder sent history missing');
 ok(reminder.includes("GLOBAL=['dylee07@hd.com','hastom@hd.com']"),'global reminder CC missing');
 ok(reminder.includes("india:['minsu.kim01@hd.com','deokho.kim@hd.com']"),'India reminder CC missing');
 ok(reminder.includes("brazil:['antos2082@hd.com','yhchoi@hd.com']"),'Brazil reminder CC missing');
 ok(reminder.includes("short- and long-term trend reviews"),'requested Lean KPI follow-up message missing');
-ok(ui.includes('hd24-seven-day-reminder.js?v=4'),'reminder loader missing');
-ok(refresh.includes('hd24-seven-day-reminder.js?v=4'),'reminder refresh preload missing');
+ok(ui.includes('hd24-seven-day-reminder.js?v=7'),'reminder loader missing');
+ok(refresh.includes('hd24-seven-day-reminder.js?v=7'),'reminder refresh preload missing');
 console.log('HD24 SEVEN-DAY REMINDER CONTRACT PASS');
 
 ok(src.includes("id='hd24MailTypeTabs'")&&src.includes('최초 발송메일')&&src.includes('리마인드 메일 [D+7 경과]'),'initial and D+7 mail tabs missing');
@@ -172,3 +176,9 @@ ok(src.includes("replyPanel.id='hd24ReplyPanel'")&&src.includes("sec.after(reply
 ok(dashboard.includes('data-tab="reply">회신 이력 반영')&&dashboard.includes("tab!=='reply'"),'separate reply tab routing missing');
 ok(src.includes("$('hd24ReplyFile')?.closest('.field-row')"),'reply Excel input must move to independent tab');
 console.log('HD24 STANDALONE REPLY TAB PASS');
+
+// Derived DIO must flow through the same reply workbook path as any other KPI.
+ok(src.includes("const kpiName = isKo ? (r.kpi||r.kpiEn||'') : (r.kpiEn||r.kpi||'')"),'reply workbook must preserve derived KPI name');
+ok(src.includes("r.target??''")&&src.includes("r.actual??''"),'reply workbook must preserve derived target/actual');
+ok(src.includes("uniqueItems=items.filter")&&src.includes("norm(r.kpiEn||r.kpi)"),'reply workbook must dedupe derived DIO by KPI and month without excluding it');
+console.log('HD24 DERIVED DIO REPLY WORKBOOK CONTRACT PASS');
