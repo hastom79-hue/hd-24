@@ -203,6 +203,11 @@ ok(historyView.includes("function aliases(x){return [norm(x.kpiEn||''),norm(x.kp
 ok(historyView.includes("function sameKpi(a,b){const A=aliases(a),B=aliases(b);return A.some(k=>B.includes(k))}"),'history grouping must match either Korean or English KPI alias');
 ok(historyView.includes("function sameGroup(a,b){return a.plant===b.plant&&Number(a.targetMonth)===Number(b.targetMonth)&&sameKpi(a,b)}"),'history bilingual merge must remain scoped to plant and month');
 console.log('HD24 HISTORY BILINGUAL GROUP PASS');
+ok(historyView.includes("const mailGroups=[]"),'timeline mail sequence must use alias-aware groups');
+ok(historyView.includes("mailGroups.find(x=>sameGroup(x.seed,m))"),'timeline sent sequence must merge bilingual KPI aliases');
+ok(historyView.includes("replyGroups.find(x=>sameGroup(x.seed,r))"),'timeline reply sequence must merge bilingual KPI aliases');
+console.log('HD24 HISTORY BILINGUAL TIMELINE PASS');
+
 
 
 
