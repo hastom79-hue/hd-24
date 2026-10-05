@@ -14,6 +14,18 @@ function flagsFor(r,all){
  if(same.some(x=>norm(x.recoveryPlan)===plan&&plan))f.push(['MEDIUM','이전 월과 동일 만회계획 반복 — 실행 효과 확인 필요']);
  return f;
 }
+function directionOf(r){const d=norm(r.direction);if(d.includes('하향')||d==='lower'||d==='down')return'LOWER';if(d.includes('상향')||d==='higher'||d==='up')return'HIGHER';const k=norm(r.kpiEn||r.kpi);return /(dio|days inventory|재고회전일수|defect|ppm|complaint|downtime|lead time)/.test(k)?'LOWER':'HIGHER'}
+function achieved(r){const a=val(r.actual),t=val(r.target);if(a===null||t===null)return null;return directionOf(r)==='LOWER'?a<=t:a>=t}
+function closedLoop(all){
+ const out=[],ordered=[...all].sort((a,b)=>Number(a.targetMonth)-Number(b.targetMonth));
+ for(const prev of ordered){const pm=Number(prev.targetMonth),next=ordered.find(x=>norm(x.kpiEn||x.kpi)===norm(prev.kpiEn||prev.kpi)&&Number(x.targetMonth)>pm);if(!next)continue;
+  const nextAch=achieved(next),prevAch=achieved(prev),plan=norm(prev.recoveryPlan),root=norm(prev.rootCause),sameRoot=root&&norm(next.rootCause)===root,samePlan=plan&&norm(next.recoveryPlan)===plan;
+  if(prevAch===false&&nextAch===false&&(sameRoot||samePlan))out.push({sev:'HIGH',month:next.targetMonth,kpi:next.kpiEn||next.kpi,msg:'전월 미달 후 차월도 미달이며 '+(sameRoot&&samePlan?'근본원인·대책이 모두 반복':'문제해결 논리가 반복')+' — 기존 대책 효과 미입증'});
+  else if(prevAch===false&&nextAch===false)out.push({sev:'MEDIUM',month:next.targetMonth,kpi:next.kpiEn||next.kpi,msg:'전월 미달 후 차월도 미달 — 변경 대책의 실행성과와 추가 근인 확인 필요'});
+  if(prev.nextMonthTarget){const promised=val(prev.nextMonthTarget),actual=val(next.actual);if(promised!==null&&actual!==null){const met=directionOf(next)==='LOWER'?actual<=promised:actual>=promised;if(!met)out.push({sev:'HIGH',month:next.targetMonth,kpi:next.kpiEn||next.kpi,msg:'전월 회신의 차월 회복목표 미달 — 약속 대비 실제성과 갭 검증 필요'});}}
+ }
+ return out;
+}
 function contradictions(all){
  const out=[], n=s=>norm(s).replace(/\s/g,''), has=(r,arr)=>arr.some(t=>n(r.kpiEn||r.kpi).includes(n(t)));
  const quality=all.filter(r=>has(r,['IQ 200 (Initial Quality)','IQ 200 (Production attributable)','Basic Quality','Assembly Quality']));
@@ -32,10 +44,10 @@ async function exportXlsx(rows,cons){
 function render(){
  if(!$('hd24Feedback')){try{window.hd24ReplyFeedback?.render?.()}catch(_){}}
  const host=$('hd24Feedback');if(!host)return;let rows=[];try{rows=JSON.parse(localStorage.getItem(KEY)||'[]').filter(r=>r.plant===($('plantSelect')?.value||'india'))}catch{};if(!rows.length)return;
- const cons=contradictions(rows), findings=rows.flatMap(r=>flagsFor(r,rows).map(x=>({r,sev:x[0],msg:x[1]}))), high=findings.filter(x=>x.sev==='HIGH').length, medium=findings.filter(x=>x.sev==='MEDIUM').length, repeatedReason=findings.filter(x=>x.msg.includes('동일 사유 반복')).length, repeatedRoot=findings.filter(x=>x.msg.includes('동일 근본원인 반복')).length, repeatedPlan=findings.filter(x=>x.msg.includes('동일 만회계획 반복')).length;
+ const cons=contradictions(rows), loop=closedLoop(rows), findings=rows.flatMap(r=>flagsFor(r,rows).map(x=>({r,sev:x[0],msg:x[1]}))), high=findings.filter(x=>x.sev==='HIGH').length+loop.filter(x=>x.sev==='HIGH').length, medium=findings.filter(x=>x.sev==='MEDIUM').length+loop.filter(x=>x.sev==='MEDIUM').length, repeatedReason=findings.filter(x=>x.msg.includes('동일 사유 반복')).length, repeatedRoot=findings.filter(x=>x.msg.includes('동일 근본원인 반복')).length, repeatedPlan=findings.filter(x=>x.msg.includes('동일 만회계획 반복')).length;
  let box=$('hd24DeepValidation');if(!box){box=document.createElement('section');box.id='hd24DeepValidation';host.prepend(box)}
- box.innerHTML='<h3>실적 × 회신 심층 검증</h3><p>달성 여부와 별개로 전월→당월 동일 KPI 반복, 회신 품질, 조치 효과, KPI 간 논리 정합성을 검증합니다.</p><div class="hd24-summary-grid"><div class="hd24-kpi-mini"><span>검증 경고</span><b>'+findings.length+'</b></div><div class="hd24-kpi-mini"><span>HIGH</span><b>'+high+'</b></div><div class="hd24-kpi-mini"><span>MEDIUM</span><b>'+medium+'</b></div><div class="hd24-kpi-mini"><span>KPI 간 모순</span><b>'+cons.length+'</b></div></div><div class="hd24-summary-grid" style="margin-top:8px"><div class="hd24-kpi-mini"><span>전월 동일 사유</span><b>'+repeatedReason+'</b></div><div class="hd24-kpi-mini"><span>전월 동일 근인</span><b>'+repeatedRoot+'</b></div><div class="hd24-kpi-mini"><span>전월 동일 대책</span><b>'+repeatedPlan+'</b></div></div><div id="hd24DeepList"></div><button type="button" id="hd24ExportDeepAnalysis">심층 분석 Excel 추출</button>';
- const list=$('hd24DeepList');findings.slice(0,30).forEach(x=>{const p=document.createElement('p');p.textContent=x.sev+' · '+x.r.targetMonth+'M · '+(x.r.kpiEn||x.r.kpi)+' — '+x.msg;list.append(p)});cons.forEach(x=>{const p=document.createElement('p');p.textContent='CROSS · '+x.month+'M · '+x.kpi+' ↔ '+x.related+' — '+x.msg;list.append(p)});
+ box.innerHTML='<h3>실적 × 회신 심층 검증</h3><p>달성 여부와 별개로 전월→당월 동일 KPI 반복, 회신 품질, 조치 효과, KPI 간 논리 정합성을 검증합니다.</p><div class="hd24-summary-grid"><div class="hd24-kpi-mini"><span>검증 경고</span><b>'+findings.length+'</b></div><div class="hd24-kpi-mini"><span>HIGH</span><b>'+high+'</b></div><div class="hd24-kpi-mini"><span>MEDIUM</span><b>'+medium+'</b></div><div class="hd24-kpi-mini"><span>KPI 간 모순</span><b>'+cons.length+'</b></div><div class="hd24-kpi-mini"><span>폐루프 경고</span><b>'+loop.length+'</b></div></div><div class="hd24-summary-grid" style="margin-top:8px"><div class="hd24-kpi-mini"><span>전월 동일 사유</span><b>'+repeatedReason+'</b></div><div class="hd24-kpi-mini"><span>전월 동일 근인</span><b>'+repeatedRoot+'</b></div><div class="hd24-kpi-mini"><span>전월 동일 대책</span><b>'+repeatedPlan+'</b></div></div><div id="hd24DeepList"></div><button type="button" id="hd24ExportDeepAnalysis">심층 분석 Excel 추출</button>';
+ const list=$('hd24DeepList');findings.slice(0,30).forEach(x=>{const p=document.createElement('p');p.textContent=x.sev+' · '+x.r.targetMonth+'M · '+(x.r.kpiEn||x.r.kpi)+' — '+x.msg;list.append(p)});loop.forEach(x=>{const p=document.createElement('p');p.textContent=x.sev+' · CLOSED LOOP · '+x.month+'M · '+x.kpi+' — '+x.msg;list.append(p)});cons.forEach(x=>{const p=document.createElement('p');p.textContent='CROSS · '+x.month+'M · '+x.kpi+' ↔ '+x.related+' — '+x.msg;list.append(p)});
  $('hd24ExportDeepAnalysis').onclick=()=>exportXlsx(rows,cons).catch(e=>alert(e.message));
 }
 document.addEventListener('DOMContentLoaded',()=>setTimeout(render,1000));document.addEventListener('hd24:reply-feedback-ready',()=>setTimeout(render,0));document.addEventListener('hd24:reply-imported',()=>setTimeout(render,100));document.addEventListener('change',e=>{if(e.target?.id==='plantSelect')setTimeout(render,100)});
