@@ -122,3 +122,12 @@
 - Added the dedupe single-wire contract to the integrated followup-mailto closed-loop regression.
 - Verified Pages deployment success through aea1f0f; GitHub-hosted non-Pages workflows continue failing before runner steps and remain an execution-layer issue, not a proven application regression.
 - Commits: 7265b34, 2e699b5, 600aa95, 93d8bff, fde05a3, aea1f0f, ab22fb5.
+
+
+## 2026-10-05 — History send semantics + bilingual reply continuity closure
+- History v31-v37: confirmed-send-only mail sequence/count, non-send sequence display, latest confirmed send retention, latest-event ordering, packaged/opened filter parity and separation.
+- Follow-up v91-v92: recurrence history matches Korean/English KPI aliases and reply import preserves bilingual KPI aliases from matching mail history.
+- D+7 contract rechecked: sent-only source, 7-day threshold, all-replied exclusion, prior-reminder exclusion.
+- Refresh/single-wire contract rechecked for follow-up initialization.
+- Remaining closure: confirm v92 Pages deployment, cross-check mixed-language reply sequence/Repeated Issue, final refresh/download regression. General non-Pages Actions continue failing outside executed test steps and are tracked separately from application regression.
+- Commits include: a260fcd, 852a6a4, 7c1f3c0, 07af24c, 1dc2d6b, e314a67, 9a46a03, c59bb88, 46c1fb4, 124ad11, d7effca, 3036746.
