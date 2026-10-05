@@ -22,32 +22,34 @@ jobs:
           m=re.search(r"hd24-ui-v3\.js\?v=(\d+)",s)
           if not m:
               raise SystemExit('Cannot determine current HD24 outer UI cache version from index.html')
-          ver=m.group(1)
+          js_ver=m.group(1)
+          cm=re.search(r"hd24-ui-v3\.css\?v=(\d+)",s)
+          css_ver=cm.group(1) if cm else js_ver
           original=s
           if 'hd24-ui-v3.css' not in s:
               s=s.replace('</head>',f'<link rel="stylesheet" href="./hd24-ui-v3.css?v={ver}">\n</head>')
           else:
-              s=re.sub(r'hd24-ui-v3\.css\?v=\d+',f'hd24-ui-v3.css?v={ver}',s)
+              s=re.sub(r'hd24-ui-v3\.css\?v=\d+',f'hd24-ui-v3.css?v={css_ver}',s)
           if 'hd24-ui-v3.js' not in s:
               s=s.replace('</body>',f'<script src="./hd24-ui-v3.js?v={ver}"></script>\n</body>')
           else:
-              s=re.sub(r'hd24-ui-v3\.js\?v=\d+',f'hd24-ui-v3.js?v={ver}',s)
+              s=re.sub(r'hd24-ui-v3\.js\?v=\d+',f'hd24-ui-v3.js?v={js_ver}',s)
           changed=s!=original
           if changed:
               p.write_text(s,encoding='utf-8')
-          assert f'hd24-ui-v3.css?v={ver}' in s
-          assert f'hd24-ui-v3.js?v={ver}' in s
+          assert f'hd24-ui-v3.css?v={css_ver}' in s
+          assert f'hd24-ui-v3.js?v={js_ver}' in s
 
           rp=Path('refresh-runtime.html')
           rs=rp.read_text(encoding='utf-8')
           r0=rs
-          rs=re.sub(r'hd24-ui-v3\.css\?v=\d+',f'hd24-ui-v3.css?v={ver}',rs)
-          rs=re.sub(r'hd24-ui-v3\.js\?v=\d+',f'hd24-ui-v3.js?v={ver}',rs)
+          rs=re.sub(r'hd24-ui-v3\.css\?v=\d+',f'hd24-ui-v3.css?v={css_ver}',rs)
+          rs=re.sub(r'hd24-ui-v3\.js\?v=\d+',f'hd24-ui-v3.js?v={js_ver}',rs)
           if rs!=r0:
               rp.write_text(rs,encoding='utf-8')
-          assert f'hd24-ui-v3.css?v={ver}' in rs
-          assert f'hd24-ui-v3.js?v={ver}' in rs
-          print(f'Approved UI + runtime refresh outer version alignment: v{ver}; index_changed={changed}; refresh_changed={rs!=r0}')
+          assert f'hd24-ui-v3.css?v={css_ver}' in rs
+          assert f'hd24-ui-v3.js?v={js_ver}' in rs
+          print(f'Approved UI + runtime refresh alignment: css=v{css_ver}, js=v{js_ver}; index_changed={changed}; refresh_changed={rs!=r0}')
           PY
       - name: Verify no stale v3 reinjection logic
         run: |
