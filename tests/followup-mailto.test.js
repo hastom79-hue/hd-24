@@ -223,6 +223,11 @@ ok(historyView.includes('<option value="failed">발송실패</option>'),'History
 ok(historyView.includes("f.s==='failed')events=events.filter(r=>r.type==='failed')"),'send-failed History filter must isolate failed events');
 ok(historyView.includes("type:'failed',sequence:''"),'failed sends must never increment confirmed-send sequence');
 console.log('HD24 SEND FAILURE HISTORY PASS');
+ok(reminder.includes("targetMonth:m.targetMonth||'',kpi:m.kpi||'',kpiEn:m.kpiEn||''"),'D+7 success/failure history must preserve source KPI context');
+ok(historyView.includes("targetMonth:m.targetMonth||'',kpi:m.kpi||'D+7 Reminder',kpiEn:m.kpiEn||m.kpi||'D+7 Reminder'"),'D+7 Timeline must render original KPI/month when available');
+ok(historyView.includes('m.originalSentAt&&`원발송 ${dt(m.originalSentAt)}`'),'D+7 Timeline must expose original send timestamp');
+console.log('HD24 D+7 KPI CONTEXT PASS');
+
 
 
 
