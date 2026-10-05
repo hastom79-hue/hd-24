@@ -1308,23 +1308,10 @@ async function openMailDraft(items, scopeLabelKo, scopeLabelEn, showStatus, mana
 
   const {file, fname} = await buildMailExcelFile(items, scopeLabelKo, scopeLabelEn);
 
-  if (navigator.canShare && navigator.canShare({files:[file]})) {
-    try {
-      const shareBody = buildMailBody(items, scopeLabelKo, scopeLabelEn, showStatus);
-      await navigator.share({files:[file], title:subject, text:shareBody});
-      log((en?'Shared with file attached via system share sheet: ':'공유하기(파일 포함)로 전달: ') + fname);
-      return;
-    } catch(err) {
-      if (err && err.name === 'AbortError') { log(en?'Share cancelled by user.':'공유가 취소됐습니다.'); return; }
-      log((en?'Share failed; switching to managed mail Preview: ':'공유 실패, 통합 메일 Preview로 전환: ') + (err&&err.message||err));
-    }
-  }
-
-  // Legacy mailto/download fallback is intentionally disabled.
-  // The current HD-24 mail flow must not trigger an unsolicited browser download.
-  // If the system share sheet is unavailable, prepare the managed Preview instead;
-  // actual send/download remains an explicit user action in the follow-up mail UI.
-  log((en?'System share unavailable; managed mail Preview will be used.':'시스템 공유를 사용할 수 없어 통합 메일 Preview를 사용합니다.'));
+  // All mail buttons use the same managed Preview/send path.
+  // Do not invoke the OS share sheet here: it bypasses HD-24 send history,
+  // required-CC enforcement and the explicit in-app send confirmation.
+  log((en?'Managed mail Preview prepared.':'통합 메일 Preview를 준비합니다.'));
   if (typeof window.hd24PrepareFollowupPreview === 'function') {
     window.hd24PrepareFollowupPreview(items, managedMode);
   } else {
