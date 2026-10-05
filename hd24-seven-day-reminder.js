@@ -4,6 +4,7 @@ const MAIL_KEY='hd24_kpi_mail_history_v2',REPLY_KEY='hd24_kpi_reply_history_v2',
 const DAY=86400000,DELAY=7*DAY,GLOBAL=['dylee07@hd.com','hastom@hd.com'],EXTRA={india:['minsu.kim01@hd.com','deokho.kim@hd.com'],brazil:['antos2082@hd.com','yhchoi@hd.com']};
 const read=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch(_){return []}};
 const norm=v=>String(v||'').toLowerCase().replace(/[^a-z0-9가-힣]/g,'');
+const sameKpi=(a,b)=>{const A=[norm(a?.kpiEn),norm(a?.kpi)].filter(Boolean),B=[norm(b?.kpiEn),norm(b?.kpi)].filter(Boolean);return A.some(x=>B.includes(x))};
 const plant=()=>{try{return currentPlant||document.getElementById('plantSelect')?.value||''}catch(_){return document.getElementById('plantSelect')?.value||''}};
 const required=(p,cc)=>[...new Set([...GLOBAL,...(EXTRA[p]||[]),...String(cc||'').split(/[;,\s]+/).filter(Boolean)].map(s=>s.trim().toLowerCase()))].join('; ');
 const greeting=n=>n?'Dear '+String(n).replace(/[\r\n<>]/g,' ').trim().replace(/,+$/,'')+',':'Dear Team,';
@@ -29,7 +30,7 @@ function pending(now=Date.now()){
   const batch=mails.filter(x=>x.status==='sent'&&x.plant===m.plant&&x.sentAt===m.sentAt&&x.to===m.to);
   const batchKey=[...new Set(batch.map(x=>[Number(x.targetMonth)||0,norm(x.kpiEn||x.kpi)].join(':')).filter(Boolean))].sort().join(',');
   const id=[m.plant,m.sentAt,m.to.toLowerCase(),batchKey].join('|');if(seen.has(id))continue;seen.add(id);
-  const answered=batch.every(x=>replies.some(r=>r.plant===x.plant&&Number(r.targetMonth)===Number(x.targetMonth)&&norm(r.kpiEn||r.kpi)===norm(x.kpiEn||x.kpi)&&Date.parse(r.replyReceivedAt)>=sent));
+  const answered=batch.every(x=>replies.some(r=>r.plant===x.plant&&Number(r.targetMonth)===Number(x.targetMonth)&&sameKpi(r,x)&&Date.parse(r.replyReceivedAt)>=sent));
   const reminded=mails.some(x=>x.status==='seven-day-reminder-sent'&&x.originalMailId===id);
   if(!answered&&!reminded)out.push({id,mail:m,batch});
  }
