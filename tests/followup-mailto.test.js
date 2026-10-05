@@ -218,3 +218,15 @@ ok(feedback.includes("setTimeout(()=>controller.abort(),30000)"),'reply feedback
 ok(ui.includes('hd24-reply-feedback.js?v=16'),'reply feedback production loader must be v16');
 ok(refresh.includes('hd24-reply-feedback.js?v=16'),'reply feedback refresh preload must be v16');
 console.log('HD24 REPLY FEEDBACK MAIL HARDENING CONTRACT PASS');
+
+
+// 2026-10-05 closed-loop regression locks.
+ok(reminder.includes("['ulsan','india','brazil']"),'D+7 must cover Ulsan, India and Brazil');
+ok(reminder.includes('const sameKpi=')&&reminder.includes('sameKpi(r,x)'),'D+7 reply matching must accept either KPI language label');
+ok(src.includes("window.hd24PrepareFollowupPreview = function(items, mode)")&&src.includes("safeMode=['month','watch','all'].includes(mode)?mode:'watch'"),'managed Preview must preserve Month/Watch/All mode');
+ok(src.includes("Content-Type':'text/plain;charset=utf-8")&&!src.includes("Content-Type':'application/json"),'initial mail API must use hardened no-preflight transport');
+ok(src.includes("if($('mailCc'))$('mailCc').value=cc"),'managed mail field must display enforced CC used for send');
+ok(feedback.includes('id="hd24FeedbackCc" readonly')&&feedback.includes("cc=(get('mailCc')?.value||'').trim()"),'feedback mail must inherit managed CC and prevent local CC drift');
+ok(feedback.includes('const previousReply=')&&!feedback.includes('history[history.length-2]'),'feedback comparison must use actual prior reply sequence');
+ok(feedback.includes('latestFeedbackAttachment=null')&&feedback.includes('exportKey!==lastExportKey'),'new feedback state must invalidate stale attachment before regeneration');
+console.log('HD24 2026-10-05 CLOSED LOOP REGRESSION PASS');
