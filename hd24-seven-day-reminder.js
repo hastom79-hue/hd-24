@@ -19,12 +19,12 @@ const reminderText=(n,lang=reminderLang)=>lang==='ko'?
 'Daily Lean KPI management goes beyond setting targets and tracking results. It requires short- and long-term trend reviews and corresponding actions by operational and shop-floor teams.','',
 'Each plant must manage these activities as part of its daily operations. Please confirm your understanding and share your action status in your reply.','',
 'Best Regards,','Mr.Seoh'].join('\n');
-const reminderSubject=(p,lang=reminderLang)=>lang==='ko'?'[HDPS KPI] D+7 미회신 안내 및 Lean 성과지표 일상관리 회신 요청 - '+(p==='india'?'인도':p==='brazil'?'브라질':'사업장'):'[HDPS KPI] D+7 Reminder: Reply & Daily Lean KPI Management - '+(p==='india'?'India':p==='brazil'?'Brazil':'Plant');
+const reminderSubject=(p,lang=reminderLang)=>lang==='ko'?'[HDPS KPI] D+7 미회신 안내 및 Lean 성과지표 일상관리 회신 요청 - '+(p==='india'?'인도':p==='brazil'?'브라질':p==='ulsan'?'울산':'사업장'):'[HDPS KPI] D+7 Reminder: Reply & Daily Lean KPI Management - '+(p==='india'?'India':p==='brazil'?'Brazil':p==='ulsan'?'Ulsan':'Plant');
 const status=s=>{const el=document.getElementById('hd24SevenDayStatus');if(el)el.textContent=s};
 function pending(now=Date.now()){
  const mails=read(MAIL_KEY),replies=read(REPLY_KEY),seen=new Set(),out=[];
  for(const m of mails){
-  if(m.status!=='sent'||!m.sentAt||!m.to||!['india','brazil'].includes(m.plant))continue;
+  if(m.status!=='sent'||!m.sentAt||!m.to||!['ulsan','india','brazil'].includes(m.plant))continue;
   const sent=Date.parse(m.sentAt);if(!Number.isFinite(sent)||now-sent<DELAY)continue;
   const batch=mails.filter(x=>x.status==='sent'&&x.plant===m.plant&&x.sentAt===m.sentAt&&x.to===m.to);
   const batchKey=[...new Set(batch.map(x=>[Number(x.targetMonth)||0,norm(x.kpiEn||x.kpi)].join(':')).filter(Boolean))].sort().join(',');
