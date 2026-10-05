@@ -230,3 +230,12 @@ ok(feedback.includes('id="hd24FeedbackCc" readonly')&&feedback.includes("cc=(get
 ok(feedback.includes('const previousReply=')&&!feedback.includes('history[history.length-2]'),'feedback comparison must use actual prior reply sequence');
 ok(feedback.includes('latestFeedbackAttachment=null')&&feedback.includes('exportKey!==lastExportKey'),'new feedback state must invalidate stale attachment before regeneration');
 console.log('HD24 2026-10-05 CLOSED LOOP REGRESSION PASS');
+
+// Initialization idempotency regression locks.
+ok(autoRun.includes('__HD24_AUTO_RUN_WIRED__'),'auto-run initialization must be idempotent');
+ok(pipeline.includes('__HD24_PIPELINE_GATE_WIRED__'),'pipeline gate initialization must be idempotent');
+ok(src.includes('__HD24_FOLLOWUP_WIRED__'),'follow-up initialization must be idempotent');
+ok(reminder.includes('__HD24_SEVEN_DAY_REMINDER_WIRED__'),'D+7 reminder initialization must be idempotent');
+ok(feedback.includes('__HD24_REPLY_FEEDBACK_WIRED__'),'reply feedback initialization must be idempotent');
+ok(directReply.includes('__HD24_DIRECT_REPLY_GUARD_WIRED__'),'direct reply guard initialization must be idempotent');
+ok(historyView.includes('__HD24_HISTORY_VIEW_WIRED__'),'history view initialization must be idempotent');
