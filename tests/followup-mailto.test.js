@@ -207,6 +207,11 @@ ok(historyView.includes("const mailGroups=[]"),'timeline mail sequence must use 
 ok(historyView.includes("mailGroups.find(x=>sameGroup(x.seed,m))"),'timeline sent sequence must merge bilingual KPI aliases');
 ok(historyView.includes("replyGroups.find(x=>sameGroup(x.seed,r))"),'timeline reply sequence must merge bilingual KPI aliases');
 console.log('HD24 HISTORY BILINGUAL TIMELINE PASS');
+ok(historyView.includes("kpiMails=mails.filter(x=>x.status!=='seven-day-reminder-sent'&&x.status!=='seven-day-reminder-failed')"),'D+7 reminder rows must be excluded from KPI summary/send sequence');
+ok(historyView.includes("type:'reminder',sequence:''"),'D+7 reminder timeline events must not receive KPI send sequence');
+ok(historyView.includes("m.status==='seven-day-reminder-sent'?'D+7 리마인드 발송':'D+7 리마인드 실패'"),'D+7 success/failure must remain explicit timeline states');
+console.log('HD24 D+7 HISTORY ISOLATION PASS');
+
 
 
 
