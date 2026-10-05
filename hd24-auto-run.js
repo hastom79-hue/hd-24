@@ -107,6 +107,8 @@ function resetAndRun(reason){
 }
 
 function wire(){
+  if(window.__HD24_AUTO_RUN_WIRED__)return;
+  window.__HD24_AUTO_RUN_WIRED__=true;
   const src=document.getElementById('srcFile');
   const master=document.getElementById('masterFile');
   const plant=document.getElementById('plantSelect');
