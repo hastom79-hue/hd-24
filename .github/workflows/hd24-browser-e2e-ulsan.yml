@@ -1,0 +1,105 @@
+name: HD24 Ulsan Browser E2E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'hd24-rule-matrix-v1.js'
+      - 'hd24-ui-v3.js'
+      - 'mapping_ulsan.json'
+      - '.github/workflows/hd24-browser-e2e-ulsan.yml'
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'hd24-rule-matrix-v1.js'
+      - 'hd24-ui-v3.js'
+      - 'mapping_ulsan.json'
+      - '.github/workflows/hd24-browser-e2e-ulsan.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-e2e-ulsan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install E2E dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install openpyxl playwright
+          python -m playwright install --with-deps chromium
+      - name: Generate anonymous Ulsan master-only fixture
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from openpyxl import Workbook
+          root=Path('.'); out=root/'qa'/'e2e-runtime-ulsan'; out.mkdir(parents=True,exist_ok=True)
+          mapping=json.loads((root/'mapping_ulsan.json').read_text(encoding='utf-8'))
+          turn=next(m for m in mapping if str(m.get('kpiEn','')).strip().lower()=='parts inventory turnover')
+          dio=next(m for m in mapping if str(m.get('kpiEn','')).strip().lower()=='dio (days inventory outstanding)')
+          assert int(turn['masterRow'])==55
+          assert int(dio['masterRow'])==102 and dio['direction']=='하향'
+          wb=Workbook(); ws=wb.active; ws.title='울산캠퍼스 KPI(26년 보고용)'
+          # Ulsan production contract: annual fixed target col 28, Jan-Dec actual cols 30-41.
+          for m in mapping:
+              r=int(m['masterRow']); ws.cell(r,13,m['kpiKr']); ws.cell(r,26,m.get('unit') or '')
+              ws.cell(r,28,10.0)
+              for c in range(30,37): ws.cell(r,c,10.0)
+          # Turnover drives derived DIO. Deliberately poison physical DIO cells to prove overwrite.
+          ws.cell(55,28,4.0)
+          for c,v in zip(range(30,37),[4.0,5.0,3.0,4.0,5.0,4.0,4.0]): ws.cell(55,c,v)
+          ws.cell(102,28,999.0)
+          for c in range(30,37): ws.cell(102,c,999.0)
+          wb.save(out/'ulsan_master.xlsx')
+          print('ULSAN MASTER-ONLY FIXTURE READY')
+          PY
+      - name: Start local app server
+        run: |
+          python -m http.server 8767 --bind 127.0.0.1 > /tmp/hd24-http-ulsan.log 2>&1 &
+          for i in {1..20}; do if curl -fsS http://127.0.0.1:8767/index.html >/dev/null; then exit 0; fi; sleep 1; done
+          cat /tmp/hd24-http-ulsan.log; exit 1
+      - name: Ulsan master-only DIO browser E2E
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+          fixture=Path('qa/e2e-runtime-ulsan').resolve()
+          with sync_playwright() as p:
+              browser=p.chromium.launch(headless=True)
+              page=browser.new_page(accept_downloads=True)
+              downloads=[]; page.on('download',lambda dl: downloads.append(dl))
+              page.goto('http://127.0.0.1:8767/index.html',wait_until='networkidle',timeout=120000)
+              page.locator('.hd24-plant-card[data-plant="ulsan"]').click()
+              page.wait_for_function("document.getElementById('plantSelect').value==='ulsan'",timeout=30000)
+              assert not page.locator('#srcFileRow').is_visible(), 'Ulsan must remain master-only'
+              page.locator('#masterFile').set_input_files(str(fixture/'ulsan_master.xlsx'))
+              page.wait_for_function("document.getElementById('log').innerText.includes('울산 매핑 로드')",timeout=30000)
+              page.wait_for_function("""() => {
+                const rows=window.allResults||[];
+                return rows.some(r=>Number(r.masterRow)===102 && Number(r.month)===1);
+              }""",timeout=30000)
+              rows=page.evaluate("""() => (window.allResults||[]).filter(r=>Number(r.masterRow)===102).map(r=>({month:r.month,target:r.target,actual:r.actual,achieved:r.achieved,direction:r.direction,kpiEn:r.kpiEn}))""")
+              assert rows, 'Derived Ulsan DIO rows missing'
+              jan=next(r for r in rows if int(r['month'])==1)
+              feb=next(r for r in rows if int(r['month'])==2)
+              mar=next(r for r in rows if int(r['month'])==3)
+              assert abs(float(jan['target'])-91.25)<1e-9 and abs(float(jan['actual'])-91.25)<1e-9 and jan['achieved'] is True
+              assert abs(float(feb['actual'])-73.0)<1e-9 and feb['achieved'] is True
+              assert abs(float(mar['actual'])-(365/3))<1e-9 and mar['achieved'] is False
+              assert all(r['direction']=='하향' for r in rows)
+              assert all(abs(float(r['target'])-91.25)<1e-9 for r in rows)
+              assert not downloads, 'Ulsan analysis/master-only path must not auto-download'
+              log=page.locator('#log').inner_text()
+              assert 'DIO 자동계산' in log and '365/부품재고회전율' in log
+              assert '울산은 월별 목표가 아닌 연간 고정목표' in log
+              print('ULSAN BROWSER E2E PASS: master-only + derived DIO + lower-is-better + zero unsolicited download')
+              browser.close()
+          PY
