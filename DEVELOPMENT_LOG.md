@@ -131,3 +131,13 @@
 - Refresh/single-wire contract rechecked for follow-up initialization.
 - Remaining closure: confirm v92 Pages deployment, cross-check mixed-language reply sequence/Repeated Issue, final refresh/download regression. General non-Pages Actions continue failing outside executed test steps and are tracked separately from application regression.
 - Commits include: a260fcd, 852a6a4, 7c1f3c0, 07af24c, 1dc2d6b, e314a67, 9a46a03, c59bb88, 46c1fb4, 124ad11, d7effca, 3036746.
+
+
+## 2026-10-05 — Refresh load + mail/history closure v93–v40
+- Production refresh inspection: active loaded modules have no location.reload path; only hd24-auto-run retains a guarded 15s watchdog, and plain refresh exits when browser File objects are absent.
+- Follow-up v93/v94: bounded auto-package retry scheduling from 4 attempts (0/250/1000/3000ms) to 2 (0/1000ms), preserving one recovery retry while reducing failure-path repeated work; duplicate prepared Preview history is suppressed only for the same plant/month/KPI/mode within 5 seconds.
+- Confirmed legacy hd24-followup-sync.js / hd24-action-export.js are not production-loaded; their auto-click/download paths remain regression fixtures and must not be reintroduced.
+- History v38: retain latest confirmed send, legacy-opened, and Outlook packaged timestamps independently so a newer Preview cannot erase prior delivery/package state from summary.
+- History v39/v40: merge Korean/English KPI aliases within the same plant and target month for both summary grouping and Timeline send/reply sequencing. Preview/package/open events do not increment confirmed-send sequence.
+- Regression contracts added for Preview-history dedupe, opened/package retention, bilingual summary grouping, and bilingual Timeline sequencing.
+- GitHub Pages deployment for v93 was confirmed successful. General non-Pages workflows continue to fail/queue independently and are not treated as application regression proof without runner steps.
