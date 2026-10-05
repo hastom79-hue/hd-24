@@ -190,6 +190,11 @@ ok(reminder.includes("if(!pending().some(x=>x.id===item.id))"),'D+7 must recheck
 ok(reminder.includes("now-previous<15*60*1000"),'D+7 must retain duplicate-send lock');
 ok(reminder.includes("localStorage.removeItem(lock);const history=read(MAIL_KEY);history.unshift({plant:m.plant,status:'seven-day-reminder-failed'"),'D+7 failure must unlock and record retryable failure');
 console.log('HD24 D+7 CLOSED LOOP PASS');
+ok(src.includes("isPrepared=extra.status==='prepared'"),'prepared-history dedupe must be scoped to Preview events only');
+ok(src.includes("Math.abs(t-Date.parse(x.preparedAt||0))<5000"),'duplicate Preview history must use a narrow five-second window');
+ok(src.includes("if(duplicate)continue"),'duplicate prepared Preview rows must not be appended');
+console.log('HD24 PREVIEW HISTORY DEDUPE PASS');
+
 
 
 
