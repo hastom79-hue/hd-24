@@ -9,4 +9,4 @@ let prevented=false,stopped=false;for(const h of listeners.click||[]){h.fn({targ
 const other={name:'reply2.xlsx',size:101,lastModified:2};input.files=[other];prevented=false;stopped=false;for(const h of listeners.click||[])h.fn({target:button,preventDefault(){prevented=true},stopImmediatePropagation(){stopped=true}});assert(!prevented&&!stopped,'different file manual import must remain available');
 const loader=fs.readFileSync('hd24-ui-v3.js','utf8'),refresh=fs.readFileSync('refresh-runtime.html','utf8');assert(loader.includes('hd24-reply-import-dedupe.js?v=2'),'production loader must include dedupe guard');assert(refresh.includes('hd24-reply-import-dedupe.js?v=2'),'runtime refresh must preload dedupe guard');
 console.log('reply import dedupe regression: PASS');
-ok(src.includes('__HD24_REPLY_IMPORT_DEDUPE_WIRED__'),'reply import dedupe wiring must be idempotent');
+assert(code.includes('__HD24_REPLY_IMPORT_DEDUPE_WIRED__'),'reply import dedupe wiring must be idempotent');
