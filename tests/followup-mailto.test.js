@@ -215,8 +215,8 @@ ok(feedback.includes("status:'send-failed'"),'reply feedback failure history mis
 ok(feedback.includes("x.sentAt||x.failedAt"),'reply feedback failure timestamp rendering missing');
 ok(feedback.includes("x.error?' · '+x.error"),'reply feedback failure detail rendering missing');
 ok(feedback.includes("setTimeout(()=>controller.abort(),30000)"),'reply feedback API timeout guard missing');
-ok(ui.includes('hd24-reply-feedback.js?v=18'),'reply feedback production loader must be v18');
-ok(refresh.includes('hd24-reply-feedback.js?v=18'),'reply feedback refresh preload must be v18');
+ok(ui.includes('hd24-reply-feedback.js?v=19'),'reply feedback production loader must be v19');
+ok(refresh.includes('hd24-reply-feedback.js?v=19'),'reply feedback refresh preload must be v19');
 console.log('HD24 REPLY FEEDBACK MAIL HARDENING CONTRACT PASS');
 
 
@@ -237,5 +237,6 @@ ok(pipeline.includes('__HD24_PIPELINE_GATE_WIRED__'),'pipeline gate initializati
 ok(src.includes('__HD24_FOLLOWUP_WIRED__'),'follow-up initialization must be idempotent');
 ok(reminder.includes('__HD24_SEVEN_DAY_REMINDER_WIRED__'),'D+7 reminder initialization must be idempotent');
 ok(feedback.includes('__HD24_REPLY_FEEDBACK_WIRED__'),'reply feedback initialization must be idempotent');
+ok(feedback.includes("document.readyState==='loading'")&&feedback.includes("DOMContentLoaded',wire,{once:true}")&&feedback.includes('else wire()'),'reply feedback must initialize when loaded after DOMContentLoaded');
 ok(directReply.includes('__HD24_DIRECT_REPLY_GUARD_WIRED__'),'direct reply guard initialization must be idempotent');
 ok(historyView.includes('__HD24_HISTORY_VIEW_WIRED__'),'history view initialization must be idempotent');
