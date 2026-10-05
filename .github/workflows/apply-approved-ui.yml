@@ -55,11 +55,11 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
           s=Path('.github/workflows/apply-approved-ui.yml').read_text(encoding='utf-8')
-          stale_js='hd24-ui-v3.js?v='+'3'
-          stale_css='hd24-ui-v3.css?v='+'3'
-          assert stale_js not in s
-          assert stale_css not in s
+          # Do not search for the prefix v3: valid versions such as v30 also contain it.
+          assert not re.search(r'hd24-ui-v3\.js\?v=3(?:[^0-9]|$)',s)
+          assert not re.search(r'hd24-ui-v3\.css\?v=3(?:[^0-9]|$)',s)
           assert 'Derive the outer UI cache version from the currently deployed index instead.' in s
           # safe-kpi-mapping is an active production runtime; only stale fixed-version reinjection is forbidden.
           # Active safe-kpi runtime is validated by the dedicated runtime regression gate.
