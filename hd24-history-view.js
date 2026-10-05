@@ -11,7 +11,6 @@ function dt(v){if(!v)return '-';try{return new Date(v).toLocaleString()}catch(_)
 function aliases(x){return [norm(x.kpiEn||''),norm(x.kpi||'')].filter(Boolean)}
 function sameKpi(a,b){const A=aliases(a),B=aliases(b);return A.some(k=>B.includes(k))}
 function sameGroup(a,b){return a.plant===b.plant&&Number(a.targetMonth)===Number(b.targetMonth)&&sameKpi(a,b)}
-function keyOf(x){return [x.plant,x.targetMonth,norm(x.kpiEn||x.kpi)].join('|')}
 function eventTime(x,type){return type==='reply'?(x.replyReceivedAt||''):(x.sentAt||x.mailOpenedAt||x.preparedAt||'')}
 function buildRows(){
   const mails=load(MAIL_KEY),replies=load(REPLY_KEY),kpiMails=mails.filter(x=>x.status!=='seven-day-reminder-sent'&&x.status!=='seven-day-reminder-failed'),all=[...kpiMails,...replies],groups=[],out=[];
