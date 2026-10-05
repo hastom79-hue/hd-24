@@ -97,6 +97,8 @@ async function sendDue(){
  }finally{busy=false;render()}
 }
 function init(){
+ if(window.__HD24_SEVEN_DAY_REMINDER_WIRED__)return;
+ window.__HD24_SEVEN_DAY_REMINDER_WIRED__=true;
  const panel=document.getElementById('hd24ReminderMailContent')||document.getElementById('hd24FollowupPanel');if(panel&&!document.getElementById('hd24SevenDayStatus')){const el=document.createElement('div');el.id='hd24SevenDayStatus';el.style.cssText='padding:8px 12px;margin:8px 0;border:1px solid #cbd5e1;border-radius:6px;font-size:13px';el.textContent='7일 미회신 재안내 확인 중';panel.appendChild(el)}
  render();check();
  document.getElementById('plantSelect')?.addEventListener('change',()=>setTimeout(check,200));
