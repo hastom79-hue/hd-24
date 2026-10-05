@@ -21,7 +21,8 @@ function buildRows(){
     const recurrence=latestReply.isRecurrence===true||same>=2;
     out.push({plant:base.plant,targetMonth:base.targetMonth,kpi:base.kpi||'',kpiEn:base.kpiEn||'',preparedAt:latestMail.preparedAt||'',sentAt:latestSent.sentAt||'',openedAt:latestMail.mailOpenedAt||'',packagedAt:latestMail.status==='outlook-package-downloaded'?(latestMail.mailOpenedAt||latestMail.preparedAt||''):'',mailStatus:latestMail.status||'',replyAt:latestReply.replyReceivedAt||'',replySequence:latestReply.replySequence||rs.length||0,responder:latestReply.responder||'',reason:latestReply.reason||'',rootCause:latestReply.rootCause||'',plan:latestReply.recoveryPlan||'',owner:latestReply.actionOwner||'',due:latestReply.plannedCompletionDate||'',nextTarget:latestReply.nextMonthRecoveryTarget||'',replyFile:latestReply.replyFileName||'',recurrence:recurrence?`Repeated Issue x${same}`:'',mailCount:ms.filter(x=>!!x.sentAt).length,replyCount:rs.length});
   }
-  return out.sort((a,b)=>String(b.replyAt||b.sentAt||b.openedAt||b.preparedAt).localeCompare(String(a.replyAt||a.sentAt||a.openedAt||a.preparedAt)));
+  const latestTime=r=>[r.replyAt,r.sentAt,r.openedAt,r.preparedAt].filter(Boolean).sort().pop()||'';
+  return out.sort((a,b)=>String(latestTime(b)).localeCompare(String(latestTime(a))));
 }
 function buildEvents(){
   const mails=load(MAIL_KEY),replies=load(REPLY_KEY),events=[];
