@@ -15,4 +15,6 @@ ok(src.includes("replies.slice().sort((a,b)=>String(eventTime(a,'reply')).locale
 ok(src.includes("return events.sort((a,b)=>String(b.time).localeCompare(String(a.time)))"),'combined timeline must display newest event first without changing sequence numbers');
 ok(src.includes("e.sequence?`${esc(e.sequence)}차`:'-'"),'non-send timeline events must not render as dash sequence');
 ok(src.includes("mailCount:ms.filter(x=>!!x.sentAt).length"),'summary mail count must include confirmed sends only');
+ok(src.includes("latestSent=ms.find(x=>!!x.sentAt)||{}"),'latest confirmed send must survive newer preview');
+ok(src.includes("sentAt:latestSent.sentAt||''"),'summary actual-send timestamp must come from latest confirmed send');
 console.log('HD24 HISTORY VIEW REGRESSION PASS');
