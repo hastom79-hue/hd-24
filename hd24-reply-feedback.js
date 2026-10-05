@@ -135,6 +135,7 @@ function render(){
  const signals={recurring:analyses.filter(x=>x.a.flags.some(f=>f[0]==='반복 근인')).length,stagnant:analyses.filter(x=>x.a.flags.some(f=>f[0]==='조치 정체')).length,overdue:analyses.filter(x=>x.a.flags.some(f=>f[0]==='기한 초과')).length,retrospective:analyses.filter(x=>/회고/.test(reviewGapFor(x.r,x.a,x.history))).length};
 
  const exportKey=plant+'|'+rows.map(r=>[r.targetMonth,r.kpiEn||r.kpi,r.replyReceivedAt,r.replySequence].join(':')).join('|');
+ const deepMail=window.hd24DeepReplyValidation,deepLoop=deepMail?.closedLoop?.(all)||[],deepCross=deepMail?.contradictions?.(all)||[];
  const ko=['담당자님,','','KPI 회신 내용을 검토한 결과입니다. 아래 KPI별 확인사항과 보완 요청을 검토하여 회신해 주시기 바랍니다.',''];
  const en=['Dear Team,','','We reviewed your KPI response. Please review the KPI-specific findings and provide the requested clarifications and updates below.',''];
  analyses.forEach(({r,a,history})=>{
@@ -146,6 +147,8 @@ function render(){
   if(a.owner||a.due){ko.push(' - 실행책임/기한: '+(a.owner||'미지정')+' / '+(a.due||'미지정'));en.push(' - Owner / due date: '+(a.owner||'Not assigned')+' / '+(a.due||'Not specified'))}
   if(a.target){ko.push(' - 차월 회복목표: '+a.target);en.push(' - Next-month recovery target: '+a.target)}
   a.flags.forEach(f=>{ko.push(' - 확인 요청: '+f[0]);en.push(' - Clarification requested: '+f[1])});
+  const deepFlags=(deepMail?.flagsFor?.(r,all)||[]).filter(x=>x[0]==='HIGH'),loopFlags=deepLoop.filter(x=>x.sev==='HIGH'&&Number(x.month)===Number(r.targetMonth)&&sameKpi(x,r)),crossFlags=deepCross.filter(x=>Number(x.month)===Number(r.targetMonth)&&(txt(x.kpi)===txt(r.kpiEn||r.kpi)||txt(x.related)===txt(r.kpiEn||r.kpi)));
+  deepFlags.forEach(x=>{ko.push(' - 심층검증 HIGH: '+x[1]);en.push(' - Deep validation HIGH: '+x[1])});loopFlags.forEach(x=>{ko.push(' - 폐루프 HIGH: '+x.msg);en.push(' - Closed-loop HIGH: '+x.msg)});crossFlags.forEach(x=>{ko.push(' - KPI 교차검증: '+x.msg);en.push(' - Cross-KPI validation: '+x.msg)});
   if(history.length>1){const prev=history[1],changed=[];fields.forEach(([k,kr,enLabel])=>{if(txt(r[k])!==txt(prev[k]))changed.push([kr,enLabel])});ko.push(' - 이전 회신 대비: '+(changed.length?changed.map(x=>x[0]).join(', ')+' 변경':'주요 회신 내용 변경 없음'));en.push(' - Versus previous reply: '+(changed.length?changed.map(x=>x[1]).join(', ')+' updated':'No material response-field change'))}
   ko.push('');en.push('');
  });
