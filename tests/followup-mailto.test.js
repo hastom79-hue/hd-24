@@ -218,6 +218,12 @@ console.log('HD24 D+7 HISTORY FILTER PASS');
 ok(historyView.includes("f.s==='recurrence'){events=events.filter(e=>rows.some(r=>sameGroup(r,e)))}"),'recurrence Timeline filter must use bilingual-aware grouping');
 ok(!historyView.includes("recurrentKeys=new Set(rows.map(keyOf))"),'legacy single-key recurrence filter must stay removed');
 console.log('HD24 BILINGUAL RECURRENCE FILTER PASS');
+ok(historyView.includes("failedMails=mails.filter(x=>x.status==='send-failed')"),'failed mail attempts must be isolated from KPI send sequencing');
+ok(historyView.includes('<option value="failed">발송실패</option>'),'History status filter must expose send failures');
+ok(historyView.includes("f.s==='failed')events=events.filter(r=>r.type==='failed')"),'send-failed History filter must isolate failed events');
+ok(historyView.includes("type:'failed',sequence:''"),'failed sends must never increment confirmed-send sequence');
+console.log('HD24 SEND FAILURE HISTORY PASS');
+
 
 
 
