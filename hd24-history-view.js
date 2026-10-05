@@ -14,10 +14,10 @@ function sameGroup(a,b){return a.plant===b.plant&&Number(a.targetMonth)===Number
 function keyOf(x){return [x.plant,x.targetMonth,norm(x.kpiEn||x.kpi)].join('|')}
 function eventTime(x,type){return type==='reply'?(x.replyReceivedAt||''):(x.sentAt||x.mailOpenedAt||x.preparedAt||'')}
 function buildRows(){
-  const mails=load(MAIL_KEY),replies=load(REPLY_KEY),all=[...mails,...replies],groups=[],out=[];
+  const mails=load(MAIL_KEY),replies=load(REPLY_KEY),kpiMails=mails.filter(x=>x.status!=='seven-day-reminder-sent'&&x.status!=='seven-day-reminder-failed'),all=[...kpiMails,...replies],groups=[],out=[];
   for(const item of all){let g=groups.find(x=>sameGroup(x.seed,item));if(!g){g={seed:item,items:[]};groups.push(g)}g.items.push(item)}
   for(const group of groups){
-    const ms=mails.filter(x=>sameGroup(group.seed,x)).sort((a,b)=>String(eventTime(b,'mail')).localeCompare(String(eventTime(a,'mail'))));
+    const ms=kpiMails.filter(x=>sameGroup(group.seed,x)).sort((a,b)=>String(eventTime(b,'mail')).localeCompare(String(eventTime(a,'mail'))));
     const rs=replies.filter(x=>sameGroup(group.seed,x)).sort((a,b)=>String(eventTime(b,'reply')).localeCompare(String(eventTime(a,'reply'))));
     const base=rs[0]||ms[0]||{},latestMail=ms[0]||{},latestSent=ms.find(x=>!!x.sentAt)||{},latestPackaged=ms.find(x=>x.status==='outlook-package-downloaded')||{},latestOpened=ms.find(x=>x.mailOpenedAt&&x.status!=='outlook-package-downloaded'&&!x.sentAt)||{},latestReply=rs[0]||{};
     const cause=norm(latestReply.rootCause||latestReply.reason||'');
@@ -30,8 +30,10 @@ function buildRows(){
 }
 function buildEvents(){
   const mails=load(MAIL_KEY),replies=load(REPLY_KEY),events=[];
+  const reminderMails=mails.filter(x=>x.status==='seven-day-reminder-sent'||x.status==='seven-day-reminder-failed'),kpiMails=mails.filter(x=>x.status!=='seven-day-reminder-sent'&&x.status!=='seven-day-reminder-failed');
   const mailGroups=[];
-  mails.slice().sort((a,b)=>String(eventTime(a,'mail')).localeCompare(String(eventTime(b,'mail')))).forEach(m=>{let g=mailGroups.find(x=>sameGroup(x.seed,m));if(!g){g={seed:m,count:0};mailGroups.push(g)}const packaged=m.status==='outlook-package-downloaded',confirmed=!!m.sentAt;let sequence='';if(confirmed){g.count+=1;sequence=g.count}const status=confirmed?'실제 발송':packaged?'Outlook 패키지 다운로드':m.mailOpenedAt?'메일앱 열림':'Preview 준비';events.push({type:'mail',sequence,time:eventTime(m,'mail'),plant:m.plant,targetMonth:m.targetMonth,kpi:m.kpi||'',kpiEn:m.kpiEn||'',status,detail:confirmed?'메일 API 성공 응답':packaged?'Outlook .eml 생성·다운로드 · 실제 발송 여부 미확인':m.mailOpenedAt?'메일앱 호출 · 실제 발송 여부 미확인':m.autoPrepared?'자동분석 Preview':'수동 Preview'});});
+  kpiMails.slice().sort((a,b)=>String(eventTime(a,'mail')).localeCompare(String(eventTime(b,'mail')))).forEach(m=>{let g=mailGroups.find(x=>sameGroup(x.seed,m));if(!g){g={seed:m,count:0};mailGroups.push(g)}const packaged=m.status==='outlook-package-downloaded',confirmed=!!m.sentAt;let sequence='';if(confirmed){g.count+=1;sequence=g.count}const status=confirmed?'실제 발송':packaged?'Outlook 패키지 다운로드':m.mailOpenedAt?'메일앱 열림':'Preview 준비';events.push({type:'mail',sequence,time:eventTime(m,'mail'),plant:m.plant,targetMonth:m.targetMonth,kpi:m.kpi||'',kpiEn:m.kpiEn||'',status,detail:confirmed?'메일 API 성공 응답':packaged?'Outlook .eml 생성·다운로드 · 실제 발송 여부 미확인':m.mailOpenedAt?'메일앱 호출 · 실제 발송 여부 미확인':m.autoPrepared?'자동분석 Preview':'수동 Preview'});});
+  reminderMails.forEach(m=>events.push({type:'reminder',sequence:'',time:m.sentAt||m.failedAt||'',plant:m.plant,targetMonth:'',kpi:'D+7 Reminder',kpiEn:'D+7 Reminder',status:m.status==='seven-day-reminder-sent'?'D+7 리마인드 발송':'D+7 리마인드 실패',detail:[m.to&&`수신 ${m.to}`,m.error&&`오류: ${m.error}`].filter(Boolean).join(' · ')}));
   const replyGroups=[];replies.slice().sort((a,b)=>String(eventTime(a,'reply')).localeCompare(String(eventTime(b,'reply')))).forEach(r=>{let g=replyGroups.find(x=>sameGroup(x.seed,r));if(!g){g={seed:r,count:0};replyGroups.push(g)}g.count+=1;const same=Number(r.sameCauseCount)||0,recurrence=r.isRecurrence===true||same>=2;events.push({type:'reply',sequence:r.replySequence||g.count,time:r.replyReceivedAt||'',plant:r.plant,targetMonth:r.targetMonth,kpi:r.kpi||'',kpiEn:r.kpiEn||'',status:recurrence?`회신 수신 · Repeated Issue x${same}`:'회신 수신',detail:[r.responder&&`회신자 ${r.responder}`,r.rootCause&&`근본원인: ${r.rootCause}`,r.recoveryPlan&&`만회계획: ${r.recoveryPlan}`].filter(Boolean).join(' · ')});});
   return events.sort((a,b)=>String(b.time).localeCompare(String(a.time)));
 }
