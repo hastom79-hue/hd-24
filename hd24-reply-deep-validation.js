@@ -1,5 +1,7 @@
 (()=>{'use strict';
 const KEY='hd24_kpi_reply_history_v2', $=id=>document.getElementById(id), norm=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
+const kpiKey=r=>norm(r.kpiEn||r.kpi).replace(/[^a-z0-9가-힣]/g,'');
+const sameKpi=(a,b)=>{const ak=[kpiKey(a),norm(a.kpi),norm(a.kpiEn)].filter(Boolean),bk=[kpiKey(b),norm(b.kpi),norm(b.kpiEn)].filter(Boolean);return ak.some(x=>bk.includes(x))};
 const val=x=>{const n=Number(String(x??'').replace(/%/g,''));return Number.isFinite(n)?n:null};
 function flagsFor(r,all){
  const f=[], reason=norm(r.reason),root=norm(r.rootCause),plan=norm(r.recoveryPlan),status=norm(r.statusTrend);
@@ -8,7 +10,7 @@ function flagsFor(r,all){
  if(/^(na|n\/a|not applicable)$/.test(root))f.push(['MEDIUM','근본원인 NA — 사유→근인 연결 검증 불가']);
  if(/ongoing|monthly|training|awareness/.test(plan)&&plan.length<90)f.push(['MEDIUM','반복관리/교육 중심 대책 — 완료조건·정량 효과 불명확']);
  if(!r.actionOwner)f.push(['HIGH','Action Owner 미지정']); if(!r.plannedCompletionDate)f.push(['HIGH','완료예정일 미지정']);
- const same=all.filter(x=>norm(x.kpiEn||x.kpi)===norm(r.kpiEn||r.kpi)&&Number(x.targetMonth)<Number(r.targetMonth));
+ const same=all.filter(x=>sameKpi(x,r)&&Number(x.targetMonth)<Number(r.targetMonth));
  if(same.some(x=>norm(x.reason)===reason&&reason))f.push(['HIGH','이전 월과 동일 사유 반복 — 근인 제거 효과 재검증']);
  if(same.some(x=>norm(x.rootCause)===root&&root))f.push(['HIGH','이전 월과 동일 근본원인 반복']);
  if(same.some(x=>norm(x.recoveryPlan)===plan&&plan))f.push(['MEDIUM','이전 월과 동일 만회계획 반복 — 실행 효과 확인 필요']);
@@ -17,8 +19,8 @@ function flagsFor(r,all){
 function directionOf(r){const d=norm(r.direction);if(d.includes('하향')||d==='lower'||d==='down')return'LOWER';if(d.includes('상향')||d==='higher'||d==='up')return'HIGHER';const k=norm(r.kpiEn||r.kpi);return /(dio|days inventory|재고회전일수|defect|ppm|complaint|downtime|lead time)/.test(k)?'LOWER':'HIGHER'}
 function achieved(r){const a=val(r.actual),t=val(r.target);if(a===null||t===null)return null;return directionOf(r)==='LOWER'?a<=t:a>=t}
 function closedLoop(all){
- const out=[],latest=new Map();all.forEach(r=>{const k=norm(r.kpiEn||r.kpi)+'|'+Number(r.targetMonth),cur=latest.get(k);if(!cur||Number(r.replySequence||0)>Number(cur.replySequence||0)||String(r.replyReceivedAt||'')>String(cur.replyReceivedAt||''))latest.set(k,r)});const ordered=[...latest.values()].sort((a,b)=>Number(a.targetMonth)-Number(b.targetMonth));
- for(const prev of ordered){const pm=Number(prev.targetMonth),next=ordered.find(x=>norm(x.kpiEn||x.kpi)===norm(prev.kpiEn||prev.kpi)&&Number(x.targetMonth)===pm+1);if(!next)continue;
+ const out=[],latest=new Map();all.forEach(r=>{const k=kpiKey(r)+'|'+Number(r.targetMonth),cur=latest.get(k);if(!cur||Number(r.replySequence||0)>Number(cur.replySequence||0)||String(r.replyReceivedAt||'')>String(cur.replyReceivedAt||''))latest.set(k,r)});const ordered=[...latest.values()].sort((a,b)=>Number(a.targetMonth)-Number(b.targetMonth));
+ for(const prev of ordered){const pm=Number(prev.targetMonth),next=ordered.find(x=>sameKpi(x,prev)&&Number(x.targetMonth)===pm+1);if(!next)continue;
   const nextAch=achieved(next),prevAch=achieved(prev),plan=norm(prev.recoveryPlan),root=norm(prev.rootCause),sameRoot=root&&norm(next.rootCause)===root,samePlan=plan&&norm(next.recoveryPlan)===plan;
   if(prevAch===false&&nextAch===false&&(sameRoot||samePlan))out.push({sev:'HIGH',month:next.targetMonth,kpi:next.kpiEn||next.kpi,msg:'전월 미달 후 차월도 미달이며 '+(sameRoot&&samePlan?'근본원인·대책이 모두 반복':'문제해결 논리가 반복')+' — 기존 대책 효과 미입증'});
   else if(prevAch===false&&nextAch===false)out.push({sev:'MEDIUM',month:next.targetMonth,kpi:next.kpiEn||next.kpi,msg:'전월 미달 후 차월도 미달 — 변경 대책의 실행성과와 추가 근인 확인 필요'});
