@@ -27,11 +27,11 @@ jobs:
           css_ver=cm.group(1) if cm else js_ver
           original=s
           if 'hd24-ui-v3.css' not in s:
-              s=s.replace('</head>',f'<link rel="stylesheet" href="./hd24-ui-v3.css?v={ver}">\n</head>')
+              s=s.replace('</head>',f'<link rel="stylesheet" href="./hd24-ui-v3.css?v={css_ver}">\n</head>')
           else:
               s=re.sub(r'hd24-ui-v3\.css\?v=\d+',f'hd24-ui-v3.css?v={css_ver}',s)
           if 'hd24-ui-v3.js' not in s:
-              s=s.replace('</body>',f'<script src="./hd24-ui-v3.js?v={ver}"></script>\n</body>')
+              s=s.replace('</body>',f'<script src="./hd24-ui-v3.js?v={js_ver}"></script>\n</body>')
           else:
               s=re.sub(r'hd24-ui-v3\.js\?v=\d+',f'hd24-ui-v3.js?v={js_ver}',s)
           changed=s!=original
