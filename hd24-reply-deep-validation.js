@@ -17,7 +17,7 @@ function flagsFor(r,all){
  if(same.some(x=>norm(x.recoveryPlan)===plan&&plan))f.push(['MEDIUM','이전 월과 동일 만회계획 반복 — 실행 효과 확인 필요']);
  return f;
 }
-function directionOf(r){const d=norm(r.direction);if(d.includes('하향')||d==='lower'||d==='down')return'LOWER';if(d.includes('상향')||d==='higher'||d==='up')return'HIGHER';const k=norm(r.kpiEn||r.kpi);return /(dio|days inventory|재고회전일수|defect|ppm|complaint|downtime|lead time)/.test(k)?'LOWER':'HIGHER'}
+function directionOf(r){try{const d=window.HD24RuleMatrix?.direction?.(r);if(d==='LOWER'||d==='HIGHER')return d}catch(_){}const d=norm(r.direction);if(d.includes('하향')||d==='lower'||d==='down')return'LOWER';if(d.includes('상향')||d==='higher'||d==='up')return'HIGHER';const k=norm(r.kpiEn||r.kpi);return /(dio|days inventory|재고회전일수|defect|ppm|complaint|downtime|lead time|recurrence|variation|loss)/.test(k)?'LOWER':'HIGHER'}
 function achieved(r){const pair=comparable(r.actual,r.target,r.unit);if(!pair)return null;const [a,t]=pair;return directionOf(r)==='LOWER'?a<=t:a>=t}
 function closedLoop(all){
  const out=[],latest=new Map();all.forEach(r=>{const k=kpiKey(r)+'|'+Number(r.targetMonth),cur=latest.get(k);if(!cur||Number(r.replySequence||0)>Number(cur.replySequence||0)||String(r.replyReceivedAt||'')>String(cur.replyReceivedAt||''))latest.set(k,r)});const ordered=[...latest.values()].sort((a,b)=>Number(a.targetMonth)-Number(b.targetMonth));
