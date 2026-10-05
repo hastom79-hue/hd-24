@@ -149,3 +149,13 @@
 - History v39/v40: merge Korean/English KPI aliases within the same plant and target month for both summary grouping and Timeline send/reply sequencing. Preview/package/open events do not increment confirmed-send sequence.
 - Regression contracts added for Preview-history dedupe, opened/package retention, bilingual summary grouping, and bilingual Timeline sequencing.
 - GitHub Pages deployment for v93 was confirmed successful. General non-Pages workflows continue to fail/queue independently and are not treated as application regression proof without runner steps.
+
+
+## 2026-10-05 — Mail/History closure v44-v45
+- Normal API send failures are isolated as History failure events and never increment confirmed-send sequence.
+- Added dedicated 발송실패 History filter and regression contracts.
+- D+7 reminder success/failure history now preserves source targetMonth, kpi, kpiEn and originalSentAt; History links reminders back to original KPI/month while keeping sequence blank.
+- Production loaders aligned: hd24-seven-day-reminder.js?v=10 and hd24-history-view.js?v=45 in both hd24-ui-v3.js and refresh-runtime.html.
+- Regression locks cover D+7 KPI context, send-failure semantics, and production/refresh loader parity.
+- Ulsan/India/Brazil D+7 coverage and DIO routing/365-turnover/lower-is-better contracts rechecked.
+- GitHub Pages deployment for head 3963ac6 completed successfully. Non-Pages Runtime/Action jobs remain separately reported because returned job data has no executable step detail (steps=null); not treated as proof of application regression.
