@@ -65,6 +65,8 @@ function ensureHistoryHook(){
   },ms));
 }
 function wire(){
+  if(window.__HD24_PIPELINE_GATE_WIRED__)return;
+  window.__HD24_PIPELINE_GATE_WIRED__=true;
   // Do not schedule startup retries on a plain refresh with empty file inputs.
   ensureHistoryHook();
   gateJudge();
