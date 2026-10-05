@@ -229,6 +229,12 @@ ok(reminder.includes("targetMonth:m.targetMonth||'',kpi:m.kpi||'',kpiEn:m.kpiEn|
 ok(historyView.includes("targetMonth:m.targetMonth||'',kpi:m.kpi||'D+7 Reminder',kpiEn:m.kpiEn||m.kpi||'D+7 Reminder'"),'D+7 Timeline must render original KPI/month when available');
 ok(historyView.includes('m.originalSentAt&&`원발송 ${dt(m.originalSentAt)}`'),'D+7 Timeline must expose original send timestamp');
 console.log('HD24 D+7 KPI CONTEXT PASS');
+const runtimeModules=['hd24-auto-run.js','hd24-pipeline-gate.js','hd24-followup.js','hd24-seven-day-reminder.js','hd24-direct-reply-guard.js','hd24-reply-import-dedupe.js','hd24-history-view.js','hd24-reply-feedback.js'].map(p=>fs.readFileSync(p,'utf8'));
+ok(runtimeModules.every(x=>!x.includes('location.reload(')),'production runtime modules must never hard-reload the page');
+ok(runtimeModules.every(x=>/__HD24_[A-Z0-9_]+__/.test(x)),'every production runtime module must keep a single-wire guard');
+ok(!autoRun.includes('createObjectURL')&&!autoRun.includes('.download='),'auto-run refresh path must never contain download primitives');
+console.log('HD24 REFRESH SAFETY CONTRACT PASS');
+
 
 
 
