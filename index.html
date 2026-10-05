@@ -1621,6 +1621,10 @@ function setupTabs(){
       applyResultCardSubVisibility(tab);
     }
     const replyPanel=document.getElementById('hd24ReplyPanel');if(replyPanel)replyPanel.classList.toggle('hd24-tab-hidden',tab!=='reply');const ra=document.getElementById('hd24ReplyAnalysisPanel');if(ra)ra.classList.toggle('hd24-tab-hidden',tab!=='replyanalysis');const rm=document.getElementById('hd24ReplyMailPanel');if(rm)rm.classList.toggle('hd24-tab-hidden',tab!=='replymail');
+    if((tab==='replyanalysis'||tab==='replymail')&&!document.getElementById(tab==='replyanalysis'?'hd24ReplyAnalysisPanel':'hd24ReplyMailPanel')){
+      try{window.hd24ReplyFeedback?.render?.()}catch(_){}
+      setTimeout(()=>{const live=document.getElementById(tab==='replyanalysis'?'hd24ReplyAnalysisPanel':'hd24ReplyMailPanel');if(live)live.classList.remove('hd24-tab-hidden')},0);
+    }
     bar.querySelectorAll('.hd24-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   }
   bar.querySelectorAll('.hd24-tab').forEach(btn => {
@@ -1630,12 +1634,11 @@ function setupTabs(){
       activate(tab);
     });
   });
-  // 새로고침은 항상 업무 시작점인 업로드·실행 탭으로 복귀한다.
-  // 파일 input은 보안상 새로고침 후 비워지므로, 이전 mail/results 탭을 복원하면
-  // 담당자 패널만 남은 빈 화면처럼 보일 수 있다. 탭 클릭 이동만 세션에 기록한다.
+  // 새로고침 후에도 회신 분석/피드백 업무 탭은 유지한다. 파일 입력이 필요한 결과/메일 탭은 업로드로 안전 복귀한다.
   const validTabs = new Set(['upload','results','mail','reply','replyanalysis','replymail','spotcheck','history','log']);
-  try { sessionStorage.setItem('hd24_active_tab', 'upload'); } catch(_){}
-  activate('upload');
+  let initialTab='upload';
+  try { const saved=sessionStorage.getItem('hd24_active_tab'); if(saved==='reply'||saved==='replyanalysis'||saved==='replymail'||saved==='history'||saved==='log'||saved==='spotcheck') initialTab=saved; else sessionStorage.setItem('hd24_active_tab','upload'); } catch(_){}
+  activate(initialTab);
   window.hd24SwitchTab = (tab)=>{
     if (!validTabs.has(tab)) return;
     try { sessionStorage.setItem('hd24_active_tab', tab); } catch(_){}
