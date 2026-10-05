@@ -199,6 +199,11 @@ ok(historyView.includes("latestPackaged=ms.find(x=>x.status==='outlook-package-d
 ok(historyView.includes("latestOpened=ms.find(x=>x.mailOpenedAt&&x.status!=='outlook-package-downloaded'&&!x.sentAt)"),'history summary must retain latest legacy-opened event independently');
 ok(historyView.includes("openedAt:latestOpened.mailOpenedAt||'',packagedAt:latestPackaged.mailOpenedAt||latestPackaged.preparedAt||''"),'history summary must not derive opened/packaged state from latest Preview only');
 console.log('HD24 HISTORY OPEN/PACKAGE RETENTION PASS');
+ok(historyView.includes("function aliases(x){return [norm(x.kpiEn||''),norm(x.kpi||'')].filter(Boolean)}"),'history grouping must expose both KPI aliases');
+ok(historyView.includes("function sameKpi(a,b){const A=aliases(a),B=aliases(b);return A.some(k=>B.includes(k))}"),'history grouping must match either Korean or English KPI alias');
+ok(historyView.includes("function sameGroup(a,b){return a.plant===b.plant&&Number(a.targetMonth)===Number(b.targetMonth)&&sameKpi(a,b)}"),'history bilingual merge must remain scoped to plant and month');
+console.log('HD24 HISTORY BILINGUAL GROUP PASS');
+
 
 
 
