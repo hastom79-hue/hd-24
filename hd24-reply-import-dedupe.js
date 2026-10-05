@@ -1,5 +1,7 @@
 (()=>{
 'use strict';
+if(window.__HD24_REPLY_IMPORT_DEDUPE_WIRED__)return;
+window.__HD24_REPLY_IMPORT_DEDUPE_WIRED__=true;
 const FILE_ID='hd24ReplyFile';
 const BUTTON_ID='hd24ImportReply';
 let autoFile=null;
