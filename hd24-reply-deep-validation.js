@@ -22,7 +22,7 @@ function closedLoop(all){
   const nextAch=achieved(next),prevAch=achieved(prev),plan=norm(prev.recoveryPlan),root=norm(prev.rootCause),sameRoot=root&&norm(next.rootCause)===root,samePlan=plan&&norm(next.recoveryPlan)===plan;
   if(prevAch===false&&nextAch===false&&(sameRoot||samePlan))out.push({sev:'HIGH',month:next.targetMonth,kpi:next.kpiEn||next.kpi,msg:'전월 미달 후 차월도 미달이며 '+(sameRoot&&samePlan?'근본원인·대책이 모두 반복':'문제해결 논리가 반복')+' — 기존 대책 효과 미입증'});
   else if(prevAch===false&&nextAch===false)out.push({sev:'MEDIUM',month:next.targetMonth,kpi:next.kpiEn||next.kpi,msg:'전월 미달 후 차월도 미달 — 변경 대책의 실행성과와 추가 근인 확인 필요'});
-  if(prev.nextMonthTarget){const promised=val(prev.nextMonthTarget),actual=val(next.actual);if(promised!==null&&actual!==null){const met=directionOf(next)==='LOWER'?actual<=promised:actual>=promised;if(!met)out.push({sev:'HIGH',month:next.targetMonth,kpi:next.kpiEn||next.kpi,msg:'전월 회신의 차월 회복목표 미달 — 약속 대비 실제성과 갭 검증 필요'});}}
+  if(prev.nextMonthRecoveryTarget){const promised=val(prev.nextMonthRecoveryTarget),actual=val(next.actual);if(promised!==null&&actual!==null){const met=directionOf(next)==='LOWER'?actual<=promised:actual>=promised;if(!met)out.push({sev:'HIGH',month:next.targetMonth,kpi:next.kpiEn||next.kpi,msg:'전월 회신의 차월 회복목표 미달 — 약속 대비 실제성과 갭 검증 필요'});}}
  }
  return out;
 }
