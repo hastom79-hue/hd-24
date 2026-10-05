@@ -141,8 +141,8 @@ ok(reminder.includes("GLOBAL=['dylee07@hd.com','hastom@hd.com']"),'global remind
 ok(reminder.includes("india:['minsu.kim01@hd.com','deokho.kim@hd.com']"),'India reminder CC missing');
 ok(reminder.includes("brazil:['antos2082@hd.com','yhchoi@hd.com']"),'Brazil reminder CC missing');
 ok(reminder.includes("short- and long-term trend reviews"),'requested Lean KPI follow-up message missing');
-ok(ui.includes('hd24-seven-day-reminder.js?v=7'),'reminder loader missing');
-ok(refresh.includes('hd24-seven-day-reminder.js?v=7'),'reminder refresh preload missing');
+ok(ui.includes('hd24-seven-day-reminder.js?v=9'),'reminder loader missing');
+ok(refresh.includes('hd24-seven-day-reminder.js?v=9'),'reminder refresh preload missing');
 console.log('HD24 SEVEN-DAY REMINDER CONTRACT PASS');
 
 ok(src.includes("id='hd24MailTypeTabs'")&&src.includes('최초 발송메일')&&src.includes('리마인드 메일 [D+7 경과]'),'initial and D+7 mail tabs missing');
@@ -215,8 +215,8 @@ ok(feedback.includes("status:'send-failed'"),'reply feedback failure history mis
 ok(feedback.includes("x.sentAt||x.failedAt"),'reply feedback failure timestamp rendering missing');
 ok(feedback.includes("x.error?' · '+x.error"),'reply feedback failure detail rendering missing');
 ok(feedback.includes("setTimeout(()=>controller.abort(),30000)"),'reply feedback API timeout guard missing');
-ok(ui.includes('hd24-reply-feedback.js?v=16'),'reply feedback production loader must be v16');
-ok(refresh.includes('hd24-reply-feedback.js?v=16'),'reply feedback refresh preload must be v16');
+ok(ui.includes('hd24-reply-feedback.js?v=18'),'reply feedback production loader must be v16');
+ok(refresh.includes('hd24-reply-feedback.js?v=18'),'reply feedback refresh preload must be v16');
 console.log('HD24 REPLY FEEDBACK MAIL HARDENING CONTRACT PASS');
 
 
