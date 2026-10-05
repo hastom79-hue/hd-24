@@ -23,4 +23,10 @@ jobs:
           node --check hd24-reply-import-dedupe.js
           node tests/direct-reply-guard.test.js
           node tests/reply-import-dedupe.test.js
+          node tests/followup-import.test.js
+          node tests/followup-exact-once.test.js
+          node tests/followup-inflight-dedupe.test.js
+          node tests/reply-cycle-guard.test.js
+          node tests/reply-cycle-same-cycle-state.test.js
+          node tests/history-view.test.js
           node tests/followup-mailto.test.js
