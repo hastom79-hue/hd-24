@@ -194,6 +194,11 @@ ok(src.includes("isPrepared=extra.status==='prepared'"),'prepared-history dedupe
 ok(src.includes("Math.abs(t-Date.parse(x.preparedAt||0))<5000"),'duplicate Preview history must use a narrow five-second window');
 ok(src.includes("if(duplicate)continue"),'duplicate prepared Preview rows must not be appended');
 console.log('HD24 PREVIEW HISTORY DEDUPE PASS');
+ok(historyView.includes("latestPackaged=ms.find(x=>x.status==='outlook-package-downloaded')"),'history summary must retain latest packaged event after newer Preview');
+ok(historyView.includes("latestOpened=ms.find(x=>x.mailOpenedAt&&x.status!=='outlook-package-downloaded'&&!x.sentAt)"),'history summary must retain latest legacy-opened event independently');
+ok(historyView.includes("openedAt:latestOpened.mailOpenedAt||'',packagedAt:latestPackaged.mailOpenedAt||latestPackaged.preparedAt||''"),'history summary must not derive opened/packaged state from latest Preview only');
+console.log('HD24 HISTORY OPEN/PACKAGE RETENTION PASS');
+
 
 
 
