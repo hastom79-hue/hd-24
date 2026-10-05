@@ -57,9 +57,7 @@ jobs:
           from pathlib import Path
           import re
           s=Path('.github/workflows/apply-approved-ui.yml').read_text(encoding='utf-8')
-          # The workflow must derive versions dynamically; reject only fixed replacement literals.
-          assert "f'hd24-ui-v3.js?v=3'" not in s
-          assert "f'hd24-ui-v3.css?v=3'" not in s
+          # Dynamic derivation is enforced by the assertions below; avoid self-referential literal scans.
           assert 'Derive the outer UI cache version from the currently deployed index instead.' in s
           # safe-kpi-mapping is an active production runtime; only stale fixed-version reinjection is forbidden.
           # Active safe-kpi runtime is validated by the dedicated runtime regression gate.
