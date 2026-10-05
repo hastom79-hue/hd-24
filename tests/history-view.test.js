@@ -17,4 +17,5 @@ ok(src.includes("e.sequence?`${esc(e.sequence)}차`:'-'"),'non-send timeline eve
 ok(src.includes("mailCount:ms.filter(x=>!!x.sentAt).length"),'summary mail count must include confirmed sends only');
 ok(src.includes("latestSent=ms.find(x=>!!x.sentAt)||{}"),'latest confirmed send must survive newer preview');
 ok(src.includes("sentAt:latestSent.sentAt||''"),'summary actual-send timestamp must come from latest confirmed send');
+ok(src.includes("const latestTime=r=>[r.replyAt,r.sentAt,r.openedAt,r.preparedAt].filter(Boolean).sort().pop()||''"),'KPI summary rows must sort by latest event across reply/send/open/preview');
 console.log('HD24 HISTORY VIEW REGRESSION PASS');
