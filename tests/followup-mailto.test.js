@@ -177,6 +177,12 @@ ok(src.includes("replyPanel.id='hd24ReplyPanel'")&&src.includes("sec.after(reply
 ok(dashboard.includes('data-tab="reply">회신 이력 반영')&&dashboard.includes("tab!=='reply'"),'separate reply tab routing missing');
 ok(src.includes("$('hd24ReplyFile')?.closest('.field-row')"),'reply Excel input must move to independent tab');
 console.log('HD24 STANDALONE REPLY TAB PASS');
+ok(src.includes("const keys=new Set([norm(r.kpiEn||''),norm(r.kpi||'')].filter(Boolean)"),'recurrence history must match Korean/English KPI aliases');
+ok(src.includes("[norm(h.kpiEn||''),norm(h.kpi||'')].some(k=>k&&keys.has(k))"),'stored recurrence history must compare both KPI aliases');
+ok(src.includes("const storedKpi=mail.kpi||kpiName,storedKpiEn=mail.kpiEn||kpiName"),'reply import must preserve KPI aliases from matching mail history');
+ok(src.includes("kpi:storedKpi,kpiEn:storedKpiEn"),'reply history must persist preserved bilingual KPI aliases');
+console.log('HD24 BILINGUAL REPLY CONTINUITY PASS');
+
 
 // Derived DIO must flow through the same reply workbook path as any other KPI.
 ok(src.includes("const kpiName = isKo ? (r.kpi||r.kpiEn||'') : (r.kpiEn||r.kpi||'')"),'reply workbook must preserve derived KPI name');
