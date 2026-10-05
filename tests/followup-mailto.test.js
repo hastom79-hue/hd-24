@@ -145,6 +145,8 @@ ok(reminder.includes("brazil:['antos2082@hd.com','yhchoi@hd.com']"),'Brazil remi
 ok(reminder.includes("short- and long-term trend reviews"),'requested Lean KPI follow-up message missing');
 ok(ui.includes('hd24-seven-day-reminder.js?v=10'),'reminder loader missing');
 ok(refresh.includes('hd24-seven-day-reminder.js?v=10'),'reminder refresh preload missing');
+ok(ui.includes('hd24-history-view.js?v=45'),'History production loader must be v45');
+ok(refresh.includes('hd24-history-view.js?v=45'),'History refresh preload must be v45');
 console.log('HD24 SEVEN-DAY REMINDER CONTRACT PASS');
 
 ok(src.includes("id='hd24MailTypeTabs'")&&src.includes('최초 발송메일')&&src.includes('리마인드 메일 [D+7 경과]'),'initial and D+7 mail tabs missing');
