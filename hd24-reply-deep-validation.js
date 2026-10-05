@@ -30,6 +30,7 @@ async function exportXlsx(rows,cons){
  const buf=await wb.xlsx.writeBuffer(),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));a.download='HDPS_KPI_Reply_Deep_Analysis_'+new Date().toISOString().slice(0,10)+'.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 function render(){
+ if(!$('hd24Feedback')){try{window.hd24ReplyFeedback?.render?.()}catch(_){}}
  const host=$('hd24Feedback');if(!host)return;let rows=[];try{rows=JSON.parse(localStorage.getItem(KEY)||'[]').filter(r=>r.plant===($('plantSelect')?.value||'india'))}catch{};if(!rows.length)return;
  const cons=contradictions(rows), findings=rows.flatMap(r=>flagsFor(r,rows).map(x=>({r,sev:x[0],msg:x[1]}))), high=findings.filter(x=>x.sev==='HIGH').length;
  let box=$('hd24DeepValidation');if(!box){box=document.createElement('section');box.id='hd24DeepValidation';host.prepend(box)}
@@ -37,6 +38,6 @@ function render(){
  const list=$('hd24DeepList');findings.slice(0,30).forEach(x=>{const p=document.createElement('p');p.textContent=x.sev+' · '+x.r.targetMonth+'M · '+(x.r.kpiEn||x.r.kpi)+' — '+x.msg;list.append(p)});cons.forEach(x=>{const p=document.createElement('p');p.textContent='CROSS · '+x.month+'M · '+x.kpi+' ↔ '+x.related+' — '+x.msg;list.append(p)});
  $('hd24ExportDeepAnalysis').onclick=()=>exportXlsx(rows,cons).catch(e=>alert(e.message));
 }
-document.addEventListener('DOMContentLoaded',()=>setTimeout(render,1000));document.addEventListener('hd24:reply-imported',()=>setTimeout(render,100));document.addEventListener('change',e=>{if(e.target?.id==='plantSelect')setTimeout(render,100)});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(render,1000));document.addEventListener('hd24:reply-feedback-ready',()=>setTimeout(render,0));document.addEventListener('hd24:reply-imported',()=>setTimeout(render,100));document.addEventListener('change',e=>{if(e.target?.id==='plantSelect')setTimeout(render,100)});
 window.hd24DeepReplyValidation={render};
 })();
