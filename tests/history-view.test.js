@@ -19,4 +19,5 @@ ok(src.includes("latestSent=ms.find(x=>!!x.sentAt)||{}"),'latest confirmed send 
 ok(src.includes("sentAt:latestSent.sentAt||''"),'summary actual-send timestamp must come from latest confirmed send');
 ok(src.includes("const latestTime=r=>[r.replyAt,r.sentAt,r.openedAt,r.preparedAt].filter(Boolean).sort().pop()||''"),'KPI summary rows must sort by latest event across reply/send/open/preview');
 ok(src.includes("else if(f.s==='packaged')rows=rows.filter(r=>r.packagedAt)"),'summary packaged filter missing');
+ok(src.includes("else if(f.s==='opened')rows=rows.filter(r=>r.openedAt&&!r.sentAt&&!r.packagedAt)"),'legacy-opened filter must exclude Outlook packages');
 console.log('HD24 HISTORY VIEW REGRESSION PASS');
