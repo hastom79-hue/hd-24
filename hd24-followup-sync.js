@@ -244,7 +244,7 @@ function wire(){
   ['srcFile','masterFile','plantSelect'].forEach(id=>$(id)?.addEventListener('change',()=>hardReset(id+' change')));
   window.addEventListener('hd24-safe-reflect-complete',safeComplete);window.addEventListener('hd24-action-export-complete',actionExportComplete);
   const rc=$('resultCard');if(rc)new MutationObserver(()=>trySync('analysis result updated')).observe(rc,{attributes:true,childList:true,subtree:true});
-  setInterval(()=>trySync('watchdog'),1000);hardReset('startup');
+  const watchdog=setInterval(()=>trySync('watchdog'),15000);window.addEventListener('beforeunload',()=>clearInterval(watchdog),{once:true});hardReset('startup');
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire,{once:true});else wire();
 })();
