@@ -211,6 +211,11 @@ ok(historyView.includes("kpiMails=mails.filter(x=>x.status!=='seven-day-reminder
 ok(historyView.includes("type:'reminder',sequence:''"),'D+7 reminder timeline events must not receive KPI send sequence');
 ok(historyView.includes("m.status==='seven-day-reminder-sent'?'D+7 리마인드 발송':'D+7 리마인드 실패'"),'D+7 success/failure must remain explicit timeline states');
 console.log('HD24 D+7 HISTORY ISOLATION PASS');
+ok(historyView.includes('<option value="reminder">D+7 리마인드</option>'),'History status filter must expose D+7 reminder events');
+ok(historyView.includes("f.s==='reminder')events=events.filter(r=>r.type==='reminder')"),'D+7 History filter must isolate reminder events');
+ok(historyView.includes("e.type==='reminder'?'<span class=\\\"pill\\\">D+7</span>'"),'Timeline must label reminder events separately from mail');
+console.log('HD24 D+7 HISTORY FILTER PASS');
+
 
 
 
