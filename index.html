@@ -1156,14 +1156,6 @@ function fmtKpiNum(v, unit){
   const n = round(v);
   return `${n}${unit ? ' '+unit : ''}`;
 }
-function gapAmount(r){
-  if (typeof r.target !== 'number' || typeof r.actual !== 'number' || !isFinite(r.target) || !isFinite(r.actual)) return null;
-  return r.direction === '하향' ? (r.actual - r.target) : (r.target - r.actual); // positive = shortfall
-}
-function itemsMonthLabel(items, en){
-  const months = [...new Set(items.map(r=>r.month))].sort((a,b)=>a-b);
-  return months.map(mo => en ? MONTH_EN[mo-1] : (mo+'월')).join('+');
-}
 function downloadFile(file){
   const url = URL.createObjectURL(file);
   const a = document.createElement('a');
@@ -1201,14 +1193,6 @@ document.getElementById('btnMailAll').addEventListener('click', () => {
   const items = allResults.filter(r => selectedMailMonths.has(r.month));
   openMailDraft(items, 'all');
 });
-// 선택한 월이 여러 개면 "6월+7월"/"Jun+Jul" 식으로 라벨 앞에 같이 표시해서, 어느
-// 달들을 합쳐 보낸 건지 메일 본문·로그·파일명에서도 알 수 있게 한다.
-function mailMonthScopeLabel(base, en){
-  const months = [...selectedMailMonths].sort((a,b)=>a-b);
-  const monthsText = months.map(mo => en ? MONTH_EN[mo-1] : (mo+'월')).join('+');
-  return `${monthsText} ${base}`;
-}
-
 // ---------- 중점관리 집중점검 (당해년도 데이터에서 관점별 무작위 1개씩 뽑기) ----------
 let spotCheckDrawn = [];
 function spotCheckPools(){
@@ -1288,7 +1272,7 @@ function startSpotCheckMail(){
   if (!spotCheckDrawn.length) return;
   selectedMailMonths = new Set(spotCheckDrawn.map(r => r.month));
   renderMailMonthChips([...new Set((allResults||[]).map(r=>r.month))].sort((a,b)=>a-b));
-  openMailDraft(spotCheckDrawn, mailMonthScopeLabel('집중점검 대상 지표', false), mailMonthScopeLabel('spot-check sampled indicators', true), false);
+  openMailDraft(spotCheckDrawn, 'watch');
   if (window.hd24SwitchTab) window.hd24SwitchTab('mail');
   saveSpotCheckDirective(spotCheckDrawn); // 메일로 실제 지시한 시점의 스냅샷을 남겨서, 다음 달에 개선됐는지 비교할 수 있게 함
 }
