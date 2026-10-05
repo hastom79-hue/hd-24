@@ -249,7 +249,7 @@ async function tryAutoPackage(reason){if(window.hd24FollowupSyncOwnsAutoPackage)
 function scheduleAutoPackage(reason){if(!uploadSignature())return;[0,250,1000,3000].forEach(ms=>setTimeout(()=>{if(uploadSignature())tryAutoPackage(reason)},ms))}
 // Legacy index.html mail fallback can hand its selected KPI set into the managed Preview.
 // This keeps one visible Preview/send path and prevents any unsolicited download/mailto behavior.
-window.hd24PrepareFollowupPreview = function(items){
+window.hd24PrepareFollowupPreview = function(items, mode){
   const safeItems = Array.isArray(items) ? items.filter(Boolean) : [];
   if (!safeItems.length) {
     if ($('hd24Preview')) $('hd24Preview').style.display='none';
@@ -257,9 +257,9 @@ window.hd24PrepareFollowupPreview = function(items){
     logSafe('통합 메일 Preview 준비 생략: 대상 KPI 없음');
     return false;
   }
-  const preparedAt=nowIso();
-  renderPreview(safeItems,'watch',preparedAt);
-  mailHistoryRecord(safeItems,{status:'prepared',preparedAt,managedFallback:true});
+  const preparedAt=nowIso(),safeMode=['month','watch','all'].includes(mode)?mode:'watch';
+  renderPreview(safeItems,safeMode,preparedAt);
+  mailHistoryRecord(safeItems,{status:'prepared',preparedAt,managedFallback:true,managedMode:safeMode});
   if (window.hd24SwitchTab) window.hd24SwitchTab('mail');
   $('hd24FollowupPanel')?.scrollIntoView({behavior:'smooth',block:'start'});
   logSafe(\`통합 메일 Preview 연결 완료: \${safeItems.length}건\`);
