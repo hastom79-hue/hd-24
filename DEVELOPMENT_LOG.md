@@ -113,3 +113,12 @@
 - Revalidated feedback attachment invalidation and success/failure mail-history semantics; initial mail required-CC enforcement remains active for Ulsan/India/Brazil.
 - GitHub Pages deployment for d29614c completed successfully. General GitHub-hosted Actions workflows still terminate before runner steps and are tracked separately from application deployment.
 - Commits: 30f45f8, d804640, b12b0e3, d29614c.
+
+
+## 2026-10-05 — Reply import dedupe v2 + closed-loop guard
+- Added __HD24_REPLY_IMPORT_DEDUPE_WIRED__ so duplicate runtime injection cannot register duplicate document listeners.
+- Bumped production and refresh runtime references to hd24-reply-import-dedupe.js?v=2.
+- Aligned regression contracts to v2 and corrected the new assertion to use the existing assert/code variables.
+- Added the dedupe single-wire contract to the integrated followup-mailto closed-loop regression.
+- Verified Pages deployment success through aea1f0f; GitHub-hosted non-Pages workflows continue failing before runner steps and remain an execution-layer issue, not a proven application regression.
+- Commits: 7265b34, 2e699b5, 600aa95, 93d8bff, fde05a3, aea1f0f, ab22fb5.
