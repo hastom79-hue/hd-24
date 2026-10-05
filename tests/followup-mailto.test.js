@@ -182,6 +182,15 @@ ok(src.includes("[norm(h.kpiEn||''),norm(h.kpi||'')].some(k=>k&&keys.has(k))"),'
 ok(src.includes("const storedKpi=mail.kpi||kpiName,storedKpiEn=mail.kpiEn||kpiName"),'reply import must preserve KPI aliases from matching mail history');
 ok(src.includes("kpi:storedKpi,kpiEn:storedKpiEn"),'reply history must persist preserved bilingual KPI aliases');
 console.log('HD24 BILINGUAL REPLY CONTINUITY PASS');
+ok(reminder.includes("if(m.status!=='sent'||!m.sentAt||!m.to"),'D+7 must use confirmed sent mail only');
+ok(reminder.includes("now-sent<DELAY"),'D+7 must enforce seven-day threshold');
+ok(reminder.includes("const answered=batch.every"),'D+7 must exclude fully replied batches');
+ok(reminder.includes("status==='seven-day-reminder-sent'&&x.originalMailId===id"),'D+7 must suppress already-sent reminders');
+ok(reminder.includes("if(!pending().some(x=>x.id===item.id))"),'D+7 must recheck eligibility immediately before send');
+ok(reminder.includes("now-previous<15*60*1000"),'D+7 must retain duplicate-send lock');
+ok(reminder.includes("localStorage.removeItem(lock);const history=read(MAIL_KEY);history.unshift({plant:m.plant,status:'seven-day-reminder-failed'"),'D+7 failure must unlock and record retryable failure');
+console.log('HD24 D+7 CLOSED LOOP PASS');
+
 
 
 // Derived DIO must flow through the same reply workbook path as any other KPI.
