@@ -17,6 +17,8 @@ jobs:
       - name: Validate current production follow-up/reply cycle
         run: |
           node --check hd24-followup.js
+          node --check hd24-reply-feedback.js
+          node --check hd24-seven-day-reminder.js
           node --check hd24-direct-reply-guard.js
           node --check hd24-reply-import-dedupe.js
           node tests/direct-reply-guard.test.js
