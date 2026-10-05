@@ -111,3 +111,13 @@
 - Refreshed production/cache loader versions: auto-run v30, pipeline-gate v24, follow-up v90, D+7 v9, direct-reply-guard v13, history-view v30, reply-feedback v18; synchronized refresh-runtime.
 - Added initialization-idempotency regression locks, fixed missing runtime-source declarations in the test itself, and removed stale D+7/Feedback cache-version assertions and diagnostics.
 - Commits: b66b7c5, cec6be3, 2242d52, 4f4e5f8, f68358c, ac69a7a, 4d258bf, 7ee2f5a, 39af55d, 2430e1e, a82c05c, 3c7a774, ecd21fc, 0ac44dd, 9ea766e, 4d07a95.
+
+
+## 2026-10-05 — Reply feedback late-load recovery + v19 regression lock
+- Fixed reply-feedback initialization so dynamically loaded runtime initializes both before and after DOMContentLoaded while retaining the single-wire guard.
+- Bumped reply-feedback production and refresh runtime references from v18 to v19 to prevent stale browser cache execution.
+- Updated closed-loop regression contracts to v19 and added an explicit late-load initialization assertion.
+- Revalidated D+7 eligibility: sent-only source, 7-day threshold, three-plant coverage, full-batch reply exclusion, successful-reminder dedupe, and localStorage send lock.
+- Revalidated feedback attachment invalidation and success/failure mail-history semantics; initial mail required-CC enforcement remains active for Ulsan/India/Brazil.
+- GitHub Pages deployment for d29614c completed successfully. General GitHub-hosted Actions workflows still terminate before runner steps and are tracked separately from application deployment.
+- Commits: 30f45f8, d804640, b12b0e3, d29614c.
