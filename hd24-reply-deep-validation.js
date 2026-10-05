@@ -33,7 +33,7 @@ function contradictions(all){
  const out=[], n=s=>norm(s).replace(/\s/g,''), has=(r,arr)=>arr.some(t=>n(r.kpiEn||r.kpi).includes(n(t)));
  const quality=all.filter(r=>has(r,['IQ 200 (Initial Quality)','IQ 200 (Production attributable)','Basic Quality','Assembly Quality']));
  const controls=all.filter(r=>has(r,['Standard Work Compliance','표준작업준수율','Standard Non-compliance Recurrence','표준미준수재발']));
- for(const q of quality){const qBad=/miss|decline|미달|악화/.test(norm(q.statusTrend));if(!qBad)continue;for(const s of controls.filter(x=>Number(x.targetMonth)===Number(q.targetMonth))){const a=val(s.actual);if(a===0||a===100||a===1)out.push({month:q.targetMonth,kpi:q.kpiEn||q.kpi,related:s.kpiEn||s.kpi,msg:'품질 결과는 네거티브하나 표준작업 관리지표는 완전 달성. 준수점검 기준·표본·판정방식의 유효성 재검증 필요'});}}
+ for(const q of quality){const qAch=achieved(q),qBad=qAch===false||/miss|decline|미달|악화/.test(norm(q.statusTrend));if(!qBad)continue;for(const s of controls.filter(x=>Number(x.targetMonth)===Number(q.targetMonth))){const controlAch=achieved(s);if(controlAch===true)out.push({month:q.targetMonth,kpi:q.kpiEn||q.kpi,related:s.kpiEn||s.kpi,msg:'품질 결과는 미달/악화이나 관련 표준작업 관리지표는 목표 달성. 준수점검 기준·표본·판정방식 및 결과지표와의 인과 연결을 재검증할 필요'});}}
  return out;
 }
 async function exportXlsx(rows,cons){
