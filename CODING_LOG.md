@@ -92,3 +92,14 @@
 - Improved repeated root-cause/action detection using normalized phrase similarity rather than exact-string-only comparison.
 - Corrected multi-reply comparison to use the actual prior reply sequence instead of an array-position assumption.
 - Commits: a6b1a61, d3fa5a4, f838578, 79d79d6, 5f249bb, 9e9e359, 817e84c, 2ef39fc, 34f9db1, b6b1c28, fb015b9, f048179.
+
+
+## 2026-10-05 — Three-plant mail closed-loop + production loader hardening
+- Aligned initial KPI mail API transport with the hardened text/plain JSON-body flow used by feedback and D+7 sends.
+- Extended D+7 reminder eligibility and bilingual subject labeling to Ulsan alongside India and Brazil; reply detection now matches either KPI language label.
+- Preserved Month / Watch / All mode through managed Preview fallback and subsequent preview refresh.
+- Locked feedback CC to the managed mail policy, synchronized enforced CC into the visible mail field, and exposed actual To/CC routing in send history.
+- Added closed-loop regression locks for three-plant D+7, bilingual reply matching, Preview mode preservation, transport, CC policy, prior-reply sequence, and stale attachment invalidation.
+- Bumped production/refresh loaders to follow-up v89, reply-feedback v17, and D+7 reminder v8 to prevent stale browser cache execution.
+- Repository main HEAD contains the changes; GitHub Actions/Pages runtime PASS was not assumed because a corresponding run/runtime result was not exposed during validation.
+- Commits: d6f5979, 40f049a, 4c795ff, 8431078, c018cfa, db52aef, 961498c, dbbb551, 3cc66c3, 98c9d93, 5c067ee.
