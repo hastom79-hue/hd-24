@@ -1302,12 +1302,6 @@ async function openMailDraft(items, scopeLabelKo, scopeLabelEn, showStatus, mana
   const to = mailToInput.value.trim();
   if (!to){ alert(en ? 'Please enter the recipient email first.' : '담당자 이메일을 먼저 입력해주세요.'); mailToInput.focus(); return; }
 
-  const subject = en
-    ? `[HDPS KPI ${showStatus?'Status':'Alert'}] ${plantLabel()} - ${itemsMonthLabel(items, true)} (${items.length} items)`
-    : `[HDPS KPI ${showStatus?'현황':'미달성 알림'}] ${cfg().label} - ${itemsMonthLabel(items, false)} (${items.length}건)`;
-
-  const {file, fname} = await buildMailExcelFile(items, scopeLabelKo, scopeLabelEn);
-
   // All mail buttons use the same managed Preview/send path.
   // Do not invoke the OS share sheet here: it bypasses HD-24 send history,
   // required-CC enforcement and the explicit in-app send confirmation.
