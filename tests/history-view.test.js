@@ -13,4 +13,5 @@ ok(src.includes("Outlook .eml 생성·다운로드 · 실제 발송 여부 미�
 ok(src.includes("mails.slice().sort((a,b)=>String(eventTime(a,'mail')).localeCompare(String(eventTime(b,'mail')))"),'mail timeline must sequence chronologically per KPI');
 ok(src.includes("replies.slice().sort((a,b)=>String(eventTime(a,'reply')).localeCompare(String(eventTime(b,'reply')))"),'reply timeline must sequence chronologically per KPI');
 ok(src.includes("return events.sort((a,b)=>String(b.time).localeCompare(String(a.time)))"),'combined timeline must display newest event first without changing sequence numbers');
+ok(src.includes("e.sequence?`${esc(e.sequence)}차`:'-'"),'non-send timeline events must not render as dash sequence');
 console.log('HD24 HISTORY VIEW REGRESSION PASS');
