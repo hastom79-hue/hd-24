@@ -1633,7 +1633,7 @@ function setupTabs(){
   // 새로고침은 항상 업무 시작점인 업로드·실행 탭으로 복귀한다.
   // 파일 input은 보안상 새로고침 후 비워지므로, 이전 mail/results 탭을 복원하면
   // 담당자 패널만 남은 빈 화면처럼 보일 수 있다. 탭 클릭 이동만 세션에 기록한다.
-  const validTabs = new Set(['upload','results','mail','reply','spotcheck','history','log']);
+  const validTabs = new Set(['upload','results','mail','reply','replyanalysis','replymail','spotcheck','history','log']);
   try { sessionStorage.setItem('hd24_active_tab', 'upload'); } catch(_){}
   activate('upload');
   window.hd24SwitchTab = (tab)=>{
