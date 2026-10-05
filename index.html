@@ -1296,7 +1296,7 @@ function downloadFile(file){
   setTimeout(()=>URL.revokeObjectURL(url), 30000);
 }
 
-async function openMailDraft(items, scopeLabelKo, scopeLabelEn, showStatus){
+async function openMailDraft(items, scopeLabelKo, scopeLabelEn, showStatus, managedMode){
   const en = currentLang==='en'; // UI 알림 문구에만 사용 (메일 본문 자체는 항상 한/영 병기)
   if (!items.length){ alert(en ? 'No KPIs match this condition.' : '해당 조건의 지표가 없습니다.'); return; }
   const to = mailToInput.value.trim();
@@ -1326,7 +1326,7 @@ async function openMailDraft(items, scopeLabelKo, scopeLabelEn, showStatus){
   // actual send/download remains an explicit user action in the follow-up mail UI.
   log((en?'System share unavailable; managed mail Preview will be used.':'시스템 공유를 사용할 수 없어 통합 메일 Preview를 사용합니다.'));
   if (typeof window.hd24PrepareFollowupPreview === 'function') {
-    window.hd24PrepareFollowupPreview(items);
+    window.hd24PrepareFollowupPreview(items, managedMode);
   } else {
     document.getElementById('hd24FollowupPanel')?.scrollIntoView({behavior:'smooth',block:'start'});
   }
@@ -1334,15 +1334,15 @@ async function openMailDraft(items, scopeLabelKo, scopeLabelEn, showStatus){
 
 document.getElementById('btnMailMonth').addEventListener('click', () => {
   const items = allResults.filter(r => selectedMailMonths.has(r.month) && !r.achieved);
-  openMailDraft(items, mailMonthScopeLabel('이번 달 미달성 전체', false), mailMonthScopeLabel("not-achieved items", true), false);
+  openMailDraft(items, mailMonthScopeLabel('이번 달 미달성 전체', false), mailMonthScopeLabel("not-achieved items", true), false, 'month');
 });
 document.getElementById('btnMailWatch').addEventListener('click', () => {
   const items = allResults.filter(r => selectedMailMonths.has(r.month) && (r.streak>=2 || r.trend==='down'));
-  openMailDraft(items, mailMonthScopeLabel('연속 미달성 또는 최근 악화 추세', false), mailMonthScopeLabel('consecutive-miss / recently worsening items', true), false);
+  openMailDraft(items, mailMonthScopeLabel('연속 미달성 또는 최근 악화 추세', false), mailMonthScopeLabel('consecutive-miss / recently worsening items', true), false, 'watch');
 });
 document.getElementById('btnMailAll').addEventListener('click', () => {
   const items = allResults.filter(r => selectedMailMonths.has(r.month));
-  openMailDraft(items, mailMonthScopeLabel('전체 지표(달성+미달성)', false), mailMonthScopeLabel("full KPI list (achieved + not achieved)", true), true);
+  openMailDraft(items, mailMonthScopeLabel('전체 지표(달성+미달성)', false), mailMonthScopeLabel("full KPI list (achieved + not achieved)", true), true, 'all');
 });
 // 선택한 월이 여러 개면 "6월+7월"/"Jun+Jul" 식으로 라벨 앞에 같이 표시해서, 어느
 // 달들을 합쳐 보낸 건지 메일 본문·로그·파일명에서도 알 수 있게 한다.
