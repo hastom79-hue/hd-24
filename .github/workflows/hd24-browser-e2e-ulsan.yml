@@ -97,9 +97,24 @@ jobs:
               assert all(r['direction']=='하향' for r in rows)
               assert all(abs(float(r['target'])-91.25)<1e-9 for r in rows)
               assert not downloads, 'Ulsan analysis/master-only path must not auto-download'
+              # Lock the DIO miss into the managed Mail Preview path without sending/downloading.
+              page.evaluate("selectedMonth=3; selectedMailMonths=new Set([3]); window.hd24PrepareFollowupPreview((window.allResults||[]).filter(r=>Number(r.month)===3 && Number(r.masterRow)===102),'watch')")
+              page.wait_for_function("document.getElementById('hd24Preview') && document.getElementById('hd24Preview').style.display==='block'",timeout=30000)
+              preview_status=page.locator('#hd24MailStatus').inner_text()
+              preview_subject=page.locator('#hd24PreviewSubject').inner_text()
+              preview_body=page.locator('#hd24PreviewBody').inner_text()
+              assert '1 KPI' in preview_status, preview_status
+              assert '울산' in preview_subject and '3월' in preview_subject, preview_subject
+              assert ('DIO' in preview_body or '재고회전일수' in preview_body), preview_body
+              page.wait_for_timeout(500)
+              assert not downloads, 'Preparing Ulsan DIO Mail Preview must not download or send files'
+              history=page.evaluate("JSON.parse(localStorage.getItem('hd24_kpi_mail_history_v2')||'[]')")
+              dio_prepared=[x for x in history if x.get('plant')=='ulsan' and int(x.get('targetMonth') or 0)==3 and x.get('status')=='prepared' and ('dio' in str(x.get('kpiEn') or x.get('kpi') or '').lower() or '재고회전일수' in str(x.get('kpi') or ''))]
+              assert dio_prepared, 'Ulsan DIO prepared-mail history missing'
+              assert not any(x.get('status') in ('sent','outlook-package-downloaded') for x in history), 'Preview preparation must not create sent/package history'
               log=page.locator('#log').inner_text()
               assert 'DIO 자동계산' in log and '365/부품재고회전율' in log
               assert '울산은 월별 목표가 아닌 연간 고정목표' in log
-              print('ULSAN BROWSER E2E PASS: master-only + derived DIO + lower-is-better + zero unsolicited download')
+              print('ULSAN BROWSER E2E PASS: master-only + derived DIO + lower-is-better + managed Mail Preview + zero unsolicited download')
               browser.close()
           PY
