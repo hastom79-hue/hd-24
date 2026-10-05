@@ -90,9 +90,9 @@ async function sendDue(){
     if(!res.ok)throw new Error('HTTP '+res.status+(responseText?' · '+responseText.slice(0,180):''));
     let responseJson=null;try{responseJson=responseText?JSON.parse(responseText):null}catch(_){}
     if(responseJson&&responseJson.success===false)throw new Error('메일 API 발송 거부: '+(responseJson.error||responseJson.message||'success=false'));
-    const history=read(MAIL_KEY);history.unshift({plant:m.plant,status:'seven-day-reminder-sent',to:m.to,cc,recipientName:m.recipientName||'',originalSentAt:m.sentAt,originalMailId:item.id,language:reminderLang,sentAt:new Date().toISOString()});localStorage.setItem(MAIL_KEY,JSON.stringify(history.slice(0,3000)));
+    const history=read(MAIL_KEY);history.unshift({plant:m.plant,status:'seven-day-reminder-sent',to:m.to,cc,recipientName:m.recipientName||'',targetMonth:m.targetMonth||'',kpi:m.kpi||'',kpiEn:m.kpiEn||'',originalSentAt:m.sentAt,originalMailId:item.id,language:reminderLang,sentAt:new Date().toISOString()});localStorage.setItem(MAIL_KEY,JSON.stringify(history.slice(0,3000)));
     localStorage.removeItem(lock);status('7일 미회신 재안내 발송 완료: '+m.to);
-   }catch(e){localStorage.removeItem(lock);const history=read(MAIL_KEY);history.unshift({plant:m.plant,status:'seven-day-reminder-failed',to:m.to,cc:required(m.plant,m.cc),recipientName:m.recipientName||'',originalSentAt:m.sentAt,originalMailId:item.id,language:reminderLang,failedAt:new Date().toISOString(),error:String(e.message||e)});localStorage.setItem(MAIL_KEY,JSON.stringify(history.slice(0,3000)));status('7일 재안내 발송 실패: '+String(e.message||e));}
+   }catch(e){localStorage.removeItem(lock);const history=read(MAIL_KEY);history.unshift({plant:m.plant,status:'seven-day-reminder-failed',to:m.to,cc:required(m.plant,m.cc),recipientName:m.recipientName||'',targetMonth:m.targetMonth||'',kpi:m.kpi||'',kpiEn:m.kpiEn||'',originalSentAt:m.sentAt,originalMailId:item.id,language:reminderLang,failedAt:new Date().toISOString(),error:String(e.message||e)});localStorage.setItem(MAIL_KEY,JSON.stringify(history.slice(0,3000)));status('7일 재안내 발송 실패: '+String(e.message||e));}
   }
  }finally{busy=false;render()}
 }
