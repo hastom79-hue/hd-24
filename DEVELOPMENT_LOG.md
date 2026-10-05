@@ -74,3 +74,13 @@
 - Added golden regression coverage for DIO aliases: `DIO`, `DIO (Days Inventory Outstanding)`, `Days Inventory Outstanding`, and Korean `재고회전일수` must all resolve to LOWER-is-better.
 - Added Korean DIO alias to the rule-matrix direction master so Ulsan/Korean labels follow the same DIO judgment logic as India/Brazil.
 - Commits: a8e5eee, f5f9773, 49a2c3d.
+
+
+## 2026-10-05 — D+7, mail transport, refresh, reply-history and feedback hardening
+- Scoped D+7 reminder identity to the normalized KPI/month batch so distinct batches do not collapse into one reminder identity.
+- Hardened reply-feedback and D+7 mail transport to avoid unnecessary browser preflight while retaining explicit API success/failure handling and timeout control.
+- Rebuilt feedback attachment state after reload and invalidated stale attachments before regeneration.
+- Added Ulsan reply import support and bilingual KPI matching across import, history, feedback analysis, and feedback export.
+- Improved repeated root-cause/action detection using normalized phrase similarity rather than exact-string-only comparison.
+- Corrected multi-reply comparison to use the actual prior reply sequence instead of an array-position assumption.
+- Commits: a6b1a61, d3fa5a4, f838578, 79d79d6, 5f249bb, 9e9e359, 817e84c, 2ef39fc, 34f9db1, b6b1c28, fb015b9, f048179.
