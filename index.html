@@ -1649,12 +1649,17 @@ function setupTabs(){
   // 그 시점의 활성 탭 기준으로 보이기/숨기기를 한 번 더 맞춰준다.
   const followupWatcher = new MutationObserver(() => {
     const followupPanel = document.getElementById('hd24FollowupPanel');
-    if (!followupPanel) return;
+    const replyPanel=document.getElementById('hd24ReplyPanel');
+    const replyAnalysis=document.getElementById('hd24ReplyAnalysisPanel');
+    const replyMail=document.getElementById('hd24ReplyMailPanel');
+    if (!followupPanel && !replyPanel && !replyAnalysis && !replyMail) return;
     const activeBtn = bar.querySelector('.hd24-tab.active');
     const activeTab = activeBtn ? activeBtn.dataset.tab : 'upload';
-    followupPanel.classList.toggle('hd24-tab-hidden', activeTab !== 'mail');
-    const replyPanel=document.getElementById('hd24ReplyPanel');if(replyPanel)replyPanel.classList.toggle('hd24-tab-hidden',activeTab!=='reply');
-    followupWatcher.disconnect();
+    if(followupPanel)followupPanel.classList.toggle('hd24-tab-hidden', activeTab !== 'mail');
+    if(replyPanel)replyPanel.classList.toggle('hd24-tab-hidden',activeTab!=='reply');
+    if(replyAnalysis)replyAnalysis.classList.toggle('hd24-tab-hidden',activeTab!=='replyanalysis');
+    if(replyMail)replyMail.classList.toggle('hd24-tab-hidden',activeTab!=='replymail');
+    if(followupPanel && replyPanel && replyAnalysis && replyMail) followupWatcher.disconnect();
   });
   followupWatcher.observe(main, {childList:true,subtree:true});
 
