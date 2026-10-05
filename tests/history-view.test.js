@@ -18,4 +18,5 @@ ok(src.includes("mailCount:ms.filter(x=>!!x.sentAt).length"),'summary mail count
 ok(src.includes("latestSent=ms.find(x=>!!x.sentAt)||{}"),'latest confirmed send must survive newer preview');
 ok(src.includes("sentAt:latestSent.sentAt||''"),'summary actual-send timestamp must come from latest confirmed send');
 ok(src.includes("const latestTime=r=>[r.replyAt,r.sentAt,r.openedAt,r.preparedAt].filter(Boolean).sort().pop()||''"),'KPI summary rows must sort by latest event across reply/send/open/preview');
+ok(src.includes("else if(f.s==='packaged')rows=rows.filter(r=>r.packagedAt)"),'summary packaged filter missing');
 console.log('HD24 HISTORY VIEW REGRESSION PASS');
