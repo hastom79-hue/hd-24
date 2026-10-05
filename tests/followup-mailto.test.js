@@ -126,6 +126,7 @@ for(const [name,expected] of [['Hemant Kadam','Dear Hemant Kadam,'],['','Dear Te
 }
 console.log('HD24 RECIPIENT GREETING PASS');
 
+const replyDedupe=fs.readFileSync('hd24-reply-import-dedupe.js','utf8');
 const reminder=fs.readFileSync('hd24-seven-day-reminder.js','utf8');
 ok(reminder.includes('const DAY=86400000,DELAY=7*DAY'),'seven-day delay missing');
 ok(reminder.includes("m.status!=='sent'"),'reminder must require confirmed API send');
@@ -238,5 +239,6 @@ ok(src.includes('__HD24_FOLLOWUP_WIRED__'),'follow-up initialization must be ide
 ok(reminder.includes('__HD24_SEVEN_DAY_REMINDER_WIRED__'),'D+7 reminder initialization must be idempotent');
 ok(feedback.includes('__HD24_REPLY_FEEDBACK_WIRED__'),'reply feedback initialization must be idempotent');
 ok(feedback.includes("document.readyState==='loading'")&&feedback.includes("DOMContentLoaded',wire,{once:true}")&&feedback.includes('else wire()'),'reply feedback must initialize when loaded after DOMContentLoaded');
+ok(replyDedupe.includes('__HD24_REPLY_IMPORT_DEDUPE_WIRED__'),'reply import dedupe initialization must be idempotent');
 ok(directReply.includes('__HD24_DIRECT_REPLY_GUARD_WIRED__'),'direct reply guard initialization must be idempotent');
 ok(historyView.includes('__HD24_HISTORY_VIEW_WIRED__'),'history view initialization must be idempotent');
