@@ -95,3 +95,11 @@
 - Bumped production/refresh loaders to follow-up v89, reply-feedback v17, and D+7 reminder v8 to prevent stale browser cache execution.
 - Repository main HEAD contains the changes; GitHub Actions/Pages runtime PASS was not assumed because a corresponding run/runtime result was not exposed during validation.
 - Commits: d6f5979, 40f049a, 4c795ff, 8431078, c018cfa, db52aef, 961498c, dbbb551, 3cc66c3, 98c9d93, 5c067ee.
+
+
+## 2026-10-05 — Refresh stability + CI final hardening
+- Added idempotent initialization guards across Auto-run, Pipeline Gate, Follow-up, D+7 Reminder, Direct Reply Guard, History View, and Reply Feedback to prevent duplicate listeners/observers/watchdogs during repeated initialization.
+- Expanded the action-cycle workflow syntax checks to all three mail runtimes and broadened the closed-loop regression suite; added manual workflow_dispatch entry.
+- Refreshed production/cache loader versions: auto-run v30, pipeline-gate v24, follow-up v90, D+7 v9, direct-reply-guard v13, history-view v30, reply-feedback v18; synchronized refresh-runtime.
+- Added initialization-idempotency regression locks, fixed missing runtime-source declarations in the test itself, and removed stale D+7/Feedback cache-version assertions and diagnostics.
+- Commits: b66b7c5, cec6be3, 2242d52, 4f4e5f8, f68358c, ac69a7a, 4d258bf, 7ee2f5a, 39af55d, 2430e1e, a82c05c, 3c7a774, ecd21fc, 0ac44dd, 9ea766e, 4d07a95.
