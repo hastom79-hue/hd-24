@@ -8,13 +8,17 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&
 function load(k){try{return JSON.parse(localStorage.getItem(k)||'[]')}catch(_){return []}}
 function plantLabel(v){return v==='india'?'India':v==='brazil'?'Brazil':v==='ulsan'?'Ulsan':v||'-'}
 function dt(v){if(!v)return '-';try{return new Date(v).toLocaleString()}catch(_){return v}}
+function aliases(x){return [norm(x.kpiEn||''),norm(x.kpi||'')].filter(Boolean)}
+function sameKpi(a,b){const A=aliases(a),B=aliases(b);return A.some(k=>B.includes(k))}
+function sameGroup(a,b){return a.plant===b.plant&&Number(a.targetMonth)===Number(b.targetMonth)&&sameKpi(a,b)}
 function keyOf(x){return [x.plant,x.targetMonth,norm(x.kpiEn||x.kpi)].join('|')}
 function eventTime(x,type){return type==='reply'?(x.replyReceivedAt||''):(x.sentAt||x.mailOpenedAt||x.preparedAt||'')}
 function buildRows(){
-  const mails=load(MAIL_KEY),replies=load(REPLY_KEY),keys=new Set([...mails.map(keyOf),...replies.map(keyOf)]),out=[];
-  for(const key of keys){
-    const ms=mails.filter(x=>keyOf(x)===key).sort((a,b)=>String(eventTime(b,'mail')).localeCompare(String(eventTime(a,'mail'))));
-    const rs=replies.filter(x=>keyOf(x)===key).sort((a,b)=>String(eventTime(b,'reply')).localeCompare(String(eventTime(a,'reply'))));
+  const mails=load(MAIL_KEY),replies=load(REPLY_KEY),all=[...mails,...replies],groups=[],out=[];
+  for(const item of all){let g=groups.find(x=>sameGroup(x.seed,item));if(!g){g={seed:item,items:[]};groups.push(g)}g.items.push(item)}
+  for(const group of groups){
+    const ms=mails.filter(x=>sameGroup(group.seed,x)).sort((a,b)=>String(eventTime(b,'mail')).localeCompare(String(eventTime(a,'mail'))));
+    const rs=replies.filter(x=>sameGroup(group.seed,x)).sort((a,b)=>String(eventTime(b,'reply')).localeCompare(String(eventTime(a,'reply'))));
     const base=rs[0]||ms[0]||{},latestMail=ms[0]||{},latestSent=ms.find(x=>!!x.sentAt)||{},latestPackaged=ms.find(x=>x.status==='outlook-package-downloaded')||{},latestOpened=ms.find(x=>x.mailOpenedAt&&x.status!=='outlook-package-downloaded'&&!x.sentAt)||{},latestReply=rs[0]||{};
     const cause=norm(latestReply.rootCause||latestReply.reason||'');
     const same=Number.isFinite(Number(latestReply.sameCauseCount))?Number(latestReply.sameCauseCount):(cause?rs.filter(x=>{const c=norm(x.rootCause||x.reason||'');return c&&(c===cause||c.includes(cause)||cause.includes(c))}).length:0);
