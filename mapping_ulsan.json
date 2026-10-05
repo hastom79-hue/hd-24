@@ -261,7 +261,7 @@
   {
     "masterRow": 102,
     "kpiKr": "DIO(재고회전일수, Days)",
-    "direction": "상향",
+    "direction": "하향",
     "unit": "일",
     "kpiEn": "DIO (Days Inventory Outstanding)"
   },
