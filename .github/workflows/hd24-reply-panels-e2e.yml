@@ -112,7 +112,7 @@ jobs:
               }""")
               page.wait_for_timeout(300)
               analysis=page.locator('#hd24ReplyAnalysisPanel').inner_text()
-              assert 'Sample KPI' in analysis, analysis
+              assert int(page.locator('.hd24-exec-drill[data-exec-drill="total"] b').inner_text())==1, analysis
               # Re-check the executive dashboard reconciliation after rendering data.
               exec_cards=page.locator('#hd24ReplyAnalysisPanel .hd24-exec-drill')
               assert exec_cards.count() >= 4, 'Executive dashboard quality cards are missing'
