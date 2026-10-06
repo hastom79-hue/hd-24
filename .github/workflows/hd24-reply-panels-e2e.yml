@@ -178,7 +178,7 @@ jobs:
 
 
 
-              for kind in ('total','complete','review','attention'):
+              for kind in ('total','complete','review','attention','recurring','stagnant','overdue','retrospective'):
                   card=page.locator(f'.hd24-exec-drill[data-exec-drill="{kind}"]')
                   expected=int(card.locator('b').inner_text())
                   card.click()
@@ -187,6 +187,13 @@ jobs:
                   actual=0 if expected==0 else rows.count()
                   assert actual==expected, (kind,expected,actual)
                   page.locator('#hd24ExecDrillClose').click()
+
+              # Classification must be exhaustive and mutually exclusive.
+              total=int(page.locator('.hd24-exec-drill[data-exec-drill="total"] b').inner_text())
+              complete=int(page.locator('.hd24-exec-drill[data-exec-drill="complete"] b').inner_text())
+              review=int(page.locator('.hd24-exec-drill[data-exec-drill="review"] b').inner_text())
+              attention=int(page.locator('.hd24-exec-drill[data-exec-drill="attention"] b').inner_text())
+              assert total==complete+review+attention, (total,complete,review,attention)
 
               page.evaluate("window.hd24SwitchTab && window.hd24SwitchTab('replymail')")
               page.wait_for_timeout(300)
