@@ -140,6 +140,14 @@ jobs:
               assert int(page.locator('.hd24-exec-drill[data-exec-drill="review"] b').inner_text())==1
               assert int(page.locator('.hd24-exec-drill[data-exec-drill="attention"] b').inner_text())==1
 
+              # Optional next-month recovery target must not downgrade an otherwise complete reply.
+              page.evaluate("""localStorage.setItem('hd24_kpi_reply_history_v2', JSON.stringify([{plant:'india',targetYear:2026,targetMonth:8,kpiEn:'Optional Target Check',reason:'Specific miss reason',rootCause:'Verified material shortage mechanism',recoveryPlan:'Secure supplier capacity and verify weekly recovery',actionOwner:'Owner A',plannedCompletionDate:'2026-10-31',replySequence:1}])); window.hd24ReplyFeedback.render()""")
+              page.wait_for_timeout(200)
+              assert int(page.locator('.hd24-exec-drill[data-exec-drill="complete"] b').inner_text())==1
+              assert int(page.locator('.hd24-exec-drill[data-exec-drill="review"] b').inner_text())==0
+              assert int(page.locator('.hd24-exec-drill[data-exec-drill="attention"] b').inner_text())==0
+
+
               for kind in ('total','complete','review','attention'):
                   card=page.locator(f'.hd24-exec-drill[data-exec-drill="{kind}"]')
                   expected=int(card.locator('b').inner_text())
