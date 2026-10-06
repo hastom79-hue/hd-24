@@ -1,0 +1,95 @@
+name: HD24 Reply Panels Browser E2E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'hd24-ui-v3.js'
+      - 'hd24-reply-feedback.js'
+      - 'hd24-reply-deep-validation.js'
+      - '.github/workflows/hd24-reply-panels-e2e.yml'
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'hd24-ui-v3.js'
+      - 'hd24-reply-feedback.js'
+      - 'hd24-reply-deep-validation.js'
+      - '.github/workflows/hd24-reply-panels-e2e.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reply-panels-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Playwright
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: Start local app server
+        run: |
+          python -m http.server 8768 --bind 127.0.0.1 > /tmp/hd24-reply-http.log 2>&1 &
+          for i in {1..20}; do if curl -fsS http://127.0.0.1:8768/index.html >/dev/null; then exit 0; fi; sleep 1; done
+          cat /tmp/hd24-reply-http.log; exit 1
+      - name: Reply analysis and feedback mail must never render blank
+        run: |
+          python - <<'PY'
+          from playwright.sync_api import sync_playwright
+          with sync_playwright() as p:
+              browser=p.chromium.launch(headless=True)
+              page=browser.new_page()
+              errors=[]
+              page.on('pageerror',lambda e: errors.append(str(e)))
+              page.goto('http://127.0.0.1:8768/index.html',wait_until='networkidle',timeout=120000)
+              page.wait_for_function("window.hd24ReplyFeedback && typeof window.hd24ReplyFeedback.render==='function'",timeout=30000)
+
+              # Reproduce the historical race: remove the upload panel, then render dedicated panels.
+              page.evaluate("""() => {
+                document.getElementById('hd24ReplyPanel')?.remove();
+                window.hd24ReplyFeedback.render();
+              }""")
+              page.wait_for_function("document.getElementById('hd24ReplyAnalysisPanel') && document.getElementById('hd24ReplyMailPanel')",timeout=10000)
+
+              page.evaluate("window.hd24SwitchTab && window.hd24SwitchTab('replyanalysis')")
+              page.wait_for_timeout(300)
+              analysis=page.locator('#hd24ReplyAnalysisPanel').inner_text().strip()
+              assert analysis, 'Reply analysis panel rendered completely blank'
+              assert ('등록된 회신이 없습니다' in analysis or '회신 상세분석' in analysis or '회신 상세 분석' in analysis), analysis
+
+              # Seed one reply and prove the data-backed analysis path renders.
+              page.evaluate("""() => {
+                localStorage.setItem('hd24_kpi_reply_history_v2', JSON.stringify([{
+                  plant:'india',targetYear:2026,targetMonth:7,kpi:'샘플 KPI',kpiEn:'Sample KPI',
+                  reason:'Missed target',rootCause:'Material delay from supplier',
+                  recoveryPlan:'Daily recovery tracking and supplier escalation',
+                  actionOwner:'Owner A',plannedCompletionDate:'2026-10-31',
+                  nextMonthRecoveryTarget:'Recover to target',responder:'Plant',
+                  replyReceivedAt:'2026-10-06T03:00:00Z',replySequence:1
+                }]));
+                window.hd24ReplyFeedback.render();
+              }""")
+              page.wait_for_timeout(300)
+              analysis=page.locator('#hd24ReplyAnalysisPanel').inner_text()
+              assert 'Sample KPI' in analysis, analysis
+              assert 'Executive Dashboard' in analysis, analysis
+
+              page.evaluate("window.hd24SwitchTab && window.hd24SwitchTab('replymail')")
+              page.wait_for_timeout(300)
+              mail=page.locator('#hd24ReplyMailPanel').inner_text().strip()
+              assert mail, 'Reply feedback mail panel rendered completely blank'
+              assert '회신 피드백 메일' in mail, mail
+              assert page.locator('#hd24FeedbackSubject').count()==1
+              assert page.locator('#hd24FeedbackDraft').count()==1
+              assert not errors, errors
+              print('HD24 REPLY PANELS E2E PASS: empty-state + data-backed analysis + feedback mail')
+              browser.close()
+          PY
