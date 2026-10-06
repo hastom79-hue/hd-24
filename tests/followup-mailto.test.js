@@ -90,7 +90,7 @@ ok(!src.includes("const ws=wb.worksheets[0]"),'first-sheet-only reply import reg
 ok(src.includes("KPI column not found: ${ws.name}")&&src.includes("Response columns not found: ${ws.name}"),'each reply worksheet must validate its own headers');
 
 ok(src.includes("const list=load(REPLY_KEY),pending=[]"),'reply import atomic staging buffer missing');
-ok(src.includes("pending.push({plant,targetMonth")&&src.includes("list.unshift(...pending.reverse());save(REPLY_KEY"),'reply import must commit only after all worksheets finish');
+ok(src.includes("pending.push({plant,targetYear,targetMonth")&&src.includes("list.unshift(...pending.reverse());save(REPLY_KEY"),'reply import must stage year-aware rows and commit only after all worksheets finish');
 
 ok(src.includes("const sameReply=x=>")&&src.includes("prev.some(sameReply)||pending.some"),'staged workbook duplicate rows must be deduplicated against prev and pending');
 
