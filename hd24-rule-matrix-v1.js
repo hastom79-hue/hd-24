@@ -152,14 +152,14 @@ function clusterFindings(rows){
 }
 function analyze(r,all){
  const fs=[],ts=targetState(r),tr=trend(r,all),act=actionState(r),txt=textFields(r),s=seriesFor(r,all),idx=s.findIndex(x=>x===r),prev=idx>0?s[idx-1]:null; const integrity=sourceIntegrity(r); if(integrity)fs.push(integrity);
- fs.push(finding('R01','PERFORMANCE',ts.state,\`Target=\${r.target??'-'}, Actual=\${r.actual??'-'}, Direction=\${direction(r)}\`,'HIGH'));
- if(tr.state!=='NO_TREND'&&tr.state!=='STABLE')fs.push(finding(tr.state==='RECOVERING'?'R02':tr.state==='RECOVERY_CONFIRMED'?'R04':tr.state==='NEW_REGRESSION'?'R05':'R03','TREND',tr.state,\`Target-gap change=\${tr.deltaGap??'-'}\`,'HIGH',tr.state==='NEW_REGRESSION'));
+ fs.push(finding('R01','PERFORMANCE',ts.state,`Target=${r.target??'-'}, Actual=${r.actual??'-'}, Direction=${direction(r)}`,'HIGH'));
+ if(tr.state!=='NO_TREND'&&tr.state!=='STABLE')fs.push(finding(tr.state==='RECOVERING'?'R02':tr.state==='RECOVERY_CONFIRMED'?'R04':tr.state==='NEW_REGRESSION'?'R05':'R03','TREND',tr.state,`Target-gap change=${tr.deltaGap??'-'}`,'HIGH',tr.state==='NEW_REGRESSION'));
  if(act.attachment)fs.push(finding('R15','REPLY_VALIDATION','REPLY_TRACEABILITY_GAP','Attachment-only reply; structured root/action/owner/due is not traceable','HIGH',true));
  if(act.structural&&act.due){
   const asOf=analysisDate(r)||new Date(), future=act.dueDate&&act.dueDate>asOf;
-  if(future)fs.push(finding('R11','ACTION','EXISTING_ACTION · EFFECT_PENDING',\`Structural action is in progress; due \${act.due}. Do not classify as action failure before due.\`,'HIGH',false));
-  else if(act.completed)fs.push(finding('R14','ACTION','EFFECT VERIFICATION REQUIRED',\`Structural action is reported complete; verify subsequent KPI/loss response before closure.\`,'HIGH',false));
-  else fs.push(finding('R12','ACTION','DUE CHECK REQUIRED',\`Action due date \${act.due} has been reached/passed; completion/effect requires validation.\`,'MEDIUM',true));
+  if(future)fs.push(finding('R11','ACTION','EXISTING_ACTION · EFFECT_PENDING',`Structural action is in progress; due ${act.due}. Do not classify as action failure before due.`,'HIGH',false));
+  else if(act.completed)fs.push(finding('R14','ACTION','EFFECT VERIFICATION REQUIRED',`Structural action is reported complete; verify subsequent KPI/loss response before closure.`,'HIGH',false));
+  else fs.push(finding('R12','ACTION','DUE CHECK REQUIRED',`Action due date ${act.due} has been reached/passed; completion/effect requires validation.`,'MEDIUM',true));
  }
  if(act.activity&&!act.structural&&ts.state==='TARGET_MISS')fs.push(finding('R10','ACTION','ACTIVITY_ACTION','Training/awareness/meeting/tracking action without structural countermeasure evidence','MEDIUM',false));
  if(prev){
