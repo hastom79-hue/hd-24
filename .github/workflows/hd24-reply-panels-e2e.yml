@@ -156,8 +156,13 @@ jobs:
                 {plant:'india',targetYear:2026,targetMonth:8,kpiEn:'Broad Due Check',reason:'Demand fluctuation',rootCause:'Confirmed planning variance mechanism',recoveryPlan:'Rebalance plan and verify weekly performance',actionOwner:'Owner A',plannedCompletionDate:'Monthly',replySequence:1}
               ])); window.hd24ReplyFeedback.render()""")
               page.wait_for_timeout(200)
-              assert int(page.locator('.hd24-exec-drill[data-exec-drill="review"] b').inner_text())==1
-              assert '기한 구체화 필요' in page.locator('#hd24ReplyAnalysisPanel').inner_text()
+              broad_review=page.locator('.hd24-exec-drill[data-exec-drill="review"] b').inner_text()
+              broad_complete=page.locator('.hd24-exec-drill[data-exec-drill="complete"] b').inner_text()
+              broad_attention=page.locator('.hd24-exec-drill[data-exec-drill="attention"] b').inner_text()
+              broad_text=page.locator('#hd24ReplyAnalysisPanel').inner_text()
+              print('BROAD_DUE_DIAG', {'complete':broad_complete,'review':broad_review,'attention':broad_attention,'has_flag':'기한 구체화 필요' in broad_text})
+              assert int(broad_review)==1, ('broad_due_review',broad_complete,broad_review,broad_attention)
+              assert '기한 구체화 필요' in broad_text, ('broad_due_flag_missing',broad_text[:1000])
 
               # Prior-month KPI rows are trend history, not prior reply iterations.
               page.evaluate("""localStorage.setItem('hd24_kpi_reply_history_v2', JSON.stringify([
