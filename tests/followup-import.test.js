@@ -14,7 +14,7 @@ ok(/const\s+list=load\(REPLY_KEY\),pending=\[\]/.test(src),'multi-sheet replies 
 ok(src.includes("list.unshift(...pending.reverse());save(REPLY_KEY,list.slice(0,4000))"),'staged replies must commit once after workbook validation');
 ok(src.includes("replySequence:prev.length+pending.filter(y=>y.plant===plant&&(Number(y.targetYear)||2026)===targetYear&&y.targetMonth===targetMonth&&sameKpi(y)).length+1"),'second replies must increment sequence within plant/month/KPI');
 ok(src.includes("const duplicate=prev.some(sameReply)||pending.some"),'duplicate reply must check persisted and staged rows');
-ok(src.includes("function replyHistoryFor(r)")&&src.includes("norm(h.kpiEn||h.kpi)===k"),'recurrence history must remain KPI scoped');
+ok(src.includes("function replyHistoryFor(r)")&&src.includes("[norm(h.kpiEn||''),norm(h.kpi||'')].some(k=>k&&keys.has(k))"),'recurrence history must remain KPI alias scoped');
 ok(src.includes("isRecurrence:same>=2"),'Repeated Issue requires at least two similar causes');
 ok(src.includes("const sent=xs.filter(x=>x.status==='sent'||!!x.sentAt)"),'actual sent mail must win reply anchor selection');
 ok(src.includes("if(sent)return sent"),'sent anchor must take precedence over later package/prepared events');
