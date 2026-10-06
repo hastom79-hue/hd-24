@@ -64,7 +64,7 @@ ok(src.includes("sameCauseCount:same")&&src.includes("isRecurrence:same>=2"),'sa
 ok(src.includes("Recurring same cause (x")&&src.includes("동일 사유 반복("),'repeated-issue follow-up tags missing');
 ok(src.includes("Previous Reason / Root Cause")&&src.includes("Previous Countermeasure"),'previous reply carry-forward columns missing');
 ok(src.includes("replySequence:prev.length+pending.filter")&&src.includes(".length+1"),'reply sequence increment missing');
-ok(src.includes("x.plant===plant&&x.targetMonth===targetMonth"),'reply sequence must be scoped by plant and target month');
+ok(src.includes("y.plant===plant&&(Number(y.targetYear)||2026)===targetYear&&y.targetMonth===targetMonth&&sameKpi(y)"),'reply sequence must be scoped by plant, target year/month, and KPI alias');
 
 ok(src.includes("targetMonth:Number(r.month)||month()"),'mail history must persist each KPI row target month');
 
