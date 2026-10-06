@@ -127,7 +127,7 @@ jobs:
               vals={}
               for i in range(cards.count()):
                   card=cards.nth(i)
-                  vals[card.get_attribute('data-exec-drill')]=int(card.locator('b').inner_text())
+                  raw=card.locator('b').inner_text().strip(); vals[card.get_attribute('data-exec-drill')]=0 if raw=='[최초 시행]' else int(raw.replace('건','').strip())
               assert vals.get('total')==vals.get('complete',0)+vals.get('review',0)+vals.get('attention',0), vals
               # Seed mixed quality rows and prove the severity tiers do not collapse into one bucket.
               page.evaluate("""localStorage.setItem('hd24_kpi_reply_history_v2', JSON.stringify([
