@@ -5,7 +5,7 @@ function ok(v,msg){if(!v)throw new Error(msg)}
 const source=fs.readFileSync('hd24-auto-run.js','utf8');
 ok(source.includes('function coreReady()'),'core readiness guard missing');
 ok(source.includes('window.hd24SafeReflectReady===true'),'safe-reflect global gate missing');
-ok(source.includes('hasSrc&&hasMaster&&hasZip&&hasMapping'),'all parsed prerequisites must be required');
+ok(source.includes('hasSrc&&hasMaster&&hasBuffer&&hasMapping'),'all parsed prerequisites must be required; ZIP is lazy and must not block readiness');
 ok(source.includes('if(sig&&btn&&btn.disabled&&safe&&core.ok)'),'stale-disabled repair must require all safe/core prerequisites');
 ok(source.includes('btn.disabled=false'),'stale-disabled UI repair missing');
 ok(source.includes("writeLog('자동 실행 대기: '+state)"),'diagnostic wait-state log missing');
