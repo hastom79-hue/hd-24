@@ -38,13 +38,6 @@ function closedLoop(all){
   else if(prevAch===false&&nextAch===false)out.push({sev:'MEDIUM',year:yearOf(next),month:next.targetMonth,kpi:next.kpiEn||next.kpi,msg:'전월 미달 후 차월도 미달 — 변경 대책의 실행성과와 추가 근인 확인 필요'});
   if(prev.nextMonthRecoveryTarget){const pair=comparable(next.actual,prev.nextMonthRecoveryTarget,next.unit||prev.unit);if(pair){const [actual,promised]=pair,met=directionOf(next)==='LOWER'?actual<=promised:actual>=promised;if(!met)out.push({sev:'HIGH',year:yearOf(next),month:next.targetMonth,kpi:next.kpiEn||next.kpi,msg:'전월 회신의 차월 회복목표 미달 — 약속 대비 실제성과 갭 검증 필요'});}}
  }
- for(const w of wips){
-  const wAch=achieved(w),wBad=wAch===false||/miss|decline|미달|악화|증가/.test(norm(w.statusTrend));if(!wBad)continue;
-  for(const l of leads.filter(x=>yearOf(x)===yearOf(w)&&Number(x.targetMonth)===Number(w.targetMonth))){
-   const lAch=achieved(l),leadImproved=lAch===true||/improv|shorten|reduc|개선|단축/.test(norm(l.statusTrend));
-   if(leadImproved)out.push({sev:'HIGH',year:yearOf(w),month:w.targetMonth,kpi:w.kpiEn||w.kpi,related:l.kpiEn||l.kpi,msg:'WIP/재공은 미달·악화인데 제조 리드타임은 목표 달성·단축으로 나타납니다. Little’s Law 관점에서 동일 범위·동일 물동량 기준이라면 논리 정합성 확인이 필요하므로 WIP 정의, Throughput 산정범위, Lead Time 시작·종료점 및 재공 포함범위를 교차 검증할 필요'});
-  }
- }
  return out;
 }
 function contradictions(all){
@@ -60,6 +53,13 @@ function contradictions(all){
   for(const c of controls.filter(x=>yearOf(x)===yearOf(q)&&Number(x.targetMonth)===Number(q.targetMonth))){
    const controlAch=achieved(c),isCompliance=has(c,complianceAliases),isRecurrence=has(c,recurrenceAliases),zeroRecurrence=isRecurrence&&Number(c.actual)===0;
    if(controlAch===true||zeroRecurrence)out.push({sev:'HIGH',year:yearOf(q),month:q.targetMonth,kpi:q.kpiEn||q.kpi,related:c.kpiEn||c.kpi,msg:'생산귀책/조립 품질 결과는 미달·악화인데 '+(isCompliance?'표준작업 준수 관리지표는 정상/목표 달성':zeroRecurrence?'비표준작업 재발지표는 0':'관련 공정관리 지표는 정상/목표 달성')+'입니다. 결과 품질과 공정관리 지표가 동시에 성립하는지 점검대상·표본·판정기준 및 원인 연결을 교차 검증할 필요'});
+  }
+ }
+ for(const w of wips){
+  const wAch=achieved(w),wBad=wAch===false||/miss|decline|미달|악화|증가/.test(norm(w.statusTrend));if(!wBad)continue;
+  for(const l of leads.filter(x=>yearOf(x)===yearOf(w)&&Number(x.targetMonth)===Number(w.targetMonth))){
+   const lAch=achieved(l),leadImproved=lAch===true||/improv|shorten|reduc|개선|단축/.test(norm(l.statusTrend));
+   if(leadImproved)out.push({sev:'HIGH',year:yearOf(w),month:w.targetMonth,kpi:w.kpiEn||w.kpi,related:l.kpiEn||l.kpi,msg:'WIP/재공은 미달·악화인데 제조 리드타임은 목표 달성·단축으로 나타납니다. 동일 범위·동일 물동량 기준이라면 논리 정합성 확인이 필요하므로 WIP 정의, Throughput 산정범위, Lead Time 시작·종료점 및 재공 포함범위를 교차 검증할 필요'});
   }
  }
  return out;
