@@ -43,10 +43,10 @@ function closedLoop(all){
 function contradictions(all){
  const out=[],n=s=>norm(s).replace(/\s/g,''),names=r=>[r.kpiEn,r.kpi].map(n).filter(Boolean),has=(r,arr)=>names(r).some(v=>arr.some(t=>v.includes(n(t))));
  const qualityAliases=['IQ 200 (Initial Quality)','IQ 200 (Production attributable)','Basic Quality','Assembly Quality','생산귀책 조립품질','생산귀책조립품질','조립품질','생산귀책 품질','Production attributable assembly quality','Production attributable quality'];
- const complianceAliases=['Standard Work Compliance','표준작업준수율','표준작업 준수율','Standard Work Adherence','Standardized Work Compliance'];
- const recurrenceAliases=['Standard Non-compliance Recurrence','표준미준수재발','표준미준수 재발','비표준작업 재발율','비표준작업 재발률','비표준 작업 재발율','비표준 작업 재발률','Non-standard Work Recurrence','Nonstandard Work Recurrence'];
+ const complianceAliases=['Standard Work Compliance','Production Instruction Compliance Rate','Sequence Compliance','표준작업준수율','표준작업 준수율','Standard Work Adherence','Standardized Work Compliance'];
+ const recurrenceAliases=['Issue Recurrence Rate','Standard Non-compliance Recurrence','표준미준수재발','표준미준수 재발','비표준작업 재발율','비표준작업 재발률','비표준 작업 재발율','비표준 작업 재발률','Non-standard Work Recurrence','Nonstandard Work Recurrence'];
  const wipAliases=['WIP','Work In Process','Work-in-Process','재공','재공재고','공정재공','공정재고'];
- const leadAliases=['Manufacturing Lead Time','Manufacturing Lead Time Reduction','제조리드타임','제조 리드타임','생산리드타임','생산 리드타임','MFG Lead Time'];
+ const leadAliases=['Cutting to Dispatch Lead Time','Manufacturing Lead Time','Manufacturing Lead Time Reduction','제조리드타임','제조 리드타임','생산리드타임','생산 리드타임','MFG Lead Time'];
  const quality=all.filter(r=>has(r,qualityAliases)),controls=all.filter(r=>has(r,[...complianceAliases,...recurrenceAliases])),wips=all.filter(r=>has(r,wipAliases)),leads=all.filter(r=>has(r,leadAliases));
  for(const q of quality){
   const qAch=achieved(q),qBad=qAch===false||/miss|decline|미달|악화/.test(norm(q.statusTrend));if(!qBad)continue;
