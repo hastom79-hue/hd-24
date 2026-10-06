@@ -287,8 +287,8 @@ ok(feedback.includes("status:'send-failed'"),'reply feedback failure history mis
 ok(feedback.includes("x.sentAt||x.failedAt"),'reply feedback failure timestamp rendering missing');
 ok(feedback.includes("x.error?' · '+x.error"),'reply feedback failure detail rendering missing');
 ok(feedback.includes("setTimeout(()=>controller.abort(),30000)"),'reply feedback API timeout guard missing');
-ok(ui.includes('hd24-reply-feedback.js?v=19'),'reply feedback production loader must be v19');
-ok(refresh.includes('hd24-reply-feedback.js?v=19'),'reply feedback refresh preload must be v19');
+const feedbackVm=ui.match(/hd24-reply-feedback\.js\?v=(\d+)/);ok(feedbackVm,'reply feedback production loader missing');
+ok(refresh.includes('hd24-reply-feedback.js?v='+feedbackVm[1]),'reply feedback refresh preload must match production loader version');
 console.log('HD24 REPLY FEEDBACK MAIL HARDENING CONTRACT PASS');
 
 
