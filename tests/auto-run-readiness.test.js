@@ -16,7 +16,7 @@ const listeners={};
 function mkEl(id){return {id,disabled:false,dataset:{},files:[],value:'',_ls:{},addEventListener(ev,fn){(this._ls[ev]??=[]).push(fn)},dispatch(ev){for(const f of this._ls[ev.type]||[])f(ev)},click(){for(const f of this._ls.click||[])f({type:'click'})}}}
 const els={srcFile:mkEl('srcFile'),masterFile:mkEl('masterFile'),plantSelect:mkEl('plantSelect'),btnReflect:mkEl('btnReflect'),log:mkEl('log')};
 els.plantSelect.value='india';
-const sandbox={console,setTimeout,setInterval,clearInterval,Date,Array,CustomEvent:class{constructor(type,opts){this.type=type;this.detail=opts?.detail}},MutationObserver:class{constructor(fn){this.fn=fn}observe(){}},document:{readyState:'complete',getElementById:id=>els[id],addEventListener(ev,fn){(listeners[ev]??=[]).push(fn)}},srcWorkbook:{Sheets:{}},masterWorkbook:{Sheets:{}},masterZip:{},mappingData:[{kpi:'x'}]};
+const sandbox={console,setTimeout,setInterval,clearInterval,Date,Array,CustomEvent:class{constructor(type,opts){this.type=type;this.detail=opts?.detail}},MutationObserver:class{constructor(fn){this.fn=fn}observe(){}},masterFileBuffer:new ArrayBuffer(8),document:{readyState:'complete',getElementById:id=>els[id],addEventListener(ev,fn){(listeners[ev]??=[]).push(fn)}},srcWorkbook:{Sheets:{}},masterWorkbook:{Sheets:{}},masterZip:{},mappingData:[{kpi:'x'}]};
 sandbox.window=sandbox;
 sandbox.addEventListener=(ev,fn)=>{(listeners[ev]??=[]).push(fn)};
 sandbox.dispatchEvent=ev=>{for(const f of listeners[ev.type]||[])f(ev)};
