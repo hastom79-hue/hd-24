@@ -31,6 +31,7 @@ function analyze(r){
  if(!plan)flags.push(['만회계획 미기재','Recovery plan is missing']);
  if(!owner)flags.push(['담당자 미지정','Action owner is not assigned']);
  if(!due)flags.push(['완료예정일 미지정','Due date is not specified']);
+ if(due&&(/^(monthly|-|n\/?a)$/i.test(due)))flags.push(['기한 구체화 필요','Due timing is too broad; specify an actionable completion week/date']);
  if(reason&&root&&reason.toLowerCase()===root.toLowerCase())flags.push(['현상/사유와 근본원인이 동일 문구입니다. 근인 분석의 구체화가 필요','Reason and root cause are identical; please clarify the underlying cause']);
  if(plan&&plan.length<12)flags.push(['만회계획이 매우 짧아 실행방법·완료조건 확인 필요','Recovery plan is too brief; clarify execution method and completion criteria']);
  if(root&&root.length<8)flags.push(['근본원인 설명이 짧아 발생 메커니즘/근거 확인 필요','Root-cause description is brief; clarify mechanism and evidence']);
