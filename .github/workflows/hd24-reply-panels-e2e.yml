@@ -103,6 +103,22 @@ jobs:
               analysis=page.locator('#hd24ReplyAnalysisPanel').inner_text()
               assert 'Sample KPI' in analysis, analysis
               assert 'Executive Dashboard' in analysis, analysis
+              # Executive quality buckets must reconcile exactly to the KPI population.
+              cards=page.locator('#hd24ReplyAnalysisPanel .hd24-exec-drill')
+              vals={}
+              for i in range(cards.count()):
+                  card=cards.nth(i)
+                  vals[card.get_attribute('data-exec-drill')]=int(card.locator('b').inner_text())
+              assert vals.get('total')==vals.get('complete',0)+vals.get('review',0)+vals.get('attention',0), vals
+              for kind in ('total','complete','review','attention'):
+                  card=page.locator(f'.hd24-exec-drill[data-exec-drill="{kind}"]')
+                  expected=int(card.locator('b').inner_text())
+                  card.click()
+                  page.wait_for_selector('#hd24ExecDrillModal')
+                  rows=page.locator('#hd24ExecDrillModal tbody tr')
+                  actual=0 if expected==0 else rows.count()
+                  assert actual==expected, (kind,expected,actual)
+                  page.locator('#hd24ExecDrillClose').click()
 
               page.evaluate("window.hd24SwitchTab && window.hd24SwitchTab('replymail')")
               page.wait_for_timeout(300)
