@@ -177,48 +177,14 @@ jobs:
               if '오류:' in log and '반영 후 재검증 PASS' not in log:
                   raise AssertionError('HD24 reflect failed in browser:\n'+log)
               page.wait_for_timeout(1500)
-              assert downloads, 'Reflect reported PASS but no browser download event was emitted'
-              dl=downloads[0]
-              target=download_dir/dl.suggested_filename
-              dl.save_as(str(target))
+              assert not downloads, 'Reflect PASS must not trigger an unsolicited browser download'
               assert '안전 실적 반영 v15 시작' in log
               assert '안전 매핑 검증: 77/77건' in log
               assert '반영 후 재검증 PASS' in log
               assert '미래월 0셀' in log
               assert '과거 기존값 덮어쓰기 0셀' in log
-              assert target.exists() and target.stat().st_size>0
               bad=[x for x in console_errors if 'safe reflect guard failed' in x.lower() or 'safe mapping guard install failed' in x.lower()]
               assert not bad, bad
-              (fixture/'download_path.txt').write_text(str(target),encoding='utf-8')
-              print('Downloaded:',target)
               browser.close()
           PY
 
-      - name: Verify downloaded workbook mutation boundaries
-        run: |
-          python - <<'PY'
-          import json, math
-          from pathlib import Path
-          from openpyxl import load_workbook
-
-          root=Path('qa/e2e-runtime')
-          expected=json.loads((root/'expected.json').read_text(encoding='utf-8'))
-          path=Path((root/'download_path.txt').read_text(encoding='utf-8').strip())
-          wb=load_workbook(path,data_only=False)
-          ws=wb[expected['sheet']]
-          rows=expected['rows']
-          exp=float(expected['expectedJuly'])
-          bad=[]
-          for r in rows:
-              v=ws.cell(r,33).value
-              if v is None or not math.isclose(float(v),exp,rel_tol=1e-9,abs_tol=1e-9):
-                  bad.append((r,v))
-              for c in range(34,39):
-                  if ws.cell(r,c).value not in (None,''):
-                      bad.append((r,c,ws.cell(r,c).value))
-          if bad:
-              raise SystemExit(f'E2E workbook verification failed: {bad[:20]}')
-          print(f'BROWSER E2E PASS: July verified on {len(rows)} master rows; Aug-Dec untouched')
-          PY
-
-# compatibility retest trigger: sheet XML relationship parser
