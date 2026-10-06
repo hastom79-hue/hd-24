@@ -96,14 +96,6 @@ jobs:
               assert analysis, 'Reply analysis panel rendered completely blank'
               assert ('등록된 회신이 없습니다' in analysis or '회신 상세분석' in analysis or '회신 상세 분석' in analysis), analysis
 
-              # Re-check the executive dashboard reconciliation after rendering data.
-              exec_cards=page.locator('#hd24ReplyAnalysisPanel .hd24-exec-drill')
-              assert exec_cards.count() >= 4, 'Executive dashboard quality cards are missing'
-              total_card=page.locator('.hd24-exec-drill[data-exec-drill="total"] b')
-              complete_card=page.locator('.hd24-exec-drill[data-exec-drill="complete"] b')
-              review_card=page.locator('.hd24-exec-drill[data-exec-drill="review"] b')
-              attention_card=page.locator('.hd24-exec-drill[data-exec-drill="attention"] b')
-              assert int(total_card.inner_text()) == int(complete_card.inner_text()) + int(review_card.inner_text()) + int(attention_card.inner_text())
               # Seed one reply and prove the data-backed analysis path renders.
               page.evaluate("""() => {
                 localStorage.setItem('hd24_kpi_reply_history_v2', JSON.stringify([{
@@ -119,6 +111,14 @@ jobs:
               page.wait_for_timeout(300)
               analysis=page.locator('#hd24ReplyAnalysisPanel').inner_text()
               assert 'Sample KPI' in analysis, analysis
+              # Re-check the executive dashboard reconciliation after rendering data.
+              exec_cards=page.locator('#hd24ReplyAnalysisPanel .hd24-exec-drill')
+              assert exec_cards.count() >= 4, 'Executive dashboard quality cards are missing'
+              total_card=page.locator('.hd24-exec-drill[data-exec-drill="total"] b')
+              complete_card=page.locator('.hd24-exec-drill[data-exec-drill="complete"] b')
+              review_card=page.locator('.hd24-exec-drill[data-exec-drill="review"] b')
+              attention_card=page.locator('.hd24-exec-drill[data-exec-drill="attention"] b')
+              assert int(total_card.inner_text()) == int(complete_card.inner_text()) + int(review_card.inner_text()) + int(attention_card.inner_text())
               assert 'Executive Dashboard' in analysis, analysis
               # Executive quality buckets must reconcile exactly to the KPI population.
               cards=page.locator('#hd24ReplyAnalysisPanel .hd24-exec-drill')
