@@ -62,6 +62,13 @@ function contradictions(all){
    if(leadImproved)out.push({sev:'HIGH',year:yearOf(w),month:w.targetMonth,kpi:w.kpiEn||w.kpi,related:l.kpiEn||l.kpi,msg:'WIP/재공은 미달·악화인데 제조 리드타임은 목표 달성·단축으로 나타납니다. 동일 범위·동일 물동량 기준이라면 논리 정합성 확인이 필요하므로 WIP 정의, Throughput 산정범위, Lead Time 시작·종료점 및 재공 포함범위를 교차 검증할 필요'});
   }
  }
+ const downtimeAliases=['Equipment Downtime','Downtime Loss'],mtbfAliases=['MTBF'],mttrAliases=['MTTR'],mttdAliases=['MTTD'],forecastAliases=['Forecast Accuracy','Mix Variation','M+1','W+3','Production Incoming Plan Compliance'],productivityAliases=['LOB Efficiency','Input MH','OT MH','Productivity'];
+ const samePeriod=(a,b)=>yearOf(a)===yearOf(b)&&Number(a.targetMonth)===Number(b.targetMonth),bad=r=>achieved(r)===false,good=r=>achieved(r)===true;
+ const cross=(aa,bb,msg)=>all.filter(r=>has(r,aa)&&bad(r)).forEach(a=>all.filter(b=>b!==a&&samePeriod(a,b)&&has(b,bb)&&good(b)).forEach(b=>out.push({sev:'MEDIUM',year:yearOf(a),month:a.targetMonth,kpi:a.kpiEn||a.kpi,related:b.kpiEn||b.kpi,msg})));
+ cross(downtimeAliases,mtbfAliases,'설비 Downtime은 미달인데 MTBF는 정상입니다. 고장빈도와 비가동손실 산정범위를 교차 검증할 필요');
+ cross([...mttrAliases,...mttdAliases],downtimeAliases,'MTTR/MTTD는 미달인데 설비 Downtime은 정상입니다. 고장건수·정지시간·탐지/복구 산식 범위를 확인할 필요');
+ cross(productivityAliases,leadAliases,'생산성/MH 계열은 미달인데 Lead Time은 정상입니다. 물량·Mix·측정구간 차이 또는 부분 최적화를 확인할 필요');
+ cross(forecastAliases,forecastAliases,'생산계획/Forecast 계열 지표가 같은 기간에 상반됩니다. 총량·Mix·Option·Incoming Plan 기준범위를 확인할 필요');
  return out;
 }
 async function exportXlsx(rows,cons){
