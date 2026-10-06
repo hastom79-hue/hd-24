@@ -1634,10 +1634,11 @@ function setupTabs(){
       activate(tab);
     });
   });
-  // 새로고침 후에도 회신 분석/피드백 업무 탭은 유지한다. 파일 입력이 필요한 결과/메일 탭은 업로드로 안전 복귀한다.
+  // 새로고침/재진입 시에는 항상 업로드·실행에서 시작한다.
+  // 파일 입력과 런타임 판정 상태는 새로고침으로 초기화되므로 이전 업무 탭만 복원하면 빈 화면이 될 수 있다.
   const validTabs = new Set(['upload','results','mail','reply','replyanalysis','replymail','spotcheck','history','log']);
-  let initialTab='upload';
-  try { const saved=sessionStorage.getItem('hd24_active_tab'); if(saved==='reply'||saved==='replyanalysis'||saved==='replymail'||saved==='history'||saved==='log'||saved==='spotcheck') initialTab=saved; else sessionStorage.setItem('hd24_active_tab','upload'); } catch(_){}
+  const initialTab='upload';
+  try { sessionStorage.setItem('hd24_active_tab','upload'); } catch(_){}
   activate(initialTab);
   window.hd24SwitchTab = (tab)=>{
     if (!validTabs.has(tab)) return;
