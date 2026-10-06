@@ -152,7 +152,7 @@ console.log('HD24 SEVEN-DAY REMINDER CONTRACT PASS');
 
 ok(src.includes("id='hd24MailTypeTabs'")&&src.includes('최초 발송메일')&&src.includes('리마인드 메일 [D+7 경과]'),'initial and D+7 mail tabs missing');
 ok(reminder.includes('hd24ReminderMailList')&&reminder.includes('리마인드 발송 이력'),'D+7 tab queue/history missing');
-ok(reminder.includes('const answered=batch.every('),'all sent KPI replies must be uploaded to suppress reminder');
+ok(reminder.includes('const unanswered=batch.filter(')&&reminder.includes('answered=unanswered.length===0'),'all sent KPI replies must be uploaded to suppress reminder while partial replies retain unanswered KPI scope');
 console.log('HD24 MAIL TWO-TAB PASS');
 
 const dashboard=fs.readFileSync('index.html','utf8');
