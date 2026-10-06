@@ -70,6 +70,7 @@ jobs:
               browser=p.chromium.launch(headless=True)
               page=browser.new_page()
               errors=[]
+              page.add_init_script("window.__hd24WindowErrors=[]; window.addEventListener('error',e=>window.__hd24WindowErrors.push({message:e.message,filename:e.filename,lineno:e.lineno,colno:e.colno}));")
               page.on('pageerror',lambda e: errors.append(str(e)+' | '+str(getattr(e,'stack', '') or '')))
               # Inspect inline scripts before exercising the UI.
               page_scripts=page.locator('script:not([src])')
@@ -144,6 +145,9 @@ jobs:
               assert '회신 피드백 메일' in mail, mail
               assert page.locator('#hd24FeedbackSubject').count()==1
               assert page.locator('#hd24FeedbackDraft').count()==1
+              if errors:
+                  print('PAGEERRORS:', errors)
+                  print('WINDOW_ERRORS:', page.evaluate("window.__hd24WindowErrors || []"))
               assert not errors, errors
               print('HD24 REPLY PANELS E2E PASS: empty-state + data-backed analysis + feedback mail')
               browser.close()
