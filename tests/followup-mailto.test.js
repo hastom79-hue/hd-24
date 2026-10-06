@@ -4,6 +4,7 @@ const ui=fs.readFileSync('hd24-ui-v3.js','utf8');
 const refresh=fs.readFileSync('refresh-runtime.html','utf8');
 const historyView=fs.readFileSync('hd24-history-view.js','utf8');
 const pipeline=fs.readFileSync('hd24-pipeline-gate.js','utf8');
+const directReply=fs.readFileSync('hd24-direct-reply-guard.js','utf8');
 function ok(x,m){if(!x)throw new Error(m)}
 ok(src.includes("buildOutlookEml({to,cc,subject:previewState.subject,body:previewState.body,attachments})"),'Outlook EML package construction missing');
 ok(src.includes("'X-Unsent: 1'"),'Outlook unsent draft marker missing');
