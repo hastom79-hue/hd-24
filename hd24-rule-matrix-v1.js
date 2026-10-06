@@ -342,7 +342,7 @@ function integrityGate(r){
  return {state:'PASS',confidence:'HIGH',reason:'CALCULATION_VERIFIED'};
 }
 function analyzeAll(rows){
- return rows.map(r=>{const findings=analyze(r,rows);return {record:r,direction:direction(r),target:targetState(r),trend:trend(r,rows),findings,managementState:managementState(findings),questions:consolidateQuestions(findings)}})
+ return rows.map(r=>{const findings=analyze(r,rows);return {record:r,direction:direction(r),target:targetState(r),trend:trend(r,rows),findings,managementState:managementState(findings),questions:consolidateQuestions(findings),actionAttribution:actionAttribution(r,rows),causeDynamics:causeDynamics(r,rows),pdcaClosure:pdcaClosure(r,rows)}})
 }
 window.HD24_RULE_MATRIX_V1={...API,KPI_DIRECTION_MASTER,masterDirection,direction,auditSummary,integrityGate,causeDynamics,standardControlEligibility,actionAttribution,pdcaClosure,issueIdentity,issueTimeline,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,issueKeyFor,consolidateIssueFollowups,analysisDate,dueDate,effectState,actionDetail,analyze,analyzeAll,consolidateQuestions};
 document.dispatchEvent(new CustomEvent('hd24:rule-matrix-ready',{detail:API}));
