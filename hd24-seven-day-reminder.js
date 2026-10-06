@@ -28,9 +28,9 @@ function pending(now=Date.now()){
   if(m.status!=='sent'||!m.sentAt||!m.to||!['ulsan','india','brazil'].includes(m.plant))continue;
   const sent=Date.parse(m.sentAt);if(!Number.isFinite(sent)||now-sent<DELAY)continue;
   const batch=mails.filter(x=>x.status==='sent'&&x.plant===m.plant&&x.sentAt===m.sentAt&&x.to===m.to);
-  const batchKey=[...new Set(batch.map(x=>[Number(x.targetMonth)||0,norm(x.kpiEn||x.kpi)].join(':')).filter(Boolean))].sort().join(',');
+  const batchKey=[...new Set(batch.map(x=>[Number(x.targetYear)||2026,Number(x.targetMonth)||0,norm(x.kpiEn||x.kpi)].join(':')).filter(Boolean))].sort().join(',');
   const id=[m.plant,m.sentAt,m.to.toLowerCase(),batchKey].join('|');if(seen.has(id))continue;seen.add(id);
-  const answered=batch.every(x=>replies.some(r=>r.plant===x.plant&&Number(r.targetMonth)===Number(x.targetMonth)&&sameKpi(r,x)&&Date.parse(r.replyReceivedAt)>=sent));
+  const answered=batch.every(x=>replies.some(r=>r.plant===x.plant&&(Number(r.targetYear)||2026)===(Number(x.targetYear)||2026)&&Number(r.targetMonth)===Number(x.targetMonth)&&sameKpi(r,x)&&Date.parse(r.replyReceivedAt)>=sent));
   const reminded=mails.some(x=>x.status==='seven-day-reminder-sent'&&x.originalMailId===id);
   if(!answered&&!reminded)out.push({id,mail:m,batch});
  }
@@ -90,7 +90,7 @@ async function sendDue(){
     if(!res.ok)throw new Error('HTTP '+res.status+(responseText?' · '+responseText.slice(0,180):''));
     let responseJson=null;try{responseJson=responseText?JSON.parse(responseText):null}catch(_){}
     if(responseJson&&responseJson.success===false)throw new Error('메일 API 발송 거부: '+(responseJson.error||responseJson.message||'success=false'));
-    const history=read(MAIL_KEY);history.unshift({plant:m.plant,status:'seven-day-reminder-sent',to:m.to,cc,recipientName:m.recipientName||'',targetMonth:m.targetMonth||'',kpi:m.kpi||'',kpiEn:m.kpiEn||'',originalSentAt:m.sentAt,originalMailId:item.id,language:reminderLang,sentAt:new Date().toISOString()});localStorage.setItem(MAIL_KEY,JSON.stringify(history.slice(0,3000)));
+    const history=read(MAIL_KEY);history.unshift({plant:m.plant,status:'seven-day-reminder-sent',to:m.to,cc,recipientName:m.recipientName||'',targetYear:Number(m.targetYear)||2026,targetMonth:m.targetMonth||'',kpi:m.kpi||'',kpiEn:m.kpiEn||'',originalSentAt:m.sentAt,originalMailId:item.id,language:reminderLang,sentAt:new Date().toISOString()});localStorage.setItem(MAIL_KEY,JSON.stringify(history.slice(0,3000)));
     localStorage.removeItem(lock);status('7일 미회신 재안내 발송 완료: '+m.to);
    }catch(e){localStorage.removeItem(lock);const history=read(MAIL_KEY);history.unshift({plant:m.plant,status:'seven-day-reminder-failed',to:m.to,cc:required(m.plant,m.cc),recipientName:m.recipientName||'',targetMonth:m.targetMonth||'',kpi:m.kpi||'',kpiEn:m.kpiEn||'',originalSentAt:m.sentAt,originalMailId:item.id,language:reminderLang,failedAt:new Date().toISOString(),error:String(e.message||e)});localStorage.setItem(MAIL_KEY,JSON.stringify(history.slice(0,3000)));status('7일 재안내 발송 실패: '+String(e.message||e));}
   }
