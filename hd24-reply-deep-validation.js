@@ -24,9 +24,9 @@ function closedLoop(all){
  const out=[],latest=new Map();all.forEach(r=>{const k=kpiKey(r)+'|'+yearOf(r)+'|'+Number(r.targetMonth),cur=latest.get(k);if(!cur||Number(r.replySequence||0)>Number(cur.replySequence||0)||String(r.replyReceivedAt||'')>String(cur.replyReceivedAt||''))latest.set(k,r)});const ordered=[...latest.values()].sort((a,b)=>Number(a.targetMonth)-Number(b.targetMonth));
  for(const prev of ordered){const pm=Number(prev.targetMonth),next=ordered.find(x=>sameKpi(x,prev)&&periodOf(x)===periodOf(prev)+1);if(!next)continue;
   const nextAch=achieved(next),prevAch=achieved(prev),plan=norm(prev.recoveryPlan),root=norm(prev.rootCause),sameRoot=root&&norm(next.rootCause)===root,samePlan=plan&&norm(next.recoveryPlan)===plan;
-  if(prevAch===false&&nextAch===false&&(sameRoot||samePlan))out.push({sev:'HIGH',month:next.targetMonth,kpi:next.kpiEn||next.kpi,msg:'전월 미달 후 차월도 미달이며 '+(sameRoot&&samePlan?'근본원인·대책이 모두 반복':'문제해결 논리가 반복')+' — 기존 대책 효과 미입증'});
-  else if(prevAch===false&&nextAch===false)out.push({sev:'MEDIUM',month:next.targetMonth,kpi:next.kpiEn||next.kpi,msg:'전월 미달 후 차월도 미달 — 변경 대책의 실행성과와 추가 근인 확인 필요'});
-  if(prev.nextMonthRecoveryTarget){const pair=comparable(next.actual,prev.nextMonthRecoveryTarget,next.unit||prev.unit);if(pair){const [actual,promised]=pair,met=directionOf(next)==='LOWER'?actual<=promised:actual>=promised;if(!met)out.push({sev:'HIGH',month:next.targetMonth,kpi:next.kpiEn||next.kpi,msg:'전월 회신의 차월 회복목표 미달 — 약속 대비 실제성과 갭 검증 필요'});}}
+  if(prevAch===false&&nextAch===false&&(sameRoot||samePlan))out.push({sev:'HIGH',year:yearOf(next),month:next.targetMonth,kpi:next.kpiEn||next.kpi,msg:'전월 미달 후 차월도 미달이며 '+(sameRoot&&samePlan?'근본원인·대책이 모두 반복':'문제해결 논리가 반복')+' — 기존 대책 효과 미입증'});
+  else if(prevAch===false&&nextAch===false)out.push({sev:'MEDIUM',year:yearOf(next),month:next.targetMonth,kpi:next.kpiEn||next.kpi,msg:'전월 미달 후 차월도 미달 — 변경 대책의 실행성과와 추가 근인 확인 필요'});
+  if(prev.nextMonthRecoveryTarget){const pair=comparable(next.actual,prev.nextMonthRecoveryTarget,next.unit||prev.unit);if(pair){const [actual,promised]=pair,met=directionOf(next)==='LOWER'?actual<=promised:actual>=promised;if(!met)out.push({sev:'HIGH',year:yearOf(next),month:next.targetMonth,kpi:next.kpiEn||next.kpi,msg:'전월 회신의 차월 회복목표 미달 — 약속 대비 실제성과 갭 검증 필요'});}}
  }
  return out;
 }
@@ -34,7 +34,7 @@ function contradictions(all){
  const out=[], n=s=>norm(s).replace(/\s/g,''), has=(r,arr)=>arr.some(t=>n(r.kpiEn||r.kpi).includes(n(t)));
  const quality=all.filter(r=>has(r,['IQ 200 (Initial Quality)','IQ 200 (Production attributable)','Basic Quality','Assembly Quality']));
  const controls=all.filter(r=>has(r,['Standard Work Compliance','표준작업준수율','Standard Non-compliance Recurrence','표준미준수재발']));
- for(const q of quality){const qAch=achieved(q),qBad=qAch===false||/miss|decline|미달|악화/.test(norm(q.statusTrend));if(!qBad)continue;for(const s of controls.filter(x=>Number(x.targetMonth)===Number(q.targetMonth))){const controlAch=achieved(s);if(controlAch===true)out.push({month:q.targetMonth,kpi:q.kpiEn||q.kpi,related:s.kpiEn||s.kpi,msg:'품질 결과는 미달/악화이나 관련 표준작업 관리지표는 목표 달성. 준수점검 기준·표본·판정방식 및 결과지표와의 인과 연결을 재검증할 필요'});}}
+ for(const q of quality){const qAch=achieved(q),qBad=qAch===false||/miss|decline|미달|악화/.test(norm(q.statusTrend));if(!qBad)continue;for(const s of controls.filter(x=>yearOf(x)===yearOf(q)&&Number(x.targetMonth)===Number(q.targetMonth))){const controlAch=achieved(s);if(controlAch===true)out.push({year:yearOf(q),month:q.targetMonth,kpi:q.kpiEn||q.kpi,related:s.kpiEn||s.kpi,msg:'품질 결과는 미달/악화이나 관련 표준작업 관리지표는 목표 달성. 준수점검 기준·표본·판정방식 및 결과지표와의 인과 연결을 재검증할 필요'});}}
  return out;
 }
 async function exportXlsx(rows,cons){
