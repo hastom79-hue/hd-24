@@ -81,18 +81,18 @@ async function sendDue(){
    localStorage.setItem(lock,String(now));
    try{
     if(!pending().some(x=>x.id===item.id)){localStorage.removeItem(lock);continue}
-    const cc=required(m.plant,m.cc),body=reminderText(m.recipientName),subject=reminderSubject(m.plant);
+    const cc=required(m.plant,m.cc),body=reminderText(m.recipientName),subject=reminderSubject(m.plant),unansweredKpis=item.batch.map(x=>({targetYear:Number(x.targetYear)||2026,targetMonth:Number(x.targetMonth)||0,kpi:x.kpi||'',kpiEn:x.kpiEn||''}));
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);let res;
-    try{res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({to:m.to,cc,subject,body,bodyHtml:'<html><body style="font-family:Arial,sans-serif;white-space:pre-line">'+body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</body></html>',plant:m.plant,reminder:true,originalSentAt:m.sentAt,originalMailId:item.id,language:reminderLang}),signal:controller.signal})}
+    try{res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({to:m.to,cc,subject,body,bodyHtml:'<html><body style="font-family:Arial,sans-serif;white-space:pre-line">'+body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</body></html>',plant:m.plant,reminder:true,originalSentAt:m.sentAt,originalMailId:item.id,language:reminderLang,unansweredKpis}),signal:controller.signal})}
     catch(err){if(err?.name==='AbortError')throw new Error('메일 API 응답 시간초과(30초)');throw new Error('메일 API 연결 실패: '+(err?.message||err))}
     finally{clearTimeout(timer)}
     let responseText='';try{responseText=await res.text()}catch(_){}
     if(!res.ok)throw new Error('HTTP '+res.status+(responseText?' · '+responseText.slice(0,180):''));
     let responseJson=null;try{responseJson=responseText?JSON.parse(responseText):null}catch(_){}
     if(responseJson&&responseJson.success===false)throw new Error('메일 API 발송 거부: '+(responseJson.error||responseJson.message||'success=false'));
-    const history=read(MAIL_KEY);history.unshift({plant:m.plant,status:'seven-day-reminder-sent',to:m.to,cc,recipientName:m.recipientName||'',targetYear:Number(m.targetYear)||2026,targetMonth:m.targetMonth||'',kpi:m.kpi||'',kpiEn:m.kpiEn||'',originalSentAt:m.sentAt,originalMailId:item.id,language:reminderLang,sentAt:new Date().toISOString()});localStorage.setItem(MAIL_KEY,JSON.stringify(history.slice(0,3000)));
+    const history=read(MAIL_KEY);history.unshift({plant:m.plant,status:'seven-day-reminder-sent',to:m.to,cc,recipientName:m.recipientName||'',targetYear:Number(m.targetYear)||2026,targetMonth:m.targetMonth||'',kpi:m.kpi||'',kpiEn:m.kpiEn||'',originalSentAt:m.sentAt,originalMailId:item.id,language:reminderLang,unansweredKpis,sentAt:new Date().toISOString()});localStorage.setItem(MAIL_KEY,JSON.stringify(history.slice(0,3000)));
     localStorage.removeItem(lock);status('7일 미회신 재안내 발송 완료: '+m.to);
-   }catch(e){localStorage.removeItem(lock);const history=read(MAIL_KEY);history.unshift({plant:m.plant,status:'seven-day-reminder-failed',to:m.to,cc:required(m.plant,m.cc),recipientName:m.recipientName||'',targetMonth:m.targetMonth||'',kpi:m.kpi||'',kpiEn:m.kpiEn||'',originalSentAt:m.sentAt,originalMailId:item.id,language:reminderLang,failedAt:new Date().toISOString(),error:String(e.message||e)});localStorage.setItem(MAIL_KEY,JSON.stringify(history.slice(0,3000)));status('7일 재안내 발송 실패: '+String(e.message||e));}
+   }catch(e){localStorage.removeItem(lock);const history=read(MAIL_KEY);history.unshift({plant:m.plant,status:'seven-day-reminder-failed',to:m.to,cc:required(m.plant,m.cc),recipientName:m.recipientName||'',targetYear:Number(m.targetYear)||2026,targetMonth:m.targetMonth||'',kpi:m.kpi||'',kpiEn:m.kpiEn||'',originalSentAt:m.sentAt,originalMailId:item.id,language:reminderLang,unansweredKpis,failedAt:new Date().toISOString(),error:String(e.message||e)});localStorage.setItem(MAIL_KEY,JSON.stringify(history.slice(0,3000)));status('7일 재안내 발송 실패: '+String(e.message||e));}
   }
  }finally{busy=false;render()}
 }
