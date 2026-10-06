@@ -74,7 +74,7 @@ function reviewGapFor(r,a,history=[]){
  if(prev&&a.root&&prev.root&&materiallySame(a.root,prev.root))gaps.push('재발방지 미흡: 이전 회신과 동일 근인이 반복되었으나 재발방지 관점의 추가 분석이 없음');
  if(prev&&a.plan&&prev.plan&&materiallySame(a.plan,prev.plan))gaps.push('활동결과 회고 미흡: 이전과 동일 대책을 유지하면서 진척·효과·실패원인에 대한 회고가 없음');
  const due=a.due?new Date(a.due):null;if(due&&!isNaN(due)&&due<new Date()&&!/완료|complete|done/i.test(a.plan||''))gaps.push('기한관리 미흡: 완료예정일이 경과했으나 완료근거 또는 지연원인/재계획이 없음');
- return gaps.length?gaps.join(' | '):'주요 관리요소(회고분석·근인·대책·책임/기한·차월목표)가 연결되어 있음. 차월 실적으로 대책 효과를 검증할 것';
+ return gaps.length?gaps.join(' | '):'주요 관리요소(회고분석·근인·대책·책임/기한)가 연결되어 있음. 차월 실적으로 대책 효과를 검증할 것';
 }
 
 function finalRequestFor(r,a,history=[]){
@@ -141,7 +141,7 @@ function render(){
  if(!rows.length&&demo){rows=[{plant,targetMonth:7,kpiEn:'Sample KPI (DEMO)',reason:'Production delay',rootCause:'',recoveryPlan:'Improve process',actionOwner:'',plannedCompletionDate:'',nextMonthRecoveryTarget:''}];groups=[{month:7,rows}]}
  const analyses=rows.map(r=>{const rp=(Number(r.targetYear)||2026)*12+Number(r.targetMonth||0);const history=all.filter(x=>x!==r&&sameKpi(x,r)&&((Number(x.targetYear)||2026)*12+Number(x.targetMonth||0))<rp).sort((a,b)=>((Number(b.targetYear)||2026)*12+Number(b.targetMonth||0))-((Number(a.targetYear)||2026)*12+Number(a.targetMonth||0)));const a=analyze(r),prev=previousReply(history,r);if(prev){const p=analyze(prev);if(a.root&&p.root&&materiallySame(a.root,p.root))a.flags.push(['반복 근인','이전 회신과 동일한 근본원인이 반복됩니다. 재발방지 조치와 효과검증 근거를 명확히 제시하십시오.']);if(a.plan&&p.plan&&materiallySame(a.plan,p.plan))a.flags.push(['조치 정체','이전 회신과 동일한 Recovery Plan입니다. 실행 진척·완료근거 또는 변경 조치를 제시하십시오.'])}const due=a.due?new Date(a.due):null;if(due&&!isNaN(due)&&due<new Date()&&!/완료|complete|done/i.test(a.plan||''))a.flags.push(['기한 초과','완료예정일이 경과했습니다. 현재 상태, 지연사유 및 재설정 완료일을 회신하십시오.']);return{r,a,history}});
  analyses.forEach(x=>{x.a.level=x.a.score===100&&x.a.flags.length===0?'충분':x.a.score>=67?'보완 필요':'중점 보완'});const stats={total:analyses.length,complete:analyses.filter(x=>x.a.level==='충분').length,review:analyses.filter(x=>x.a.level==='보완 필요').length,attention:analyses.filter(x=>x.a.level==='중점 보완').length,history:analyses.filter(x=>x.history.length>0).length};const classificationOk=stats.complete+stats.review+stats.attention===stats.total;
- const gaps={root:analyses.filter(x=>!x.a.root||x.a.root.length<8).length,plan:analyses.filter(x=>!x.a.plan||x.a.plan.length<12).length,target:analyses.filter(x=>!x.a.target).length,owner:analyses.filter(x=>!x.a.owner||!x.a.due).length};
+ const gaps={root:analyses.filter(x=>!x.a.root||x.a.root.length<8).length,plan:analyses.filter(x=>!x.a.plan||x.a.plan.length<12).length,owner:analyses.filter(x=>!x.a.owner||!x.a.due).length};
  const signals={recurring:analyses.filter(x=>x.a.flags.some(f=>f[0]==='반복 근인')).length,stagnant:analyses.filter(x=>x.a.flags.some(f=>f[0]==='조치 정체')).length,overdue:analyses.filter(x=>x.a.flags.some(f=>f[0]==='기한 초과')).length,retrospective:analyses.filter(x=>{const g=reviewGapFor(x.r,x.a,x.history);return g.includes('미흡')||g.includes('오류')||g.includes('부족')}).length};
 
  const exportKey=plant+'|'+rows.map(r=>[r.targetMonth,r.kpiEn||r.kpi,r.replyReceivedAt,r.replySequence].join(':')).join('|');
