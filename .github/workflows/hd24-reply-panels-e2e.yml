@@ -147,6 +147,7 @@ jobs:
               assert int(page.locator('.hd24-exec-drill[data-exec-drill="review"] b').inner_text())==0
               assert int(page.locator('.hd24-exec-drill[data-exec-drill="attention"] b').inner_text())==0
               assert '[최초 시행]' in page.locator('.hd24-exec-drill[data-exec-drill="history"] b').inner_text()
+              assert '차월 회복목표 미기재' not in page.locator('#hd24ReplyAnalysisPanel').inner_text()
               assert int(page.locator('.hd24-exec-drill[data-exec-drill="recurring"] b').inner_text())==0
               assert int(page.locator('.hd24-exec-drill[data-exec-drill="stagnant"] b').inner_text())==0
               assert int(page.locator('.hd24-exec-drill[data-exec-drill="retrospective"] b').inner_text())==0
