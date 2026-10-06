@@ -151,6 +151,17 @@ jobs:
               assert int(page.locator('.hd24-exec-drill[data-exec-drill="recurring"] b').inner_text())==0
               assert int(page.locator('.hd24-exec-drill[data-exec-drill="stagnant"] b').inner_text())==0
               assert int(page.locator('.hd24-exec-drill[data-exec-drill="retrospective"] b').inner_text())==0
+              # Prior-month KPI rows are trend history, not prior reply iterations.
+              page.evaluate("""localStorage.setItem('hd24_kpi_reply_history_v2', JSON.stringify([
+                {plant:'india',targetYear:2026,targetMonth:7,kpiEn:'Monthly History Check',reason:'Reason A',rootCause:'Root cause A verified',recoveryPlan:'Action A with weekly verification',actionOwner:'Owner A',plannedCompletionDate:'2026-10-31',replySequence:1},
+                {plant:'india',targetYear:2026,targetMonth:8,kpiEn:'Monthly History Check',reason:'Reason A',rootCause:'Root cause A verified',recoveryPlan:'Action A with weekly verification',actionOwner:'Owner A',plannedCompletionDate:'2026-10-31',replySequence:1}
+              ])); window.hd24ReplyFeedback.render()""")
+              page.wait_for_timeout(200)
+              assert '[최초 시행]' in page.locator('.hd24-exec-drill[data-exec-drill="history"] b').inner_text()
+              assert int(page.locator('.hd24-exec-drill[data-exec-drill="recurring"] b').inner_text())==0
+              assert int(page.locator('.hd24-exec-drill[data-exec-drill="stagnant"] b').inner_text())==0
+              assert int(page.locator('.hd24-exec-drill[data-exec-drill="retrospective"] b').inner_text())==0
+
 
 
               for kind in ('total','complete','review','attention'):
