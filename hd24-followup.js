@@ -252,6 +252,10 @@ function scheduleAutoPackage(reason){if(!uploadSignature())return;[0,1000].forEa
 // Legacy index.html mail fallback can hand its selected KPI set into the managed Preview.
 // This keeps one visible Preview/send path and prevents any unsolicited download/mailto behavior.
 window.hd24PrepareFollowupPreview = function(items, mode){
+  if (!$('hd24Preview')) {
+    window.__HD24_FOLLOWUP_WIRED__=false;
+    ensureUi();
+  }
   const safeItems = Array.isArray(items) ? items.filter(Boolean) : [];
   if (!safeItems.length) {
     if ($('hd24Preview')) $('hd24Preview').style.display='none';
