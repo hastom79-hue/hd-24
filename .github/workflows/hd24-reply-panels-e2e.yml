@@ -71,6 +71,15 @@ jobs:
               page=browser.new_page()
               errors=[]
               page.on('pageerror',lambda e: errors.append(str(e)+' | '+str(getattr(e,'stack', '') or '')))
+              # Inspect inline scripts before exercising the UI.
+              page_scripts=page.locator('script:not([src])')
+              for i in range(page_scripts.count()):
+                  body=page_scripts.nth(i).text_content() or ''
+                  if body.strip():
+                      import subprocess
+                      p=subprocess.run(['node','--check'],input=body,text=True,capture_output=True)
+                      assert p.returncode==0, f'Inline script {i} syntax failed: {p.stderr}'
+
               page.goto('http://127.0.0.1:8768/index.html',wait_until='networkidle',timeout=120000)
               page.wait_for_function("window.hd24ReplyFeedback && typeof window.hd24ReplyFeedback.render==='function'",timeout=30000)
 
