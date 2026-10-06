@@ -5,7 +5,7 @@ ok(src.includes("if(!cPlant)throw new Error(`Plant column not found: ${ws.name}`
 ok(src.includes("if(!cMonth)throw new Error(`Target Month column not found: ${ws.name}`)"),'Target Month header must be mandatory');
 ok(src.includes("?'ulsan':''"),'unknown plant must fail closed after recognizing Ulsan/India/Brazil');
 ok(!src.includes("?'india':pkey()"),'unknown plant must not fall back to current plant');
-ok(src.includes("const rawMonth=val(cMonth),targetMonth=Number(rawMonth)"),'target month must come from workbook');
+ok(src.includes("rawMonth=val(cMonth),targetMonth=Number(rawMonth)"),'target month must come from workbook');
 ok(!src.includes("targetMonth=Number(val(cMonth))||month()"),'invalid month must not fall back to analysis month');
 ok(src.includes("!Number.isInteger(targetMonth)"),'target month must be integer');
 ok(src.includes("targetMonth>month()"),'future target month must be blocked');
