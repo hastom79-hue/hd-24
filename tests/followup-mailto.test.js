@@ -188,7 +188,7 @@ ok(src.includes("kpi:storedKpi,kpiEn:storedKpiEn"),'reply history must persist p
 console.log('HD24 BILINGUAL REPLY CONTINUITY PASS');
 ok(reminder.includes("if(m.status!=='sent'||!m.sentAt||!m.to"),'D+7 must use confirmed sent mail only');
 ok(reminder.includes("now-sent<DELAY"),'D+7 must enforce seven-day threshold');
-ok(reminder.includes("const answered=batch.every"),'D+7 must exclude fully replied batches');
+ok(reminder.includes("const unanswered=batch.filter(")&&reminder.includes("answered=unanswered.length===0"),'D+7 must exclude fully replied batches and retain only unanswered KPI rows for partial replies');
 ok(reminder.includes("status==='seven-day-reminder-sent'&&x.originalMailId===id"),'D+7 must suppress already-sent reminders');
 ok(reminder.includes("if(!pending().some(x=>x.id===item.id))"),'D+7 must recheck eligibility immediately before send');
 ok(reminder.includes("now-previous<15*60*1000"),'D+7 must retain duplicate-send lock');
