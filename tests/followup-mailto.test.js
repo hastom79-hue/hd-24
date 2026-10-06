@@ -216,7 +216,7 @@ ok(historyView.includes("m.status==='seven-day-reminder-sent'?'D+7 리마인드 
 console.log('HD24 D+7 HISTORY ISOLATION PASS');
 ok(historyView.includes('<option value="reminder">D+7 리마인드</option>'),'History status filter must expose D+7 reminder events');
 ok(historyView.includes("f.s==='reminder')events=events.filter(r=>r.type==='reminder')"),'D+7 History filter must isolate reminder events');
-ok(historyView.includes("e.type==='reminder'?'<span class=\\\"pill\\\">D+7</span>'"),'Timeline must label reminder events separately from mail');
+ok(historyView.includes("e.type==='reminder'?'<span class=\"pill\">D+7</span>'"),'Timeline must label reminder events separately from mail');
 console.log('HD24 D+7 HISTORY FILTER PASS');
 ok(historyView.includes("f.s==='recurrence'){events=events.filter(e=>rows.some(r=>sameGroup(r,e)))}"),'recurrence Timeline filter must use bilingual-aware grouping');
 ok(!historyView.includes("recurrentKeys=new Set(rows.map(keyOf))"),'legacy single-key recurrence filter must stay removed');
