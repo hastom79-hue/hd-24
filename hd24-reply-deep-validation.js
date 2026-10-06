@@ -38,6 +38,13 @@ function closedLoop(all){
   else if(prevAch===false&&nextAch===false)out.push({sev:'MEDIUM',year:yearOf(next),month:next.targetMonth,kpi:next.kpiEn||next.kpi,msg:'전월 미달 후 차월도 미달 — 변경 대책의 실행성과와 추가 근인 확인 필요'});
   if(prev.nextMonthRecoveryTarget){const pair=comparable(next.actual,prev.nextMonthRecoveryTarget,next.unit||prev.unit);if(pair){const [actual,promised]=pair,met=directionOf(next)==='LOWER'?actual<=promised:actual>=promised;if(!met)out.push({sev:'HIGH',year:yearOf(next),month:next.targetMonth,kpi:next.kpiEn||next.kpi,msg:'전월 회신의 차월 회복목표 미달 — 약속 대비 실제성과 갭 검증 필요'});}}
  }
+ for(const w of wips){
+  const wAch=achieved(w),wBad=wAch===false||/miss|decline|미달|악화|증가/.test(norm(w.statusTrend));if(!wBad)continue;
+  for(const l of leads.filter(x=>yearOf(x)===yearOf(w)&&Number(x.targetMonth)===Number(w.targetMonth))){
+   const lAch=achieved(l),leadImproved=lAch===true||/improv|shorten|reduc|개선|단축/.test(norm(l.statusTrend));
+   if(leadImproved)out.push({sev:'HIGH',year:yearOf(w),month:w.targetMonth,kpi:w.kpiEn||w.kpi,related:l.kpiEn||l.kpi,msg:'WIP/재공은 미달·악화인데 제조 리드타임은 목표 달성·단축으로 나타납니다. Little’s Law 관점에서 동일 범위·동일 물동량 기준이라면 논리 정합성 확인이 필요하므로 WIP 정의, Throughput 산정범위, Lead Time 시작·종료점 및 재공 포함범위를 교차 검증할 필요'});
+  }
+ }
  return out;
 }
 function contradictions(all){
@@ -45,7 +52,9 @@ function contradictions(all){
  const qualityAliases=['IQ 200 (Initial Quality)','IQ 200 (Production attributable)','Basic Quality','Assembly Quality','생산귀책 조립품질','생산귀책조립품질','조립품질','생산귀책 품질','Production attributable assembly quality','Production attributable quality'];
  const complianceAliases=['Standard Work Compliance','표준작업준수율','표준작업 준수율','Standard Work Adherence','Standardized Work Compliance'];
  const recurrenceAliases=['Standard Non-compliance Recurrence','표준미준수재발','표준미준수 재발','비표준작업 재발율','비표준작업 재발률','비표준 작업 재발율','비표준 작업 재발률','Non-standard Work Recurrence','Nonstandard Work Recurrence'];
- const quality=all.filter(r=>has(r,qualityAliases)),controls=all.filter(r=>has(r,[...complianceAliases,...recurrenceAliases]));
+ const wipAliases=['WIP','Work In Process','Work-in-Process','재공','재공재고','공정재공','공정재고'];
+ const leadAliases=['Manufacturing Lead Time','Manufacturing Lead Time Reduction','제조리드타임','제조 리드타임','생산리드타임','생산 리드타임','MFG Lead Time'];
+ const quality=all.filter(r=>has(r,qualityAliases)),controls=all.filter(r=>has(r,[...complianceAliases,...recurrenceAliases])),wips=all.filter(r=>has(r,wipAliases)),leads=all.filter(r=>has(r,leadAliases));
  for(const q of quality){
   const qAch=achieved(q),qBad=qAch===false||/miss|decline|미달|악화/.test(norm(q.statusTrend));if(!qBad)continue;
   for(const c of controls.filter(x=>yearOf(x)===yearOf(q)&&Number(x.targetMonth)===Number(q.targetMonth))){
