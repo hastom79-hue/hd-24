@@ -151,3 +151,14 @@
 - Regression locks cover D+7 KPI context, send-failure semantics, and production/refresh loader parity.
 - Ulsan/India/Brazil D+7 coverage and DIO routing/365-turnover/lower-is-better contracts rechecked.
 - GitHub Pages deployment for head 3963ac6 completed successfully. Non-Pages Runtime/Action jobs remain separately reported because returned job data has no executable step detail (steps=null); not treated as proof of application regression.
+
+
+## 2026-10-06 — Reply-analysis dashboard integrity and mail capture
+- Reworked reply Executive Dashboard quality tiers so 충분/보완 필요/중점 보완 are based on defect severity and multiplicity rather than field-completeness percentage alone.
+- Removed next-month recovery target from mandatory reply-quality scoring because the India 6–8M source reply workbook does not contain that field.
+- Prior-reply comparison now follows same-KPI chronological year/month history; recurring root-cause and stagnant-action signals are evaluated against earlier periods.
+- Fixed retrospective weakness overcount: normal explanatory text containing 회고 is no longer itself treated as a weakness.
+- Expanded cross-KPI contradiction checks beyond the initial quality/standard-work and WIP/lead-time examples to equipment reliability, productivity/lead-time, planning/forecast, and inventory relationships; direct conflicts and cross-check candidates are separated by severity.
+- Added Executive Dashboard and 실적 × 회신 심층검증 dashboard capture support for India/Brazil feedback mail. Mail body is concise; KPI-level detail remains in the attached analysis workbook.
+- Added Browser E2E contract that seeds one 충분, one 보완 필요, and one 중점 보완 reply and requires the dashboard to render 1/1/1, preventing all rows from collapsing into one quality tier.
+- Regression status through 4eafbf3c: Runtime Regression SUCCESS, Action Cycle SUCCESS, approved UI SUCCESS; Browser E2E and Pages were still running at the time of this log update.
