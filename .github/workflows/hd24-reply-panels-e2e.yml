@@ -151,7 +151,7 @@ jobs:
               assert int(page.locator('.hd24-exec-drill[data-exec-drill="recurring"] b').inner_text())==0
               assert int(page.locator('.hd24-exec-drill[data-exec-drill="stagnant"] b').inner_text())==0
               assert int(page.locator('.hd24-exec-drill[data-exec-drill="retrospective"] b').inner_text())==0
-                            # Broad due timing must downgrade an otherwise complete first reply to review.
+              # Broad due timing must downgrade an otherwise complete first reply to review.
               page.evaluate("""localStorage.setItem('hd24_kpi_reply_history_v2', JSON.stringify([
                 {plant:'india',targetYear:2026,targetMonth:8,kpiEn:'Broad Due Check',reason:'Demand fluctuation',rootCause:'Confirmed planning variance mechanism',recoveryPlan:'Rebalance plan and verify weekly performance',actionOwner:'Owner A',plannedCompletionDate:'Monthly',replySequence:1}
               ])); window.hd24ReplyFeedback.render()""")
@@ -159,7 +159,7 @@ jobs:
               assert int(page.locator('.hd24-exec-drill[data-exec-drill="review"] b').inner_text())==1
               assert '기한 구체화 필요' in page.locator('#hd24ReplyAnalysisPanel').inner_text()
 
-# Prior-month KPI rows are trend history, not prior reply iterations.
+              # Prior-month KPI rows are trend history, not prior reply iterations.
               page.evaluate("""localStorage.setItem('hd24_kpi_reply_history_v2', JSON.stringify([
                 {plant:'india',targetYear:2026,targetMonth:7,kpiEn:'Monthly History Check',reason:'Reason A',rootCause:'Root cause A verified',recoveryPlan:'Action A with weekly verification',actionOwner:'Owner A',plannedCompletionDate:'2026-10-31',replySequence:1},
                 {plant:'india',targetYear:2026,targetMonth:8,kpiEn:'Monthly History Check',reason:'Reason A',rootCause:'Root cause A verified',recoveryPlan:'Action A with weekly verification',actionOwner:'Owner A',plannedCompletionDate:'2026-10-31',replySequence:1}
