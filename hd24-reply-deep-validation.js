@@ -41,10 +41,18 @@ function closedLoop(all){
  return out;
 }
 function contradictions(all){
- const out=[], n=s=>norm(s).replace(/\s/g,''), has=(r,arr)=>arr.some(t=>n(r.kpiEn||r.kpi).includes(n(t)));
- const quality=all.filter(r=>has(r,['IQ 200 (Initial Quality)','IQ 200 (Production attributable)','Basic Quality','Assembly Quality']));
- const controls=all.filter(r=>has(r,['Standard Work Compliance','표준작업준수율','Standard Non-compliance Recurrence','표준미준수재발']));
- for(const q of quality){const qAch=achieved(q),qBad=qAch===false||/miss|decline|미달|악화/.test(norm(q.statusTrend));if(!qBad)continue;for(const s of controls.filter(x=>yearOf(x)===yearOf(q)&&Number(x.targetMonth)===Number(q.targetMonth))){const controlAch=achieved(s);if(controlAch===true)out.push({year:yearOf(q),month:q.targetMonth,kpi:q.kpiEn||q.kpi,related:s.kpiEn||s.kpi,msg:'품질 결과는 미달/악화이나 관련 표준작업 관리지표는 목표 달성. 준수점검 기준·표본·판정방식 및 결과지표와의 인과 연결을 재검증할 필요'});}}
+ const out=[],n=s=>norm(s).replace(/\s/g,''),names=r=>[r.kpiEn,r.kpi].map(n).filter(Boolean),has=(r,arr)=>names(r).some(v=>arr.some(t=>v.includes(n(t))));
+ const qualityAliases=['IQ 200 (Initial Quality)','IQ 200 (Production attributable)','Basic Quality','Assembly Quality','생산귀책 조립품질','생산귀책조립품질','조립품질','생산귀책 품질','Production attributable assembly quality','Production attributable quality'];
+ const complianceAliases=['Standard Work Compliance','표준작업준수율','표준작업 준수율','Standard Work Adherence','Standardized Work Compliance'];
+ const recurrenceAliases=['Standard Non-compliance Recurrence','표준미준수재발','표준미준수 재발','비표준작업 재발율','비표준작업 재발률','비표준 작업 재발율','비표준 작업 재발률','Non-standard Work Recurrence','Nonstandard Work Recurrence'];
+ const quality=all.filter(r=>has(r,qualityAliases)),controls=all.filter(r=>has(r,[...complianceAliases,...recurrenceAliases]));
+ for(const q of quality){
+  const qAch=achieved(q),qBad=qAch===false||/miss|decline|미달|악화/.test(norm(q.statusTrend));if(!qBad)continue;
+  for(const c of controls.filter(x=>yearOf(x)===yearOf(q)&&Number(x.targetMonth)===Number(q.targetMonth))){
+   const controlAch=achieved(c),isCompliance=has(c,complianceAliases),isRecurrence=has(c,recurrenceAliases),zeroRecurrence=isRecurrence&&Number(c.actual)===0;
+   if(controlAch===true||zeroRecurrence)out.push({sev:'HIGH',year:yearOf(q),month:q.targetMonth,kpi:q.kpiEn||q.kpi,related:c.kpiEn||c.kpi,msg:'생산귀책/조립 품질 결과는 미달·악화인데 '+(isCompliance?'표준작업 준수 관리지표는 정상/목표 달성':zeroRecurrence?'비표준작업 재발지표는 0':'관련 공정관리 지표는 정상/목표 달성')+'입니다. 결과 품질과 공정관리 지표가 동시에 성립하는지 점검대상·표본·판정기준 및 원인 연결을 교차 검증할 필요'});
+  }
+ }
  return out;
 }
 async function exportXlsx(rows,cons){
