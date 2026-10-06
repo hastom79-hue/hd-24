@@ -233,7 +233,7 @@ console.log('HD24 D+7 KPI CONTEXT PASS');
 const runtimeModules=['hd24-auto-run.js','hd24-pipeline-gate.js','hd24-followup.js','hd24-seven-day-reminder.js','hd24-direct-reply-guard.js','hd24-reply-import-dedupe.js','hd24-history-view.js','hd24-reply-feedback.js'].map(p=>fs.readFileSync(p,'utf8'));
 ok(runtimeModules.every(x=>!x.includes('location.reload(')),'production runtime modules must never hard-reload the page');
 ok(runtimeModules.every(x=>/__HD24_[A-Z0-9_]+__/.test(x)),'every production runtime module must keep a single-wire guard');
-ok(!autoRun.includes('createObjectURL')&&!autoRun.includes('.download='),'auto-run refresh path must never contain download primitives');
+ok(!runtimeModules[0].includes('createObjectURL')&&!runtimeModules[0].includes('.download='),'auto-run refresh path must never contain download primitives');
 console.log('HD24 REFRESH SAFETY CONTRACT PASS');
 
 
