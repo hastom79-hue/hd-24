@@ -317,7 +317,7 @@ ok(replyDedupe.includes('__HD24_REPLY_IMPORT_DEDUPE_WIRED__'),'reply import dedu
 ok(directReply.includes('__HD24_DIRECT_REPLY_GUARD_WIRED__'),'direct reply guard initialization must be idempotent');
 ok(historyView.includes('__HD24_HISTORY_VIEW_WIRED__'),'history view initialization must be idempotent');
 
-ok(!/function closedLoop\(all\)[\s\S]*?for\(const w of wips\)/.test(deepValidation),'closedLoop must not reference undefined WIP collections');
+const closedLoopBody=deepValidation.slice(deepValidation.indexOf('function closedLoop(all)'),deepValidation.indexOf('function contradictions(all)'));\nok(!closedLoopBody.includes('for(const w of wips)'),'closedLoop must not reference undefined WIP collections');
 ok(deepValidation.includes("const wipAliases=['WIP','Work In Process','Work-in-Process','재공','재공재고','공정재공','공정재고']"),'WIP contradiction aliases missing');
 ok(deepValidation.includes("const leadAliases=['Manufacturing Lead Time','Manufacturing Lead Time Reduction','제조리드타임','제조 리드타임','생산리드타임','생산 리드타임','MFG Lead Time']"),'Lead-time contradiction aliases missing');
 ok(/function contradictions\(all\)[\s\S]*?for\(const w of wips\)[\s\S]*?leadImproved[\s\S]*?WIP\/재공은 미달·악화인데 제조 리드타임은 목표 달성·단축/.test(deepValidation),'WIP vs lead-time inconsistency must be classified as KPI contradiction');
