@@ -120,7 +120,7 @@ function ensureDedicatedPanels(){
  return{analysis,mail};
 }
 function render(){
- const panel=get('hd24ReplyPanel');if(!panel)return;const dedicated=ensureDedicatedPanels(),analysisPanel=dedicated.analysis,mailPanel=dedicated.mail;let box=get('hd24Feedback');if(!box){box=document.createElement('section');box.id='hd24Feedback';analysisPanel.append(box)}else if(box.parentElement!==analysisPanel)analysisPanel.append(box)
+ const dedicated=ensureDedicatedPanels(),analysisPanel=dedicated.analysis,mailPanel=dedicated.mail;if(!analysisPanel||!mailPanel)return;const panel=get('hd24ReplyPanel');let box=get('hd24Feedback');if(!box){box=document.createElement('section');box.id='hd24Feedback';analysisPanel.append(box)}else if(box.parentElement!==analysisPanel)analysisPanel.append(box)
  const plant=get('plantSelect')?.value||'india';let all=[];try{all=JSON.parse(localStorage.getItem(KEY)||'[]').filter(x=>x.plant===plant)}catch{}
  all.sort((a,b)=>String(b.replyReceivedAt||'').localeCompare(String(a.replyReceivedAt||'')));
  const groups=[];all.forEach(r=>{const year=Number(r.targetYear)||2026;let g=groups.find(x=>x.year===year&&x.month===Number(r.targetMonth)&&sameKpi(x.rows[0],r));if(!g){g={year,month:Number(r.targetMonth),rows:[]};groups.push(g)}g.rows.push(r)});
