@@ -5,6 +5,7 @@ const refresh=fs.readFileSync('refresh-runtime.html','utf8');
 const historyView=fs.readFileSync('hd24-history-view.js','utf8');
 const pipeline=fs.readFileSync('hd24-pipeline-gate.js','utf8');
 const directReply=fs.readFileSync('hd24-direct-reply-guard.js','utf8');
+const deepValidation=fs.readFileSync('hd24-reply-deep-validation.js','utf8');
 function ok(x,m){if(!x)throw new Error(m)}
 ok(src.includes("buildOutlookEml({to,cc,subject:previewState.subject,body:previewState.body,attachments})"),'Outlook EML package construction missing');
 ok(src.includes("'X-Unsent: 1'"),'Outlook unsent draft marker missing');
@@ -315,3 +316,10 @@ ok(feedback.includes("document.readyState==='loading'")&&feedback.includes("DOMC
 ok(replyDedupe.includes('__HD24_REPLY_IMPORT_DEDUPE_WIRED__'),'reply import dedupe initialization must be idempotent');
 ok(directReply.includes('__HD24_DIRECT_REPLY_GUARD_WIRED__'),'direct reply guard initialization must be idempotent');
 ok(historyView.includes('__HD24_HISTORY_VIEW_WIRED__'),'history view initialization must be idempotent');
+
+ok(!/function closedLoop\(all\)[\s\S]*?for\(const w of wips\)/.test(deepValidation),'closedLoop must not reference undefined WIP collections');
+ok(deepValidation.includes("const wipAliases=['WIP','Work In Process','Work-in-Process','재공','재공재고','공정재공','공정재고']"),'WIP contradiction aliases missing');
+ok(deepValidation.includes("const leadAliases=['Manufacturing Lead Time','Manufacturing Lead Time Reduction','제조리드타임','제조 리드타임','생산리드타임','생산 리드타임','MFG Lead Time']"),'Lead-time contradiction aliases missing');
+ok(/function contradictions\(all\)[\s\S]*?for\(const w of wips\)[\s\S]*?leadImproved[\s\S]*?WIP\/재공은 미달·악화인데 제조 리드타임은 목표 달성·단축/.test(deepValidation),'WIP vs lead-time inconsistency must be classified as KPI contradiction');
+ok(/function contradictions\(all\)[\s\S]*?qualityAliases[\s\S]*?complianceAliases[\s\S]*?zeroRecurrence/.test(deepValidation),'Quality vs standard-work/recurrence contradiction contract missing');
+console.log('PASS: KPI contradiction classification contracts');
