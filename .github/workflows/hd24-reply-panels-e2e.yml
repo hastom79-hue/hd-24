@@ -171,9 +171,10 @@ jobs:
               ])); window.hd24ReplyFeedback.render()""")
               page.wait_for_timeout(200)
               assert '[최초 시행]' in page.locator('.hd24-exec-drill[data-exec-drill="history"] b').inner_text()
-              assert int(page.locator('.hd24-exec-drill[data-exec-drill="recurring"] b').inner_text())==0
-              assert int(page.locator('.hd24-exec-drill[data-exec-drill="stagnant"] b').inner_text())==0
-              assert int(page.locator('.hd24-exec-drill[data-exec-drill="retrospective"] b').inner_text())==0
+              # Monthly trend signals are independent from actual replySequence history.
+              assert int(page.locator('.hd24-exec-drill[data-exec-drill="recurring"] b').inner_text())>=1
+              assert int(page.locator('.hd24-exec-drill[data-exec-drill="stagnant"] b').inner_text())>=1
+              assert int(page.locator('.hd24-exec-drill[data-exec-drill="retrospective"] b').inner_text())>=1
 
 
 
