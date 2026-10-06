@@ -264,7 +264,7 @@ window.hd24PrepareFollowupPreview = function(items, mode){
   mailHistoryRecord(safeItems,{status:'prepared',preparedAt,managedFallback:true,managedMode:safeMode});
   if (window.hd24SwitchTab) window.hd24SwitchTab('mail');
   $('hd24FollowupPanel')?.scrollIntoView({behavior:'smooth',block:'start'});
-  logSafe(\`통합 메일 Preview 연결 완료: \${safeItems.length}건\`);
+  logSafe(`통합 메일 Preview 연결 완료: ${safeItems.length}건`);
   return true;
 };
 // 메일 발송 대상 월 체크박스가 바뀌었을 때(자동패키지의 파일서명 기준 중복방지 가드에
