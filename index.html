@@ -1649,7 +1649,12 @@ function setupTabs(){
 
   // 메일 미리보기 패널은 판정 이후 나중에(비동기로) 생성되므로, 생성되는 순간을 감지해서
   // 그 시점의 활성 탭 기준으로 보이기/숨기기를 한 번 더 맞춰준다.
+  let followupSyncQueued=false;
   const followupWatcher = new MutationObserver(() => {
+    if(followupSyncQueued)return;
+    followupSyncQueued=true;
+    requestAnimationFrame(()=>{
+    followupSyncQueued=false;
     const followupPanel = document.getElementById('hd24FollowupPanel');
     const replyPanel=document.getElementById('hd24ReplyPanel');
     const replyAnalysis=document.getElementById('hd24ReplyAnalysisPanel');
@@ -1662,6 +1667,7 @@ function setupTabs(){
     if(replyAnalysis)replyAnalysis.classList.toggle('hd24-tab-hidden',activeTab!=='replyanalysis');
     if(replyMail)replyMail.classList.toggle('hd24-tab-hidden',activeTab!=='replymail');
     if(followupPanel && replyPanel && replyAnalysis && replyMail) followupWatcher.disconnect();
+    });
   });
   followupWatcher.observe(main, {childList:true,subtree:true});
 
