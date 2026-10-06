@@ -64,7 +64,8 @@ function contradictions(all){
  }
  const downtimeAliases=['Equipment Downtime','Downtime Loss'],mtbfAliases=['MTBF'],mttrAliases=['MTTR'],mttdAliases=['MTTD'],forecastAliases=['Forecast Accuracy','Mix Variation','M+1','W+3','Production Incoming Plan Compliance'],productivityAliases=['LOB Efficiency','Input MH','OT MH','Productivity'];
  const samePeriod=(a,b)=>yearOf(a)===yearOf(b)&&Number(a.targetMonth)===Number(b.targetMonth),bad=r=>achieved(r)===false,good=r=>achieved(r)===true;
- const cross=(aa,bb,msg)=>all.filter(r=>has(r,aa)&&bad(r)).forEach(a=>all.filter(b=>b!==a&&samePeriod(a,b)&&has(b,bb)&&good(b)).forEach(b=>out.push({sev:'MEDIUM',year:yearOf(a),month:a.targetMonth,kpi:a.kpiEn||a.kpi,related:b.kpiEn||b.kpi,msg})));
+ const pushUnique=x=>{const key=[x.year,x.month,n(x.kpi),n(x.related),x.msg].join('|');if(!out.some(y=>[y.year,y.month,n(y.kpi),n(y.related),y.msg].join('|')===key))out.push(x)};
+ const cross=(aa,bb,msg)=>all.filter(r=>has(r,aa)&&bad(r)).forEach(a=>all.filter(b=>b!==a&&samePeriod(a,b)&&has(b,bb)&&good(b)).forEach(b=>pushUnique({sev:'MEDIUM',year:yearOf(a),month:a.targetMonth,kpi:a.kpiEn||a.kpi,related:b.kpiEn||b.kpi,msg})));
  cross(downtimeAliases,mtbfAliases,'설비 Downtime은 미달인데 MTBF는 정상입니다. 고장빈도와 비가동손실 산정범위를 교차 검증할 필요');
  cross([...mttrAliases,...mttdAliases],downtimeAliases,'MTTR/MTTD는 미달인데 설비 Downtime은 정상입니다. 고장건수·정지시간·탐지/복구 산식 범위를 확인할 필요');
  cross(productivityAliases,leadAliases,'생산성/MH 계열은 미달인데 Lead Time은 정상입니다. 물량·Mix·측정구간 차이 또는 부분 최적화를 확인할 필요');
