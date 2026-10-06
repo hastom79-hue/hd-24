@@ -8,6 +8,7 @@ on:
       - 'hd24-ui-v3.js'
       - 'hd24-reply-feedback.js'
       - 'hd24-reply-deep-validation.js'
+      - 'hd24-rule-matrix-v1.js'
       - '.github/workflows/hd24-reply-panels-e2e.yml'
   pull_request:
     paths:
