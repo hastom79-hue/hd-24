@@ -48,7 +48,7 @@ jobs:
               browser=p.chromium.launch(headless=True)
               page=browser.new_page()
               errors=[]
-              page.on('pageerror',lambda e: errors.append(str(e)))
+              page.on('pageerror',lambda e: errors.append(str(e)+' | '+str(getattr(e,'stack', '') or '')))
               page.goto('http://127.0.0.1:8768/index.html',wait_until='networkidle',timeout=120000)
               page.wait_for_function("window.hd24ReplyFeedback && typeof window.hd24ReplyFeedback.render==='function'",timeout=30000)
 
