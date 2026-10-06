@@ -30,9 +30,9 @@ function pending(now=Date.now()){
   const batch=mails.filter(x=>x.status==='sent'&&x.plant===m.plant&&x.sentAt===m.sentAt&&x.to===m.to);
   const batchKey=[...new Set(batch.map(x=>[Number(x.targetYear)||2026,Number(x.targetMonth)||0,norm(x.kpiEn||x.kpi)].join(':')).filter(Boolean))].sort().join(',');
   const id=[m.plant,m.sentAt,m.to.toLowerCase(),batchKey].join('|');if(seen.has(id))continue;seen.add(id);
-  const answered=batch.every(x=>replies.some(r=>r.plant===x.plant&&(Number(r.targetYear)||2026)===(Number(x.targetYear)||2026)&&Number(r.targetMonth)===Number(x.targetMonth)&&sameKpi(r,x)&&Date.parse(r.replyReceivedAt)>=sent));
+  const unanswered=batch.filter(x=>!replies.some(r=>r.plant===x.plant&&(Number(r.targetYear)||2026)===(Number(x.targetYear)||2026)&&Number(r.targetMonth)===Number(x.targetMonth)&&sameKpi(r,x)&&Date.parse(r.replyReceivedAt)>=sent)),answered=unanswered.length===0;
   const reminded=mails.some(x=>x.status==='seven-day-reminder-sent'&&x.originalMailId===id);
-  if(!answered&&!reminded)out.push({id,mail:m,batch});
+  if(!answered&&!reminded)out.push({id,mail:m,batch:unanswered,originalBatch:batch});
  }
  return out;
 }
