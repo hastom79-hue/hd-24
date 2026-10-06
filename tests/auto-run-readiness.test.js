@@ -44,11 +44,9 @@ setTimeout(()=>{
 },700);
 
 const safe=fs.readFileSync('safe-kpi-mapping.js','utf8');
-ok(safe.includes('window.hd24CurrentMasterFile=outFile'),'final download must promote updated master file');
-ok(safe.includes("a.download=outName"),'download must use updated master output name');
-ok(safe.includes("신규 '+horizon+'월 실적 포함"),'download log must explicitly identify updated performance month');
-ok(safe.indexOf('window.hd24CurrentMasterFile=outFile') < safe.indexOf("a.download=outName"),'updated master must be promoted before automatic download');
-console.log('PASS updated final-master auto-download invariant');
+ok(safe.includes('window.hd24CurrentMasterFile=outFile'),'successful reflect must promote updated master file for explicit user actions');
+ok(!safe.includes("a.download=outName"),'successful reflect must not trigger an unsolicited browser download');
+console.log('PASS updated final-master promotion + no unsolicited auto-download invariant');
 
 const html=fs.readFileSync('index.html','utf8');
 ok(html.includes('사업장 실적파일 + 최종관리파일 업로드 완료 시 자동 처리'),'upload-driven UI contract missing');
