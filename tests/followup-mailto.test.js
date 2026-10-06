@@ -56,8 +56,9 @@ ok(!src.includes("resultScreenshots()"),'approved single-Excel mail package must
 ok(src.includes("const seen=new Set(),rows=[]")&&src.includes("if(seen.has(k))continue"),'send-history UI must deduplicate KPI-level records into one attempt row');
 ok(src.includes("메일 패키지 생성 실패:"),'top-level send pipeline error diagnostic missing');
 
-ok(src.includes("targetMonth>month()"),'future-month reply history fail-closed guard missing');
-ok(src.includes("회신 파일 미래/비정상 월 차단"),'future-month reply rejection diagnostic missing');
+ok(src.includes("targetMonth>=1&&targetMonth<=12"),'reply month validity guard missing');
+ok(src.includes("회신 파일 비정상 월 차단"),'invalid reply month rejection diagnostic missing');
+ok(src.includes("(Number(x.targetYear)||2026)===targetYear&&x.targetMonth===targetMonth"),'reply/mail matching must isolate year and month');
 
 ok(src.includes("sameCauseCount:same")&&src.includes("isRecurrence:same>=2"),'same-cause recurrence threshold missing');
 ok(src.includes("Recurring same cause (x")&&src.includes("동일 사유 반복("),'repeated-issue follow-up tags missing');
