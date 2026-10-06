@@ -31,8 +31,9 @@ function pending(now=Date.now()){
   const batchKey=[...new Set(batch.map(x=>[Number(x.targetYear)||2026,Number(x.targetMonth)||0,norm(x.kpiEn||x.kpi)].join(':')).filter(Boolean))].sort().join(',');
   const id=[m.plant,m.sentAt,m.to.toLowerCase(),batchKey].join('|');if(seen.has(id))continue;seen.add(id);
   const unanswered=batch.filter(x=>!replies.some(r=>r.plant===x.plant&&(Number(r.targetYear)||2026)===(Number(x.targetYear)||2026)&&Number(r.targetMonth)===Number(x.targetMonth)&&sameKpi(r,x)&&Date.parse(r.replyReceivedAt)>=sent)),answered=unanswered.length===0;
-  const reminded=mails.some(x=>x.status==='seven-day-reminder-sent'&&x.originalMailId===id);
-  if(!answered&&!reminded)out.push({id,mail:m,batch:unanswered,originalBatch:batch});
+  const unansweredKey=[...new Set(unanswered.map(x=>[Number(x.targetYear)||2026,Number(x.targetMonth)||0,norm(x.kpiEn||x.kpi)].join(':')))].sort().join(','),reminderId=id+'|unanswered:'+unansweredKey;
+  const reminded=mails.some(x=>x.status==='seven-day-reminder-sent'&&x.originalMailId===id&&(!x.unansweredKey||x.unansweredKey===unansweredKey));
+  if(!answered&&!reminded)out.push({id,reminderId,unansweredKey,mail:m,batch:unanswered,originalBatch:batch});
  }
  return out;
 }
@@ -76,14 +77,14 @@ async function sendDue(){
  busy=true;
  try{
   for(const item of due){
-   const m=item.mail,lock='hd24_7day_lock_'+item.id,now=Date.now(),previous=Number(localStorage.getItem(lock)||0);
+   const m=item.mail,lock='hd24_7day_lock_'+(item.reminderId||item.id),now=Date.now(),previous=Number(localStorage.getItem(lock)||0);
    if(previous&&now-previous<15*60*1000)continue;
    localStorage.setItem(lock,String(now));
    try{
     if(!pending().some(x=>x.id===item.id)){localStorage.removeItem(lock);continue}
     const cc=required(m.plant,m.cc),body=reminderText(m.recipientName),subject=reminderSubject(m.plant),unansweredKpis=item.batch.map(x=>({targetYear:Number(x.targetYear)||2026,targetMonth:Number(x.targetMonth)||0,kpi:x.kpi||'',kpiEn:x.kpiEn||''}));
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);let res;
-    try{res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({to:m.to,cc,subject,body,bodyHtml:'<html><body style="font-family:Arial,sans-serif;white-space:pre-line">'+body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</body></html>',plant:m.plant,reminder:true,originalSentAt:m.sentAt,originalMailId:item.id,language:reminderLang,unansweredKpis}),signal:controller.signal})}
+    try{res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({to:m.to,cc,subject,body,bodyHtml:'<html><body style="font-family:Arial,sans-serif;white-space:pre-line">'+body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</body></html>',plant:m.plant,reminder:true,originalSentAt:m.sentAt,originalMailId:item.id,unansweredKey:item.unansweredKey||'',language:reminderLang,unansweredKpis}),signal:controller.signal})}
     catch(err){if(err?.name==='AbortError')throw new Error('메일 API 응답 시간초과(30초)');throw new Error('메일 API 연결 실패: '+(err?.message||err))}
     finally{clearTimeout(timer)}
     let responseText='';try{responseText=await res.text()}catch(_){}
