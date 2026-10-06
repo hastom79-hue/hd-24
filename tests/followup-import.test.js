@@ -9,7 +9,7 @@ ok(src.includes("rawMonth=val(cMonth),targetMonth=Number(rawMonth)"),'target mon
 ok(!src.includes("targetMonth=Number(val(cMonth))||month()"),'invalid month must not fall back to analysis month');
 ok(src.includes("!Number.isInteger(targetMonth)"),'target month must be integer');
 ok(src.includes("targetMonth<=12"),'target month must be constrained to a valid workbook month');
-ok(src.includes("pending.some(x=>x.plant===plant&&x.targetMonth===targetMonth"),'same-file staged duplicate must be blocked');
+ok(src.includes("pending.some(x=>x.plant===plant&&(Number(x.targetYear)||2026)===targetYear&&x.targetMonth===targetMonth"),'same-file staged duplicate must be blocked within target year');
 ok(/const\s+list=load\(REPLY_KEY\),pending=\[\]/.test(src),'multi-sheet replies must stage before commit');
 ok(src.includes("list.unshift(...pending.reverse());save(REPLY_KEY,list.slice(0,4000))"),'staged replies must commit once after workbook validation');
 ok(src.includes("replySequence:prev.length+pending.filter(y=>y.plant===plant&&y.targetMonth===targetMonth&&norm(y.kpiEn||y.kpi)===key).length+1"),'second replies must increment sequence within plant/month/KPI');
