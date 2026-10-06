@@ -129,6 +129,17 @@ jobs:
                   card=cards.nth(i)
                   vals[card.get_attribute('data-exec-drill')]=int(card.locator('b').inner_text())
               assert vals.get('total')==vals.get('complete',0)+vals.get('review',0)+vals.get('attention',0), vals
+              # Seed mixed quality rows and prove the severity tiers do not collapse into one bucket.
+              page.evaluate("""localStorage.setItem('hd24_kpi_reply_history_v2', JSON.stringify([
+                {plant:'india',targetYear:2026,targetMonth:8,kpiEn:'Tier Complete',reason:'Specific miss reason',rootCause:'Verified material shortage mechanism',recoveryPlan:'Secure supplier capacity and verify weekly recovery',actionOwner:'Owner A',plannedCompletionDate:'2026-10-31',replySequence:1},
+                {plant:'india',targetYear:2026,targetMonth:8,kpiEn:'Tier Review',reason:'Specific miss reason',rootCause:'Verified material shortage mechanism',recoveryPlan:'Improve',actionOwner:'Owner B',plannedCompletionDate:'2026-10-31',replySequence:1},
+                {plant:'india',targetYear:2026,targetMonth:8,kpiEn:'Tier Priority',reason:'Specific miss reason',rootCause:'',recoveryPlan:'',actionOwner:'',plannedCompletionDate:'',replySequence:1}
+              ])); window.hd24ReplyFeedback.render()""")
+              page.wait_for_timeout(300)
+              assert int(page.locator('.hd24-exec-drill[data-exec-drill="complete"] b').inner_text())==1
+              assert int(page.locator('.hd24-exec-drill[data-exec-drill="review"] b').inner_text())==1
+              assert int(page.locator('.hd24-exec-drill[data-exec-drill="attention"] b').inner_text())==1
+
               for kind in ('total','complete','review','attention'):
                   card=page.locator(f'.hd24-exec-drill[data-exec-drill="{kind}"]')
                   expected=int(card.locator('b').inner_text())
