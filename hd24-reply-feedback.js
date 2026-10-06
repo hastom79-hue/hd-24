@@ -146,23 +146,8 @@ function render(){
  const deepMail=window.hd24DeepReplyValidation,deepLoop=deepMail?.closedLoop?.(all)||[],deepCross=deepMail?.contradictions?.(all)||[];
  const ko=['담당자님,','','KPI 회신 검토 결과를 공유드립니다.','이번 검토는 추가 자료 작성을 요구하기보다, 미달성 원인의 타당성과 회복조치의 실행 가능성을 확인하기 위한 것입니다.','','[검토 요약]','- 분석 KPI: '+stats.total+'건','- 회신 품질: 충분 '+stats.complete+' / 보완 필요 '+stats.review+' / 중점 보완 '+stats.attention,'- 실행관리 신호: 반복 근인 '+signals.recurring+' / 대책 정체 '+signals.stagnant+' / 기한 초과 '+signals.overdue+' / 회고 취약 '+signals.retrospective+'건','','아래 KPI별 핵심 보완사항을 확인하시고 현재 조치상태와 함께 회신해 주시기 바랍니다.',''];
  const en=['Dear Team,','','Please find below the review of your KPI response.','The purpose is not to request additional documents, but to confirm whether the stated causes are valid and whether the recovery actions are executable and being managed.','','[Review Summary]','- KPIs reviewed: '+stats.total,'- Response quality: Complete '+stats.complete+' / Review needed '+stats.review+' / Priority '+stats.attention,'- Execution signals: Repeated root causes '+signals.recurring+' / Stagnant actions '+signals.stagnant+' / Overdue '+signals.overdue+' / Retrospective gaps '+signals.retrospective,'','Please review the key points below and reply with the current action status and required clarifications.',''];
- analyses.forEach(({r,a,history})=>{
-  const title=(Number(r.targetYear)||2026)+' / '+r.targetMonth+'M / '+(r.kpiEn||r.kpi),requests=[];
-  ko.push('■ '+title);en.push('■ '+title);
-  ko.push('[현재 회신] '+(a.reason||'미달성 사유 미기재')+' / 근인: '+(a.root||'미기재'));
-  en.push('[Current Response] '+(a.reason||'Reason not provided')+' / Root cause: '+(a.root||'Not provided'));
-  if(a.plan||a.owner||a.due){ko.push('[실행계획] '+(a.plan||'만회계획 미기재')+' / '+(a.owner||'담당자 미지정')+' / '+(a.due||'기한 미지정'));en.push('[Action Plan] '+(a.plan||'Recovery plan not provided')+' / '+(a.owner||'Owner not assigned')+' / '+(a.due||'Due date not specified'))}
-  if(a.target){ko.push('[회복목표] '+a.target);en.push('[Recovery Target] '+a.target)}
-  a.flags.forEach(f=>requests.push(f[1]||f[0]));
-  const deepFlags=(deepMail?.flagsFor?.(r,all)||[]).filter(x=>x[0]==='HIGH'),loopFlags=deepLoop.filter(x=>x.sev==='HIGH'&&(Number(x.year)||2026)===(Number(r.targetYear)||2026)&&Number(x.month)===Number(r.targetMonth)&&sameKpi(x,r)),crossFlags=deepCross.filter(x=>(Number(x.year)||2026)===(Number(r.targetYear)||2026)&&Number(x.month)===Number(r.targetMonth)&&(txt(x.kpi)===txt(r.kpiEn||r.kpi)||txt(x.related)===txt(r.kpiEn||r.kpi)));
-  deepFlags.forEach(x=>requests.push(x[1]));loopFlags.forEach(x=>requests.push(x.msg));crossFlags.forEach(x=>requests.push(x.msg));
-  const unique=[...new Set(requests.map(x=>txt(x)).filter(Boolean))];
-  ko.push('[핵심 판단] '+(a.level==='충분'&&!unique.length?'필수 회신정보는 확인되었으며 차기 실적에서 개선효과 확인이 필요합니다.':'보완 확인이 필요합니다. 필수정보 완성도 '+a.score+'%'));
-  en.push('[Assessment] '+(a.level==='충분'&&!unique.length?'Required response information is complete; improvement effectiveness should be verified in the next result.':'Clarification is required. Required-information completeness: '+a.score+'%'));
-  if(unique.length){ko.push('[필수 보완요청]');en.push('[Required Clarifications]');unique.forEach((x,i)=>{ko.push(' '+(i+1)+'. '+x);en.push(' '+(i+1)+'. '+x)})}
-  if(history.length>1){const prev=history[1],changed=[];fields.forEach(([k,kr,enLabel])=>{if(txt(r[k])!==txt(prev[k]))changed.push([kr,enLabel])});ko.push('[이전 회신 대비] '+(changed.length?changed.map(x=>x[0]).join(', ')+' 변경':'주요 회신내용 변경 없음'));en.push('[Versus Previous Reply] '+(changed.length?changed.map(x=>x[1]).join(', ')+' updated':'No material change in the response'))}
-  ko.push('');en.push('');
- });
+ ko.push('[대시보드 요약]','- Executive Dashboard와 실적 × 회신 심층검증 Dashboard를 메일 본문에 최신 화면 그대로 삽입합니다.','- 우선 확인: 중점 보완 '+stats.attention+'건 / 반복 근인 '+signals.recurring+'건 / 대책 정체 '+signals.stagnant+'건 / 기한 초과 '+signals.overdue+'건.','- KPI별 상세 사유·근인·대책·담당/기한·교차검증 결과는 첨부 분석파일을 확인해 주시기 바랍니다.','');
+ en.push('[Dashboard Summary]','- The latest Executive Dashboard and Performance × Reply Deep Validation Dashboard are embedded in the email body.','- Priority review: '+stats.attention+' / repeated root causes '+signals.recurring+' / stagnant actions '+signals.stagnant+' / overdue '+signals.overdue+'.','- Please refer to the attached analysis file for KPI-level reasons, root causes, actions, owners/due dates, and cross-validation details.','');
  ko.push('[회신 요청]','위 보완사항에 대해 현재 조치상태, 담당자 및 완료예정일을 중심으로 회신해 주시기 바랍니다. 추가 자료는 판단에 필요한 경우에만 최소 범위로 요청드리겠습니다.','','감사합니다.','서지철 드림');
  en.push('[Reply Requested]','Please reply focusing on the current action status, owner, and committed completion date for the items above. Additional evidence will be requested only where necessary for validation.','','Best Regards,','Mr.Seoh');
  if(!drafts.ko)drafts.ko=ko.join('\n');if(!drafts.en)drafts.en=en.join('\n');
