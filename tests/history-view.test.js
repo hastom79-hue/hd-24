@@ -2,7 +2,7 @@ const fs=require('fs');
 function ok(v,m){if(!v)throw new Error(m)}
 const src=fs.readFileSync('hd24-history-view.js','utf8');
 ok(src.includes("const status=confirmed?'실제 발송':packaged?'Outlook 패키지 다운로드'"),'mail status precedence missing');
-ok(src.includes("if(confirmed){mailGroups[k]=(mailGroups[k]||0)+1;sequence=mailGroups[k]}"),'mail sequence must advance only for confirmed sends');
+ok(src.includes("if(confirmed){g.count+=1;sequence=g.count}"),'mail sequence must advance only for confirmed sends');
 ok(src.includes("let sequence=''"),'preview/package events must remain unnumbered');
 ok(src.includes("const replyGroups={}"),'legacy reply chronological sequence fallback missing');
 ok(src.includes("sequence:r.replySequence||replyGroups[k]"),'replySequence precedence missing');
