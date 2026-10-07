@@ -7,6 +7,7 @@ on:
       - 'index.html'
       - 'hd24-ui-v3.js'
       - 'hd24-reply-feedback.js'
+      - 'hd24-followup.js'
       - 'hd24-reply-deep-validation.js'
       - 'hd24-rule-matrix-v1.js'
       - '.github/workflows/hd24-reply-panels-e2e.yml'
@@ -15,6 +16,7 @@ on:
       - 'index.html'
       - 'hd24-ui-v3.js'
       - 'hd24-reply-feedback.js'
+      - 'hd24-followup.js'
       - 'hd24-reply-deep-validation.js'
       - '.github/workflows/hd24-reply-panels-e2e.yml'
   workflow_dispatch:
