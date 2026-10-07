@@ -1083,6 +1083,11 @@ function restoreMailRecipients(){
     if(savedTo.trim().toLowerCase()==='dylee07@hd.com'){localStorage.removeItem(toKey);savedTo=''}
     localStorage.setItem(migrationKey,'1');
   }
+  if(!savedTo){
+    let contacts=[];try{contacts=JSON.parse(localStorage.getItem('hdps_contacts_v1')||'[]')}catch(_){}
+    const valid=contacts.filter(x=>x&&x.plant===currentPlant&&/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(x.email||'').trim()));
+    if(valid.length===1){savedTo=String(valid[0].email).trim();localStorage.setItem(toKey,savedTo);if(valid[0].name)localStorage.setItem('hdps_mail_toname_' + currentPlant,String(valid[0].name).trim())}
+  }
   mailToInput.value=savedTo;
   mailCcInput.value=sanitizeMailCcDisplay(localStorage.getItem('hdps_mail_cc_' + currentPlant) || '');
   localStorage.setItem('hdps_mail_cc_' + currentPlant,mailCcInput.value);
