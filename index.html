@@ -1077,7 +1077,13 @@ function sanitizeMailCcDisplay(value){
   return [...new Set([...required,...extras].map(x=>x.toLowerCase()))].join('; ');
 }
 function restoreMailRecipients(){
-  mailToInput.value=localStorage.getItem('hdps_mail_to_' + currentPlant) || '';
+  const toKey='hdps_mail_to_' + currentPlant, migrationKey='hd24_mail_to_unpin_v1_' + currentPlant;
+  let savedTo=localStorage.getItem(toKey) || '';
+  if(!localStorage.getItem(migrationKey)){
+    if(savedTo.trim().toLowerCase()==='dylee07@hd.com'){localStorage.removeItem(toKey);savedTo=''}
+    localStorage.setItem(migrationKey,'1');
+  }
+  mailToInput.value=savedTo;
   mailCcInput.value=sanitizeMailCcDisplay(localStorage.getItem('hdps_mail_cc_' + currentPlant) || '');
   localStorage.setItem('hdps_mail_cc_' + currentPlant,mailCcInput.value);
 }
