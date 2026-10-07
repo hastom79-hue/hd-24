@@ -50,6 +50,10 @@ ok(src.includes("innerHTML=highlightedMailBody(previewState.body)"),'preview mus
 ok(src.includes("Confirm KPI recovery after implementing corrective actions.")&&src.includes("KPI 실적 회복 여부"),'bilingual mail must retain concise recovery instruction');
 console.log('HD24 FOLLOWUP DEFAULT-SENDER PASS');
 
+ok(src.includes("let preparedAttachment=null"),'mail preview must retain exact prepared attachment');
+ok(src.includes("id=\"hd24AttachmentPreview\""),'attachment preview UI missing');
+ok(src.includes("hd24AttachmentOpen"),'attachment preview/open control missing');
+ok(src.includes("const built=preparedAttachment||await prepareAttachment(previewState.items)"),'send must reuse exact previewed Excel attachment');
 ok(src.includes("메일 패키지 준비 시작..."),'send button must expose pipeline start');
 ok(src.includes("2/6 회신 Excel 생성 완료"),'Excel stage completion diagnostic missing');
 ok(src.includes("3/6 단일 Excel 첨부 모드 준비 완료"),'single-Excel attachment stage diagnostic missing');
