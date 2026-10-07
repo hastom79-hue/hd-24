@@ -137,6 +137,8 @@ for(const [selected,stale,expected] of [['india','brazil','India'],['brazil','in
  ok(context.pn()===expected,'plant label mismatch after selector switch: '+selected);
 }
 console.log('HD24 ACTIVE PLANT SWITCH PASS');
+ok(ui.includes("allResults = [];")&&ui.includes("selectedMonth = null;")&&ui.includes("selectedMailMonths?.clear"),'plant change must clear stale KPI mail data from previous plant');
+console.log('HD24 STALE PLANT KPI RESET PASS');
 ok(src.includes("cc=requiredCc($('mailCc')?.value.trim()||previewState.cc)"),'send API must enforce CC');
 ok(src.includes('function buildOutlookEml({to,cc,subject,body,attachments}){cc=requiredCc(cc)'),'EML must enforce CC');
 console.log('HD24 INDIA/BRAZIL MANDATORY CC PASS');
