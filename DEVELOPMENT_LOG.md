@@ -162,3 +162,21 @@
 - Added Executive Dashboard and 실적 × 회신 심층검증 dashboard capture support for India/Brazil feedback mail. Mail body is concise; KPI-level detail remains in the attached analysis workbook.
 - Added Browser E2E contract that seeds one 충분, one 보완 필요, and one 중점 보완 reply and requires the dashboard to render 1/1/1, preventing all rows from collapsing into one quality tier.
 - Regression status through 4eafbf3c: Runtime Regression SUCCESS, Action Cycle SUCCESS, approved UI SUCCESS; Browser E2E and Pages were still running at the time of this log update.
+
+
+## 2026-10-08 — Feedback recipient SSOT, refresh performance, and send-path hardening
+- Removed dedicated reply-feedback To hardcoding and synchronized feedback To/CC with the performance-analysis mail source of truth (`mailTo` / `mailCc`); feedback fields are read-only mirrors and send re-reads the source immediately before delivery.
+- Added one-time migration for legacy browser storage that had `dylee07@hd.com` pinned as the plant recipient; this removes the old default without blocking a future explicit user selection of that address.
+- Added recipient regression contracts: no hardcoded feedback To, legacy pinned-value migration, and SSOT enforcement.
+- Fixed stale plant-state paths: active `plantSelect` wins over stale globals, plant changes invalidate prepared preview/attachment state, and stale KPI analysis arrays/month selections are cleared.
+- Fixed reply-feedback plant rerendering and deep-validation late-load behavior so the active plant is reflected immediately and the second dashboard can render after dynamic script load.
+- Hardened dashboard mail capture: missing dashboard DOM or html2canvas no longer blocks the mail path; each capture is bounded by a 6-second timeout; mail HTML safely supports 0/1/2 captured dashboard images.
+- Fixed feedback send-button behavior: click is acknowledged immediately with a preparing state, duplicate clicks are blocked, capture failure falls back to Excel-only mail preparation, and early validation exits restore the button state.
+- Bumped reply-feedback runtime through v35; production and refresh loaders are kept aligned.
+- Fixed refresh performance hotspot in `hd24-terminology-v1.js`: removed full-document rescans on every subtree mutation and now processes only newly added DOM roots after the initial pass (terminology v2).
+- Deduplicated deep-validation startup renders with a debounced scheduler and data signature guard, eliminating overlapping immediate / ready-event / DOMContentLoaded recomputation (deep-validation v24).
+- Recipient recovery after removing the legacy pin: when saved `mailTo` is empty, restore only if the current plant contact master has exactly one valid contact; multiple contacts are never selected arbitrarily.
+- Added feedback synchronization after `contactSelect` changes so an explicitly selected performance-mail contact is mirrored into the feedback recipient on the next tick.
+- Regression coverage expanded for resilient feedback send, dashboard capture timeout, 0/1-image safety, single-contact recovery, and contact-selection propagation.
+- Verified successful pipelines during this sequence include Runtime Regression, Action Cycle Regression, KPI Action Regression, approved UI, Ulsan Browser E2E, and Pages for the corresponding deployed heads; the newest recipient-recovery head remains subject to its own final pipeline completion before closure.
+- Key commits in this workstream include: d459fa6, 1bd59f2, c379895, 44f95f1, d08d8fc, f837fc6, 441149a, 733df97, db897b3, bec131d, 4a62b8c, d2b4286, 21d14e8, a1e47f8, deccb81, 59d97c8, ad777f7, 9dbe5d6, 138ba00, 9199617, 71acf3a, 63612b8, fda3b6d.
