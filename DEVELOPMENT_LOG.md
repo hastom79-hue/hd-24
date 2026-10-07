@@ -180,3 +180,12 @@
 - Regression coverage expanded for resilient feedback send, dashboard capture timeout, 0/1-image safety, single-contact recovery, and contact-selection propagation.
 - Verified successful pipelines during this sequence include Runtime Regression, Action Cycle Regression, KPI Action Regression, approved UI, Ulsan Browser E2E, and Pages for the corresponding deployed heads; the newest recipient-recovery head remains subject to its own final pipeline completion before closure.
 - Key commits in this workstream include: d459fa6, 1bd59f2, c379895, 44f95f1, d08d8fc, f837fc6, 441149a, 733df97, db897b3, bec131d, 4a62b8c, d2b4286, 21d14e8, a1e47f8, deccb81, 59d97c8, ad777f7, 9dbe5d6, 138ba00, 9199617, 71acf3a, 63612b8, fda3b6d.
+
+
+### 2026-10-08 — Recipient recovery UX closure v35-v36
+- After removing the legacy pinned recipient, empty performance-mail To now recovers only when the active plant has exactly one valid contact in `hdps_contacts_v1`; multiple contacts remain explicitly user-selected.
+- Reply-feedback v35 listens for `contactSelect` changes and re-reads the performance-mail To on the next tick, keeping the feedback recipient mirror synchronized without hardcoded addresses.
+- Reply-feedback v36 replaces the ambiguous empty-recipient message with a direct instruction to select the performance-analysis mail contact/recipient and focuses the source `mailTo` field.
+- Production and refresh loaders were advanced together through feedback v36.
+- Validation at v36: Runtime Regression SUCCESS, KPI Action Regression SUCCESS, Action Cycle Regression SUCCESS, approved UI SUCCESS, Ulsan Browser E2E SUCCESS; Pages deployment was still running at this log point.
+- Commits: 9199617, 71acf3a, fda3b6d, 16db233, cf3db01, bc1a9aa.
