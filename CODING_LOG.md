@@ -197,3 +197,13 @@
 - Production and refresh loaders were advanced together through feedback v36.
 - Validation at v36: Runtime Regression SUCCESS, KPI Action Regression SUCCESS, Action Cycle Regression SUCCESS, approved UI SUCCESS, Ulsan Browser E2E SUCCESS; Pages deployment was still running at this log point.
 - Commits: 9199617, 71acf3a, fda3b6d, 16db233, cf3db01, bc1a9aa.
+
+
+### 2026-10-08 — Outlook EML empty-message defect closure v37
+- Real-user validation exposed an Outlook fallback defect: clicking feedback send opened an Outlook message window with no subject and an empty body.
+- Root cause was in the generated RFC822/MIME framing: the EML builder joined header/body lines with literal escaped `\\r\\n` text instead of actual CRLF separators, so Outlook could not reliably parse the Subject, MIME boundaries, and body.
+- Corrected the feedback EML builder to emit real RFC MIME CRLF framing while preserving UTF-8 encoded subject/body, inline dashboard images, and the Excel attachment.
+- Added a regression contract that requires real CRLF joining and rejects reintroduction of literal escaped CRLF framing.
+- Advanced reply-feedback production and refresh loaders from v36 to v37.
+- Validation at v37: KPI Action Regression SUCCESS, Action Cycle Regression SUCCESS, approved UI SUCCESS, Ulsan Browser E2E SUCCESS, Runtime Regression SUCCESS; Pages deployment was still running at this log point.
+- Commits: 1a92c7b, 64b0ac6, bfba51d, 6bef6af.
