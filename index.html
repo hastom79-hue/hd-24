@@ -456,6 +456,9 @@ document.getElementById('plantSelect').addEventListener('change', async (e) => {
   document.getElementById('srcFile').value = '';
   document.getElementById('masterFile').value = '';
   document.getElementById('resultCard').style.display = 'none';
+  allResults = [];
+  selectedMonth = null;
+  if (typeof selectedMailMonths !== 'undefined' && selectedMailMonths?.clear) selectedMailMonths.clear();
   applyPlantUI();
   checkReady();
   await loadMapping();
