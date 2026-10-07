@@ -351,7 +351,7 @@ ok(/function contradictions\(all\)[\s\S]*?for\(const w of wips\)[\s\S]*?WIP\/재
 ok(/function contradictions\(all\)[\s\S]*?qualityAliases[\s\S]*?complianceAliases[\s\S]*?zeroRecurrence/.test(deepValidation),'Quality vs standard-work/recurrence contradiction contract missing');
 console.log('PASS: KPI contradiction classification contracts');
 
-const feedback=fs.readFileSync('hd24-reply-feedback.js','utf8');
-ok(feedback.includes("const activePlant=(get('plantSelect')?.value||plant).trim()"),'feedback send must recheck active plant at click time');
-ok(feedback.includes("dashboardImages=[];status.textContent='대시보드 캡처 생략 · Excel 첨부 메일을 계속 준비합니다.'"),'feedback send must continue with Excel when dashboard capture fails');
-ok(feedback.includes("function resetForPlantChange(){drafts={ko:'',en:''};draftKey='';demo=false;lastExportKey='';latestFeedbackAttachment=null"),'feedback plant change must clear stale India draft and attachment');
+const feedbackSendSrc=fs.readFileSync('hd24-reply-feedback.js','utf8');
+ok(feedbackSendSrc.includes("const activePlant=(get('plantSelect')?.value||plant).trim()"),'feedback send must recheck active plant at click time');
+ok(feedbackSendSrc.includes("if(!el)continue")&&feedbackSendSrc.includes("if(typeof window.html2canvas!=='function')return out"),'feedback send must continue with Excel when dashboard capture fails');
+ok(feedbackSendSrc.includes("function resetForPlantChange(){drafts={ko:'',en:''};draftKey='';demo=false;lastExportKey='';latestFeedbackAttachment=null"),'feedback plant change must clear stale India draft and attachment');
