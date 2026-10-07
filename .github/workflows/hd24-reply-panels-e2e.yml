@@ -162,6 +162,7 @@ jobs:
               broad_text=page.locator('#hd24ReplyAnalysisPanel').inner_text()
               print('BROAD_DUE_DIAG', {'complete':broad_complete,'review':broad_review,'attention':broad_attention,'has_flag':'기한 구체화 필요' in broad_text})
               assert int(broad_review)==1, ('broad_due_review',broad_complete,broad_review,broad_attention)
+              assert int(page.locator('.hd24-exec-drill[data-exec-drill="overdue"] b').inner_text())==0, 'Monthly must never be classified as overdue'
               # Detail rows are collapsed by default; tier value is the authoritative dashboard assertion here.
 
               # Prior-month KPI rows are trend history, not prior reply iterations.
@@ -209,7 +210,7 @@ jobs:
               stagnant=int(page.locator('.hd24-exec-drill[data-exec-drill="stagnant"] b').inner_text())
               overdue=int(page.locator('.hd24-exec-drill[data-exec-drill="overdue"] b').inner_text())
               retrospective=int(page.locator('.hd24-exec-drill[data-exec-drill="retrospective"] b').inner_text())
-              assert f'반복 근인 {recurring} / 전월 대책 정체 {stagnant} / 기한 초과 {overdue} / 회고 취약 {retrospective}건' in draft, draft
+              assert f'전월 반복 근인 {recurring} / 전월 대책 정체 {stagnant} / 기한 초과 {overdue} / 회고 취약 {retrospective}건' in draft, draft
               if errors:
                   print('PAGEERRORS:', errors)
                   print('WINDOW_ERRORS:', page.evaluate("window.__hd24WindowErrors || []"))
