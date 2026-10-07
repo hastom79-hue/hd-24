@@ -100,8 +100,16 @@ jobs:
               assert all(abs(float(r['target'])-91.25)<1e-9 for r in rows)
               assert not downloads, 'Ulsan analysis/master-only path must not auto-download'
               # Lock the DIO miss into the managed Mail Preview path without sending/downloading.
-              page.evaluate("selectedMonth=3; selectedMailMonths=new Set([3]); window.hd24PrepareFollowupPreview((window.allResults||[]).filter(r=>Number(r.month)===3 && Number(r.masterRow)===102),'watch')")
-              page.wait_for_function("document.getElementById('hd24Preview') && document.getElementById('hd24Preview').style.display==='block'",timeout=30000)
+              page.wait_for_function("typeof window.hd24PrepareFollowupPreview==='function'",timeout=30000)
+              preview_result=page.evaluate("""() => {
+                selectedMonth=3; selectedMailMonths=new Set([3]);
+                const items=(window.allResults||[]).filter(r=>Number(r.month)===3 && Number(r.masterRow)===102);
+                const result=window.hd24PrepareFollowupPreview(items,'watch');
+                return {result,count:items.length,hasPreview:!!document.getElementById('hd24Preview'),display:document.getElementById('hd24Preview')?.style.display||'',hasPanel:!!document.getElementById('hd24FollowupPanel')};
+              }""")
+              assert preview_result['count']==1, preview_result
+              assert preview_result['result'] is True, preview_result
+              assert preview_result['hasPreview'] and preview_result['display']=='block', preview_result
               preview_status=page.locator('#hd24MailStatus').inner_text()
               preview_subject=page.locator('#hd24PreviewSubject').inner_text()
               preview_body=page.locator('#hd24PreviewBody').inner_text()
