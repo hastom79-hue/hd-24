@@ -109,8 +109,10 @@ function render(){
  const list=$('hd24DeepList');findings.forEach(x=>{const p=document.createElement('p');p.textContent=x.sev+' · '+yearOf(x.r)+'-'+String(x.r.targetMonth).padStart(2,'0')+' · '+(x.r.kpiEn||x.r.kpi)+' — '+x.msg;list.append(p)});loop.forEach(x=>{const p=document.createElement('p');p.textContent=x.sev+' · ACTION EFFECTIVENESS GAP · '+(Number(x.year)||2026)+'-'+String(x.month).padStart(2,'0')+' · '+x.kpi+' — '+x.msg;list.append(p)});cons.forEach(x=>{const p=document.createElement('p');p.textContent='CROSS · '+(Number(x.year)||2026)+'-'+String(x.month).padStart(2,'0')+' · '+x.kpi+' ↔ '+x.related+' — '+x.msg;list.append(p)});
  $('hd24ExportDeepAnalysis').onclick=()=>exportXlsx(rows,cons).catch(e=>alert(e.message));
 }
-document.addEventListener('DOMContentLoaded',()=>setTimeout(render,1000));document.addEventListener('hd24:reply-feedback-ready',()=>setTimeout(render,0));document.addEventListener('hd24:reply-imported',()=>setTimeout(render,100));document.addEventListener('change',e=>{if(e.target?.id==='plantSelect')setTimeout(render,100)});
-window.hd24DeepReplyValidation={render,flagsFor,contradictions,closedLoop};
-setTimeout(render,0);
+let renderTimer=0,lastRenderSig='';
+function renderScheduled(delay=0){clearTimeout(renderTimer);renderTimer=setTimeout(()=>{renderTimer=0;const plant=$('plantSelect')?.value||'india',raw=localStorage.getItem(KEY)||'[]',sig=plant+'|'+raw.length+'|'+raw.slice(-160);if(sig===lastRenderSig&&$('hd24DeepValidation'))return;lastRenderSig=sig;render()},delay)}
+document.addEventListener('DOMContentLoaded',()=>renderScheduled(120),{once:true});document.addEventListener('hd24:reply-feedback-ready',()=>renderScheduled(40));document.addEventListener('hd24:reply-imported',()=>renderScheduled(120));document.addEventListener('change',e=>{if(e.target?.id==='plantSelect'){lastRenderSig='';renderScheduled(80)}});
+window.hd24DeepReplyValidation={render,renderScheduled,flagsFor,contradictions,closedLoop};
+renderScheduled(40);
 document.dispatchEvent(new CustomEvent('hd24:deep-validation-ready'));
 })();
