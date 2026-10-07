@@ -116,7 +116,7 @@ for(const [plant,extra,absent] of [
  ['brazil',['antos2082@hd.com','yhchoi@hd.com'],['minsu.kim01@hd.com','deokho.kim@hd.com']],
  ['ulsan',[],['minsu.kim01@hd.com','deokho.kim@hd.com','antos2082@hd.com','yhchoi@hd.com']]
 ]){
- const context={pkey:()=>plant,REQUIRED_CC:['hastom@hd.com'],INDIA_REQUIRED_CC:['minsu.kim01@hd.com','deokho.kim@hd.com'],BRAZIL_REQUIRED_CC:['antos2082@hd.com','yhchoi@hd.com']};
+ const context={pkey:()=>plant,REQUIRED_TO:'dylee07@hd.com',REQUIRED_CC:['hastom@hd.com'],INDIA_REQUIRED_CC:['minsu.kim01@hd.com','deokho.kim@hd.com'],BRAZIL_REQUIRED_CC:['antos2082@hd.com','yhchoi@hd.com']};
  vmModule.createContext(context);vmModule.runInContext(helper[0]+';this.applyCc=requiredCc;',context);
  const actual=context.applyCc('HASTOM@HD.COM;other@hd.com;other@hd.com').toLowerCase().split('; ');
  for(const email of [...context.REQUIRED_CC,...extra,'other@hd.com'])ok(actual.includes(email),plant+' missing '+email);
