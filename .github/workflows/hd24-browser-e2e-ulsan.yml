@@ -54,12 +54,10 @@ jobs:
           assert int(turn['masterRow'])==55
           assert int(dio['masterRow'])==102 and dio['direction']=='하향'
           wb=Workbook(); ws=wb.active; ws.title='울산캠퍼스 KPI(26년 보고용)'
-          # Ulsan production contract: annual fixed target col 28, Jan-Dec actual cols 30-41.
           for m in mapping:
               r=int(m['masterRow']); ws.cell(r,13,m['kpiKr']); ws.cell(r,26,m.get('unit') or '')
               ws.cell(r,28,10.0)
               for c in range(30,37): ws.cell(r,c,10.0)
-          # Turnover drives derived DIO. Deliberately poison physical DIO cells to prove overwrite.
           ws.cell(55,28,4.0)
           for c,v in zip(range(30,37),[4.0,5.0,3.0,4.0,5.0,4.0,4.0]): ws.cell(55,c,v)
           ws.cell(102,28,999.0)
@@ -88,11 +86,12 @@ jobs:
               assert not page.locator('#srcFileRow').is_visible(), 'Ulsan must remain master-only'
               page.locator('#masterFile').set_input_files(str(fixture/'ulsan_master.xlsx'))
               page.wait_for_function("document.getElementById('log').innerText.includes('울산 매핑 로드')",timeout=30000)
+              # allResults is a top-level lexical `let`, not a window property. Evaluate it in page scope.
               page.wait_for_function("""() => {
-                const rows=window.allResults||[];
-                return rows.some(r=>Number(r.masterRow)===102 && Number(r.month)===1);
+                try { return Array.isArray(allResults) && allResults.some(r=>Number(r.masterRow)===102 && Number(r.month)===1); }
+                catch (_) { return false; }
               }""",timeout=30000)
-              rows=page.evaluate("""() => (window.allResults||[]).filter(r=>Number(r.masterRow)===102).map(r=>({month:r.month,target:r.target,actual:r.actual,achieved:r.achieved,direction:r.direction,kpiEn:r.kpiEn}))""")
+              rows=page.evaluate("""() => allResults.filter(r=>Number(r.masterRow)===102).map(r=>({month:r.month,target:r.target,actual:r.actual,achieved:r.achieved,direction:r.direction,kpiEn:r.kpiEn}))""")
               assert rows, 'Derived Ulsan DIO rows missing'
               jan=next(r for r in rows if int(r['month'])==1)
               feb=next(r for r in rows if int(r['month'])==2)
@@ -103,11 +102,10 @@ jobs:
               assert all(r['direction']=='하향' for r in rows)
               assert all(abs(float(r['target'])-91.25)<1e-9 for r in rows)
               assert not downloads, 'Ulsan analysis/master-only path must not auto-download'
-              # Lock the DIO miss into the managed Mail Preview path without sending/downloading.
               page.wait_for_function("typeof window.hd24PrepareFollowupPreview==='function'",timeout=30000)
               preview_result=page.evaluate("""() => {
                 selectedMonth=3; selectedMailMonths=new Set([3]);
-                const items=(window.allResults||[]).filter(r=>Number(r.month)===3 && Number(r.masterRow)===102);
+                const items=allResults.filter(r=>Number(r.month)===3 && Number(r.masterRow)===102);
                 const result=window.hd24PrepareFollowupPreview(items,'watch');
                 return {result,count:items.length,hasPreview:!!document.getElementById('hd24Preview'),display:document.getElementById('hd24Preview')?.style.display||'',hasPanel:!!document.getElementById('hd24FollowupPanel')};
               }""")
