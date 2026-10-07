@@ -43,6 +43,16 @@ function analyze(r){
  return {missing,flags,score,level,reason,root,plan,owner,due,target};
 }
 
+function dueState(r,a){
+ const raw=txt(a?.due||r?.plannedCompletionDate).trim();
+ const done=/완료|complete|done/i.test(txt(r?.actionStatus||r?.status||r?.completionStatus));
+ if(!raw)return {kind:'missing',overdue:false};
+ if(/^(monthly|-|n\/?a)$/i.test(raw))return {kind:'broad',overdue:false};
+ if(/^(?:w(?:eek)?\s*)?[1-5]\s*[,\/-]?\s*[A-Za-z]{3,9}[-\s,]*20\d{2}$/i.test(raw)||/^w[1-5]\s*[,\/-]?\s*(?:0?[1-9]|1[0-2])[-\/]20\d{2}$/i.test(raw))return {kind:'week',overdue:false};
+ const t=Date.parse(raw);
+ return Number.isFinite(t)?{kind:'date',overdue:t<Date.now()&&!done}:{kind:'text',overdue:false};
+}
+
 function analysisResultFor(r,a,history=[]){
  const k=txt(r.kpiEn||r.kpi)||'KPI',parts=[];
  parts.push(`${k}: response completeness ${a.score}%`);
@@ -56,7 +66,7 @@ function analysisResultFor(r,a,history=[]){
  const prior=previousReply(history,r),prev=prior?analyze(prior):null;
  if(prev&&a.root&&prev.root&&materiallySame(a.root,prev.root))parts.push('same root cause recurs from the previous reply');
  if(prev&&a.plan&&prev.plan&&materiallySame(a.plan,prev.plan))parts.push('recovery action is unchanged from the previous reply; progress/effect evidence is required');
- const due=a.due?new Date(a.due):null,explicitDone=/완료|complete|done/i.test(txt(r.actionStatus||r.status||r.completionStatus));if(due&&!isNaN(due)&&due<new Date()&&!explicitDone)parts.push('planned completion date has passed without clear completion evidence');
+ const due=dueState(r,a);if(due.overdue)parts.push('planned completion date has passed without clear completion evidence');
  return parts.join('. ')+'.';
 }
 
@@ -72,7 +82,7 @@ function reviewGapFor(r,a,history=[]){
  const prior=previousReply(history,r),prev=prior?analyze(prior):null;
  if(prev&&a.root&&prev.root&&materiallySame(a.root,prev.root))gaps.push('재발방지 미흡: 이전 회신과 동일 근인이 반복되었으나 재발방지 관점의 추가 분석이 없음');
  if(prev&&a.plan&&prev.plan&&materiallySame(a.plan,prev.plan))gaps.push('활동결과 회고 미흡: 이전과 동일 대책을 유지하면서 진척·효과·실패원인에 대한 회고가 없음');
- const due=a.due?new Date(a.due):null,explicitDone=/완료|complete|done/i.test(txt(r.actionStatus||r.status||r.completionStatus));if(due&&!isNaN(due)&&due<new Date()&&!explicitDone)gaps.push('기한관리 미흡: 완료예정일이 경과했으나 완료근거 또는 지연원인/재계획이 없음');
+ const due=dueState(r,a);if(due.overdue)gaps.push('기한관리 미흡: 완료예정일이 경과했으나 완료근거 또는 지연원인/재계획이 없음');
  return gaps.length?gaps.join(' | '):'주요 관리요소(회고분석·근인·대책·책임/기한)가 연결되어 있음. 차월 실적으로 대책 효과를 검증할 것';
 }
 
@@ -86,7 +96,7 @@ function finalRequestFor(r,a,history=[]){
  const prior=previousReply(history,r),prev=prior?analyze(prior):null;
  if(prev&&a.root&&prev.root&&materiallySame(a.root,prev.root))req.push('반복 근인에 대한 재발방지 대책 및 추가 근인분석 제출');
  if(prev&&a.plan&&prev.plan&&materiallySame(a.plan,prev.plan))req.push('기존 대책의 진척·효과·미흡원인 회고 및 변경/추가조치 제출');
- const due=a.due?new Date(a.due):null,explicitDone=/완료|complete|done/i.test(txt(r.actionStatus||r.status||r.completionStatus));if(due&&!isNaN(due)&&due<new Date()&&!explicitDone)req.push('기한초과 사유, 현재 진척률 및 재설정 완료일 회신');
+ const due=dueState(r,a);if(due.overdue)req.push('기한초과 사유, 현재 진척률 및 재설정 완료일 회신');
  return req.length?req.map((x,i)=>`${i+1}. ${x}`).join(' / '):'추가 필수 보완사항 없음. 차월 KPI 실적으로 Recovery Action 효과를 확인하고 결과를 회신';
 }
 
@@ -138,7 +148,7 @@ function render(){
  if(nextKey!==draftKey){draftKey=nextKey;drafts={ko:'',en:''};if(rows.length)demo=false}
  if(!rows.length&&!demo){box.innerHTML='<h3>회신 상세 분석 및 피드백</h3><div style="padding:22px;border:1px dashed #a9b9ce;border-radius:10px;background:#f7faff;margin:12px 0"><strong>등록된 회신이 없습니다.</strong><p>회신 Excel을 등록하면 KPI별 사유·근본원인·만회계획·담당자·완료일을 구조적으로 분석하고 이전 회신과 비교합니다.</p><button type="button" id="hd24DemoPreview">샘플 분석 미리보기 (저장·발송 안 함)</button></div>';get('hd24DemoPreview').onclick=()=>{demo=true;render()};return}
  if(!rows.length&&demo){rows=[{plant,targetMonth:7,kpiEn:'Sample KPI (DEMO)',reason:'Production delay',rootCause:'',recoveryPlan:'Improve process',actionOwner:'',plannedCompletionDate:'',nextMonthRecoveryTarget:''}];groups=[{month:7,rows}]}
- const analyses=rows.map(r=>{const history=all.filter(x=>x!==r&&sameKpi(x,r)&&Number(x.replySequence||0)<Number(r.replySequence||0)).sort(replyOrder);const a=analyze(r),prev=previousReply(history,r);if(prev){const p=analyze(prev);if(a.root&&p.root&&materiallySame(a.root,p.root))a.flags.push(['반복 근인','이전 회신과 동일한 근본원인이 반복됩니다. 재발방지 조치와 효과검증 근거를 명확히 제시하십시오.']);if(a.plan&&p.plan&&materiallySame(a.plan,p.plan))a.flags.push(['조치 정체','이전 회신과 동일한 Recovery Plan입니다. 실행 진척·완료근거 또는 변경 조치를 제시하십시오.'])}const due=a.due?new Date(a.due):null;const explicitDone=/완료|complete|done/i.test(txt(r.actionStatus||r.status||r.completionStatus));if(due&&!isNaN(due)&&due<new Date()&&!explicitDone)a.flags.push(['기한 초과','완료예정일이 경과했습니다. 현재 상태, 지연사유 및 재설정 완료일을 회신하십시오.']);return{r,a,history}});
+ const analyses=rows.map(r=>{const history=all.filter(x=>x!==r&&sameKpi(x,r)&&Number(x.replySequence||0)<Number(r.replySequence||0)).sort(replyOrder);const a=analyze(r),prev=previousReply(history,r);if(prev){const p=analyze(prev);if(a.root&&p.root&&materiallySame(a.root,p.root))a.flags.push(['반복 근인','이전 회신과 동일한 근본원인이 반복됩니다. 재발방지 조치와 효과검증 근거를 명확히 제시하십시오.']);if(a.plan&&p.plan&&materiallySame(a.plan,p.plan))a.flags.push(['조치 정체','이전 회신과 동일한 Recovery Plan입니다. 실행 진척·완료근거 또는 변경 조치를 제시하십시오.'])}const due=dueState(r,a);if(due.overdue)a.flags.push(['기한 초과','완료예정일이 경과했습니다. 현재 상태, 지연사유 및 재설정 완료일을 회신하십시오.']);return{r,a,history}});
  const deepExec=window.hd24DeepReplyValidation;
  const trendFlags=x=>deepExec?.flagsFor?.(x.r,all)||[];
  const loopFindings=deepExec?.closedLoop?.(all)||[];
