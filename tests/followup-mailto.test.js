@@ -289,6 +289,7 @@ ok(feedback.includes("send.onclick=async()=>")&&feedback.includes("if(!endpoint)
 ok(feedback.includes("if(demo||send.disabled)return;send.disabled=true;status.textContent='메일 발송 준비 중...'"),'feedback send click must acknowledge immediately and block duplicate clicks');
 ok(feedback.includes("Promise.race([capture,timeout])")&&feedback.includes("dashboard capture timeout"),'feedback dashboard capture must have a bounded timeout');
 ok(feedback.includes("function dashboardHtml(body,images=[])")&&!feedback.includes("images[1].cid"),'feedback mail HTML must tolerate zero or one dashboard capture');
+ok(feedback.includes("return lines.join('\\r\\n')")&&!feedback.includes("return lines.join('\\\\r\\\\n')"),'Outlook EML must use RFC MIME CRLF separators rather than literal escaped text');
 ok(!/setTimeout\(\(\)=>downloadFeedbackEml|DOMContentLoaded[^\n]*downloadFeedbackEml|reply-imported[^\n]*downloadFeedbackEml/.test(feedback),'reply feedback must not auto-download EML during load/import');
 ok(src.includes("$('hd24DownloadReply')?.addEventListener('click',async()=>")&&src.includes("downloadFile((preparedAttachment||await prepareAttachment(previewState.items)).file)"),'reply Excel download must remain explicit user-click only');
 ok(src.includes("$('hd24AttachmentOpen')?.addEventListener('click',async()=>")&&src.includes("downloadFile(a.file);logSafe('발송 예정 첨부파일 확인: '+a.fname)"),'attachment inspection download must remain explicit user-click only');
