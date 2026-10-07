@@ -163,6 +163,13 @@ jobs:
               print('BROAD_DUE_DIAG', {'complete':broad_complete,'review':broad_review,'attention':broad_attention,'has_flag':'기한 구체화 필요' in broad_text})
               assert int(broad_review)==1, ('broad_due_review',broad_complete,broad_review,broad_attention)
               assert int(page.locator('.hd24-exec-drill[data-exec-drill="overdue"] b').inner_text())==0, 'Monthly must never be classified as overdue'
+              # Due-state regression matrix: week timing is actionable but not overdue; only explicit past dates without completed status are overdue.
+              for due_value,status_value,expected_overdue in [('W1, Oct-2026','',0),('W2, Sep-2026','',0),('2020-01-01','',1),('2020-01-01','Complete',0)]:
+                  page.evaluate("([due,status]) => { localStorage.setItem('hd24_kpi_reply_history_v2', JSON.stringify([{plant:'india',targetYear:2026,targetMonth:8,kpiEn:'Due State Check',reason:'Demand fluctuation',rootCause:'Confirmed planning variance mechanism',recoveryPlan:'Complete supplier recovery action and verify weekly performance',actionOwner:'Owner A',plannedCompletionDate:due,actionStatus:status,replySequence:1}])); window.hd24ReplyFeedback.render(); }", [due_value,status_value])
+                  page.wait_for_timeout(100)
+                  actual=int(page.locator('.hd24-exec-drill[data-exec-drill="overdue"] b').inner_text())
+                  assert actual==expected_overdue, (due_value,status_value,expected_overdue,actual)
+
               # Detail rows are collapsed by default; tier value is the authoritative dashboard assertion here.
 
               # Prior-month KPI rows are trend history, not prior reply iterations.
