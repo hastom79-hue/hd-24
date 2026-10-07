@@ -199,3 +199,11 @@
 - Advanced reply-feedback production and refresh loaders from v36 to v37.
 - Validation at v37: KPI Action Regression SUCCESS, Action Cycle Regression SUCCESS, approved UI SUCCESS, Ulsan Browser E2E SUCCESS, Runtime Regression SUCCESS; Pages deployment was still running at this log point.
 - Commits: 1a92c7b, 64b0ac6, bfba51d, 6bef6af.
+
+
+### 2026-10-08 — Outlook EML pre-download MIME validation v38
+- Follow-up review confirmed the normal KPI Outlook EML builder already used real CRLF; the empty-message defect was isolated to the reply-feedback EML path.
+- Added a strict pre-download MIME gate for reply-feedback Outlook packages: validates X-Unsent/MIME-Version CRLF framing, encoded Subject header, multipart/mixed boundary, header/body separator, and attachment Content-Disposition.
+- Malformed EML is now blocked before download with an explicit MIME validation failure instead of allowing Outlook to open a blank/subjectless message.
+- Added regression coverage for the pre-download MIME gate and advanced production/refresh feedback loaders from v37 to v38.
+- Commits: 1fd2fa5, ea0a561, abb3bf1, 7e2dda6.
