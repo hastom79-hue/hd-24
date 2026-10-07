@@ -127,6 +127,7 @@ ok(src.includes("cc=requiredCc($('mailCc')?.value)"),'preview must enforce CC');
 ok(src.includes("contaminated=tokens.some(x=>!email.test(x))"),'CC parser must reject contaminated recipient strings');
 ok(src.includes("const seen=new Set([currentMailTo().toLowerCase()])"),'CC parser must exclude the same To recipient used by performance-analysis mail');
 ok(src.includes("function currentMailTo(){return String($('mailTo')?.value||'').trim()||REQUIRED_TO;}"),'followup To must synchronize with performance-analysis mail recipient');
+ok(src.includes("function pkey(){const selected=String($('plantSelect')?.value||'').trim();if(selected)return selected;"),'followup plant must use the active plant selector before stale currentPlant state');
 ok(src.includes("cc=requiredCc($('mailCc')?.value.trim()||previewState.cc)"),'send API must enforce CC');
 ok(src.includes('function buildOutlookEml({to,cc,subject,body,attachments}){cc=requiredCc(cc)'),'EML must enforce CC');
 console.log('HD24 INDIA/BRAZIL MANDATORY CC PASS');
