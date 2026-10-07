@@ -49,34 +49,31 @@ function closedLoop(all){
 }
 function contradictions(all){
  const out=[],n=s=>norm(s).replace(/\s/g,''),names=r=>[r.kpiEn,r.kpi].map(n).filter(Boolean),has=(r,arr)=>names(r).some(v=>arr.some(t=>v.includes(n(t))));
- const qualityAliases=['IQ 200 (Initial Quality)','IQ 200 (Production attributable)','Basic Quality','Assembly Quality','생산귀책 조립품질','생산귀책조립품질','조립품질','생산귀책 품질','Production attributable assembly quality','Production attributable quality'];
+ const qualityAliases=['IQ 200 (Initial Quality)','IQ 200 (Production attributable)','IQ 200 Issues with Production responsibility','생산귀책 조립품질','생산귀책조립품질','Production attributable assembly quality','Production attributable quality'];
  const complianceAliases=['Standard Work Compliance','Production Instruction Compliance Rate','Sequence Compliance','표준작업준수율','표준작업 준수율','Standard Work Adherence','Standardized Work Compliance'];
- const recurrenceAliases=['Issue Recurrence Rate','Non-Compliance Recurrence Rate','Standard Non-compliance Recurrence','표준미준수재발','표준미준수 재발','비표준작업 재발율','비표준작업 재발률','비표준 작업 재발율','비표준 작업 재발률','Non-standard Work Recurrence','Nonstandard Work Recurrence'];
+ const recurrenceAliases=['Issue Recurrence Rate','Non-Compliance Recurrence Rate','Standard Non-compliance Recurrence','표준미준수재발','표준미준수 재발','비표준작업 재발율','비표준작업 재발률','Non-standard Work Recurrence','Nonstandard Work Recurrence'];
  const wipAliases=['WIP','WIP compliance rate (Fabrication)','WIP compliance rate(Assy Line On- Line-Out )','Min/Max compliance rate of input materials by process','Work In Process','Work-in-Process','재공','재공재고','공정재공','공정재고'];
- const leadAliases=['Cutting to Dispatch Lead Time','Lead Time by Production Line (Cutting To Dispatch)','Manufacturing Lead Time','Manufacturing Lead Time Reduction','제조리드타임','제조 리드타임','생산리드타임','생산 리드타임','MFG Lead Time'];
+ const leadAliases=['Cutting to Dispatch Lead Time','Lead Time by Production Line (Cutting To Dispatch)'];
  const quality=all.filter(r=>has(r,qualityAliases)),controls=all.filter(r=>has(r,[...complianceAliases,...recurrenceAliases])),wips=all.filter(r=>has(r,wipAliases)),leads=all.filter(r=>has(r,leadAliases));
  for(const q of quality){
-  const qAch=achieved(q),qBad=qAch===false||/miss|decline|미달|악화/.test(norm(q.statusTrend));if(!qBad)continue;
+  const qBad=achieved(q)===false||/miss|decline|미달|악화/.test(norm(q.statusTrend));if(!qBad)continue;
   for(const c of controls.filter(x=>yearOf(x)===yearOf(q)&&Number(x.targetMonth)===Number(q.targetMonth))){
-   const controlAch=achieved(c),isCompliance=has(c,complianceAliases),isRecurrence=has(c,recurrenceAliases),zeroRecurrence=isRecurrence&&Number(c.actual)===0;
-   if(controlAch===true||zeroRecurrence)out.push({sev:'HIGH',year:yearOf(q),month:q.targetMonth,kpi:q.kpiEn||q.kpi,related:c.kpiEn||c.kpi,msg:'생산귀책/조립 품질 결과는 미달·악화인데 '+(isCompliance?'표준작업 준수 관리지표는 정상/목표 달성':zeroRecurrence?'비표준작업 재발지표는 0':'관련 공정관리 지표는 정상/목표 달성')+'입니다. 결과 품질과 공정관리 지표가 동시에 성립하는지 점검대상·표본·판정기준 및 원인 연결을 교차 검증할 필요'});
+   const isCompliance=has(c,complianceAliases),isRecurrence=has(c,recurrenceAliases),zeroRecurrence=isRecurrence&&Number(c.actual)===0;
+   if(achieved(c)===true||zeroRecurrence)out.push({sev:'HIGH',year:yearOf(q),month:q.targetMonth,kpi:q.kpiEn||q.kpi,related:c.kpiEn||c.kpi,msg:'생산귀책/초기 품질 결과는 미달·악화인데 '+(isCompliance?'표준작업 준수 관리지표는 정상/목표 달성':zeroRecurrence?'비표준작업 재발지표는 0':'관련 공정관리 지표는 정상/목표 달성')+'입니다. 점검대상·표본·판정기준 및 원인 연결을 교차 검증할 필요'});
   }
  }
  for(const w of wips){
-  const wAch=achieved(w),wBad=wAch===false||/miss|decline|미달|악화|증가/.test(norm(w.statusTrend));if(!wBad)continue;
+  const wBad=achieved(w)===false||/miss|decline|미달|악화|증가/.test(norm(w.statusTrend));if(!wBad)continue;
   for(const l of leads.filter(x=>yearOf(x)===yearOf(w)&&Number(x.targetMonth)===Number(w.targetMonth))){
-   const lAch=achieved(l),leadImproved=lAch===true||/improv|shorten|reduc|개선|단축/.test(norm(l.statusTrend));
-   if(leadImproved)out.push({sev:'HIGH',year:yearOf(w),month:w.targetMonth,kpi:w.kpiEn||w.kpi,related:l.kpiEn||l.kpi,msg:'WIP/재공은 미달·악화인데 제조 리드타임은 목표 달성·단축으로 나타납니다. 동일 범위·동일 물동량 기준이라면 논리 정합성 확인이 필요하므로 WIP 정의, Throughput 산정범위, Lead Time 시작·종료점 및 재공 포함범위를 교차 검증할 필요'});
+   if(achieved(l)===true||/improv|shorten|reduc|개선|단축/.test(norm(l.statusTrend)))out.push({sev:'HIGH',year:yearOf(w),month:w.targetMonth,kpi:w.kpiEn||w.kpi,related:l.kpiEn||l.kpi,msg:'WIP/재공은 미달·악화인데 Cutting-to-Dispatch 제조 리드타임은 목표 달성·단축으로 나타납니다. 동일 범위·동일 물동량 기준인지 WIP 정의, Throughput, Lead Time 시작·종료점 및 재공 포함범위를 교차 검증할 필요'});
   }
  }
- const downtimeAliases=['Equipment Downtime','Equipment Downtime Loss','Downtime Loss','Quality (MH Loss ) Line Downtime','Quality Line Downtime - Supplier/Part Attribution','Material-Induced Downtime MH'],mtbfAliases=['MTBF'],mttrAliases=['MTTR'],mttdAliases=['MTTD'],forecastAliases=['Forecast Accuracy','Option Planning Forecast Accuracy','Mix Variation','M+1','M+1 Production Volume Variation Rate','W+3','W+3 Mix Variation Rate','Production Incoming Plan Compliance','Monthly Shipment Plan Compliance Rate'],productivityAliases=['LOB Efficiency','Input MH','OT MH','Productivity'];
+ const downtimeAliases=['Equipment Downtime Loss'],mtbfAliases=['MTBF'],mttrAliases=['MTTR'],mttdAliases=['MTTD'];
  const samePeriod=(a,b)=>yearOf(a)===yearOf(b)&&Number(a.targetMonth)===Number(b.targetMonth),bad=r=>achieved(r)===false,good=r=>achieved(r)===true;
  const pushUnique=x=>{const key=[x.year,x.month,n(x.kpi),n(x.related),x.msg].join('|');if(!out.some(y=>[y.year,y.month,n(y.kpi),n(y.related),y.msg].join('|')===key))out.push(x)};
  const cross=(aa,bb,msg)=>all.filter(r=>has(r,aa)&&bad(r)).forEach(a=>all.filter(b=>b!==a&&samePeriod(a,b)&&has(b,bb)&&good(b)).forEach(b=>pushUnique({sev:'MEDIUM',year:yearOf(a),month:a.targetMonth,kpi:a.kpiEn||a.kpi,related:b.kpiEn||b.kpi,msg})));
- cross(downtimeAliases,mtbfAliases,'설비 Downtime은 미달인데 MTBF는 정상입니다. 고장빈도와 비가동손실 산정범위를 교차 검증할 필요');
- cross([...mttrAliases,...mttdAliases],downtimeAliases,'MTTR/MTTD는 미달인데 설비 Downtime은 정상입니다. 고장건수·정지시간·탐지/복구 산식 범위를 확인할 필요');
- cross(productivityAliases,leadAliases,'생산성/MH 계열은 미달인데 Lead Time은 정상입니다. 물량·Mix·측정구간 차이 또는 부분 최적화를 확인할 필요');
- cross(forecastAliases,forecastAliases,'생산계획/Forecast 계열 지표가 같은 기간에 상반됩니다. 총량·Mix·Option·Incoming Plan 기준범위를 확인할 필요');
+ cross(downtimeAliases,mtbfAliases,'Equipment Downtime Loss는 미달인데 MTBF는 정상입니다. 고장빈도와 비가동손실 산정범위를 교차 검증할 필요');
+ cross([...mttrAliases,...mttdAliases],downtimeAliases,'MTTR/MTTD는 미달인데 Equipment Downtime Loss는 정상입니다. 고장건수·정지시간·탐지/복구 산식 범위를 확인할 필요');
  return out;
 }
 async function exportXlsx(rows,cons){
