@@ -23,7 +23,7 @@ const norm=v=>String(v??'').toLowerCase().replace(/\r?\n/g,' ').replace(/["'â€œâ
 const nowIso=()=>new Date().toISOString();
 function load(key){try{return JSON.parse(localStorage.getItem(key)||'[]')}catch(_){return []}}
 function save(key,v){localStorage.setItem(key,JSON.stringify(v))}
-function pkey(){try{return currentPlant||$('plantSelect')?.value||''}catch(_){return $('plantSelect')?.value||''}}
+function pkey(){const selected=String($('plantSelect')?.value||'').trim();if(selected)return selected;try{return String(currentPlant||'').trim()}catch(_){return ''}}
 function pname(){return pkey()==='india'?'India':pkey()==='brazil'?'Brazil':pkey()==='ulsan'?'Ulsan':pkey()}
 function month(){try{return selectedMonth||0}catch(_){return 0}}
 function current(){try{const months=(typeof selectedMailMonths!=='undefined'&&selectedMailMonths&&selectedMailMonths.size)?selectedMailMonths:new Set([month()]);return (allResults||[]).filter(r=>months.has(r.month))}catch(_){return []}}
