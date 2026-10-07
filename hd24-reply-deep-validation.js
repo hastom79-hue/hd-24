@@ -5,6 +5,13 @@ const sameKpi=(a,b)=>{const ak=[kpiKey(a),norm(a.kpi),norm(a.kpiEn)].filter(Bool
 const yearOf=r=>Number(r?.targetYear)||2026, periodOf=r=>yearOf(r)*12+Number(r?.targetMonth||0)-1;
 const val=x=>{if(typeof x==='number')return Number.isFinite(x)?x:null;const raw=String(x??'').trim().replace(/,/g,'');const m=raw.match(/[-+]?\d*\.?\d+/);if(!m)return null;const n=Number(m[0]);return Number.isFinite(n)?n:null};
 function comparable(actual,target,unit){let a=val(actual),t=val(target);if(a===null||t===null)return null;const u=norm(unit);if(u.includes('%')){const ratio=(Math.abs(a)<=1&&Math.abs(t)>1)||(Math.abs(t)<=1&&Math.abs(a)>1);if(ratio){if(Math.abs(a)<=1)a*=100;if(Math.abs(t)<=1)t*=100}}return[a,t]};
+function dueInfo(r){
+ const raw=String(r?.plannedCompletionDate||'').trim(),done=/완료|complete|done/i.test(String(r?.actionStatus||r?.status||r?.completionStatus||''));
+ if(!raw)return {kind:'missing',time:null,done};
+ if(/^(monthly|-|n\/?a)$/i.test(raw))return {kind:'broad',time:null,done};
+ if(/^(?:w(?:eek)?\s*)?[1-5]\s*[,\/-]?\s*[A-Za-z]{3,9}[-\s,]*20\d{2}$/i.test(raw)||/^w[1-5]\s*[,\/-]?\s*(?:0?[1-9]|1[0-2])[-\/]20\d{2}$/i.test(raw))return {kind:'week',time:null,done};
+ const t=Date.parse(raw);return Number.isFinite(t)?{kind:'date',time:t,done}:{kind:'text',time:null,done};
+}
 function flagsFor(r,all){
  const f=[], reason=norm(r.reason),root=norm(r.rootCause),plan=norm(r.recoveryPlan),status=norm(r.statusTrend);
  if(/find attached|see attached|refer attached/.test(reason))f.push(['HIGH','첨부자료 참조만으로는 원인 검증 불가']);
@@ -12,9 +19,9 @@ function flagsFor(r,all){
  if(/^(na|n\/a|not applicable)$/.test(root))f.push(['MEDIUM','근본원인 NA — 사유→근인 연결 검증 불가']);
  if(/ongoing|monthly|training|awareness/.test(plan)&&plan.length<90)f.push(['MEDIUM','반복관리/교육 중심 대책 — 완료조건·정량 효과 불명확']);
  if(!r.actionOwner)f.push(['HIGH','Action Owner 미지정']); if(!r.plannedCompletionDate)f.push(['HIGH','완료예정일 미지정']);
- const owner=norm(r.actionOwner),due=Date.parse(r.plannedCompletionDate||''),received=Date.parse(r.replyReceivedAt||'');
- if(owner&&Number.isFinite(due)&&Number.isFinite(received)&&due<received){
-  const priorOverdue=all.filter(x=>x!==r&&norm(x.actionOwner)===owner&&periodOf(x)<periodOf(r)&&Number.isFinite(Date.parse(x.plannedCompletionDate||''))&&Number.isFinite(Date.parse(x.replyReceivedAt||''))&&Date.parse(x.plannedCompletionDate)<Date.parse(x.replyReceivedAt));
+ const owner=norm(r.actionOwner),di=dueInfo(r),due=di.time,received=Date.parse(r.replyReceivedAt||'');
+ if(owner&&!di.done&&di.kind==='date'&&Number.isFinite(due)&&Number.isFinite(received)&&due<received){
+  const priorOverdue=all.filter(x=>{if(x===r||norm(x.actionOwner)!==owner||periodOf(x)>=periodOf(r))return false;const xi=dueInfo(x),xr=Date.parse(x.replyReceivedAt||'');return !xi.done&&xi.kind==='date'&&Number.isFinite(xi.time)&&Number.isFinite(xr)&&xi.time<xr});
   const distinctPeriods=new Set(priorOverdue.map(periodOf)).size;
   if(distinctPeriods>=2)f.push(['HIGH','동일 담당자 3개 기간 이상 완료기한 초과 반복 — 실행관리 및 부하/책임배분 점검 필요']);
   else if(distinctPeriods>=1)f.push(['MEDIUM','동일 담당자 완료기한 초과 반복 — 조치 일정관리 점검 필요']);
