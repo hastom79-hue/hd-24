@@ -116,7 +116,7 @@ for(const [plant,extra,absent] of [
  ['brazil',['antos2082@hd.com','yhchoi@hd.com'],['minsu.kim01@hd.com','deokho.kim@hd.com']],
  ['ulsan',[],['minsu.kim01@hd.com','deokho.kim@hd.com','antos2082@hd.com','yhchoi@hd.com']]
 ]){
- const context={pkey:()=>plant,REQUIRED_TO:'dylee07@hd.com',REQUIRED_CC:['hastom@hd.com'],INDIA_REQUIRED_CC:['minsu.kim01@hd.com','deokho.kim@hd.com'],BRAZIL_REQUIRED_CC:['antos2082@hd.com','yhchoi@hd.com']};
+ const context={pkey:()=>plant,currentMailTo:()=> 'dylee07@hd.com',REQUIRED_CC:['hastom@hd.com'],INDIA_REQUIRED_CC:['minsu.kim01@hd.com','deokho.kim@hd.com'],BRAZIL_REQUIRED_CC:['antos2082@hd.com','yhchoi@hd.com']};
  vmModule.createContext(context);vmModule.runInContext(helper[0]+';this.applyCc=requiredCc;',context);
  const actual=context.applyCc('HASTOM@HD.COM;other@hd.com;other@hd.com').toLowerCase().split('; ');
  for(const email of [...context.REQUIRED_CC,...extra,'other@hd.com'])ok(actual.includes(email),plant+' missing '+email);
@@ -125,7 +125,8 @@ for(const [plant,extra,absent] of [
 }
 ok(src.includes("cc=requiredCc($('mailCc')?.value)"),'preview must enforce CC');
 ok(src.includes("contaminated=tokens.some(x=>!email.test(x))"),'CC parser must reject contaminated recipient strings');
-ok(src.includes("const seen=new Set([REQUIRED_TO.toLowerCase()])"),'CC parser must exclude primary To recipient');
+ok(src.includes("const seen=new Set([currentMailTo().toLowerCase()])"),'CC parser must exclude the same To recipient used by performance-analysis mail');
+ok(src.includes("function currentMailTo(){return String($('mailTo')?.value||'').trim()||REQUIRED_TO;}"),'followup To must synchronize with performance-analysis mail recipient');
 ok(src.includes("cc=requiredCc($('mailCc')?.value.trim()||previewState.cc)"),'send API must enforce CC');
 ok(src.includes('function buildOutlookEml({to,cc,subject,body,attachments}){cc=requiredCc(cc)'),'EML must enforce CC');
 console.log('HD24 INDIA/BRAZIL MANDATORY CC PASS');
