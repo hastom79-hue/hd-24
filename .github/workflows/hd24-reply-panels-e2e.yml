@@ -209,7 +209,7 @@ jobs:
               stagnant=int(page.locator('.hd24-exec-drill[data-exec-drill="stagnant"] b').inner_text())
               overdue=int(page.locator('.hd24-exec-drill[data-exec-drill="overdue"] b').inner_text())
               retrospective=int(page.locator('.hd24-exec-drill[data-exec-drill="retrospective"] b').inner_text())
-              assert f'반복 근인 {recurring} / 대책 정체 {stagnant} / 기한 초과 {overdue} / 회고 취약 {retrospective}건' in draft, draft
+              assert f'반복 근인 {recurring} / 전월 대책 정체 {stagnant} / 기한 초과 {overdue} / 회고 취약 {retrospective}건' in draft, draft
               if errors:
                   print('PAGEERRORS:', errors)
                   print('WINDOW_ERRORS:', page.evaluate("window.__hd24WindowErrors || []"))
