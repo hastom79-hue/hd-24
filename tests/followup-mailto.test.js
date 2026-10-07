@@ -288,7 +288,7 @@ console.log('HD24 DIO EDGE REGRESSION CONTRACT PASS');
 ok(feedback.includes("api&&api.success===false"),'reply feedback must reject API logical failure');
 ok(feedback.includes("status:'send-failed'"),'reply feedback failure history missing');
 ok(feedback.includes("x.sentAt||x.failedAt"),'reply feedback failure timestamp rendering missing');
-ok(feedback.includes("x.error?' · '+x.error"),'reply feedback failure detail rendering missing');
+ok(feedback.includes("x.error?' · '+esc(x.error)"),'reply feedback failure detail rendering missing');
 ok(feedback.includes("setTimeout(()=>controller.abort(),30000)"),'reply feedback API timeout guard missing');
 const feedbackVm=ui.match(/hd24-reply-feedback\.js\?v=(\d+)/);ok(feedbackVm,'reply feedback production loader missing');
 ok(refresh.includes('hd24-reply-feedback.js?v='+feedbackVm[1]),'reply feedback refresh preload must match production loader version');
