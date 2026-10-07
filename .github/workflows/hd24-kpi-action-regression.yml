@@ -7,6 +7,8 @@ on:
       - 'kpi-action-workbook.js'
       - 'hd24-action-export.js'
       - 'hd24-ui-v3.js'
+      - 'hd24-auto-run.js'
+      - 'refresh-runtime.html'
       - 'tests/kpi-action-classifier.test.js'
       - 'tests/kpi-action-workbook.test.js'
       - 'tests/kpi-action-export.test.js'
