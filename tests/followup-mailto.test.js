@@ -1,6 +1,7 @@
 const fs=require('fs');
 const src=fs.readFileSync('hd24-followup.js','utf8');
 const ui=fs.readFileSync('hd24-ui-v3.js','utf8');
+const indexHtml=fs.readFileSync('index.html','utf8');
 const refresh=fs.readFileSync('refresh-runtime.html','utf8');
 const historyView=fs.readFileSync('hd24-history-view.js','utf8');
 const pipeline=fs.readFileSync('hd24-pipeline-gate.js','utf8');
@@ -137,7 +138,7 @@ for(const [selected,stale,expected] of [['india','brazil','India'],['brazil','in
  ok(context.pn()===expected,'plant label mismatch after selector switch: '+selected);
 }
 console.log('HD24 ACTIVE PLANT SWITCH PASS');
-ok(ui.includes("allResults = [];")&&ui.includes("selectedMonth = null;")&&ui.includes("selectedMailMonths?.clear"),'plant change must clear stale KPI mail data from previous plant');
+ok(indexHtml.includes("allResults = [];")&&indexHtml.includes("selectedMonth = null;")&&indexHtml.includes("selectedMailMonths?.clear"),'plant change must clear stale KPI mail data from previous plant');
 console.log('HD24 STALE PLANT KPI RESET PASS');
 ok(src.includes("cc=requiredCc($('mailCc')?.value.trim()||previewState.cc)"),'send API must enforce CC');
 ok(src.includes('function buildOutlookEml({to,cc,subject,body,attachments}){cc=requiredCc(cc)'),'EML must enforce CC');
