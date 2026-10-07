@@ -52,6 +52,7 @@ ok(src.includes("Confirm KPI recovery after implementing corrective actions.")&&
 console.log('HD24 FOLLOWUP DEFAULT-SENDER PASS');
 
 ok(src.includes("let preparedAttachment=null"),'mail preview must retain exact prepared attachment');
+ok((src.match(/Number\(r\.targetYear\)\|\|2026/g)||[]).length>=2,'reply Excel stale-state signatures must use identical target-year fields');
 ok(src.includes("preparedAttachmentPromise=null"),'attachment preview must track in-flight Excel generation');
 ok(src.includes("if(preparedAttachmentPromise)return preparedAttachmentPromise"),'send/open must reuse in-flight attachment promise');
 ok(src.includes("preparedAttachmentEpoch++"),'new preview must invalidate stale in-flight attachment generation');
