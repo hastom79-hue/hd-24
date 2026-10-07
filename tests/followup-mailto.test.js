@@ -124,6 +124,8 @@ for(const [plant,extra,absent] of [
  ok(actual.length===new Set(actual).size,plant+' duplicate CC');
 }
 ok(src.includes("cc=requiredCc($('mailCc')?.value)"),'preview must enforce CC');
+ok(src.includes("contaminated=tokens.some(x=>!email.test(x))"),'CC parser must reject contaminated recipient strings');
+ok(src.includes("const seen=new Set([REQUIRED_TO.toLowerCase()])"),'CC parser must exclude primary To recipient');
 ok(src.includes("cc=requiredCc($('mailCc')?.value.trim()||previewState.cc)"),'send API must enforce CC');
 ok(src.includes('function buildOutlookEml({to,cc,subject,body,attachments}){cc=requiredCc(cc)'),'EML must enforce CC');
 console.log('HD24 INDIA/BRAZIL MANDATORY CC PASS');
