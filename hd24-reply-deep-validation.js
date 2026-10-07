@@ -44,9 +44,9 @@ function contradictions(all){
  const out=[],n=s=>norm(s).replace(/\s/g,''),names=r=>[r.kpiEn,r.kpi].map(n).filter(Boolean),has=(r,arr)=>names(r).some(v=>arr.some(t=>v.includes(n(t))));
  const qualityAliases=['IQ 200 (Initial Quality)','IQ 200 (Production attributable)','Basic Quality','Assembly Quality','생산귀책 조립품질','생산귀책조립품질','조립품질','생산귀책 품질','Production attributable assembly quality','Production attributable quality'];
  const complianceAliases=['Standard Work Compliance','Production Instruction Compliance Rate','Sequence Compliance','표준작업준수율','표준작업 준수율','Standard Work Adherence','Standardized Work Compliance'];
- const recurrenceAliases=['Issue Recurrence Rate','Standard Non-compliance Recurrence','표준미준수재발','표준미준수 재발','비표준작업 재발율','비표준작업 재발률','비표준 작업 재발율','비표준 작업 재발률','Non-standard Work Recurrence','Nonstandard Work Recurrence'];
- const wipAliases=['WIP','Work In Process','Work-in-Process','재공','재공재고','공정재공','공정재고'];
- const leadAliases=['Cutting to Dispatch Lead Time','Manufacturing Lead Time','Manufacturing Lead Time Reduction','제조리드타임','제조 리드타임','생산리드타임','생산 리드타임','MFG Lead Time'];
+ const recurrenceAliases=['Issue Recurrence Rate','Non-Compliance Recurrence Rate','Standard Non-compliance Recurrence','표준미준수재발','표준미준수 재발','비표준작업 재발율','비표준작업 재발률','비표준 작업 재발율','비표준 작업 재발률','Non-standard Work Recurrence','Nonstandard Work Recurrence'];
+ const wipAliases=['WIP','WIP compliance rate (Fabrication)','WIP compliance rate(Assy Line On- Line-Out )','Min/Max compliance rate of input materials by process','Work In Process','Work-in-Process','재공','재공재고','공정재공','공정재고'];
+ const leadAliases=['Cutting to Dispatch Lead Time','Lead Time by Production Line (Cutting To Dispatch)','Manufacturing Lead Time','Manufacturing Lead Time Reduction','제조리드타임','제조 리드타임','생산리드타임','생산 리드타임','MFG Lead Time'];
  const quality=all.filter(r=>has(r,qualityAliases)),controls=all.filter(r=>has(r,[...complianceAliases,...recurrenceAliases])),wips=all.filter(r=>has(r,wipAliases)),leads=all.filter(r=>has(r,leadAliases));
  for(const q of quality){
   const qAch=achieved(q),qBad=qAch===false||/miss|decline|미달|악화/.test(norm(q.statusTrend));if(!qBad)continue;
@@ -62,7 +62,7 @@ function contradictions(all){
    if(leadImproved)out.push({sev:'HIGH',year:yearOf(w),month:w.targetMonth,kpi:w.kpiEn||w.kpi,related:l.kpiEn||l.kpi,msg:'WIP/재공은 미달·악화인데 제조 리드타임은 목표 달성·단축으로 나타납니다. 동일 범위·동일 물동량 기준이라면 논리 정합성 확인이 필요하므로 WIP 정의, Throughput 산정범위, Lead Time 시작·종료점 및 재공 포함범위를 교차 검증할 필요'});
   }
  }
- const downtimeAliases=['Equipment Downtime','Downtime Loss'],mtbfAliases=['MTBF'],mttrAliases=['MTTR'],mttdAliases=['MTTD'],forecastAliases=['Forecast Accuracy','Mix Variation','M+1','W+3','Production Incoming Plan Compliance'],productivityAliases=['LOB Efficiency','Input MH','OT MH','Productivity'];
+ const downtimeAliases=['Equipment Downtime','Equipment Downtime Loss','Downtime Loss','Quality (MH Loss ) Line Downtime','Quality Line Downtime - Supplier/Part Attribution','Material-Induced Downtime MH'],mtbfAliases=['MTBF'],mttrAliases=['MTTR'],mttdAliases=['MTTD'],forecastAliases=['Forecast Accuracy','Option Planning Forecast Accuracy','Mix Variation','M+1','M+1 Production Volume Variation Rate','W+3','W+3 Mix Variation Rate','Production Incoming Plan Compliance','Monthly Shipment Plan Compliance Rate'],productivityAliases=['LOB Efficiency','Input MH','OT MH','Productivity'];
  const samePeriod=(a,b)=>yearOf(a)===yearOf(b)&&Number(a.targetMonth)===Number(b.targetMonth),bad=r=>achieved(r)===false,good=r=>achieved(r)===true;
  const pushUnique=x=>{const key=[x.year,x.month,n(x.kpi),n(x.related),x.msg].join('|');if(!out.some(y=>[y.year,y.month,n(y.kpi),n(y.related),y.msg].join('|')===key))out.push(x)};
  const cross=(aa,bb,msg)=>all.filter(r=>has(r,aa)&&bad(r)).forEach(a=>all.filter(b=>b!==a&&samePeriod(a,b)&&has(b,bb)&&good(b)).forEach(b=>pushUnique({sev:'MEDIUM',year:yearOf(a),month:a.targetMonth,kpi:a.kpiEn||a.kpi,related:b.kpiEn||b.kpi,msg})));
