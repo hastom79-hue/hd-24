@@ -15,7 +15,7 @@ let previewState=null;
 let lastAutoPackageSignature='';
 let legacyAutoSuppressedLogged=false;
 let manualPreviewEpoch=0;
-let preparedAttachment=null;
+let preparedAttachment=null,preparedAttachmentPromise=null,preparedAttachmentEpoch=0;
 
 const $=id=>document.getElementById(id);
 const norm=v=>String(v??'').toLowerCase().replace(/\r?\n/g,' ').replace(/["'“”‘’]/g,'').replace(/[()\[\]{}%:/\\,_-]/g,' ').replace(/\s+/g,' ').trim();
@@ -214,13 +214,21 @@ $('hd24InitialMailTab').addEventListener('click',()=>selectMailType('initial'));
 try{const font=localStorage.getItem(MAIL_FONT_KEY),size=localStorage.getItem(MAIL_SIZE_KEY);if(MAIL_FONTS.includes(font))$('hd24MailFont').value=font;if([9,10,11,12,14,16,18].includes(Number(size)))$('hd24MailFontSize').value=size}catch(_){}['hd24MailFont','hd24MailFontSize'].forEach(id=>$(id)?.addEventListener('change',applyMailStyle));applyMailStyle();wireUi();}
 function renderSendLog(){const el=$('hd24SendLog');if(!el)return;const raw=load(MAIL_KEY).filter(x=>x.plant===pkey()&&(x.status==='sent'||x.status==='send-failed'||x.status==='outlook-package-downloaded'));const seen=new Set(),rows=[];for(const x of raw){const t=x.sentAt||x.failedAt||x.mailOpenedAt||x.preparedAt||'',k=[x.status,t,x.to||'',x.cc||'',x.error||''].join('|');if(seen.has(k))continue;seen.add(k);rows.push(x);if(rows.length>=8)break}el.innerHTML=rows.length?rows.map(x=>{const ok=x.status==='sent',pack=x.status==='outlook-package-downloaded',label=ok?'발송 성공':pack?'Outlook 패키지':'발송 실패',t=x.sentAt||x.failedAt||x.mailOpenedAt||x.preparedAt||'',detail=x.error?' · '+String(x.error).replace(/[<>]/g,''):'',route=(x.to?' · To '+String(x.to).replace(/[<>]/g,''):'')+(x.cc?' · CC '+String(x.cc).replace(/[<>]/g,''):'');return '<div style="padding:3px 0;border-bottom:1px solid #e7eaee"><b>'+label+'</b> · '+(t?new Date(t).toLocaleString():'-')+route+detail+'</div>'}).join(''):'발송 이력 없음'}
 async function prepareAttachment(items){
-  const built=await withTimeout(buildReplyFile(items),30000,'회신 Excel 생성');
-  if(!built?.file||built.file.size<1000)throw new Error('회신 Excel 파일이 비어 있습니다.');
-  preparedAttachment={file:built.file,fname:built.fname,preparedAt:nowIso()};
-  const box=$('hd24AttachmentPreview');if(box){box.style.display='block';$('hd24AttachmentName').textContent=built.fname;$('hd24AttachmentMeta').textContent=Math.ceil(built.file.size/1024)+' KB · 발송 예정 파일';}
-  return preparedAttachment;
+  if(preparedAttachment)return preparedAttachment;
+  if(preparedAttachmentPromise)return preparedAttachmentPromise;
+  const epoch=preparedAttachmentEpoch;
+  preparedAttachmentPromise=(async()=>{
+    const built=await withTimeout(buildReplyFile(items),30000,'회신 Excel 생성');
+    if(!built?.file||built.file.size<1000)throw new Error('회신 Excel 파일이 비어 있습니다.');
+    const attachment={file:built.file,fname:built.fname,preparedAt:nowIso()};
+    if(epoch!==preparedAttachmentEpoch)return prepareAttachment(previewState?.items||items);
+    preparedAttachment=attachment;
+    const box=$('hd24AttachmentPreview');if(box){box.style.display='block';$('hd24AttachmentName').textContent=built.fname;$('hd24AttachmentMeta').textContent=Math.ceil(built.file.size/1024)+' KB · 발송 예정 파일';}
+    return preparedAttachment;
+  })();
+  try{return await preparedAttachmentPromise}finally{if(epoch===preparedAttachmentEpoch)preparedAttachmentPromise=null}
 }
-async function renderPreview(items,mode,preparedAt){const to=REQUIRED_TO,cc=requiredCc($('mailCc')?.value);if($('mailCc'))$('mailCc').value=cc;previewState={items,mode,to,cc,subject:subject(items),body:body(items),preparedAt:preparedAt||nowIso()};preparedAttachment=null;$('hd24Preview').style.display='block';$('hd24PreviewTo').textContent=to||'(recipient not entered)';$('hd24PreviewCc').textContent=cc||'(none)';$('hd24PreviewSubject').textContent=previewState.subject;$('hd24PreviewBody').innerHTML=highlightedMailBody(previewState.body);$('hd24MailStatus').textContent=`Preview ready · ${items.length} KPI(s) · prepared ${new Date(previewState.preparedAt).toLocaleString()}`;logSafe(`메일 미리보기 준비: ${items.length}건`);renderSendLog();try{await prepareAttachment(items);$('hd24MailStatus').textContent=`Preview ready · ${items.length} KPI(s) · 첨부파일 확인 가능`;}catch(e){$('hd24MailStatus').textContent='첨부파일 준비 실패: '+(e?.message||e);logSafe('첨부파일 미리보기 준비 실패: '+(e?.message||e));}}
+async function renderPreview(items,mode,preparedAt){const to=REQUIRED_TO,cc=requiredCc($('mailCc')?.value);if($('mailCc'))$('mailCc').value=cc;previewState={items,mode,to,cc,subject:subject(items),body:body(items),preparedAt:preparedAt||nowIso()};preparedAttachment=null;preparedAttachmentPromise=null;preparedAttachmentEpoch++;$('hd24Preview').style.display='block';$('hd24PreviewTo').textContent=to||'(recipient not entered)';$('hd24PreviewCc').textContent=cc||'(none)';$('hd24PreviewSubject').textContent=previewState.subject;$('hd24PreviewBody').innerHTML=highlightedMailBody(previewState.body);$('hd24MailStatus').textContent=`Preview ready · ${items.length} KPI(s) · prepared ${new Date(previewState.preparedAt).toLocaleString()}`;logSafe(`메일 미리보기 준비: ${items.length}건`);renderSendLog();try{await prepareAttachment(items);$('hd24MailStatus').textContent=`Preview ready · ${items.length} KPI(s) · 첨부파일 확인 가능`;}catch(e){$('hd24MailStatus').textContent='첨부파일 준비 실패: '+(e?.message||e);logSafe('첨부파일 미리보기 준비 실패: '+(e?.message||e));}}
 function interceptMailButton(id,mode){const el=$(id);if(!el)return;el.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();const items=selectItems(mode);if(!items.length){alert('메일 대상 KPI가 없습니다.');return}const preparedAt=nowIso();renderPreview(items,mode,preparedAt).catch(e=>logSafe('메일 Preview 준비 오류: '+(e?.message||e)));mailHistoryRecord(items,{status:'prepared',preparedAt})},true)}
 function mailHistoryRecord(items,extra){const list=load(MAIL_KEY),preparedAt=extra.preparedAt||previewState?.preparedAt||nowIso(),isPrepared=extra.status==='prepared',mode=extra.managedMode||previewState?.mode||'';for(const r of items){const row={plant:pkey(),plantName:pname(),targetYear:Number(r.targetYear)||2026,targetMonth:Number(r.month)||month(),kpi:r.kpi||'',kpiEn:r.kpiEn||'',preparedAt,...extra};if(isPrepared){const key=norm(r.kpiEn||r.kpi),t=Date.parse(preparedAt),duplicate=list.some(x=>x.status==='prepared'&&x.plant===row.plant&&(Number(x.targetYear)||2026)===row.targetYear&&Number(x.targetMonth)===Number(row.targetMonth)&&norm(x.kpiEn||x.kpi)===key&&(x.managedMode||'')===mode&&Math.abs(t-Date.parse(x.preparedAt||0))<5000);if(duplicate)continue}list.unshift(row)}save(MAIL_KEY,list.slice(0,3000));}
 async function withTimeout(p,ms,label){let t;try{return await Promise.race([p,new Promise((_,rej)=>{t=setTimeout(()=>rej(new Error(label+' 시간초과')),ms)})])}finally{clearTimeout(t)}}
