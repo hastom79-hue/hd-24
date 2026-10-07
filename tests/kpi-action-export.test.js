@@ -31,14 +31,14 @@ ok(!loader.includes('hd24-action-export-watchdog.js'),'production loader must no
 ok(!loader.includes('hd24-followup-sync.js'),'production loader must not reintroduce legacy follow-up sync');
 ok(loader.includes('hd24-auto-run.js?v=31'),'production loader must include current auto-run');
 ok(loader.includes('hd24-pipeline-gate.js?v=24'),'production loader must include current pipeline gate');
-ok(loader.includes('hd24-followup.js?v=106'),'production loader must include current follow-up');
+ok(loader.includes('hd24-followup.js?v=107'),'production loader must include current follow-up');
 ok(loader.includes('hd24-direct-reply-guard.js?v=13'),'production loader must include direct reply guard');
 ok(loader.includes('hd24-reply-import-dedupe.js?v=2'),'production loader must include reply import dedupe');
 ok(!refresh.includes('hd24-action-export.js'),'refresh helper must not preload legacy action export');
 ok(!refresh.includes('hd24-action-cycle-guard.js'),'refresh helper must not preload legacy cycle guard');
 ok(refresh.includes('hd24-auto-run.js?v=31'),'refresh helper must preload current auto-run');
 ok(refresh.includes('hd24-pipeline-gate.js?v=24'),'refresh helper must preload current pipeline gate');
-ok(refresh.includes('hd24-followup.js?v=106'),'refresh helper must preload current follow-up');
+ok(refresh.includes('hd24-followup.js?v=107'),'refresh helper must preload current follow-up');
 ok(refresh.includes('hd24-direct-reply-guard.js?v=13'),'refresh helper must preload direct reply guard');
 ok(refresh.includes('hd24-reply-import-dedupe.js?v=2'),'refresh helper must preload reply import dedupe');
 console.log('PASS kpi-action-export legacy fixture invariants + current production runtime wiring');
