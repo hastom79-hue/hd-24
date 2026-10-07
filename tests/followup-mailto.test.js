@@ -320,7 +320,8 @@ ok(historyView.includes('__HD24_HISTORY_VIEW_WIRED__'),'history view initializat
 const closedLoopBody=deepValidation.slice(deepValidation.indexOf('function closedLoop(all)'),deepValidation.indexOf('function contradictions(all)'));
 ok(!closedLoopBody.includes('for(const w of wips)'),'closedLoop must not reference undefined WIP collections');
 ok(deepValidation.includes("'WIP compliance rate (Fabrication)'")&&deepValidation.includes("'WIP compliance rate(Assy Line On- Line-Out )'")&&deepValidation.includes("'Min/Max compliance rate of input materials by process'"),'India WIP contradiction aliases missing');
-ok(deepValidation.includes("'Lead Time by Production Line (Cutting To Dispatch)'")&&deepValidation.includes("'Manufacturing Lead Time'"),'India lead-time contradiction aliases missing');
-ok(/function contradictions\(all\)[\s\S]*?for\(const w of wips\)[\s\S]*?leadImproved[\s\S]*?WIP\/재공은 미달·악화인데 제조 리드타임은 목표 달성·단축/.test(deepValidation),'WIP vs lead-time inconsistency must be classified as KPI contradiction');
+ok(deepValidation.includes("'Lead Time by Production Line (Cutting To Dispatch)'"),'India Cutting-to-Dispatch lead-time contradiction alias missing');
+ok(!deepValidation.includes("'Manufacturing Lead Time','Manufacturing Lead Time Reduction'"),'broad manufacturing lead-time aliases must stay excluded from strong contradiction scoring');
+ok(/function contradictions\(all\)[\s\S]*?for\(const w of wips\)[\s\S]*?WIP\/재공은 미달·악화인데 Cutting-to-Dispatch 제조 리드타임은 목표 달성·단축/.test(deepValidation),'WIP vs Cutting-to-Dispatch lead-time inconsistency must remain a strong KPI contradiction');
 ok(/function contradictions\(all\)[\s\S]*?qualityAliases[\s\S]*?complianceAliases[\s\S]*?zeroRecurrence/.test(deepValidation),'Quality vs standard-work/recurrence contradiction contract missing');
 console.log('PASS: KPI contradiction classification contracts');
