@@ -328,7 +328,7 @@ ok(src.includes("Content-Type':'text/plain;charset=utf-8")&&!src.includes("Conte
 ok(src.includes("if($('mailCc'))$('mailCc').value=cc"),'managed mail field must display enforced CC used for send');
 ok(feedback.includes('id="hd24FeedbackCc" readonly')&&feedback.includes('function syncFeedbackRecipients()')&&feedback.includes("get('mailTo')?.value")&&feedback.includes("get('mailCc')?.value")&&feedback.includes('syncedRecipients=syncFeedbackRecipients()'),'feedback mail must use performance mail To/CC as the single source of truth');
 ok(!feedback.includes("const to='dylee07@hd.com'")&&!feedback.includes("const linkedTo='dylee07@hd.com'"),'feedback mail must not hardcode dylee07 as recipient');
-ok(index.includes("migrationKey='hd24_mail_to_unpin_v1_' + currentPlant")&&index.includes("savedTo.trim().toLowerCase()==='dylee07@hd.com'")&&index.includes("localStorage.removeItem(toKey)"),'legacy pinned dylee07 recipient must be migrated out of browser storage');
+ok(indexHtml.includes("migrationKey='hd24_mail_to_unpin_v1_' + currentPlant")&&indexHtml.includes("savedTo.trim().toLowerCase()==='dylee07@hd.com'")&&indexHtml.includes("localStorage.removeItem(toKey)"),'legacy pinned dylee07 recipient must be migrated out of browser storage');
 ok(feedback.includes('const previousReply=')&&!feedback.includes('history[history.length-2]'),'feedback comparison must use actual prior reply sequence');
 ok(feedback.includes('latestFeedbackAttachment=null')&&feedback.includes('exportKey!==lastExportKey'),'new feedback state must invalidate stale attachment before regeneration');
 console.log('HD24 2026-10-05 CLOSED LOOP REGRESSION PASS');
