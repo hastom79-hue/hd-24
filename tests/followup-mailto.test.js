@@ -350,3 +350,8 @@ ok(!deepValidation.includes("'Manufacturing Lead Time','Manufacturing Lead Time 
 ok(/function contradictions\(all\)[\s\S]*?for\(const w of wips\)[\s\S]*?WIP\/재공은 미달·악화인데 Cutting-to-Dispatch 제조 리드타임은 목표 달성·단축/.test(deepValidation),'WIP vs Cutting-to-Dispatch lead-time inconsistency must remain a strong KPI contradiction');
 ok(/function contradictions\(all\)[\s\S]*?qualityAliases[\s\S]*?complianceAliases[\s\S]*?zeroRecurrence/.test(deepValidation),'Quality vs standard-work/recurrence contradiction contract missing');
 console.log('PASS: KPI contradiction classification contracts');
+
+const feedback=fs.readFileSync('hd24-reply-feedback.js','utf8');
+ok(feedback.includes("const activePlant=(get('plantSelect')?.value||plant).trim()"),'feedback send must recheck active plant at click time');
+ok(feedback.includes("dashboardImages=[];status.textContent='대시보드 캡처 생략 · Excel 첨부 메일을 계속 준비합니다.'"),'feedback send must continue with Excel when dashboard capture fails');
+ok(feedback.includes("function resetForPlantChange(){drafts={ko:'',en:''};draftKey='';demo=false;lastExportKey='';latestFeedbackAttachment=null"),'feedback plant change must clear stale India draft and attachment');
