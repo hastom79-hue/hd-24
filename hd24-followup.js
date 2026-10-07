@@ -6,7 +6,7 @@ const MAIL_KEY='hd24_kpi_mail_history_v2';
 const CONFIG_KEY='hd24_mail_endpoint_v1';
 const REQUIRED_TO='dylee07@hd.com';
 const REQUIRED_CC=['hastom@hd.com'];
-function requiredCc(value){const addresses=String(value||'').split(/[;,\s]+/).map(s=>s.trim()).filter(Boolean);const seen=new Set();return [...REQUIRED_CC,...(pkey()==='india'?INDIA_REQUIRED_CC:pkey()==='brazil'?BRAZIL_REQUIRED_CC:[]),...addresses].filter(address=>{const key=address.toLowerCase();if(seen.has(key))return false;seen.add(key);return true}).join('; ')}
+function requiredCc(value){const raw=String(value||'').trim(),tokens=raw?raw.split(/[;,\s]+/).map(s=>s.trim()).filter(Boolean):[],email=/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,contaminated=tokens.some(x=>!email.test(x)),extras=contaminated?[]:tokens.filter(x=>email.test(x));const seen=new Set([REQUIRED_TO.toLowerCase()]);return [...REQUIRED_CC,...(pkey()==='india'?INDIA_REQUIRED_CC:pkey()==='brazil'?BRAZIL_REQUIRED_CC:[]),...extras].filter(address=>{const key=address.toLowerCase();if(seen.has(key))return false;seen.add(key);return true}).join('; ')}
 const INDIA_REQUIRED_CC=['minsu.kim01@hd.com','deokho.kim@hd.com'];
 const BRAZIL_REQUIRED_CC=["antos2082@hd.com","yhchoi@hd.com"];
 const MISS_FILL='FFFBE9E7', STATUS_FILL='FFE2E8F0';
