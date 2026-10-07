@@ -51,6 +51,9 @@ ok(src.includes("Confirm KPI recovery after implementing corrective actions.")&&
 console.log('HD24 FOLLOWUP DEFAULT-SENDER PASS');
 
 ok(src.includes("let preparedAttachment=null"),'mail preview must retain exact prepared attachment');
+ok(src.includes("preparedAttachmentPromise=null"),'attachment preview must track in-flight Excel generation');
+ok(src.includes("if(preparedAttachmentPromise)return preparedAttachmentPromise"),'send/open must reuse in-flight attachment promise');
+ok(src.includes("preparedAttachmentEpoch++"),'new preview must invalidate stale in-flight attachment generation');
 ok(src.includes("id=\"hd24AttachmentPreview\""),'attachment preview UI missing');
 ok(src.includes("hd24AttachmentOpen"),'attachment preview/open control missing');
 ok(src.includes("const built=preparedAttachment||await prepareAttachment(previewState.items)"),'send must reuse exact previewed Excel attachment');
