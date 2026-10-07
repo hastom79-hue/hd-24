@@ -8,7 +8,8 @@ ok(source.includes('window.hd24SafeReflectReady===true'),'safe-reflect global ga
 ok(source.includes('hasMaster&&hasBuffer&&hasMapping'),'master/buffer/mapping prerequisites must remain required');
 ok(source.includes('(masterOnly||hasSrc)&&hasMaster&&hasBuffer&&hasMapping'),'effective readiness must require source for source+master mode and allow master-only mode');
 ok(source.includes('masterOnly'),'master-only branch missing');
-ok(source.includes("plant==='ulsan'"),'Ulsan master-only eligibility missing');
+ok(source.includes("document.getElementById('plantSelect')?.value==='ulsan'"),'Ulsan master-only eligibility fallback missing');
+ok(source.includes("typeof cfg==='function' && cfg().hasSource===false"),'configured master-only eligibility missing');
 ok(source.includes("const btn=document.getElementById(masterOnly?'btnJudge':'btnReflect')"),'master-only must use judgment button while source+master uses safe reflect');
 ok(source.includes('if(sig&&btn&&btn.disabled&&safe&&core.ok)'),'stale-disabled repair must require all safe/core prerequisites');
 ok(source.includes('btn.disabled=false'),'stale-disabled UI repair missing');
