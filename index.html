@@ -1067,8 +1067,19 @@ const mailToInput = document.getElementById('mailTo');
 const mailCcInput = document.getElementById('mailCc');
 const mailToNameInput = document.getElementById('mailToName');
 const mailFromNameInput = document.getElementById('mailFromName');
-mailToInput.value = localStorage.getItem('hdps_mail_to_' + currentPlant) || '';
-mailCcInput.value = localStorage.getItem('hdps_mail_cc_' + currentPlant) || '';
+function sanitizeMailCcDisplay(value){
+  const required=['hastom@hd.com',...(currentPlant==='india'?['minsu.kim01@hd.com','deokho.kim@hd.com']:currentPlant==='brazil'?['antos2082@hd.com','yhchoi@hd.com']:[])];
+  const tokens=String(value||'').trim().split(/[;,\s]+/).filter(Boolean),email=/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+  const extras=tokens.some(x=>!email.test(x))?[]:tokens.filter(x=>email.test(x)&&x.toLowerCase()!=='dylee07@hd.com');
+  return [...new Set([...required,...extras].map(x=>x.toLowerCase()))].join('; ');
+}
+function restoreMailRecipients(){
+  mailToInput.value='dylee07@hd.com';
+  mailCcInput.value=sanitizeMailCcDisplay(localStorage.getItem('hdps_mail_cc_' + currentPlant) || '');
+  localStorage.setItem('hdps_mail_to_' + currentPlant,mailToInput.value);
+  localStorage.setItem('hdps_mail_cc_' + currentPlant,mailCcInput.value);
+}
+restoreMailRecipients();
 mailToNameInput.value = localStorage.getItem('hdps_mail_toname_' + currentPlant) || '';
 mailFromNameInput.value = localStorage.getItem('hdps_mail_from') || '';
 mailToInput.addEventListener('change', () => { localStorage.setItem('hdps_mail_to_' + currentPlant, mailToInput.value.trim()); });
@@ -1076,8 +1087,7 @@ mailCcInput.addEventListener('change', () => { localStorage.setItem('hdps_mail_c
 mailToNameInput.addEventListener('change', () => { localStorage.setItem('hdps_mail_toname_' + currentPlant, mailToNameInput.value.trim()); });
 mailFromNameInput.addEventListener('change', () => { localStorage.setItem('hdps_mail_from', mailFromNameInput.value.trim()); });
 document.getElementById('plantSelect').addEventListener('change', () => {
-  mailToInput.value = localStorage.getItem('hdps_mail_to_' + currentPlant) || '';
-  mailCcInput.value = localStorage.getItem('hdps_mail_cc_' + currentPlant) || '';
+  restoreMailRecipients();
   mailToNameInput.value = localStorage.getItem('hdps_mail_toname_' + currentPlant) || '';
   renderContactSelect();
   document.getElementById('contactPlant').value = currentPlant;
