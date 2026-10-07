@@ -7,6 +7,7 @@ on:
       - 'index.html'
       - 'hd24-rule-matrix-v1.js'
       - 'hd24-ui-v3.js'
+      - 'hd24-auto-run.js'
       - 'hd24-followup.js'
       - 'refresh-runtime.html'
       - 'mapping_ulsan.json'
@@ -16,6 +17,9 @@ on:
       - 'index.html'
       - 'hd24-rule-matrix-v1.js'
       - 'hd24-ui-v3.js'
+      - 'hd24-auto-run.js'
+      - 'hd24-followup.js'
+      - 'refresh-runtime.html'
       - 'mapping_ulsan.json'
       - '.github/workflows/hd24-browser-e2e-ulsan.yml'
   workflow_dispatch:
