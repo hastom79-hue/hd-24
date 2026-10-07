@@ -6,34 +6,39 @@ let runningSince=0;
 let watchdog=null;
 let lastWaitState='';
 
+function isMasterOnly(){
+  try{return typeof cfg==='function' && cfg().hasSource===false;}catch(_){return document.getElementById('plantSelect')?.value==='ulsan';}
+}
 function getSignature(){
   const src=document.getElementById('srcFile');
   const master=document.getElementById('masterFile');
   const plant=document.getElementById('plantSelect');
   const sf=src&&src.files&&src.files[0];
   const mf=master&&master.files&&master.files[0];
-  if(!sf||!mf)return '';
-  return [plant?plant.value:'',sf.name,sf.size,sf.lastModified,mf.name,mf.size,mf.lastModified].join('|');
+  if(!mf)return '';
+  if(!isMasterOnly()&&!sf)return '';
+  const srcSig=sf?[sf.name,sf.size,sf.lastModified].join('|'):'MASTER_ONLY';
+  return [plant?plant.value:'',srcSig,mf.name,mf.size,mf.lastModified].join('|');
 }
 
 function coreReady(){
   try{
+    const masterOnly=isMasterOnly();
     const hasSrc=typeof srcWorkbook!=='undefined'&&!!srcWorkbook;
     const hasMaster=typeof masterWorkbook!=='undefined'&&!!masterWorkbook;
     const hasZip=typeof masterZip!=='undefined'&&!!masterZip;
     const hasBuffer=typeof masterFileBuffer!=='undefined'&&!!masterFileBuffer;
     const hasMapping=typeof mappingData!=='undefined'&&Array.isArray(mappingData)&&mappingData.length>0;
-    return {hasSrc,hasMaster,hasZip,hasBuffer,hasMapping,ok:hasSrc&&hasMaster&&hasBuffer&&hasMapping};
-  }catch(_){return {hasSrc:false,hasMaster:false,hasZip:false,hasBuffer:false,hasMapping:false,ok:false};}
+    return {masterOnly,hasSrc,hasMaster,hasZip,hasBuffer,hasMapping,ok:(masterOnly||hasSrc)&&hasMaster&&hasBuffer&&hasMapping};
+  }catch(_){return {masterOnly:false,hasSrc:false,hasMaster:false,hasZip:false,hasBuffer:false,hasMapping:false,ok:false};}
 }
 
 function readiness(){
-  const btn=document.getElementById('btnReflect');
+  const masterOnly=isMasterOnly();
+  const btn=document.getElementById(masterOnly?'btnJudge':'btnReflect');
   const sig=getSignature();
   const core=coreReady();
-  // The authoritative readiness flag is installed by safe-kpi-mapping.js.
-  // data-safe-reflect-ready is diagnostic only; a stale/missing dataset marker must not deadlock auto-run.
-  const safe=window.hd24SafeReflectReady===true&&!!btn;
+  const safe=masterOnly ? !!btn : (window.hd24SafeReflectReady===true&&!!btn);
   if(sig&&btn&&btn.disabled&&safe&&core.ok){
     btn.disabled=false;
     if(typeof window.checkReady==='function'){
@@ -41,10 +46,10 @@ function readiness(){
     }
   }
   return {
-    sig,btn,core,
+    sig,btn,core,masterOnly,
     ok:!!(sig&&btn&&!btn.disabled&&safe&&core.ok),
     disabled:btn?!!btn.disabled:null,
-    globalReady:window.hd24SafeReflectReady===true,
+    globalReady:masterOnly?true:window.hd24SafeReflectReady===true,
     datasetReady:btn?btn.dataset.safeReflectReady:null
   };
 }
@@ -61,7 +66,18 @@ function writeLog(message){
 
 function syncSuccess(){
   const sig=getSignature();
-  if(sig&&window.hd24SafeReflectSuccessSignature===sig){
+  if(!sig)return false;
+  if(isMasterOnly()){
+    const rows=typeof allResults!=='undefined'&&Array.isArray(allResults)?allResults:[];
+    if(rows.length){
+      const first=completedSignature!==sig;
+      completedSignature=sig;runningSignature='';runningSince=0;
+      if(first)writeLog('자동 판정 완료 확인: 울산 master-only 결과 생성');
+      return true;
+    }
+    return false;
+  }
+  if(window.hd24SafeReflectSuccessSignature===sig){
     const first=completedSignature!==sig;
     completedSignature=sig;
     runningSignature='';
@@ -73,7 +89,7 @@ function syncSuccess(){
 }
 
 function waitStateText(s){
-  return `disabled=${s.disabled} / safe=${s.globalReady} / dataset=${s.datasetReady||'-'} / src=${s.core.hasSrc} / master=${s.core.hasMaster} / buffer=${s.core.hasBuffer} / zip(lazy)=${s.core.hasZip} / mapping=${s.core.hasMapping}`;
+  return `mode=${s.masterOnly?'master-only':'source+master'} / disabled=${s.disabled} / safe=${s.globalReady} / dataset=${s.datasetReady||'-'} / src=${s.core.hasSrc} / master=${s.core.hasMaster} / buffer=${s.core.hasBuffer} / zip(lazy)=${s.core.hasZip} / mapping=${s.core.hasMapping}`;
 }
 
 function tryAutoRun(reason){
@@ -91,8 +107,8 @@ function tryAutoRun(reason){
   if(runningSignature===sig&&now-runningSince<15000)return;
   runningSignature=sig;
   runningSince=now;
-  writeLog('자동 실행 시작: '+reason+' — 업로드 완료 즉시 안전검증/실적반영');
-  try{s.btn.click();}
+  writeLog(s.masterOnly ? '자동 판정 시작: '+reason+' — 울산 총괄파일 master-only 판정' : '자동 실행 시작: '+reason+' — 업로드 완료 즉시 안전검증/실적반영');
+  try{s.btn.click();if(s.masterOnly)setTimeout(syncSuccess,0);}
   catch(e){runningSignature='';runningSince=0;writeLog('자동 실행 오류: '+(e&&e.message||e));}
 }
 
@@ -101,7 +117,6 @@ function resetAndRun(reason){
   runningSignature='';
   runningSince=0;
   lastWaitState='';
-  // A plain refresh has no browser File objects, so repeated startup retries only create needless work.
   if(!getSignature())return;
   [100,600,1800,4000].forEach(ms=>setTimeout(()=>{if(getSignature())tryAutoRun(reason)},ms));
 }
@@ -112,10 +127,11 @@ function wire(){
   const src=document.getElementById('srcFile');
   const master=document.getElementById('masterFile');
   const plant=document.getElementById('plantSelect');
-  const btn=document.getElementById('btnReflect');
+  const reflectBtn=document.getElementById('btnReflect');
+  const judgeBtn=document.getElementById('btnJudge');
   [src,master].forEach(el=>el&&el.addEventListener('change',()=>resetAndRun(el.id+' upload')));
   if(plant)plant.addEventListener('change',()=>resetAndRun('plant change'));
-  if(btn)new MutationObserver(()=>tryAutoRun('readiness enabled')).observe(btn,{attributes:true,attributeFilter:['disabled','data-safe-reflect-ready']});
+  [reflectBtn,judgeBtn].forEach(btn=>btn&&new MutationObserver(()=>tryAutoRun('readiness enabled')).observe(btn,{attributes:true,attributeFilter:['disabled','data-safe-reflect-ready']}));
   document.addEventListener('hd24-safe-reflect-success',syncSuccess);
   window.addEventListener('hd24-safe-reflect-complete',syncSuccess);
   watchdog=setInterval(()=>{const sig=getSignature();if(!sig||sig===completedSignature)return;if(runningSignature===sig&&Date.now()-runningSince<15000)return;tryAutoRun('watchdog')},15000);
