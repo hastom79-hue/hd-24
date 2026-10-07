@@ -130,6 +130,13 @@ ok(src.includes("function currentMailTo(){return String($('mailTo')?.value||'').
 ok(src.includes("function pkey(){const selected=String($('plantSelect')?.value||'').trim();if(selected)return selected;"),'followup plant must use the active plant selector before stale currentPlant state');
 ok(src.includes("function invalidateFollowupPreviewForPlantChange(){previewState=null;preparedAttachment=null;preparedAttachmentPromise=null;preparedAttachmentEpoch++;"),'plant change must invalidate stale followup preview and attachment');
 ok(src.includes("$('plantSelect')?.addEventListener('change',invalidateFollowupPreviewForPlantChange)"),'plant selector must trigger followup preview invalidation');
+const plantHelper=src.match(/function pkey\(\)\{[^\n]+\}\nfunction pname\(\)\{[^\n]+\}/);ok(plantHelper,'plant identity helpers missing');
+for(const [selected,stale,expected] of [['india','brazil','India'],['brazil','india','Brazil'],['ulsan','india','Ulsan']]){
+ const nodes={plantSelect:{value:selected}},context={$:id=>nodes[id],currentPlant:stale};vmModule.createContext(context);vmModule.runInContext(plantHelper[0]+';this.pk=pkey;this.pn=pname;',context);
+ ok(context.pk()===selected,'active selector lost to stale currentPlant: '+selected);
+ ok(context.pn()===expected,'plant label mismatch after selector switch: '+selected);
+}
+console.log('HD24 ACTIVE PLANT SWITCH PASS');
 ok(src.includes("cc=requiredCc($('mailCc')?.value.trim()||previewState.cc)"),'send API must enforce CC');
 ok(src.includes('function buildOutlookEml({to,cc,subject,body,attachments}){cc=requiredCc(cc)'),'EML must enforce CC');
 console.log('HD24 INDIA/BRAZIL MANDATORY CC PASS');
