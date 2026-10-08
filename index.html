@@ -1674,8 +1674,12 @@ function setupTabs(){
   // 메일 미리보기 패널은 판정 이후 나중에(비동기로) 생성되므로, 생성되는 순간을 감지해서
   // 그 시점의 활성 탭 기준으로 보이기/숨기기를 한 번 더 맞춰준다.
   let followupSyncQueued=false;
-  const followupWatcher = new MutationObserver(() => {
-    if(followupSyncQueued)return;
+  const followupWatcher = new MutationObserver(records => {
+    // Ignore KPI grid/text churn: only react when one of the four async panels is inserted.
+    const panelSelector='#hd24FollowupPanel,#hd24ReplyPanel,#hd24ReplyAnalysisPanel,#hd24ReplyMailPanel';
+    const panelInserted=records.some(record=>[...record.addedNodes].some(node=>
+      node.nodeType===1&&(node.matches?.(panelSelector)||node.querySelector?.(panelSelector))));
+    if(!panelInserted||followupSyncQueued)return;
     followupSyncQueued=true;
     requestAnimationFrame(()=>{
     followupSyncQueued=false;
