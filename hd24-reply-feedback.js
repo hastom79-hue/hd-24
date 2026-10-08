@@ -323,10 +323,14 @@ function kpiPerformanceEvidence(r,history=[]){
  if(!unit||!priorUnit)return 'KPI trend: source unit is missing for one or both months; comparison withheld pending unit confirmation';
  if(unit.toLowerCase()!==priorUnit.toLowerCase())return 'KPI trend: source units differ across months ('+priorUnit+' vs '+unit+'); comparison withheld pending unit reconciliation';
  const direction=txt(r?.improvementDirection||r?.targetDirection||r?.betterDirection).toLowerCase();
+ const previousDirection=txt(prior?.improvementDirection||prior?.targetDirection||prior?.betterDirection).toLowerCase();
+ const normalizeDirection=v=>['higher','up','increase','상향'].includes(v)?'higher':['lower','down','decrease','하향'].includes(v)?'lower':'';
+ if(!normalizeDirection(direction)||!normalizeDirection(previousDirection))return 'KPI trend: improvement direction is missing or unrecognized for one or both months; comparison withheld';
+ if(normalizeDirection(direction)!==normalizeDirection(previousDirection))return 'KPI trend: improvement direction differs across months; comparison withheld pending KPI definition review';
  if(!prior)return 'KPI trend: no earlier-month comparison available';
  if(current===null||previous===null)return 'KPI trend: actual performance values unavailable or nonnumeric; direction not assessed';
- if(!['higher','lower','up','down','increase','decrease'].includes(direction))return 'KPI trend: values available but improvement direction is undefined; no improvement or deterioration inferred';
- const higher=['higher','up','increase'].includes(direction),delta=current-previous;
+ if(!normalizeDirection(direction))return 'KPI trend: improvement direction is undefined; comparison withheld';
+ const higher=normalizeDirection(direction)==='higher',delta=current-previous;
  const trend=delta===0?'unchanged':(higher?delta>0:delta<0)?'improved':'deteriorated';
  return 'KPI trend: '+trend+' ('+previous+(unit?' '+unit:'')+' -> '+current+(unit?' '+unit:'')+'); action effectiveness and causation remain unverified';
 }
