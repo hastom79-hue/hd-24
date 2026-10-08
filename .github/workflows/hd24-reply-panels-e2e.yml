@@ -131,7 +131,10 @@ jobs:
               except Exception:
                   from pathlib import Path
                   Path('test-results').mkdir(exist_ok=True)
-                  page.screenshot(path='test-results/initialization-failure.png',full_page=True,timeout=10000)
+                  try:
+                      page.screenshot(path='test-results/initialization-failure.png',full_page=True,timeout=5000)
+                  except Exception as capture_error:
+                      print(f'INITIALIZATION SCREENSHOT UNAVAILABLE: {capture_error}',flush=True)
                   print('INITIALIZATION FAILURE',page.evaluate("""() => ({
                     readyState:document.readyState,
                     feedbackReady:!!window.hd24ReplyFeedback,
@@ -203,7 +206,10 @@ jobs:
                           import json
                           Path('test-results').mkdir(exist_ok=True)
                           Path(f'test-results/refresh-{attempt+1}-failure.json').write_text(json.dumps({'condition':label,'state':state,'errors':errors},ensure_ascii=False,indent=2),encoding='utf-8')
-                          page.screenshot(path=f'test-results/refresh-{attempt+1}-failure.png',full_page=True,timeout=10000)
+                          try:
+                              page.screenshot(path=f'test-results/refresh-{attempt+1}-failure.png',full_page=True,timeout=5000)
+                          except Exception as capture_error:
+                              print(f'REFRESH SCREENSHOT UNAVAILABLE: {capture_error}',flush=True)
                           raise
                   assert page.locator('#hd24ExecutiveDashboard').inner_text().strip(), f'Empty executive dashboard after reload {attempt+1}'
                   assert page.locator('#hd24DeepValidation').inner_text().strip(), f'Empty deep validation after reload {attempt+1}'
