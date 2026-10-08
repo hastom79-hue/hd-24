@@ -151,12 +151,17 @@ const HD24_DEEP_LEGEND_EN=[
  ['Total Validation Findings','Total warnings detected by HIGH/MEDIUM deep validation, open-loop checks, and cross-KPI consistency checks.']
 ];
 function translateDeepLegend(root,lang){
- const title=[...root.querySelectorAll('b')].find(el=>/^(판정 범례 · 집계 기준|Assessment Legend and Counting Rules)$/.test(el.textContent.trim()));
- if(!title)return;
- const panel=title.parentElement,grid=panel?.querySelector('div[style*="grid-template-columns"]');
- if(!grid)return;
- const cells=[...grid.children].filter(el=>el.tagName==='DIV');
- if(cells.length!==8)return;
+ // Use the stable legend grid structure, not translated title text or prior text-node state.
+ const grid=[...root.querySelectorAll('div[style*="grid-template-columns"]')]
+  .find(el=>el.children.length===8&&el.children[0]?.textContent.includes('HIGH'));
+ if(!grid)throw new Error('Deep Validation legend grid not found (expected eight definitions)');
+ const panel=grid.parentElement;
+ const cells=[...grid.children];
+ const title=panel?.firstElementChild;
+ if(title){if(!title.dataset.hd24KoHtml)title.dataset.hd24KoHtml=title.innerHTML;
+  if(lang==='en')title.textContent='Assessment Legend and Counting Rules';
+  else title.innerHTML=title.dataset.hd24KoHtml;
+ }
  cells.forEach((cell,i)=>{
   if(!cell.dataset.hd24KoHtml)cell.dataset.hd24KoHtml=cell.innerHTML;
   if(lang==='en')cell.textContent=HD24_DEEP_LEGEND_EN[i][0]+' · '+HD24_DEEP_LEGEND_EN[i][1];
@@ -166,6 +171,12 @@ function translateDeepLegend(root,lang){
  if(foot){if(!foot.dataset.hd24KoHtml)foot.dataset.hd24KoHtml=foot.innerHTML;
   if(lang==='en')foot.textContent='Note: HIGH and MEDIUM indicate validation priority for reply quality and problem-solving management, not KPI target achievement.';
   else foot.innerHTML=foot.dataset.hd24KoHtml;
+ }
+ if(lang==='en'){
+  const heading=root.querySelector('h3');
+  if(heading)heading.textContent='Performance × Reply Deep Validation';
+  const description=root.querySelector('h3 + p');
+  if(description)description.textContent='Validate recurring KPI misses across months, reply quality, corrective-action effectiveness, and cross-KPI consistency independently of target achievement.';
  }
 }
 function translateExecutiveLegend(root,lang){
