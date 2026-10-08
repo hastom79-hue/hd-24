@@ -254,7 +254,35 @@ jobs:
               with zipfile.ZipFile(io.BytesIO(changed_xlsx[0].get_payload(decode=True))) as z:
                   xml=' '.join(z.read(n).decode('utf-8','replace') for n in z.namelist() if n.startswith('xl/') and n.endswith('.xml'))
                   assert 'Revised historical root cause - verified by QA' in xml, 'Edited root cause is absent from regenerated workbook'
-                  assert 'Source KPI Evidence' in xml, 'Source evidence sheet is missing'
+                  from xml.etree import ElementTree as ET
+                  ns={'x':'http://schemas.openxmlformats.org/spreadsheetml/2006/main','r':'http://schemas.openxmlformats.org/officeDocument/2006/relationships','p':'http://schemas.openxmlformats.org/package/2006/relationships'}
+                  wb=ET.fromstring(z.read('xl/workbook.xml'))
+                  sheet=next((x for x in wb.findall('x:sheets/x:sheet',ns) if x.attrib.get('name')=='Source KPI Evidence'),None)
+                  assert sheet is not None, 'Source KPI Evidence worksheet is missing'
+                  rel_id=sheet.attrib.get('{'+ns['r']+'}id')
+                  rels=ET.fromstring(z.read('xl/_rels/workbook.xml.rels'))
+                  rel=next((x for x in rels.findall('p:Relationship',ns) if x.attrib.get('Id')==rel_id),None)
+                  assert rel is not None, 'Evidence worksheet relationship is missing'
+                  target=rel.attrib['Target'].lstrip('/')
+                  target=target if target.startswith('xl/') else 'xl/'+target
+                  evidence=ET.fromstring(z.read(target))
+                  shared=[]
+                  if 'xl/sharedStrings.xml' in z.namelist():
+                      strings=ET.fromstring(z.read('xl/sharedStrings.xml'))
+                      shared=[''.join(t.text or '' for t in item.findall('.//x:t',ns)) for item in strings.findall('x:si',ns)]
+                  values=[]
+                  for row in evidence.findall('x:sheetData/x:row',ns):
+                      for cell in row.findall('x:c',ns):
+                          if not cell.attrib.get('r','').startswith('I'): continue
+                          v=cell.find('x:v',ns)
+                          inline=cell.find('x:is',ns)
+                          if cell.attrib.get('t')=='s' and v is not None:
+                              values.append(shared[int(v.text)])
+                          elif inline is not None:
+                              values.append(''.join(t.text or '' for t in inline.findall('.//x:t',ns)))
+                          elif v is not None:
+                              values.append(v.text or '')
+                  assert 'Revised historical root cause - verified by QA' in values, 'Edited root cause absent from Source KPI Evidence column I'
               print('PASS: historical reply change invalidates attached Excel')
               print('PASS: unsent EML includes two valid inline PNG dashboards and three-sheet Excel')
               browser.close()
