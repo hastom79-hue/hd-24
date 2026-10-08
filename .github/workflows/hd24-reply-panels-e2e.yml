@@ -6,6 +6,7 @@ on:
     paths:
       - 'index.html'
       - 'hd24-ui-v3.js'
+      - 'refresh-runtime.html'
       - 'hd24-reply-feedback.js'
       - 'hd24-followup.js'
       - 'hd24-reply-deep-validation.js'
@@ -15,6 +16,7 @@ on:
     paths:
       - 'index.html'
       - 'hd24-ui-v3.js'
+      - 'refresh-runtime.html'
       - 'hd24-reply-feedback.js'
       - 'hd24-followup.js'
       - 'hd24-reply-deep-validation.js'
@@ -43,6 +45,19 @@ jobs:
           python -m http.server 8768 --bind 127.0.0.1 > /tmp/hd24-reply-http.log 2>&1 &
           for i in {1..20}; do if curl -fsS http://127.0.0.1:8768/index.html >/dev/null; then exit 0; fi; sleep 1; done
           cat /tmp/hd24-reply-http.log; exit 1
+      - name: Verify refresh preload matches production loader
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          loader=Path('hd24-ui-v3.js').read_text(encoding='utf-8')
+          refresh=Path('refresh-runtime.html').read_text(encoding='utf-8')
+          assets=set(re.findall(r'[\\w-]+\\.js\\?v=\\d+',loader))
+          missing=sorted(asset for asset in assets if asset not in refresh)
+          assert assets, 'No production JavaScript assets detected'
+          assert not missing, f'Refresh preload missing production assets: {missing}'
+          print(f'PASS: refresh preloads all {len(assets)} production JavaScript assets')
+          PY
       - name: Validate loaded JavaScript syntax
         run: |
           python - <<'PY'
