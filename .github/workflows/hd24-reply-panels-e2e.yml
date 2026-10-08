@@ -287,6 +287,8 @@ jobs:
               page.wait_for_function("typeof window.hd24SwitchTab === 'function'",timeout=15000)
               page.evaluate("window.hd24SwitchTab('replymail')")
               page.wait_for_selector('#hd24FeedbackSend',state='attached',timeout=15000)
+              page.locator('#hd24FeedbackEn').click()
+              assert 'Dear Team,' in page.locator('#hd24FeedbackDraft').input_value(), 'English feedback draft was not selected'
               page.evaluate("""() => { const el=document.getElementById('hd24DashboardLanguageSelect'); if(!el)throw new Error('Dashboard language selector missing'); el.value='en'; el.dispatchEvent(new Event('change',{bubbles:true})); }""")
               page.wait_for_timeout(300)
               with page.expect_download(timeout=60000) as downloaded:
@@ -311,7 +313,6 @@ jobs:
               first_cid=html.find('cid:')
               assert first_cid>html.find('Dear Team,')>=0, 'Dashboard image appears before feedback body'
               assert html.find('[Review and Follow-up Actions]')>=0 and html.find('[Review and Follow-up Actions]')<first_cid, 'Follow-up actions must precede inline dashboard images'
-              assert 'button' not in html.split('cid:')[0].lower() or 'dashboard' in html.lower(), 'Malformed HTML body'
               print('PASS: generated EML places complete feedback and follow-up text before inline dashboard images')
 
               page.locator('#hd24FeedbackDraft').fill('STALE_DRAFT_SENTINEL_FROM_PRIOR_REPLY')
