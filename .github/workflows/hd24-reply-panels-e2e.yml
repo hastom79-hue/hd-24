@@ -140,6 +140,10 @@ jobs:
                     deep: document.getElementById('hd24DeepValidation')?.innerText.trim()
                   })""")
                   assert page.locator('#hd24DashboardLanguageSelect').input_value()=='en', f'Language selection reset after reload {attempt+1}'
+                  assert page.evaluate("sessionStorage.getItem('hd24_dashboard_language_v1')")=='en', f'Saved language lost after reload {attempt+1}'
+                  for ident in ('hd24ExecutiveDashboard','hd24DeepValidation'):
+                      remaining=re.findall(r'[가-힣]+',page.locator('#'+ident).inner_text())
+                      assert not remaining, f'{ident} has Korean after reload {attempt+1}: {remaining[:20]}'
                   assert current['history']==baseline['history'], f'Reply history changed after reload {attempt+1}'
                   assert current['executive']==baseline['executive'], f'Executive KPI dashboard changed after reload {attempt+1}'
                   assert current['deep']==baseline['deep'], f'Deep validation dashboard changed after reload {attempt+1}'
