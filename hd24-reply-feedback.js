@@ -5,7 +5,7 @@ const fields=[['reason','미달성 사유','Reason'],['rootCause','근본원인'
 const optionalFields=[['nextMonthRecoveryTarget','차월 회복목표','Next-month target']];
 const txt=v=>String(v??'').trim(), esc=s=>txt(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const kpiKey=r=>txt(r?.kpiEn||r?.kpi).toLowerCase();
-const sameKpi=(a,b)=>{const keys=r=>[txt(r?.kpiEn).toLowerCase(),txt(r?.kpi).toLowerCase()].filter(Boolean);const A=keys(a),B=keys(b);return A.some(x=>B.includes(x))};
+const sameKpi=(a,b)=>{if(a?.plant&&b?.plant&&txt(a.plant).toLowerCase()!==txt(b.plant).toLowerCase())return false;const keys=r=>[txt(r?.kpiEn).toLowerCase(),txt(r?.kpi).toLowerCase()].filter(Boolean);const A=keys(a),B=keys(b);return A.some(x=>B.includes(x))};
 function requiredFeedbackCc(value){const seen=new Set();return String(value||'').split(/[;,\\s]+/).map(v=>v.trim()).filter(v=>/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(v)).filter(v=>{const k=v.toLowerCase();if(seen.has(k))return false;seen.add(k);return true}).join('; ')}
 const safeHeader=v=>txt(v).replace(/[\r\n]+/g,' ');
 const mimeB64Text=v=>btoa(unescape(encodeURIComponent(txt(v))));
