@@ -110,7 +110,7 @@ function render(){
  $('hd24ExportDeepAnalysis').onclick=()=>exportXlsx(rows,cons).catch(e=>alert(e.message));
 }
 let renderTimer=0,lastRenderSig='';
-function renderScheduled(delay=0){clearTimeout(renderTimer);renderTimer=setTimeout(()=>{renderTimer=0;const plant=$('plantSelect')?.value||'india',raw=localStorage.getItem(KEY)||'[]',sig=plant+'|'+raw.length+'|'+raw.slice(-160);if(sig===lastRenderSig&&$('hd24DeepValidation'))return;lastRenderSig=sig;render()},delay)}
+function renderScheduled(delay=0){clearTimeout(renderTimer);renderTimer=setTimeout(()=>{renderTimer=0;const plant=$('plantSelect')?.value||'india',raw=localStorage.getItem(KEY)||'[]',sig=plant+'|'+raw.length+'|'+raw.slice(-160);if(sig===lastRenderSig&&$('hd24DeepValidation')?.isConnected)return;lastRenderSig=sig;render()},delay)}
 document.addEventListener('DOMContentLoaded',()=>renderScheduled(120),{once:true});document.addEventListener('hd24:reply-feedback-ready',()=>renderScheduled(40));document.addEventListener('hd24:reply-imported',()=>renderScheduled(120));document.addEventListener('change',e=>{if(e.target?.id==='plantSelect'){lastRenderSig='';renderScheduled(80)}});
 window.hd24DeepReplyValidation={render,renderScheduled,flagsFor,contradictions,closedLoop};
 renderScheduled(40);
