@@ -547,7 +547,7 @@ jobs:
                   page.wait_for_function("JSON.parse(localStorage.getItem('hd24_reply_feedback_mail_v1')||'[]')[0]?.status==='send-failed'",timeout=30000)
               except Exception:
                   print('MAIL API FAILURE DIAGNOSTIC:',page.evaluate("""() => ({
-                    status:document.getElementById('hd24FeedbackMail')?.innerText?.slice(-1200),
+                    status:document.getElementById('hd24FeedbackSendStatus')?.innerText?.slice(-1200),\n                    subject:document.getElementById('hd24FeedbackSubject')?.value?.slice(0,120),\n                    draft:document.getElementById('hd24FeedbackDraft')?.value?.slice(0,120),\n                    recipient:document.getElementById('mailTo')?.value,
                     logs:JSON.parse(localStorage.getItem('hd24_reply_feedback_mail_v1')||'[]').slice(0,3),
                     endpoint:localStorage.getItem('hd24_mail_endpoint_v1'),
                     busy:window.__HD24_FEEDBACK_SEND_BUSY__
