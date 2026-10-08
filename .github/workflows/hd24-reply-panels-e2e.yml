@@ -250,6 +250,7 @@ jobs:
               with zipfile.ZipFile(io.BytesIO(changed_xlsx[0].get_payload(decode=True))) as z:
                   xml=' '.join(z.read(n).decode('utf-8','replace') for n in z.namelist() if n.startswith('xl/') and n.endswith('.xml'))
                   assert 'Revised historical root cause - verified by QA' in xml, 'Edited root cause is absent from regenerated workbook'
+                  assert 'Source KPI Evidence' in xml, 'Source evidence sheet is missing'
               print('PASS: historical reply change invalidates attached Excel')
               print('PASS: unsent EML includes two valid inline PNG dashboards and three-sheet Excel')
               browser.close()
