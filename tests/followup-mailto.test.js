@@ -361,7 +361,7 @@ ok(/function contradictions\(all\)[\s\S]*?qualityAliases[\s\S]*?complianceAliase
 console.log('PASS: KPI contradiction classification contracts');
 
 // Integration gate: production and forced-refresh paths must load the same feedback runtime.
-const feedbackLoader=ui.match(/hd24-reply-feedback\\.js\\?v=(\\d+)/);
+const feedbackLoader=ui.match(/hd24-reply-feedback\.js\?v=(\d+)/);
 ok(feedbackLoader,'production feedback runtime loader missing');
 ok(refresh.includes('hd24-reply-feedback.js?v='+feedbackLoader[1]),'refresh feedback runtime cache version mismatch');
 ok(refresh.includes("cache:'reload'"),'forced-refresh path must bypass cached runtime resources');
