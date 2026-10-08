@@ -234,6 +234,7 @@ jobs:
                   assert len([n for n in names if re.fullmatch(r'xl/worksheets/sheet\\d+\\.xml',n)])>=3,'Missing workbook evidence/detail sheets'
               html=' '.join((part.get_payload(decode=True) or b'').decode('utf-8','replace') for part in parts if part.get_content_type()=='text/html')
               assert all('cid:'+part.get('Content-ID','').strip('<>') in html for part in png),'Missing embedded dashboard CID reference'
+              page.locator('#hd24FeedbackDraft').fill('STALE_DRAFT_SENTINEL_FROM_PRIOR_REPLY')
               # A change to a prior reply must invalidate the generated workbook.
               page.evaluate("""() => {
                 const key='hd24_kpi_reply_history_v2';
@@ -242,6 +243,7 @@ jobs:
                 localStorage.setItem(key,JSON.stringify(history));
                 window.hd24ReplyFeedback.render();
               }""")
+              assert 'STALE_DRAFT_SENTINEL_FROM_PRIOR_REPLY' not in page.locator('#hd24FeedbackDraft').input_value(), 'Reply edit retained stale feedback email draft'
               with page.expect_download(timeout=60000) as changed_download:
                   page.locator('#hd24FeedbackSend').click()
               changed=email.message_from_bytes(open(changed_download.value.path(),'rb').read())
