@@ -53,9 +53,40 @@ const HD24_DASHBOARD_TRANSLATIONS=[
  ['클릭하여 상세그리드 보기','Click to view the detail grid'],
  ['회신 품질 및 실행관리 핵심 신호','Reply Quality and Execution Management'],['상세내용은 아래 KPI별 분석에서 확인','See KPI-level analysis below'],['분석 KPI','KPIs Reviewed'],['충분 · 추가보완 없음','Complete · No Follow-up'],['보완 필요 · 단일/경미 결함','Review Needed · Minor Gap'],['중점 보완 · 복합/핵심 결함','Priority Review · Critical Gap'],['이전 회신 비교','Previous Reply Comparison'],['최초 시행','First Review'],['전월 반복 근인','Repeated Root Causes'],['전월 대책 정체','Stagnant Actions'],['기한 초과','Overdue Actions'],['회고 취약','Retrospective Gaps'],['지표 범례 · 집계 의미','Metric Definitions'],['실적 × 회신 심층 검증','Performance × Reply Deep Validation'],['달성 여부','Achievement Status'],['동일 KPI 반복','Repeated KPI'],['회신 품질','Reply Quality'],['조치 효과','Action Effectiveness'],['KPI 간 논리적 모순','Cross-KPI Contradictions'],['KPI 간 모순','Cross-KPI Contradictions'],['상세그리드','Detail Grid'],['상세 사유','Detailed Finding'],['미달성 사유','Reason for Miss'],['근본원인','Root Cause'],['만회계획','Recovery Plan'],['완료예정일','Due Date'],['담당자','Action Owner'],['회신차수','Reply Sequence'],['사업장','Plant'],['연도·월','Year / Month'],['관련 KPI','Related KPI'],['탐지유형','Detection Type'],['등급','Severity'],['대책','Action'],['회신','Reply'],['심층 검증','Deep Validation'],['반복','Repeated'],['미흡','Insufficient'],['위험','Risk'],['높음','High'],['중간','Medium'],['닫기','Close']
 ];
+const HD24_EXEC_LEGEND_EN=[
+ 'Number of KPIs reviewed during the selected analysis period',
+ 'Number of KPIs with complete reply information and no additional gaps in quality, recurrence, or execution management',
+ 'Number of KPIs requiring follow-up due to missing mandatory information, insufficient root-cause or action specificity, or recurring issues',
+ 'Number of KPIs missing two or more essential fields (root cause, action, owner, due date), or having under 67% of mandatory information. Recurring causes and stagnant actions are monitored separately',
+ 'On the first reply import, show [First Review]. Compare with previous replies only for actual resubmissions (replySequence ≥ 2)',
+ 'Number of KPIs with recurring root causes requiring verification of root-cause elimination',
+ 'Number of KPIs with repeated recovery actions requiring verification of implementation effectiveness',
+ 'Number of KPIs with overdue due dates and no confirmed completion',
+ 'Number of KPIs lacking retrospective review of action results, effectiveness, or next-period follow-through'
+];
+function translateExecutiveLegend(root,lang){
+ const title=[...root.querySelectorAll('b')].find(el=>el.textContent.trim()==='지표 범례 · 집계 의미'||el.textContent.trim()==='Metric Definitions');
+ if(!title)return;
+ const panel=title.parentElement,grid=panel?.querySelector('div[style*="grid-template-columns"]');
+ if(!grid)return;
+ const cells=[...grid.children].filter(el=>el.tagName==='DIV');
+ if(cells.length!==9)return;
+ cells.forEach((cell,i)=>{
+  if(!cell.dataset.hd24KoHtml)cell.dataset.hd24KoHtml=cell.innerHTML;
+  if(lang==='en'){
+   const label=['KPIs Reviewed','Complete','Review Needed','Priority Review','Previous Reply Comparison','Repeated Root Causes','Stagnant Actions','Overdue Actions','Retrospective Gaps'][i];
+   cell.innerHTML='<b>'+label+'</b> · '+HD24_EXEC_LEGEND_EN[i];
+  }else cell.innerHTML=cell.dataset.hd24KoHtml;
+ });
+ const foot=grid.nextElementSibling;
+ if(foot){if(!foot.dataset.hd24KoHtml)foot.dataset.hd24KoHtml=foot.innerHTML;
+  if(lang==='en'){const numbers=[...root.querySelectorAll('.hd24-kpi-strip .hd24-kpi-mini b')].map(x=>x.textContent.trim());foot.textContent='Quality classification reconciliation: Complete '+(numbers[1]||'0')+' + Review Needed '+(numbers[2]||'0')+' + Priority Review '+(numbers[3]||'0')+' = '+(numbers[0]||'0')+' KPIs. These counts reflect reply quality and execution management, not KPI achievement.'}
+  else foot.innerHTML=foot.dataset.hd24KoHtml;
+ }
+}
 const dashboardOriginalText=new WeakMap();
 const HD24_DASHBOARD_TRANSLATIONS_ORDERED=[...HD24_DASHBOARD_TRANSLATIONS].sort((a,b)=>b[0].length-a[0].length);function dashboardTranslateText(value){let out=value;for(const [ko,en] of HD24_DASHBOARD_TRANSLATIONS_ORDERED)out=out.split(ko).join(en);return out.replace(/(\d+)건(?=\s|$|[·,.)])/g,'$1 items')}
-function setDashboardLanguage(lang){window.__HD24_DASHBOARD_LANG__=lang;for(const id of ['hd24ExecutiveDashboard','hd24DeepValidation']){const root=get(id);if(!root)continue;const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){if(!dashboardOriginalText.has(node))dashboardOriginalText.set(node,node.nodeValue);const original=dashboardOriginalText.get(node);const translated=lang==='en'?dashboardTranslateText(original):original;if(node.nodeValue!==translated)node.nodeValue=translated}}document.querySelectorAll('[data-hd24-dashboard-language]').forEach(x=>{x.value=lang});const warning=get('hd24DashboardTranslationWarning');if(warning){const residual=[];if(lang==='en')for(const id of ['hd24ExecutiveDashboard','hd24DeepValidation']){const root=get(id);if(root){const text=root.textContent||'';const hits=text.match(/[가-힣]+/g);if(hits)residual.push(...hits)}}warning.textContent=residual.length?'Translation incomplete: '+[...new Set(residual)].slice(0,8).join(', ')+' · English email blocked until fully translated':'';warning.style.display=residual.length?'block':'none';warning.style.cssText='display:'+(residual.length?'block':'none')+';max-width:100%;flex-basis:100%;overflow-wrap:anywhere;color:#a13a2a;font-size:12px;padding:4px 0'}}
+function setDashboardLanguage(lang){window.__HD24_DASHBOARD_LANG__=lang;for(const id of ['hd24ExecutiveDashboard','hd24DeepValidation']){const root=get(id);if(!root)continue;const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){if(!dashboardOriginalText.has(node))dashboardOriginalText.set(node,node.nodeValue);const original=dashboardOriginalText.get(node);const translated=lang==='en'?dashboardTranslateText(original):original;if(node.nodeValue!==translated)node.nodeValue=translated}}const exec=get('hd24ExecutiveDashboard');if(exec)translateExecutiveLegend(exec,lang);document.querySelectorAll('[data-hd24-dashboard-language]').forEach(x=>{x.value=lang});const warning=get('hd24DashboardTranslationWarning');if(warning){const residual=[];if(lang==='en')for(const id of ['hd24ExecutiveDashboard','hd24DeepValidation']){const root=get(id);if(root){const text=root.textContent||'';const hits=text.match(/[가-힣]+/g);if(hits)residual.push(...hits)}}warning.textContent=residual.length?'Translation incomplete: '+[...new Set(residual)].slice(0,8).join(', ')+' · English email blocked until fully translated':'';warning.style.display=residual.length?'block':'none';warning.style.cssText='display:'+(residual.length?'block':'none')+';max-width:100%;flex-basis:100%;overflow-wrap:anywhere;color:#a13a2a;font-size:12px;padding:4px 0'}}
 function ensureDashboardLanguageControl(){const host=get('hd24Feedback');if(!host)return;let control=get('hd24DashboardLanguageControl');if(!control){control=document.createElement('div');control.id='hd24DashboardLanguageControl';control.style.cssText='display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:8px;margin:8px 0';control.innerHTML='<label for="hd24DashboardLanguageSelect">대시보드 언어 / Dashboard language</label><select id="hd24DashboardLanguageSelect" data-hd24-dashboard-language aria-label="Dashboard language"><option value="ko">한국어</option><option value="en">English</option></select>';control.insertAdjacentHTML('beforeend','<span id="hd24DashboardTranslationWarning" role="status" style="display:none;color:#a13a2a;font-size:12px"></span>');host.prepend(control);control.querySelector('select').onchange=e=>setDashboardLanguage(e.target.value)}setDashboardLanguage(window.__HD24_DASHBOARD_LANG__||'ko')}
 document.addEventListener('hd24:deep-validation-ready',()=>setTimeout(ensureDashboardLanguageControl,80));
 document.addEventListener('hd24:deep-validation-rendered',()=>ensureDashboardLanguageControl());
