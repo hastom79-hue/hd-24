@@ -125,6 +125,7 @@ jobs:
               errors=[]
               page.on('pageerror',lambda e: errors.append(str(e)))
               page.goto('http://127.0.0.1:8768/index.html',wait_until='domcontentloaded',timeout=120000)
+              print('INITIALIZATION CHECK: waiting for feedback and deep validation globals',flush=True)
               try:
                   page.wait_for_function("window.hd24ReplyFeedback && window.hd24DeepReplyValidation",timeout=30000)
               except Exception:
@@ -180,6 +181,7 @@ jobs:
                     }""",baseline)
                   ]
                   for label,condition,arg in waits:
+                      print(f'REFRESH CHECK attempt={attempt+1} condition={label}',flush=True)
                       try:
                           page.wait_for_function(condition,arg=arg,timeout=15000)
                       except Exception as exc:
