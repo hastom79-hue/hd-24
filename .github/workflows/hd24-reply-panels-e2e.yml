@@ -122,6 +122,7 @@ jobs:
               })""")
               assert baseline['history'], 'Fixture reply history missing before refresh'
               assert baseline['executive'] and baseline['deep'], 'Baseline dashboard content missing'
+              assert page.locator('#hd24DashboardLanguageSelect').input_value()=='en', 'English selection not active before refresh'
               for attempt in range(3):
                   page.reload(wait_until='networkidle')
                   page.wait_for_function("document.querySelector('.hd24-tab.active')?.dataset.tab === 'replyanalysis'",timeout=15000)
@@ -138,6 +139,7 @@ jobs:
                     executive: document.getElementById('hd24ExecutiveDashboard')?.innerText.trim(),
                     deep: document.getElementById('hd24DeepValidation')?.innerText.trim()
                   })""")
+                  assert page.locator('#hd24DashboardLanguageSelect').input_value()=='en', f'Language selection reset after reload {attempt+1}'
                   assert current['history']==baseline['history'], f'Reply history changed after reload {attempt+1}'
                   assert current['executive']==baseline['executive'], f'Executive KPI dashboard changed after reload {attempt+1}'
                   assert current['deep']==baseline['deep'], f'Deep validation dashboard changed after reload {attempt+1}'
