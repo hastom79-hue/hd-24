@@ -363,9 +363,9 @@ function finalRequestFor(r,a,history=[]){
 
 function feedbackFor(r,a,history=[]){
  const k=/[가-힣]/.test(txt(r.kpiEn||r.kpi))?'This KPI':(txt(r.kpiEn||r.kpi)||'KPI'), out=[];
- if(!a.root)out.push(`${k}: Identify the verified root cause with evidence, not only the symptom or result.`);
+ if(!a.root)out.push(`${k}: Identify and substantiate the root cause with evidence, not only the symptom or result.`);
  if(a.root&&a.root.length<8)out.push(`${k}: Expand the root cause to explain the failure mechanism and supporting evidence.`);
- if(!a.plan)out.push(`${k}: Define a concrete recovery action linked directly to the verified root cause.`);
+ if(!a.plan)out.push(`${k}: Define a concrete recovery action linked to the stated root cause and verify the causal link.`);
  else if(a.plan.length<12)out.push(`${k}: Specify the recovery action, execution method and completion criteria in measurable terms.`);
  if(!a.owner)out.push(`${k}: Assign one accountable action owner for the recovery action.`);
  if(!a.due)out.push(`${k}: Set a committed completion date for the recovery action.`);
