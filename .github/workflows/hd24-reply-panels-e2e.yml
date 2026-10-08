@@ -139,7 +139,7 @@ jobs:
                 ]));
                 window.hd24ReplyFeedback.render();
                 window.hd24DeepReplyValidation.render();
-                window.hd24SwitchTab('replyanalysis');
+                document.querySelector('.hd24-tab[data-tab="replyanalysis"]')?.click();
               }""")
               page.wait_for_selector('#hd24DashboardLanguageSelect',timeout=15000)
               page.locator('#hd24DashboardLanguageSelect').select_option('en')
@@ -212,7 +212,7 @@ jobs:
                 document.getElementById('mailTo').value='qa-example@example.invalid';
                 window.hd24ReplyFeedback.render();
                 window.hd24DeepReplyValidation.render();
-                window.hd24SwitchTab('replymail');
+                document.querySelector('.hd24-tab[data-tab="replymail"]')?.click();
               }""")
               page.wait_for_selector('#hd24FeedbackSend',timeout=15000)
               page.locator('#hd24DashboardLanguageSelect').select_option('en')
@@ -324,7 +324,7 @@ jobs:
               }""")
               page.wait_for_function("document.getElementById('hd24ReplyAnalysisPanel') && document.getElementById('hd24ReplyMailPanel')",timeout=10000)
 
-              page.evaluate("window.hd24SwitchTab && window.hd24SwitchTab('replyanalysis')")
+              page.evaluate("document.querySelector('.hd24-tab[data-tab=\"replyanalysis\"]')?.click()")
               page.wait_for_timeout(300)
               analysis=page.locator('#hd24ReplyAnalysisPanel').inner_text().strip()
               assert analysis, 'Reply analysis panel rendered completely blank'
@@ -435,7 +435,7 @@ jobs:
               attention=int(page.locator('.hd24-exec-drill[data-exec-drill="attention"] b').inner_text())
               assert total==complete+review+attention, (total,complete,review,attention)
 
-              page.evaluate("window.hd24SwitchTab && window.hd24SwitchTab('replymail')")
+              page.evaluate("document.querySelector('.hd24-tab[data-tab=\"replymail\"]')?.click()")
               page.wait_for_timeout(300)
               mail=page.locator('#hd24ReplyMailPanel').inner_text().strip()
               assert mail, 'Reply feedback mail panel rendered completely blank'
