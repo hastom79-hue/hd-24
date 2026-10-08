@@ -350,10 +350,29 @@ function kpiPerformanceEvidence(r,history=[]){
  const trend=delta===0?'unchanged':(higher?delta>0:delta<0)?'improved':'deteriorated';
  return 'KPI trend: '+trend+' ('+previous+(unit?' '+unit:'')+' -> '+current+(unit?' '+unit:'')+'); action effectiveness and causation remain unverified';
 }
+function crossMonthActionAssessment(r,a,history=[]){
+ const prior=previousReply(history,r);
+ if(!prior)return 'Cross-month cause/action review: no earlier KPI reply available; action effectiveness cannot be assessed';
+ const prev=analyze(prior);
+ const compare=(now,old,label)=>{
+  if(!now||!old)return label+': one or both replies lack a documented statement';
+  return label+': '+(materiallySame(now,old)?'similar wording across replies; confirm actual recurrence or action progress':'wording changed across replies; explain what was revised and why');
+ };
+ const evidence=[r?.actionCompletionEvidence,r?.completionEvidence,r?.effectivenessEvidence,r?.verificationEvidence].map(txt).filter(Boolean);
+ const status=evidence.length?'execution/verification text is present but its validity and causal link to KPI results remain unverified':'no separately recorded completion or effectiveness evidence';
+ return [
+  'Cross-month cause/action review',
+  compare(a.root,prev.root,'Root cause'),
+  compare(a.plan,prev.plan,'Recovery action'),
+  'Action effectiveness: '+status,
+  'Required follow-up: compare actual KPI results with action execution dates, completion proof and sustained performance before attributing any improvement to the action'
+ ].join('; ');
+}
 function analysisResultFor(r,a,history=[]){
  const k=/[가-힣]/.test(txt(r.kpiEn||r.kpi))?'This KPI':(txt(r.kpiEn||r.kpi)||'KPI'),parts=[];
  parts.push(`${k}: response completeness ${a.score}%`);
  parts.push(kpiPerformanceEvidence(r,history));
+ parts.push(crossMonthActionAssessment(r,a,history));
  if(!a.reason)parts.push('miss/deterioration reason is not explained');
  if(!a.root)parts.push('root cause is not documented'); else if(a.root.length<8)parts.push('root cause is stated but mechanism/evidence is insufficient'); else parts.push('root cause is described; causal validity is not yet verified');
  if(!a.plan)parts.push('recovery action is absent'); else if(a.plan.length<12)parts.push('recovery action exists but execution method/completion criteria are insufficient'); else parts.push('recovery action is described; execution and effectiveness are not yet verified');
