@@ -159,13 +159,31 @@ jobs:
               assert page.locator('#hd24DashboardLanguageSelect').input_value()=='en', 'English selection not active before refresh'
               for attempt in range(3):
                   page.reload(wait_until='domcontentloaded')
-                  page.wait_for_function("document.querySelector('.hd24-tab.active')?.dataset.tab === 'replyanalysis'",timeout=15000)
-                  page.wait_for_function("window.hd24ReplyFeedback && window.hd24DeepReplyValidation",timeout=15000)
-                  page.wait_for_function("""baseline => {
-                    const executive=document.getElementById('hd24ExecutiveDashboard')?.innerText.trim();
-                    const deep=document.getElementById('hd24DeepValidation')?.innerText.trim();
-                    return executive===baseline.executive && deep===baseline.deep;
-                  }""",arg=baseline,timeout=15000)
+                  waits=[
+                    ('restore replyanalysis tab',"document.querySelector('.hd24-tab.active')?.dataset.tab === 'replyanalysis'",None),
+                    ('initialize reply feedback and deep validation',"window.hd24ReplyFeedback && window.hd24DeepReplyValidation",None),
+                    ('restore identical dashboard contents',"""baseline => {
+                      const executive=document.getElementById('hd24ExecutiveDashboard')?.innerText.trim();
+                      const deep=document.getElementById('hd24DeepValidation')?.innerText.trim();
+                      return executive===baseline.executive && deep===baseline.deep;
+                    }""",baseline)
+                  ]
+                  for label,condition,arg in waits:
+                      try:
+                          page.wait_for_function(condition,arg=arg,timeout=15000)
+                      except Exception as exc:
+                          state=page.evaluate("""() => ({
+                            activeTab:document.querySelector('.hd24-tab.active')?.dataset.tab,
+                            savedTab:sessionStorage.getItem('hd24_active_tab'),
+                            feedbackReady:!!window.hd24ReplyFeedback,
+                            deepReady:!!window.hd24DeepReplyValidation,
+                            selectedLanguage:document.getElementById('hd24DashboardLanguageSelect')?.value,
+                            savedLanguage:sessionStorage.getItem('hd24_dashboard_language_v1'),
+                            executiveLength:document.getElementById('hd24ExecutiveDashboard')?.innerText.trim().length||0,
+                            deepLength:document.getElementById('hd24DeepValidation')?.innerText.trim().length||0
+                          })""")
+                          print(f'REFRESH FAILURE attempt={attempt+1} condition={label} state={state} errors={errors}',flush=True)
+                          raise
                   assert page.locator('#hd24ExecutiveDashboard').inner_text().strip(), f'Empty executive dashboard after reload {attempt+1}'
                   assert page.locator('#hd24DeepValidation').inner_text().strip(), f'Empty deep validation after reload {attempt+1}'
                   current=page.evaluate("""() => ({
