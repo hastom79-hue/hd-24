@@ -315,7 +315,7 @@ console.log('HD24 DIO EDGE REGRESSION CONTRACT PASS');
 
 
 // Reply-feedback mail must match initial/D+7 failure semantics.
-ok(feedback.includes("api&&api.success===false"),'reply feedback must reject API logical failure');
+ok(feedback.includes("if(!api||api.success!==true)"),'reply feedback must reject API logical failure or missing explicit success acknowledgement');
 ok(feedback.includes("status:'send-failed'"),'reply feedback failure history missing');
 ok(feedback.includes("x.sentAt||x.failedAt"),'reply feedback failure timestamp rendering missing');
 ok(feedback.includes("x.error?' · '+esc(x.error)"),'reply feedback failure detail rendering missing');
