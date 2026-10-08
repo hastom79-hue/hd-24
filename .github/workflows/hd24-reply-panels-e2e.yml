@@ -141,7 +141,7 @@ jobs:
                 window.hd24DeepReplyValidation.render();
                 document.querySelector('.hd24-tab[data-tab="replyanalysis"]')?.click();
               }""")
-              page.wait_for_selector('#hd24DashboardLanguageSelect',timeout=15000)
+              page.wait_for_selector('#hd24DashboardLanguageSelect',state='attached',timeout=15000)
               page.locator('#hd24DashboardLanguageSelect').select_option('en')
               page.wait_for_timeout(350)
               for ident in ('hd24ExecutiveDashboard','hd24DeepValidation'):
