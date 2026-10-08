@@ -303,6 +303,16 @@ jobs:
               assert len(png)==2,f'Expected 2 PNG dashboards, got {len(png)}'
               assert len(xlsx)==1,f'Expected 1 Excel attachment, got {len(xlsx)}'
               assert all((part.get_payload(decode=True) or b'').startswith(bytes.fromhex('89504e47')) for part in png),'Invalid PNG payload'
+              import struct
+              from pathlib import Path
+              Path('test-results').mkdir(exist_ok=True)
+              for idx,part in enumerate(png):
+                  payload=part.get_payload(decode=True)
+                  width,height=struct.unpack('>II',payload[16:24])
+                  assert 500<=width<=3000 and 120<=height<=18000, f'Dashboard {idx+1} unexpected PNG dimensions {width}x{height}'
+                  Path(f'test-results/hd24-dashboard-{idx+1}.png').write_bytes(payload)
+                  print(f'DASHBOARD IMAGE {idx+1}: {width}x{height}, {len(payload)} bytes')
+
               with zipfile.ZipFile(io.BytesIO(xlsx[0].get_payload(decode=True))) as z:
                   names=z.namelist()
                   assert 'xl/workbook.xml' in names,'Invalid Excel workbook'
@@ -596,6 +606,14 @@ jobs:
               print('PASS: browser mail API rejection, successful acknowledgement, Excel+2 PNG payload, and separate log statuses')
               browser.close()
           PY
+      - name: Upload generated dashboard PNG evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hd24-dashboard-capture-evidence
+          path: test-results/hd24-dashboard-*.png
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Preserve browser E2E failure diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
