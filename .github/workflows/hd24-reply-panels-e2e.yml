@@ -52,7 +52,7 @@ jobs:
           from pathlib import Path
           loader=Path('hd24-ui-v3.js').read_text(encoding='utf-8')
           refresh=Path('refresh-runtime.html').read_text(encoding='utf-8')
-          assets=set(re.findall(r'[\\w-]+\\.js\\?v=\\d+',loader))
+          assets=set(re.findall(r'[\w-]+\.js\?v=\d+',loader))
           missing=sorted(asset for asset in assets if asset not in refresh)
           assert assets, 'No production JavaScript assets detected'
           assert not missing, f'Refresh preload missing production assets: {missing}'
