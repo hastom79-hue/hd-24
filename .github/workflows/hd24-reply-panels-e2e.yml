@@ -176,7 +176,9 @@ jobs:
               assert baseline['executive'] and baseline['deep'], 'Baseline dashboard content missing'
               assert page.locator('#hd24DashboardLanguageSelect').input_value()=='en', 'English selection not active before refresh'
               for attempt in range(3):
+                  print(f'REFRESH START attempt={attempt+1} baseline executive={len(baseline["executive"])} deep={len(baseline["deep"])}',flush=True)
                   page.reload(wait_until='domcontentloaded')
+                  print(f'REFRESH LOADED attempt={attempt+1} ready={page.evaluate("document.readyState")}',flush=True)
                   waits=[
                     ('restore replyanalysis tab',"document.querySelector('.hd24-tab.active')?.dataset.tab === 'replyanalysis'",None),
                     ('initialize reply feedback and deep validation',"window.hd24ReplyFeedback && window.hd24DeepReplyValidation",None),
@@ -201,6 +203,14 @@ jobs:
                             executiveLength:document.getElementById('hd24ExecutiveDashboard')?.innerText.trim().length||0,
                             deepLength:document.getElementById('hd24DeepValidation')?.innerText.trim().length||0
                           })""")
+                          observed=page.evaluate("""() => ({
+                            executive:document.getElementById('hd24ExecutiveDashboard')?.innerText.trim()||'',
+                            deep:document.getElementById('hd24DeepValidation')?.innerText.trim()||''
+                          })""")
+                          state['executiveMatchesBaseline']=observed['executive']==baseline['executive']
+                          state['deepMatchesBaseline']=observed['deep']==baseline['deep']
+                          state['executivePreview']=observed['executive'][:250]
+                          state['deepPreview']=observed['deep'][:250]
                           print(f'REFRESH FAILURE attempt={attempt+1} condition={label} state={state} errors={errors}',flush=True)
                           from pathlib import Path
                           import json
