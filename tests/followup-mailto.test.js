@@ -362,5 +362,5 @@ console.log('PASS: KPI contradiction classification contracts');
 
 const feedbackSendSrc=fs.readFileSync('hd24-reply-feedback.js','utf8');
 ok(feedbackSendSrc.includes("const activePlant=(get('plantSelect')?.value||plant).trim()"),'feedback send must recheck active plant at click time');
-ok(feedbackSendSrc.includes("if(!el)continue")&&feedbackSendSrc.includes("if(typeof window.html2canvas!=='function')return out"),'feedback send must continue with Excel when dashboard capture fails');
+ok(feedbackSendSrc.includes("errors.push(id+': 대시보드 DOM 없음')")&&feedbackSendSrc.includes("throw new Error('html2canvas 라이브러리가 로드되지 않았습니다.')")&&feedbackSendSrc.includes("if(out.length!==defs.length)throw new Error("),'feedback send must block incomplete dashboard images and show diagnostic errors');
 ok(feedbackSendSrc.includes("function resetForPlantChange(){drafts={ko:'',en:''};draftKey='';demo=false;lastExportKey='';latestFeedbackAttachment=null"),'feedback plant change must clear stale India draft and attachment');
