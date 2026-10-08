@@ -286,7 +286,7 @@ jobs:
               xlsx=[part for part in parts if part.get_content_type()=='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
               assert len(png)==2,f'Expected 2 PNG dashboards, got {len(png)}'
               assert len(xlsx)==1,f'Expected 1 Excel attachment, got {len(xlsx)}'
-              assert all((part.get_payload(decode=True) or b'').startswith(b'\\x89PNG') for part in png),'Invalid PNG payload'
+              assert all((part.get_payload(decode=True) or b'').startswith(bytes.fromhex('89504e47')) for part in png),'Invalid PNG payload'
               with zipfile.ZipFile(io.BytesIO(xlsx[0].get_payload(decode=True))) as z:
                   names=z.namelist()
                   assert 'xl/workbook.xml' in names,'Invalid Excel workbook'
