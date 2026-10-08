@@ -319,6 +319,8 @@ function kpiPerformanceEvidence(r,history=[]){
  const number=v=>{const raw=txt(v).replace(/,/g,'');return raw!==''&&/^-?\d+(?:\.\d+)?$/.test(raw)?Number(raw):null};
  const current=number(r?.actual),previous=number(prior?.actual);
  const unit=txt(r?.unit||r?.kpiUnit||r?.uom);
+ const priorUnit=txt(prior?.unit||prior?.kpiUnit||prior?.uom);
+ if(unit&&priorUnit&&unit.toLowerCase()!==priorUnit.toLowerCase())return 'KPI trend: source units differ across months ('+priorUnit+' vs '+unit+'); comparison withheld pending unit reconciliation';
  const direction=txt(r?.improvementDirection||r?.targetDirection||r?.betterDirection).toLowerCase();
  if(!prior)return 'KPI trend: no earlier-month comparison available';
  if(current===null||previous===null)return 'KPI trend: actual performance values unavailable or nonnumeric; direction not assessed';
