@@ -360,6 +360,12 @@ ok(/function contradictions\(all\)[\s\S]*?for\(const w of wips\)[\s\S]*?WIP\/재
 ok(/function contradictions\(all\)[\s\S]*?qualityAliases[\s\S]*?complianceAliases[\s\S]*?zeroRecurrence/.test(deepValidation),'Quality vs standard-work/recurrence contradiction contract missing');
 console.log('PASS: KPI contradiction classification contracts');
 
+// Integration gate: production and forced-refresh paths must load the same feedback runtime.
+const feedbackLoader=ui.match(/hd24-reply-feedback\\.js\\?v=(\\d+)/);
+ok(feedbackLoader,'production feedback runtime loader missing');
+ok(refresh.includes('hd24-reply-feedback.js?v='+feedbackLoader[1]),'refresh feedback runtime cache version mismatch');
+ok(refresh.includes("cache:'reload'"),'forced-refresh path must bypass cached runtime resources');
+ok(src.includes("'X-Unsent: 1'"),'mail integration must retain unsent Outlook draft packaging');
 const feedbackSendSrc=fs.readFileSync('hd24-reply-feedback.js','utf8');
 ok(feedbackSendSrc.includes("const activePlant=(get('plantSelect')?.value||plant).trim()"),'feedback send must recheck active plant at click time');
 ok(feedbackSendSrc.includes("errors.push(id+': 대시보드 DOM 없음')")&&feedbackSendSrc.includes("throw new Error('html2canvas 라이브러리가 로드되지 않았습니다.')")&&feedbackSendSrc.includes("if(out.length!==defs.length)throw new Error("),'feedback send must block incomplete dashboard images and show diagnostic errors');
