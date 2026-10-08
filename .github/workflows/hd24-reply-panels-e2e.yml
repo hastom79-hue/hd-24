@@ -191,7 +191,7 @@ jobs:
           import re, email, zipfile, io
           from playwright.sync_api import sync_playwright
           with sync_playwright() as p:
-              browser=p.chromium.launch(headless=True,accept_downloads=True)
+              browser=p.chromium.launch(headless=True)
               page=browser.new_page(accept_downloads=True)
               page.goto('http://127.0.0.1:8768/index.html',wait_until='networkidle',timeout=120000)
               page.wait_for_function("window.hd24ReplyFeedback && window.hd24DeepReplyValidation",timeout=30000)
