@@ -14,6 +14,23 @@ const asciiFileName=v=>safeHeader(v).replace(/[^A-Za-z0-9._-]+/g,'_')||'attachme
 const rfc5987=v=>encodeURIComponent(safeHeader(v)).replace(/['()]/g,escape);
 function feedbackEml({to,cc,subject,body,attachment,images=[]}){const boundary='----=_HD24_REPLY_'+Date.now().toString(36),related=boundary+'_related',alt=boundary+'_alternative',lines=['X-Unsent: 1','MIME-Version: 1.0','To: '+safeHeader(to)];if(cc)lines.push('Cc: '+safeHeader(cc));lines.push('Subject: =?UTF-8?B?'+mimeB64Text(subject)+'?=','Content-Type: multipart/mixed; boundary="'+boundary+'"','','--'+boundary,'Content-Type: multipart/related; boundary="'+related+'"; type="multipart/alternative"','','--'+related,'Content-Type: multipart/alternative; boundary="'+alt+'"','','--'+alt,'Content-Type: text/plain; charset="UTF-8"','Content-Transfer-Encoding: base64','',mimeLines(mimeB64Text(body)),'--'+alt,'Content-Type: text/html; charset="UTF-8"','Content-Transfer-Encoding: base64','',mimeLines(mimeB64Text(dashboardHtml(body,images))),'--'+alt+'--');images.forEach(img=>lines.push('--'+related,'Content-Type: image/png; name="'+asciiFileName(img.filename)+'"','Content-Transfer-Encoding: base64','Content-Disposition: inline; filename="'+asciiFileName(img.filename)+'"','Content-ID: <'+img.cid+'>','Content-Location: '+asciiFileName(img.filename),'',mimeLines(img.base64)));lines.push('--'+related+'--');const fallback=asciiFileName(attachment.filename),encoded=rfc5987(attachment.filename);lines.push('--'+boundary,'Content-Type: '+safeHeader(attachment.mimeType||'application/octet-stream')+'; name="'+fallback+'"; name*=UTF-8\'\''+encoded,'Content-Transfer-Encoding: base64','Content-Disposition: attachment; filename="'+fallback+'"; filename*=UTF-8\'\''+encoded,'',mimeLines(attachment.base64),'--'+boundary+'--','');return lines.join('\r\n')}
 const HD24_DASHBOARD_TRANSLATIONS=[
+ ['현재 선택 분석기간에 회신 검토 대상이 된 KPI 수','Number of KPIs reviewed during the selected analysis period'],
+ ['핵심 회신정보가 갖춰지고 내용 품질·반복성·실행관리 검토에서도 추가 보완신호가 없는 KPI 수','Number of KPIs with complete reply information and no additional gaps in quality, recurrence, or execution management'],
+ ['핵심정보는 대체로 갖췄으나 단일 필수항목 누락, 근인·대책 구체성 부족, 반복성 등 보완신호가 있는 KPI 수','Number of KPIs requiring follow-up due to a missing required field, insufficient root-cause or action detail, or recurring issues'],
+ ['근인·대책·담당·기한 중 핵심항목 2개 이상 누락 또는 필수정보 67% 미만인 KPI 수. 반복근인·대책정체는 단독으로 중점보완을 만들지 않고 별도 실행관리 신호로 관리','Number of KPIs missing at least two key fields (root cause, action, owner, or due date), or with under 67% required information. Repeated causes and stagnant actions are monitored separately'],
+ ['최초 회신파일 반영 시','On the first reply import'],
+ ['으로 표시하고, 실제 재회신(replySequence 2 이상)부터 직전 회신과 비교 가능한 KPI를 OO건으로 표시','is shown. Comparison against the previous reply starts only from actual resubmissions (replySequence 2 or higher)'],
+ ['전월 대비 동일 근본원인이 반복되어 근인 제거효과 재검증이 필요한 KPI 수','Number of KPIs with recurring root causes requiring verification of corrective effectiveness'],
+ ['전월 대비 동일 만회대책이 반복되어 실행효과 확인이 필요한 KPI 수','Number of KPIs with repeated recovery actions requiring effectiveness checks'],
+ ['완료예정일이 경과했으나 완료가 확인되지 않은 KPI 수','Number of KPIs past their due date without confirmed completion'],
+ ['조치 결과·효과 검증 또는 차기 반영에 대한 회고가 부족한 KPI 수','Number of KPIs lacking review of action results, effectiveness, or carryover to the next period'],
+ ['※ 품질등급 검산:','Quality classification reconciliation:'],
+ ['정상','Balanced'],['집계 오류','Counting discrepancy'],
+ ['각 숫자는 KPI 달성/미달 건수가 아니라','These figures do not represent KPI achievement or misses; they indicate'],
+ ['회신 품질 및 실행관리 상태','reply quality and execution-management status'],
+ ['관리 해석','Management Interpretation'],
+ ['반복 원인, 동일 대책 정체, 기한 경과, 활동결과 회고 부족을 우선 관리합니다. 추가 자료는 판단에 필요한 최소 범위만 요청합니다.','Prioritize recurring causes, stagnant corrective actions, overdue commitments, and insufficient review of action results. Request only the minimum additional evidence needed for a decision.'],
+ ['충분','Complete'],['보완 필요','Review Needed'],['중점 보완','Priority Review'],
  ['달성 여부와 별개로 전월→당월 동일 KPI 반복, 회신 품질, 조치 효과, KPI 간 논리 정합성을 검증합니다.','Independently of target achievement, this review checks recurring KPIs across months, reply quality, corrective-action effectiveness, and logical consistency across KPIs.'],
  ['전체 검증이슈','Total Validation Findings'],
  ['대책 효과검증 미흡','Action Effectiveness Not Verified'],
