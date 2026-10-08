@@ -91,6 +91,20 @@ jobs:
           assert "status:'send-failed'" in source, 'Failed sends must have distinct log status'
           print('PASS: mail response guard and EML vs sent log status separation')
           PY
+      - name: Verify body-first dashboard layout and strictly earlier reply comparison
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('hd24-reply-feedback.js').read_text(encoding='utf-8')
+          start=s.index('function dashboardHtml(body,images=[])')
+          end=s.index('function downloadFeedbackEml(',start)
+          html=s[start:end]
+          assert html.index("escHtml(body)") < html.index("'+shots"), 'Dashboard images must follow email body'
+          assert 'copy.querySelectorAll(' in s and 'button,input,select,textarea' in s, 'Capture controls must be excluded'
+          assert "monthKey(x)<currentMonth" in s, 'Prior reply must be strictly earlier than current KPI month'
+          assert "monthKey(x)<=currentMonth" not in s, 'Same-month replies cannot count as previous period'
+          print('PASS: body precedes dashboards; controls excluded; previous reply must be earlier month')
+          PY
       - name: Verify asynchronous feedback Excel version guards
         run: |
           python - <<'PY'
