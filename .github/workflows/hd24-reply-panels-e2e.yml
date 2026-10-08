@@ -142,7 +142,7 @@ jobs:
                 document.querySelector('.hd24-tab[data-tab="replyanalysis"]')?.click();
               }""")
               page.wait_for_selector('#hd24DashboardLanguageSelect',state='attached',timeout=15000)
-              page.locator('#hd24DashboardLanguageSelect').select_option('en')
+              page.evaluate("""() => { const el=document.getElementById('hd24DashboardLanguageSelect'); if(!el)throw new Error('Dashboard language selector missing'); el.value='en'; el.dispatchEvent(new Event('change',{bubbles:true})); }""")
               page.wait_for_timeout(350)
               for ident in ('hd24ExecutiveDashboard','hd24DeepValidation'):
                   content=page.locator('#'+ident).inner_text()
@@ -215,7 +215,7 @@ jobs:
                 document.querySelector('.hd24-tab[data-tab="replymail"]')?.click();
               }""")
               page.wait_for_selector('#hd24FeedbackSend',timeout=15000)
-              page.locator('#hd24DashboardLanguageSelect').select_option('en')
+              page.evaluate("""() => { const el=document.getElementById('hd24DashboardLanguageSelect'); if(!el)throw new Error('Dashboard language selector missing'); el.value='en'; el.dispatchEvent(new Event('change',{bubbles:true})); }""")
               page.wait_for_timeout(300)
               with page.expect_download(timeout=60000) as downloaded:
                   page.locator('#hd24FeedbackSend').click()
