@@ -290,7 +290,7 @@ jobs:
               with zipfile.ZipFile(io.BytesIO(xlsx[0].get_payload(decode=True))) as z:
                   names=z.namelist()
                   assert 'xl/workbook.xml' in names,'Invalid Excel workbook'
-                  assert len([n for n in names if re.fullmatch(r'xl/worksheets/sheet\\d+\\.xml',n)])>=3,'Missing workbook evidence/detail sheets'
+                  assert len([n for n in names if re.fullmatch(r'xl/worksheets/sheet\d+\.xml',n)])>=3,'Missing workbook evidence/detail sheets'
               html=' '.join((part.get_payload(decode=True) or b'').decode('utf-8','replace') for part in parts if part.get_content_type()=='text/html')
               assert all('cid:'+part.get('Content-ID','').strip('<>') in html for part in png),'Missing embedded dashboard CID reference'
               page.locator('#hd24FeedbackDraft').fill('STALE_DRAFT_SENTINEL_FROM_PRIOR_REPLY')
