@@ -65,6 +65,47 @@ jobs:
                   queue.append(child)
           print('Loaded JS syntax PASS:', ', '.join(sorted(seen)))
           PY
+      - name: English dashboards and refresh regression (browser)
+        run: |
+          python - <<'PY'
+          import re
+          from playwright.sync_api import sync_playwright
+          with sync_playwright() as p:
+              browser=p.chromium.launch(headless=True)
+              page=browser.new_page()
+              errors=[]
+              page.on('pageerror',lambda e: errors.append(str(e)))
+              page.goto('http://127.0.0.1:8768/index.html',wait_until='networkidle',timeout=120000)
+              page.wait_for_function("window.hd24ReplyFeedback && window.hd24DeepReplyValidation",timeout=30000)
+              page.evaluate("""() => {
+                localStorage.setItem('hd24_kpi_reply_history_v2',JSON.stringify([
+                  {plant:'india',targetYear:2026,targetMonth:7,kpi:'Test KPI',kpiEn:'Test KPI',
+                   reason:'Specific missed target reason',rootCause:'Repeated supplier delay',
+                   recoveryPlan:'Weekly corrective-action effectiveness check',
+                   actionOwner:'Owner A',plannedCompletionDate:'2026-10-31',replySequence:1},
+                  {plant:'india',targetYear:2026,targetMonth:8,kpi:'Test KPI',kpiEn:'Test KPI',
+                   reason:'Specific missed target reason',rootCause:'Repeated supplier delay',
+                   recoveryPlan:'Weekly corrective-action effectiveness check',
+                   actionOwner:'Owner A',plannedCompletionDate:'2026-10-31',replySequence:1}
+                ]));
+                window.hd24ReplyFeedback.render();
+                window.hd24DeepReplyValidation.render();
+                window.hd24SwitchTab('replyanalysis');
+              }""")
+              page.wait_for_selector('#hd24DashboardLanguageSelect',timeout=15000)
+              page.locator('#hd24DashboardLanguageSelect').select_option('en')
+              page.wait_for_timeout(350)
+              for ident in ('hd24ExecutiveDashboard','hd24DeepValidation'):
+                  content=page.locator('#'+ident).inner_text()
+                  remaining=re.findall(r'[가-힣]+',content)
+                  assert not remaining, f'{ident} has untranslated Korean: {remaining[:20]}'
+              assert not errors, errors
+              page.reload(wait_until='networkidle')
+              page.wait_for_function("document.querySelector('.hd24-tab.active')?.dataset.tab === 'replyanalysis'",timeout=15000)
+              assert not errors, errors
+              print('PASS: English dashboards contain no Korean and refresh preserves selected tab')
+              browser.close()
+          PY
       - name: Reply analysis and feedback mail must never render blank
         run: |
           python - <<'PY'
