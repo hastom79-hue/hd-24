@@ -314,7 +314,22 @@ function dueState(r,a){
  return Number.isFinite(t)?{kind:'date',overdue:t<Date.now()&&!done}:{kind:'text',overdue:false};
 }
 
+function masterDefinitionEvidence(r){
+ const lookup=window.hd24KpiDefinitionLookup;
+ if(typeof lookup!=='function')return {status:'unavailable'};
+ const result=lookup(r?.plant,txt(r?.kpiEn||r?.kpi));
+ if(result?.status!=='unique-name-only')return {status:result?.status||'unavailable'};
+ const normalize=v=>txt(v).trim().toLowerCase();
+ const sourceUnit=normalize(r?.unit||r?.kpiUnit||r?.uom),masterUnit=normalize(result.unit);
+ const direction=v=>['higher','up','increase','상향'].includes(normalize(v))?'higher':['lower','down','decrease','하향'].includes(normalize(v))?'lower':'';
+ const sourceDirection=direction(r?.improvementDirection||r?.targetDirection||r?.betterDirection),masterDirection=direction(result.direction);
+ if(!sourceUnit||!masterUnit||!sourceDirection||!masterDirection)return {status:'incomplete'};
+ if(sourceUnit!==masterUnit||sourceDirection!==masterDirection)return {status:'conflict'};
+ return {status:'consistent'};
+}
 function kpiPerformanceEvidence(r,history=[]){
+ const master=masterDefinitionEvidence(r);
+ if(master.status==='conflict')return 'KPI trend: source KPI definition conflicts with the plant master; comparison withheld pending reconciliation';
  const prior=previousReply(history,r);
  if(!prior)return 'KPI trend: no earlier-month comparison available';
  const number=v=>{const raw=txt(v).replace(/,/g,'');return raw!==''&&/^-?\d+(?:\.\d+)?$/.test(raw)?Number(raw):null};
