@@ -384,7 +384,7 @@ function render(){
  all.sort((a,b)=>String(b.replyReceivedAt||'').localeCompare(String(a.replyReceivedAt||''))||Number(b.replySequence||0)-Number(a.replySequence||0));
  const groups=[];all.forEach(r=>{const year=Number(r.targetYear)||2026;let g=groups.find(x=>x.year===year&&x.month===Number(r.targetMonth)&&sameKpi(x.rows[0],r));if(!g){g={year,month:Number(r.targetMonth),rows:[]};groups.push(g)}g.rows.push(r)});
  let rows=groups.map(g=>g.rows[0]);
- const nextKey=plant+'|'+rows.map(r=>[Number(r.targetYear)||2026,r.targetMonth,r.kpiEn||r.kpi,r.replyReceivedAt,r.replySequence].join(':')).join('|');
+ const nextKey=plant+'|'+JSON.stringify({rows,saved:all});
  if(nextKey!==draftKey){draftKey=nextKey;drafts={ko:'',en:''};if(rows.length)demo=false}
  if(!rows.length&&!demo){box.innerHTML='<h3>회신 상세 분석 및 피드백</h3><div style="padding:22px;border:1px dashed #a9b9ce;border-radius:10px;background:#f7faff;margin:12px 0"><strong>등록된 회신이 없습니다.</strong><p>회신 Excel을 등록하면 KPI별 사유·근본원인·만회계획·담당자·완료일을 구조적으로 분석하고 이전 회신과 비교합니다.</p><button type="button" id="hd24DemoPreview">샘플 분석 미리보기 (저장·발송 안 함)</button></div>';get('hd24DemoPreview').onclick=()=>{demo=true;render()};return}
  if(!rows.length&&demo){rows=[{plant,targetMonth:7,kpiEn:'Sample KPI (DEMO)',reason:'Production delay',rootCause:'',recoveryPlan:'Improve process',actionOwner:'',plannedCompletionDate:'',nextMonthRecoveryTarget:''}];groups=[{month:7,rows}]}
