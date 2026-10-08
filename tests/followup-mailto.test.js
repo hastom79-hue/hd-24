@@ -287,7 +287,7 @@ const feedback=fs.readFileSync('hd24-reply-feedback.js','utf8');
 ok(!/createObjectURL|\.download\s*=|saveAs\(/.test(autoRun),'auto-run must not contain browser download primitives');
 ok(feedback.includes("send.onclick=async()=>")&&feedback.includes("if(!endpoint)")&&feedback.includes("downloadFeedbackEml(file)"),'reply feedback EML download must remain inside explicit send action fallback');
 ok(feedback.includes("if(send.disabled)return;if(demo){status.textContent=")&&feedback.includes("send.disabled=true;status.textContent='메일 발송 준비 중...'"),'feedback send click must acknowledge immediately and block duplicate clicks');
-ok(feedback.includes("Promise.race([capture,timeout])")&&feedback.includes("dashboard capture timeout"),'feedback dashboard capture must have a bounded timeout');
+ok(feedback.includes("Promise.race([window.html2canvas(copy,")&&feedback.includes("캡처 시간 초과")&&feedback.includes("12000")),'feedback dashboard capture must have a bounded timeout');
 ok(feedback.includes("function dashboardHtml(body,images=[])")&&!feedback.includes("images[1].cid"),'feedback mail HTML must tolerate zero or one dashboard capture');
 ok(feedback.includes("return lines.join('\\r\\n')")&&!feedback.includes("return lines.join('\\\\r\\\\n')"),'Outlook EML must use RFC MIME CRLF separators rather than literal escaped text');
 ok(feedback.includes("const validEml=eml.startsWith('X-Unsent: 1\\r\\nMIME-Version: 1.0\\r\\n')")&&feedback.includes("eml.includes('\\r\\nSubject: =?UTF-8?B?')")&&feedback.includes("eml.includes('\\r\\nContent-Type: multipart/mixed; boundary=')")&&feedback.includes("Outlook EML MIME 검증 실패"),'feedback send must reject malformed Outlook MIME before download');
