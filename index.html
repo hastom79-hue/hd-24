@@ -415,6 +415,17 @@ document.getElementById('hd24KpiChangeBannerBtn').addEventListener('click', () =
   log(`지표 변경 사유 기록됨: ${pendingKpiChangeCandidates.join(', ')} — ${reason.trim()}`);
 });
 function cfg(){ return PLANT_CONFIG[currentPlant]; }
+// Read-only KPI definition lookup for reply feedback; never changes original reply data.
+window.hd24KpiDefinitionLookup=function(plant,kpiName){
+  if(plant!==currentPlant||!Array.isArray(mappingData)||!mappingData.length)return {status:'unavailable'};
+  const normalized=v=>String(v??'').trim().replace(/\\s+/g,' ').toLowerCase();
+  const key=normalized(kpiName);
+  if(!key)return {status:'unmatched'};
+  const matches=mappingData.filter(m=>normalized(m.kpiEn)===key||normalized(m.kpiKr)===key);
+  if(matches.length!==1)return {status:matches.length?'ambiguous':'unmatched'};
+  const m=matches[0];
+  return {status:'unique-name-only',unit:m.unit||'',direction:m.direction||'',kpiEn:m.kpiEn||'',kpiKr:m.kpiKr||''};
+};
 
 const mappingCache = new Map();
 const mappingPending = new Map();
