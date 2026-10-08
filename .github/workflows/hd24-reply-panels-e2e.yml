@@ -158,7 +158,7 @@ jobs:
               assert baseline['executive'] and baseline['deep'], 'Baseline dashboard content missing'
               assert page.locator('#hd24DashboardLanguageSelect').input_value()=='en', 'English selection not active before refresh'
               for attempt in range(3):
-                  page.reload(wait_until='networkidle')
+                  page.reload(wait_until='domcontentloaded')
                   page.wait_for_function("document.querySelector('.hd24-tab.active')?.dataset.tab === 'replyanalysis'",timeout=15000)
                   page.wait_for_function("window.hd24ReplyFeedback && window.hd24DeepReplyValidation",timeout=15000)
                   page.wait_for_function("""baseline => {
@@ -193,7 +193,7 @@ jobs:
           with sync_playwright() as p:
               browser=p.chromium.launch(headless=True)
               page=browser.new_page(accept_downloads=True)
-              page.goto('http://127.0.0.1:8768/index.html',wait_until='networkidle',timeout=120000)
+              page.goto('http://127.0.0.1:8768/index.html',wait_until='domcontentloaded',timeout=120000)
               page.wait_for_function("window.hd24ReplyFeedback && window.hd24DeepReplyValidation",timeout=30000)
               page.evaluate("""() => {
                 localStorage.removeItem('hd24_mail_endpoint_v1');
@@ -305,7 +305,7 @@ jobs:
               errors=[]
               page.add_init_script("window.__hd24WindowErrors=[]; window.addEventListener('error',e=>window.__hd24WindowErrors.push({message:e.message,filename:e.filename,lineno:e.lineno,colno:e.colno}));")
               page.on('pageerror',lambda e: errors.append(str(e)+' | '+str(getattr(e,'stack', '') or '')))
-              page.goto('http://127.0.0.1:8768/index.html',wait_until='networkidle',timeout=120000)
+              page.goto('http://127.0.0.1:8768/index.html',wait_until='domcontentloaded',timeout=120000)
               # Inspect inline scripts after navigation, before exercising the UI.
               page_scripts=page.locator('script:not([src])')
               for i in range(page_scripts.count()):
