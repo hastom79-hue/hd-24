@@ -13,6 +13,23 @@ const mimeLines=v=>txt(v).match(/.{1,76}/g)?.join('\r\n')||'';
 const asciiFileName=v=>safeHeader(v).replace(/[^A-Za-z0-9._-]+/g,'_')||'attachment.xlsx';
 const rfc5987=v=>encodeURIComponent(safeHeader(v)).replace(/['()]/g,escape);
 function feedbackEml({to,cc,subject,body,attachment,images=[]}){const boundary='----=_HD24_REPLY_'+Date.now().toString(36),related=boundary+'_related',alt=boundary+'_alternative',lines=['X-Unsent: 1','MIME-Version: 1.0','To: '+safeHeader(to)];if(cc)lines.push('Cc: '+safeHeader(cc));lines.push('Subject: =?UTF-8?B?'+mimeB64Text(subject)+'?=','Content-Type: multipart/mixed; boundary="'+boundary+'"','','--'+boundary,'Content-Type: multipart/related; boundary="'+related+'"; type="multipart/alternative"','','--'+related,'Content-Type: multipart/alternative; boundary="'+alt+'"','','--'+alt,'Content-Type: text/plain; charset="UTF-8"','Content-Transfer-Encoding: base64','',mimeLines(mimeB64Text(body)),'--'+alt,'Content-Type: text/html; charset="UTF-8"','Content-Transfer-Encoding: base64','',mimeLines(mimeB64Text(dashboardHtml(body,images))),'--'+alt+'--');images.forEach(img=>lines.push('--'+related,'Content-Type: image/png; name="'+asciiFileName(img.filename)+'"','Content-Transfer-Encoding: base64','Content-Disposition: inline; filename="'+asciiFileName(img.filename)+'"','Content-ID: <'+img.cid+'>','Content-Location: '+asciiFileName(img.filename),'',mimeLines(img.base64)));lines.push('--'+related+'--');const fallback=asciiFileName(attachment.filename),encoded=rfc5987(attachment.filename);lines.push('--'+boundary,'Content-Type: '+safeHeader(attachment.mimeType||'application/octet-stream')+'; name="'+fallback+'"; name*=UTF-8\'\''+encoded,'Content-Transfer-Encoding: base64','Content-Disposition: attachment; filename="'+fallback+'"; filename*=UTF-8\'\''+encoded,'',mimeLines(attachment.base64),'--'+boundary+'--','');return lines.join('\r\n')}
+const HD24_CAPTURE_TRANSLATIONS=[
+ ['를 나타냅니다','These figures represent'],
+ ['나타냅니다','represent'],['검증 대상','items reviewed'],
+ ['월 연속 동일','consecutive months with the same'],
+ ['개월 연속 동일','consecutive months with the same'],
+ ['동일 사유','same reason'],['동일 근인','same root cause'],
+ ['제거 효과','elimination effectiveness'],['제거','elimination'],
+ ['효과','effectiveness'],['근인','root cause'],['사유','reason'],
+ ['연속','consecutive'],['개월','months'],['검토','review'],
+ ['대상','target'],['충분','Complete'],['핵심','key'],['정보','information'],
+ ['전월','previous month'],['당월','current month'],['회신','reply'],
+ ['분석','analysis'],['품질','quality'],['기한','due date'],['실행','execution'],
+ ['관리','management'],['목표','target'],['달성','achieved'],['미달','missed'],
+ ['확인','verify'],['필요','required'],['대책','action'],['반복','repeated'],
+ ['지표','metric'],['전체','total'],['건','items']
+];
+const HD24_CAPTURE_TRANSLATIONS_ORDERED=[...HD24_CAPTURE_TRANSLATIONS].sort((a,b)=>b[0].length-a[0].length);
 const HD24_DEEP_FINDING_TRANSLATIONS=[
  ['첨부자료 참조만으로는 원인 검증 불가','Root cause cannot be verified from attachment references alone'],
  ['타 KPI/이전 항목 참조형 회신 — KPI별 독립 근인 필요','Reply refers to another KPI or previous item; provide a specific root cause for this KPI'],
@@ -152,7 +169,7 @@ document.addEventListener('hd24:deep-validation-ready',()=>setTimeout(ensureDash
 document.addEventListener('hd24:deep-validation-rendered',()=>ensureDashboardLanguageControl());
 function englishDashboardClone(root){
  const replacements=[['회신 품질 및 실행관리 핵심 신호','Reply Quality and Execution Management'],['상세내용은 아래 KPI별 분석에서 확인','See KPI-level analysis below'],['분석 KPI','KPIs Reviewed'],['충분 · 추가보완 없음','Complete · No Follow-up'],['보완 필요 · 단일/경미 결함','Review Needed · Minor Gap'],['중점 보완 · 복합/핵심 결함','Priority Review · Critical Gap'],['이전 회신 비교','Previous Reply Comparison'],['최초 시행','First Review'],['전월 반복 근인','Repeated Root Causes'],['전월 대책 정체','Stagnant Actions'],['기한 초과','Overdue Actions'],['회고 취약','Retrospective Gaps'],['지표 범례 · 집계 의미','Metric Definitions']];
- const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){let value=node.nodeValue;for(const [ko,en] of HD24_DEEP_FINDING_TRANSLATIONS_ORDERED)value=value.split(ko).join(en);node.nodeValue=dashboardTranslateText(value)}
+ const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){let value=node.nodeValue;for(const [ko,en] of HD24_DEEP_FINDING_TRANSLATIONS_ORDERED)value=value.split(ko).join(en);for(const [ko,en] of HD24_DETAIL_TRANSLATIONS_ORDERED)value=value.split(ko).join(en);value=dashboardTranslateText(value);for(const [ko,en] of HD24_CAPTURE_TRANSLATIONS_ORDERED)value=value.split(ko).join(en);node.nodeValue=value}
  const remaining=(root.textContent||'').match(/[가-힣]+/g);if(remaining?.length)throw new Error('영문 대시보드 미번역 항목 '+[...new Set(remaining)].slice(0,8).join(', ')+' — 메일 생성 차단');
 }
 async function captureFeedbackDashboards(){
