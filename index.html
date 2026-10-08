@@ -342,7 +342,7 @@
 
 <script>
 try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch(_) {}
-window.addEventListener('pageshow', () => { try { window.scrollTo(0, 0); } catch(_) {} }, { once:true });
+// Keep native browser scroll restoration; forced scroll-to-top caused a visible jump on refresh.
 window.hd24SafeReflectReady = false;
 const PLANT_CONFIG = {
   india: { label:'인도', labelEn:'India', mappingFile:'mapping_india.json', srcSheet:'Final With HQ Suggestion', masterSheet:'인도법인 KPI(26년 보고용)', srcMonthStartCol:15, masterTargetCol:25, masterMonthStartCol:27, hasSource:true },
@@ -1659,11 +1659,11 @@ function setupTabs(){
       activate(tab);
     });
   });
-  // 새로고침/재진입 시에는 항상 업로드·실행에서 시작한다.
-  // 파일 입력과 런타임 판정 상태는 새로고침으로 초기화되므로 이전 업무 탭만 복원하면 빈 화면이 될 수 있다.
+  // Restore the last selected tab after refresh. Never reset the user's navigation.
+  // Panels that require re-upload continue to display their own empty-state guidance.
   const validTabs = new Set(['upload','results','mail','reply','replyanalysis','replymail','spotcheck','history','log']);
-  const initialTab='upload';
-  try { sessionStorage.setItem('hd24_active_tab','upload'); } catch(_){}
+  let initialTab='upload';
+  try { const savedTab=sessionStorage.getItem('hd24_active_tab');if(validTabs.has(savedTab))initialTab=savedTab; } catch(_){}
   activate(initialTab);
   window.hd24SwitchTab = (tab)=>{
     if (!validTabs.has(tab)) return;
