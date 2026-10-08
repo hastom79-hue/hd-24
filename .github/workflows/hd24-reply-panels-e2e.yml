@@ -111,8 +111,8 @@ jobs:
           assert "JSON.stringify({rows,saved:all.filter(r=>r.plant===plant)})" in source, 'Excel cache must include complete reply history'
           assert "const nextKey=plant+'|'+JSON.stringify({rows,saved:all});" in source, 'Draft cache must include complete reply content and history'
           for loader in ('hd24-ui-v3.js','refresh-runtime.html'):
-              assert 'hd24-reply-feedback.js?v=87' in Path(loader).read_text(encoding='utf-8'), loader
-          print('PASS: screen/Excel ordering, history cache key and v86 loaders')
+              assert 'hd24-reply-feedback.js?v=89' in Path(loader).read_text(encoding='utf-8'), loader
+          print('PASS: screen/Excel ordering, history cache key and v89 loaders')
           PY
       - name: English dashboards and refresh regression (browser)
         run: |
