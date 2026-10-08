@@ -319,6 +319,7 @@ function kpiPerformanceEvidence(r,history=[]){
  if(!prior)return 'KPI trend: no earlier-month comparison available';
  const number=v=>{const raw=txt(v).replace(/,/g,'');return raw!==''&&/^-?\d+(?:\.\d+)?$/.test(raw)?Number(raw):null};
  const current=number(r?.actual),previous=number(prior?.actual);
+ if(current===null||previous===null)return 'KPI trend: actual performance values unavailable or nonnumeric; direction not assessed';
  const unit=txt(r?.unit||r?.kpiUnit||r?.uom);
  const priorUnit=txt(prior?.unit||prior?.kpiUnit||prior?.uom);
  if(!unit||!priorUnit)return 'KPI trend: source unit is missing for one or both months; comparison withheld pending unit confirmation';
@@ -328,8 +329,7 @@ function kpiPerformanceEvidence(r,history=[]){
  const normalizeDirection=v=>['higher','up','increase','상향'].includes(v)?'higher':['lower','down','decrease','하향'].includes(v)?'lower':'';
  if(!normalizeDirection(direction)||!normalizeDirection(previousDirection))return 'KPI trend: improvement direction is missing or unrecognized for one or both months; comparison withheld';
  if(normalizeDirection(direction)!==normalizeDirection(previousDirection))return 'KPI trend: improvement direction differs across months; comparison withheld pending KPI definition review';
- if(current===null||previous===null)return 'KPI trend: actual performance values unavailable or nonnumeric; direction not assessed';
- if(!normalizeDirection(direction))return 'KPI trend: improvement direction is undefined; comparison withheld';
+
  const higher=normalizeDirection(direction)==='higher',delta=current-previous;
  const trend=delta===0?'unchanged':(higher?delta>0:delta<0)?'improved':'deteriorated';
  return 'KPI trend: '+trend+' ('+previous+(unit?' '+unit:'')+' -> '+current+(unit?' '+unit:'')+'); action effectiveness and causation remain unverified';
