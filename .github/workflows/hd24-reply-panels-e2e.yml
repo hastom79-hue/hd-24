@@ -101,6 +101,7 @@ jobs:
           html=s[start:end]
           assert html.index("escHtml(body)") < html.index("'+shots"), 'Dashboard images must follow email body'
           assert 'copy.querySelectorAll(' in s and 'button,input,select,textarea' in s, 'Capture controls must be excluded'
+          assert '#hd24DeepDetailBox,#hd24ExportDeepAnalysis' in s, 'Detail accordion and Excel export must be excluded from email capture'
           assert "monthKey(x)<currentMonth" in s, 'Prior reply must be strictly earlier than current KPI month'
           assert "monthKey(x)<=currentMonth" not in s, 'Same-month replies cannot count as previous period'
           print('PASS: body precedes dashboards; controls excluded; previous reply must be earlier month')
