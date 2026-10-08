@@ -515,6 +515,52 @@ jobs:
               print('HD24 REPLY PANELS E2E PASS: empty-state + data-backed analysis + feedback mail')
               browser.close()
           PY
+      - name: Browser E2E mail API success and failure acknowledgement
+        run: |
+          python - <<'PY'
+          import json
+          from playwright.sync_api import sync_playwright
+          with sync_playwright() as p:
+              browser=p.chromium.launch(headless=True)
+              page=browser.new_page(accept_downloads=True)
+              page.goto('http://127.0.0.1:8768/index.html',wait_until='domcontentloaded',timeout=120000)
+              page.wait_for_function("window.hd24ReplyFeedback && window.hd24DeepReplyValidation && typeof window.hd24SwitchTab==='function'",timeout=30000)
+              page.evaluate("""() => {
+                localStorage.setItem('hd24_mail_endpoint_v1','https://hd24-mail-test.invalid/send');
+                localStorage.setItem('hd24_kpi_reply_history_v2',JSON.stringify([
+                  {plant:'india',targetYear:2026,targetMonth:7,kpi:'Sample KPI',kpiEn:'Sample KPI',
+                   reason:'Production delay',rootCause:'Material shortage',
+                   recoveryPlan:'Supplier escalation and weekly verification',actionOwner:'Owner A',
+                   plannedCompletionDate:'2026-10-31',replySequence:1}
+                ]));
+                document.getElementById('plantSelect').value='india';
+                document.getElementById('mailTo').value='qa-example@example.invalid';
+                window.hd24ReplyFeedback.render();
+                window.hd24DeepReplyValidation.render();
+                window.hd24SwitchTab('replymail');
+              }""")
+              page.wait_for_selector('#hd24FeedbackSend',state='visible',timeout=15000)
+              page.wait_for_function("document.querySelector('#hd24FeedbackSend') && !document.querySelector('#hd24FeedbackSend').disabled",timeout=20000)
+              page.route('https://hd24-mail-test.invalid/send',lambda route: route.fulfill(status=200,content_type='application/json',body='{"success":false,"error":"Simulated rejection"}'))
+              page.locator('#hd24FeedbackSend').click()
+              page.wait_for_function("JSON.parse(localStorage.getItem('hd24_reply_feedback_mail_v1')||'[]')[0]?.status==='send-failed'",timeout=30000)
+              assert 'Simulated rejection' in page.locator('#hd24FeedbackMail').inner_text(), 'API logical rejection not shown'
+              page.unroute('https://hd24-mail-test.invalid/send')
+              captured=[]
+              def success(route):
+                  captured.append(json.loads(route.request.post_data))
+                  route.fulfill(status=200,content_type='application/json',body='{"success":true}')
+              page.route('https://hd24-mail-test.invalid/send',success)
+              page.locator('#hd24FeedbackSend').click()
+              page.wait_for_function("JSON.parse(localStorage.getItem('hd24_reply_feedback_mail_v1')||'[]')[0]?.status==='sent'",timeout=30000)
+              assert captured and captured[0].get('attachment',{}).get('base64'), 'API payload missing Excel'
+              assert len(captured[0].get('dashboardImages',[]))==2, 'API payload missing PNG dashboards'
+              assert all(x.get('base64','').startswith('iVBORw0KGgo') for x in captured[0]['dashboardImages']), 'API PNG payload invalid'
+              history=page.evaluate("JSON.parse(localStorage.getItem('hd24_reply_feedback_mail_v1')||'[]')")
+              assert history[0]['status']=='sent' and history[1]['status']=='send-failed',history[:2]
+              print('PASS: browser mail API rejection, successful acknowledgement, Excel+2 PNG payload, and separate log statuses')
+              browser.close()
+          PY
       - name: Preserve browser E2E failure diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
