@@ -223,6 +223,21 @@ jobs:
                   assert len([n for n in names if re.fullmatch(r'xl/worksheets/sheet\\d+\\.xml',n)])>=3,'Missing workbook evidence/detail sheets'
               html=' '.join((part.get_payload(decode=True) or b'').decode('utf-8','replace') for part in parts if part.get_content_type()=='text/html')
               assert all('cid:'+part.get('Content-ID','').strip('<>') in html for part in png),'Missing embedded dashboard CID reference'
+              # A change to a prior reply must invalidate the generated workbook.
+              page.evaluate("""() => {
+                const key='hd24_kpi_reply_history_v2';
+                const history=JSON.parse(localStorage.getItem(key));
+                history[0].rootCause='Revised historical root cause - verified by QA';
+                localStorage.setItem(key,JSON.stringify(history));
+                window.hd24ReplyFeedback.render();
+              }""")
+              with page.expect_download(timeout=60000) as changed_download:
+                  page.locator('#hd24FeedbackSend').click()
+              changed=email.message_from_bytes(open(changed_download.value.path(),'rb').read())
+              changed_xlsx=[part for part in changed.walk() if part.get_content_type()=='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+              assert len(changed_xlsx)==1,'Updated reply must still have exactly one Excel attachment'
+              assert changed_xlsx[0].get_payload(decode=True)!=xlsx[0].get_payload(decode=True),'Historical reply change did not regenerate Excel'
+              print('PASS: historical reply change invalidates attached Excel')
               print('PASS: unsent EML includes two valid inline PNG dashboards and three-sheet Excel')
               browser.close()
           PY
