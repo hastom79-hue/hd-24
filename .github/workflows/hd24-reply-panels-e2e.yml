@@ -80,6 +80,17 @@ jobs:
                   queue.append(child)
           print('Loaded JS syntax PASS:', ', '.join(sorted(seen)))
           PY
+      - name: Verify mail API success acknowledgement guard
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          source=Path('hd24-reply-feedback.js').read_text(encoding='utf-8')
+          assert "api.success!==true" in source, 'Mail API success must be explicitly true'
+          assert "JSON 형식이 아닙니다" in source, 'Non-JSON mail API response must fail'
+          assert "status:'outlook-package-downloaded'" in source, 'EML package must be logged separately from sent mail'
+          assert "status:'send-failed'" in source, 'Failed sends must have distinct log status'
+          print('PASS: mail response guard and EML vs sent log status separation')
+          PY
       - name: English dashboards and refresh regression (browser)
         run: |
           python - <<'PY'
