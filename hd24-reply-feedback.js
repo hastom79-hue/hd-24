@@ -140,6 +140,34 @@ const HD24_EXEC_LEGEND_EN=[
  'Number of KPIs with overdue due dates and no confirmed completion',
  'Number of KPIs lacking retrospective review of action results, effectiveness, or next-period follow-through'
 ];
+const HD24_DEEP_LEGEND_EN=[
+ ['HIGH','Critical management requirements (root cause, accountable owner, or recovery commitment) are missing, or repeated failure requires priority review.'],
+ ['MEDIUM','Further verification of root-cause specificity, corrective-action detail, or effectiveness is required; no immediately critical error has been established.'],
+ ['Action Effectiveness Not Verified','Performance has not improved after the previous reply, or the committed recovery target was missed, leaving the PDCA cycle open.'],
+ ['Cross-KPI Contradictions','Related KPI results and reply explanations may be inconsistent; cross-validation is required.'],
+ ['Repeated Reason from Previous Month','The same reason for missing the target recurs for the same KPI across consecutive months.'],
+ ['Repeated Root Cause from Previous Month','The same root cause recurs for the same KPI; verify whether root-cause elimination was effective.'],
+ ['Repeated Action Plan from Previous Month','The same recovery plan recurs for the same KPI; verify implementation and effectiveness.'],
+ ['Total Validation Findings','Total warnings detected by HIGH/MEDIUM deep validation, open-loop checks, and cross-KPI consistency checks.']
+];
+function translateDeepLegend(root,lang){
+ const title=[...root.querySelectorAll('b')].find(el=>/^(판정 범례 · 집계 기준|Assessment Legend and Counting Rules)$/.test(el.textContent.trim()));
+ if(!title)return;
+ const panel=title.parentElement,grid=panel?.querySelector('div[style*="grid-template-columns"]');
+ if(!grid)return;
+ const cells=[...grid.children].filter(el=>el.tagName==='DIV');
+ if(cells.length!==8)return;
+ cells.forEach((cell,i)=>{
+  if(!cell.dataset.hd24KoHtml)cell.dataset.hd24KoHtml=cell.innerHTML;
+  if(lang==='en')cell.textContent=HD24_DEEP_LEGEND_EN[i][0]+' · '+HD24_DEEP_LEGEND_EN[i][1];
+  else cell.innerHTML=cell.dataset.hd24KoHtml;
+ });
+ const foot=grid.nextElementSibling;
+ if(foot){if(!foot.dataset.hd24KoHtml)foot.dataset.hd24KoHtml=foot.innerHTML;
+  if(lang==='en')foot.textContent='Note: HIGH and MEDIUM indicate validation priority for reply quality and problem-solving management, not KPI target achievement.';
+  else foot.innerHTML=foot.dataset.hd24KoHtml;
+ }
+}
 function translateExecutiveLegend(root,lang){
  const title=[...root.querySelectorAll('b')].find(el=>el.textContent.trim()==='지표 범례 · 집계 의미'||el.textContent.trim()==='Metric Definitions');
  if(!title)return;
@@ -163,7 +191,7 @@ function translateExecutiveLegend(root,lang){
 const dashboardOriginalText=new WeakMap();
 const HD24_DASHBOARD_TRANSLATIONS_ORDERED=[...HD24_DASHBOARD_TRANSLATIONS].sort((a,b)=>b[0].length-a[0].length);function englishFindingText(value){let out=String(value??'');for(const [ko,en] of HD24_DEEP_FINDING_TRANSLATIONS_ORDERED)out=out.split(ko).join(en);for(const [ko,en] of HD24_DETAIL_TRANSLATIONS_ORDERED)out=out.split(ko).join(en);return dashboardTranslateText(out)}
 function dashboardTranslateText(value){let out=value;for(const [ko,en] of HD24_DASHBOARD_TRANSLATIONS_ORDERED)out=out.split(ko).join(en);return out.replace(/(\d+)건(?=\s|$|[·,.)])/g,'$1 items')}
-function setDashboardLanguage(lang){window.__HD24_DASHBOARD_LANG__=lang;for(const id of ['hd24ExecutiveDashboard','hd24DeepValidation','hd24Feedback']){const root=get(id);if(!root)continue;const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){if(!dashboardOriginalText.has(node))dashboardOriginalText.set(node,node.nodeValue);const original=dashboardOriginalText.get(node);let translated=original;if(lang==='en'){for(const [ko,en] of HD24_DEEP_FINDING_TRANSLATIONS_ORDERED)translated=translated.split(ko).join(en);for(const [ko,en] of HD24_DETAIL_TRANSLATIONS_ORDERED)translated=translated.split(ko).join(en);translated=dashboardTranslateText(translated)}if(node.nodeValue!==translated)node.nodeValue=translated}}const exec=get('hd24ExecutiveDashboard');if(exec)translateExecutiveLegend(exec,lang);document.querySelectorAll('[data-hd24-dashboard-language]').forEach(x=>{x.value=lang});const warning=get('hd24DashboardTranslationWarning');if(warning){const residual=[];if(lang==='en')for(const id of ['hd24Feedback']){const root=get(id);if(root){const text=root.textContent||'';const hits=text.match(/[가-힣]+/g);if(hits)residual.push(...hits)}}warning.textContent=residual.length?'Translation incomplete: '+[...new Set(residual)].slice(0,8).join(', ')+' · English email blocked until fully translated':'';warning.style.display=residual.length?'block':'none';warning.style.cssText='display:'+(residual.length?'block':'none')+';max-width:100%;flex-basis:100%;overflow-wrap:anywhere;color:#a13a2a;font-size:12px;padding:4px 0'}}
+function setDashboardLanguage(lang){window.__HD24_DASHBOARD_LANG__=lang;for(const id of ['hd24ExecutiveDashboard','hd24DeepValidation','hd24Feedback']){const root=get(id);if(!root)continue;const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){if(!dashboardOriginalText.has(node))dashboardOriginalText.set(node,node.nodeValue);const original=dashboardOriginalText.get(node);let translated=original;if(lang==='en'){for(const [ko,en] of HD24_DEEP_FINDING_TRANSLATIONS_ORDERED)translated=translated.split(ko).join(en);for(const [ko,en] of HD24_DETAIL_TRANSLATIONS_ORDERED)translated=translated.split(ko).join(en);translated=dashboardTranslateText(translated)}if(node.nodeValue!==translated)node.nodeValue=translated}}const exec=get('hd24ExecutiveDashboard');if(exec)translateExecutiveLegend(exec,lang);const deep=get('hd24DeepValidation');if(deep)translateDeepLegend(deep,lang);document.querySelectorAll('[data-hd24-dashboard-language]').forEach(x=>{x.value=lang});const warning=get('hd24DashboardTranslationWarning');if(warning){const residual=[];if(lang==='en')for(const id of ['hd24Feedback']){const root=get(id);if(root){const text=root.textContent||'';const hits=text.match(/[가-힣]+/g);if(hits)residual.push(...hits)}}warning.textContent=residual.length?'Translation incomplete: '+[...new Set(residual)].slice(0,8).join(', ')+' · English email blocked until fully translated':'';warning.style.display=residual.length?'block':'none';warning.style.cssText='display:'+(residual.length?'block':'none')+';max-width:100%;flex-basis:100%;overflow-wrap:anywhere;color:#a13a2a;font-size:12px;padding:4px 0'}}
 function ensureDashboardLanguageControl(){const host=get('hd24Feedback');if(!host)return;let control=get('hd24DashboardLanguageControl');if(!control){control=document.createElement('div');control.id='hd24DashboardLanguageControl';control.style.cssText='display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:8px;margin:8px 0';control.innerHTML='<label for="hd24DashboardLanguageSelect">대시보드 언어 / Dashboard language</label><select id="hd24DashboardLanguageSelect" data-hd24-dashboard-language aria-label="Dashboard language"><option value="ko">한국어</option><option value="en">English</option></select>';control.insertAdjacentHTML('beforeend','<span id="hd24DashboardTranslationWarning" role="status" style="display:none;color:#a13a2a;font-size:12px"></span>');host.prepend(control);control.querySelector('select').onchange=e=>setDashboardLanguage(e.target.value)}setDashboardLanguage(window.__HD24_DASHBOARD_LANG__||'ko')}
 document.addEventListener('hd24:deep-validation-ready',()=>setTimeout(ensureDashboardLanguageControl,80));
 document.addEventListener('hd24:deep-validation-rendered',()=>ensureDashboardLanguageControl());
@@ -180,7 +208,7 @@ async function captureFeedbackDashboards(){
   let stage=null;
   try{
    stage=document.createElement('div');stage.style.cssText='position:fixed;left:0;top:0;width:1180px;height:850px;overflow:auto;background:#fff;z-index:-9999;pointer-events:none;visibility:visible';
-   const copy=el.cloneNode(true);copy.style.display='block';copy.style.visibility='visible';copy.style.width='1120px';copy.style.maxWidth='none';stage.appendChild(copy);document.body.appendChild(stage);if(id==='hd24ExecutiveDashboard')translateExecutiveLegend(copy,'en');englishDashboardClone(copy);
+   const copy=el.cloneNode(true);copy.style.display='block';copy.style.visibility='visible';copy.style.width='1120px';copy.style.maxWidth='none';stage.appendChild(copy);document.body.appendChild(stage);if(id==='hd24ExecutiveDashboard')translateExecutiveLegend(copy,'en');if(id==='hd24DeepValidation')translateDeepLegend(copy,'en');englishDashboardClone(copy);
    const canvas=await Promise.race([window.html2canvas(copy,{backgroundColor:'#ffffff',scale:1.2,useCORS:true,logging:false,windowWidth:1400,scrollX:0,scrollY:0}),new Promise((_,reject)=>setTimeout(()=>reject(new Error('캡처 시간 초과')),12000))]);
    const base64=canvas.toDataURL('image/png').split(',')[1];if(canvas.width<200||canvas.height<100||!base64?.startsWith('iVBORw0KGgo')||base64.length<1500)throw new Error('PNG 크기 또는 인코딩 불량');
    out.push({filename,cid,mimeType:'image/png',base64});
