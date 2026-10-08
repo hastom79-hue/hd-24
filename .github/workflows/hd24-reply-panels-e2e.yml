@@ -271,7 +271,6 @@ jobs:
                       p=subprocess.run(['node','--check'],input=body,text=True,capture_output=True)
                       assert p.returncode==0, f'Inline script {i} syntax failed: {p.stderr}'
 
-              page.goto('http://127.0.0.1:8768/index.html',wait_until='networkidle',timeout=120000)
               page.wait_for_function("window.hd24ReplyFeedback && typeof window.hd24ReplyFeedback.render==='function'",timeout=30000)
 
               # Reproduce the historical race: remove the upload panel, then render dedicated panels.
