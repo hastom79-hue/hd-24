@@ -456,3 +456,13 @@ jobs:
               print('HD24 REPLY PANELS E2E PASS: empty-state + data-backed analysis + feedback mail')
               browser.close()
           PY
+      - name: Preserve browser E2E failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hd24-reply-e2e-failure-diagnostics
+          path: |
+            /tmp/hd24-reply-http.log
+            test-results/
+          if-no-files-found: warn
+          retention-days: 7
