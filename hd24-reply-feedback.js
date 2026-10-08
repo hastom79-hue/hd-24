@@ -212,13 +212,13 @@ function dueState(r,a){
 }
 
 function analysisResultFor(r,a,history=[]){
- const k=txt(r.kpiEn||r.kpi)||'KPI',parts=[];
+ const k=/[가-힣]/.test(txt(r.kpiEn||r.kpi))?'This KPI':(txt(r.kpiEn||r.kpi)||'KPI'),parts=[];
  parts.push(`${k}: response completeness ${a.score}%`);
  if(!a.reason)parts.push('miss/deterioration reason is not explained');
  if(!a.root)parts.push('verified root cause is absent'); else if(a.root.length<8)parts.push('root cause is stated but mechanism/evidence is insufficient'); else parts.push('root cause is documented');
  if(!a.plan)parts.push('recovery action is absent'); else if(a.plan.length<12)parts.push('recovery action exists but execution method/completion criteria are insufficient'); else parts.push('recovery action is documented');
  if(!a.owner)parts.push('accountable owner is not assigned'); else parts.push('accountable owner is recorded in the source fields');
- if(!a.due)parts.push('committed completion date is absent'); else parts.push(`due: ${a.due}`);
+ if(!a.due)parts.push('committed completion date is absent'); else parts.push(/[가-힣]/.test(String(a.due))?'committed completion date is recorded in the source fields':`due: ${a.due}`);
  if(a.target)parts.push('next-month recovery target is recorded in the source fields');
  if(a.reason&&a.root&&a.reason.toLowerCase()===a.root.toLowerCase())parts.push('reason and root cause use the same statement, so causal depth is insufficient');
  const prior=previousReply(history,r),prev=prior?analyze(prior):null;
@@ -259,7 +259,7 @@ function finalRequestFor(r,a,history=[]){
 }
 
 function feedbackFor(r,a,history=[]){
- const k=txt(r.kpiEn||r.kpi)||'KPI', out=[];
+ const k=/[가-힣]/.test(txt(r.kpiEn||r.kpi))?'This KPI':(txt(r.kpiEn||r.kpi)||'KPI'), out=[];
  if(!a.root)out.push(`${k}: Identify the verified root cause with evidence, not only the symptom or result.`);
  if(a.root&&a.root.length<8)out.push(`${k}: Expand the root cause to explain the failure mechanism and supporting evidence.`);
  if(!a.plan)out.push(`${k}: Define a concrete recovery action linked directly to the verified root cause.`);
