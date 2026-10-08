@@ -314,9 +314,23 @@ function dueState(r,a){
  return Number.isFinite(t)?{kind:'date',overdue:t<Date.now()&&!done}:{kind:'text',overdue:false};
 }
 
+function kpiPerformanceEvidence(r,history=[]){
+ const prior=previousReply(history,r);
+ const number=v=>{const raw=txt(v).replace(/,/g,'');return raw!==''&&/^-?\d+(?:\.\d+)?$/.test(raw)?Number(raw):null};
+ const current=number(r?.actual),previous=number(prior?.actual);
+ const unit=txt(r?.unit||r?.kpiUnit||r?.uom);
+ const direction=txt(r?.improvementDirection||r?.targetDirection||r?.betterDirection).toLowerCase();
+ if(!prior)return 'KPI trend: no earlier-month comparison available';
+ if(current===null||previous===null)return 'KPI trend: actual performance values unavailable or nonnumeric; direction not assessed';
+ if(!['higher','lower','up','down','increase','decrease'].includes(direction))return 'KPI trend: values available but improvement direction is undefined; no improvement or deterioration inferred';
+ const higher=['higher','up','increase'].includes(direction),delta=current-previous;
+ const trend=delta===0?'unchanged':(higher?delta>0:delta<0)?'improved':'deteriorated';
+ return 'KPI trend: '+trend+' ('+previous+(unit?' '+unit:'')+' -> '+current+(unit?' '+unit:'')+'); action effectiveness and causation remain unverified';
+}
 function analysisResultFor(r,a,history=[]){
  const k=/[가-힣]/.test(txt(r.kpiEn||r.kpi))?'This KPI':(txt(r.kpiEn||r.kpi)||'KPI'),parts=[];
  parts.push(`${k}: response completeness ${a.score}%`);
+ parts.push(kpiPerformanceEvidence(r,history));
  if(!a.reason)parts.push('miss/deterioration reason is not explained');
  if(!a.root)parts.push('root cause is not documented'); else if(a.root.length<8)parts.push('root cause is stated but mechanism/evidence is insufficient'); else parts.push('root cause is described; causal validity is not yet verified');
  if(!a.plan)parts.push('recovery action is absent'); else if(a.plan.length<12)parts.push('recovery action exists but execution method/completion criteria are insufficient'); else parts.push('recovery action is described; execution and effectiveness are not yet verified');
