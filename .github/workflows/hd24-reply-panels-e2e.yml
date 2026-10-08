@@ -263,8 +263,10 @@ jobs:
                   rels=ET.fromstring(z.read('xl/_rels/workbook.xml.rels'))
                   rel=next((x for x in rels.findall('p:Relationship',ns) if x.attrib.get('Id')==rel_id),None)
                   assert rel is not None, 'Evidence worksheet relationship is missing'
-                  target=rel.attrib['Target'].lstrip('/')
-                  target=target if target.startswith('xl/') else 'xl/'+target
+                  import posixpath
+                  raw_target=rel.attrib['Target']
+                  target=raw_target.lstrip('/') if raw_target.startswith('/') else posixpath.normpath(posixpath.join('xl',raw_target))
+                  assert target.startswith('xl/worksheets/') and target in z.namelist(), 'Evidence worksheet target is invalid: '+target
                   evidence=ET.fromstring(z.read(target))
                   shared=[]
                   if 'xl/sharedStrings.xml' in z.namelist():
