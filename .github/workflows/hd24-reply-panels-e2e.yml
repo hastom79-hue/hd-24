@@ -307,6 +307,13 @@ jobs:
                   assert len([n for n in names if re.fullmatch(r'xl/worksheets/sheet\d+\.xml',n)])>=3,'Missing workbook evidence/detail sheets'
               html=' '.join((part.get_payload(decode=True) or b'').decode('utf-8','replace') for part in parts if part.get_content_type()=='text/html')
               assert all('cid:'+part.get('Content-ID','').strip('<>') in html for part in png),'Missing embedded dashboard CID reference'
+              assert 'Dear Team,' in html and 'This report presents the findings' in html, 'Feedback email body is missing'
+              first_cid=html.find('cid:')
+              assert first_cid>html.find('Dear Team,')>=0, 'Dashboard image appears before feedback body'
+              assert html.find('[Review and Follow-up Actions]')>=0 and html.find('[Review and Follow-up Actions]')<first_cid, 'Follow-up actions must precede inline dashboard images'
+              assert 'button' not in html.split('cid:')[0].lower() or 'dashboard' in html.lower(), 'Malformed HTML body'
+              print('PASS: generated EML places complete feedback and follow-up text before inline dashboard images')
+
               page.locator('#hd24FeedbackDraft').fill('STALE_DRAFT_SENTINEL_FROM_PRIOR_REPLY')
               # A change to a prior reply must invalidate the generated workbook.
               page.evaluate("""() => {
