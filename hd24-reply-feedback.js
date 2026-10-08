@@ -270,7 +270,7 @@ function phraseSimilarity(a,b){a=phraseNorm(a);b=phraseNorm(b);if(!a||!b)return 
 const materiallySame=(a,b)=>phraseSimilarity(a,b)>=0.6;
 function qualityTier(r,a){const critical=['rootCause','recoveryPlan','actionOwner','plannedCompletionDate'].filter(k=>!txt(r[k])).length,structural=a.flags.filter(f=>['근본원인 미기재','만회계획 미기재','담당자 미지정','완료예정일 미지정'].includes(f[0])).length,execution=a.flags.filter(f=>['반복 근인','조치 정체','기한 초과'].includes(f[0])).length,content=a.flags.filter(f=>/동일 문구|매우 짧|설명이 짧|반복 기재|기한 구체화 필요/.test(f[0])).length;if(critical>=2||structural>=2||a.score<67)return '중점 보완';if(structural||execution||content||a.flags.some(f=>f[0]==='심층검증 HIGH'||f[0]==='심층검증 보완'))return '보완 필요';return '충분'};
 const replyOrder=(a,b)=>{const pa=(Number(a?.targetYear)||2026)*12+Number(a?.targetMonth||0),pb=(Number(b?.targetYear)||2026)*12+Number(b?.targetMonth||0);if(pa!==pb)return pb-pa;const sa=Number(a?.replySequence)||0,sb=Number(b?.replySequence)||0;if(sa!==sb)return sb-sa;return String(b?.replyReceivedAt||'').localeCompare(String(a?.replyReceivedAt||''))};
-const previousReply=(history,current)=>history.filter(x=>x!==current).sort(replyOrder)[0]||null;
+const previousReply=(history,current)=>{const monthKey=r=>(Number(r?.targetYear)||2026)*12+Number(r?.targetMonth||0),currentMonth=monthKey(current);if(!Number(current?.targetMonth))return null;return history.filter(x=>x!==current&&Number(x?.targetMonth)&&monthKey(x)<currentMonth).sort(replyOrder)[0]||null;};
 function analyze(r){
  const missing=fields.filter(([k])=>!txt(r[k]));
  const reason=txt(r.reason),root=txt(r.rootCause),plan=txt(r.recoveryPlan),owner=txt(r.actionOwner),due=txt(r.plannedCompletionDate),target=txt(r.nextMonthRecoveryTarget);
