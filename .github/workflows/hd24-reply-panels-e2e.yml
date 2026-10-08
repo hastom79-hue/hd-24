@@ -125,7 +125,18 @@ jobs:
               errors=[]
               page.on('pageerror',lambda e: errors.append(str(e)))
               page.goto('http://127.0.0.1:8768/index.html',wait_until='domcontentloaded',timeout=120000)
-              page.wait_for_function("window.hd24ReplyFeedback && window.hd24DeepReplyValidation",timeout=30000)
+              try:
+                  page.wait_for_function("window.hd24ReplyFeedback && window.hd24DeepReplyValidation",timeout=30000)
+              except Exception:
+                  print('INITIALIZATION FAILURE',page.evaluate("""() => ({
+                    readyState:document.readyState,
+                    feedbackReady:!!window.hd24ReplyFeedback,
+                    deepReady:!!window.hd24DeepReplyValidation,
+                    tabBarPresent:!!document.querySelector('.hd24-tab'),
+                    scriptCount:document.scripts.length,
+                    scriptSources:Array.from(document.scripts).map(s=>s.src).filter(Boolean).slice(-12)
+                  })"""),'pageErrors=',errors,flush=True)
+                  raise
               page.evaluate("""() => {
                 localStorage.setItem('hd24_kpi_reply_history_v2',JSON.stringify([
                   {plant:'india',targetYear:2026,targetMonth:7,kpi:'Test KPI',kpiEn:'Test KPI',
