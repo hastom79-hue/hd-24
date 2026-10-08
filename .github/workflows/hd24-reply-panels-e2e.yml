@@ -248,6 +248,9 @@ jobs:
               with page.expect_download(timeout=60000) as changed_download:
                   page.locator('#hd24FeedbackSend').click()
               changed=email.message_from_bytes(open(changed_download.value.path(),'rb').read())
+              assert changed.get('X-Unsent')=='1', 'Generated Outlook draft must remain explicitly unsent'
+              changed_text=' '.join((part.get_payload(decode=True) or b'').decode('utf-8','replace') for part in changed.walk() if part.get_content_type() in ('text/plain','text/html'))
+              assert 'STALE_DRAFT_SENTINEL_FROM_PRIOR_REPLY' not in changed_text, 'Stale feedback draft leaked into regenerated Outlook package'
               changed_xlsx=[part for part in changed.walk() if part.get_content_type()=='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
               assert len(changed_xlsx)==1,'Updated reply must still have exactly one Excel attachment'
               assert changed_xlsx[0].get_payload(decode=True)!=xlsx[0].get_payload(decode=True),'Historical reply change did not regenerate Excel'
