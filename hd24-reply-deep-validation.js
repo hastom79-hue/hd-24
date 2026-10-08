@@ -110,8 +110,8 @@ function render(){
  $('hd24ExportDeepAnalysis').onclick=()=>exportXlsx(rows,cons).catch(e=>alert(e.message));
  return true;
 }
-let renderTimer=0,lastRenderSig='';
-function renderScheduled(delay=0){clearTimeout(renderTimer);renderTimer=setTimeout(()=>{renderTimer=0;const plant=$('plantSelect')?.value||'india',raw=localStorage.getItem(KEY)||'[]',sig=plant+'|'+raw;if(sig===lastRenderSig&&$('hd24DeepValidation')?.isConnected)return;try{if(render()!==false){lastRenderSig=sig;document.dispatchEvent(new CustomEvent('hd24:deep-validation-rendered'))}else{lastRenderSig='';setTimeout(()=>renderScheduled(150),150)}}catch(error){console.error('HD24 deep validation render failed',error);lastRenderSig='';}},delay)}
+let renderTimer=0,lastRenderSig='',hostRetryCount=0;
+function renderScheduled(delay=0){clearTimeout(renderTimer);renderTimer=setTimeout(()=>{renderTimer=0;const plant=$('plantSelect')?.value||'india',raw=localStorage.getItem(KEY)||'[]',sig=plant+'|'+raw;if(sig===lastRenderSig&&$('hd24DeepValidation')?.isConnected)return;try{if(render()!==false){hostRetryCount=0;lastRenderSig=sig;document.dispatchEvent(new CustomEvent('hd24:deep-validation-rendered'))}else{lastRenderSig='';if(++hostRetryCount<=5)setTimeout(()=>renderScheduled(150),150);else console.warn('HD24 deep validation host unavailable after 5 retries')}}catch(error){console.error('HD24 deep validation render failed',error);lastRenderSig='';}},delay)}
 document.addEventListener('DOMContentLoaded',()=>renderScheduled(120),{once:true});document.addEventListener('hd24:reply-feedback-ready',()=>renderScheduled(40));document.addEventListener('hd24:reply-imported',()=>renderScheduled(120));document.addEventListener('change',e=>{if(e.target?.id==='plantSelect'){lastRenderSig='';renderScheduled(80)}});
 window.hd24DeepReplyValidation={render,renderScheduled,flagsFor,contradictions,closedLoop,drillRows,detailRows:rows=>{const findings=rows.flatMap(r=>flagsFor(r,rows).map(x=>({r,sev:x[0],msg:x[1]})));return drillRows('all',rows,findings,closedLoop(rows),contradictions(rows))}};
 renderScheduled(40);
