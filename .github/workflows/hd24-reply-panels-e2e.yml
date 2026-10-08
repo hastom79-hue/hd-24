@@ -91,6 +91,17 @@ jobs:
           assert "status:'send-failed'" in source, 'Failed sends must have distinct log status'
           print('PASS: mail response guard and EML vs sent log status separation')
           PY
+      - name: Verify asynchronous feedback Excel version guards
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          source=Path('hd24-reply-feedback.js').read_text(encoding='utf-8')
+          assert 'function exportFeedbackWorkbook(rows,plant,expectedExportKey=lastExportKey)' in source
+          assert 'expectedExportKey!==lastExportKey' in source
+          assert "(get('plantSelect')?.value||'india')!==plant" in source
+          assert 'exportFeedbackWorkbook(rows,plant,exportKey).catch(e=>{if(lastExportKey!==exportKey)return;' in source
+          print('PASS: stale Excel export results and failures cannot overwrite newer version state')
+          PY
       - name: English dashboards and refresh regression (browser)
         run: |
           python - <<'PY'
