@@ -244,6 +244,7 @@ jobs:
                 window.hd24ReplyFeedback.render();
               }""")
               assert 'STALE_DRAFT_SENTINEL_FROM_PRIOR_REPLY' not in page.locator('#hd24FeedbackDraft').input_value(), 'Reply edit retained stale feedback email draft'
+              assert len(page.locator('#hd24FeedbackDraft').input_value().strip())>30, 'Regenerated feedback email draft is empty or truncated'
               with page.expect_download(timeout=60000) as changed_download:
                   page.locator('#hd24FeedbackSend').click()
               changed=email.message_from_bytes(open(changed_download.value.path(),'rb').read())
