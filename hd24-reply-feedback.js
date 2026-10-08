@@ -330,6 +330,7 @@ function masterDefinitionEvidence(r){
 function kpiPerformanceEvidence(r,history=[]){
  const master=masterDefinitionEvidence(r);
  if(master.status==='conflict')return 'KPI trend: source KPI definition conflicts with the plant master; comparison withheld pending reconciliation';
+ if(master.status!=='consistent')return 'KPI trend: plant KPI master definition is '+master.status+'; comparison withheld pending verified unit and direction mapping';
  const prior=previousReply(history,r);
  if(!prior)return 'KPI trend: no earlier-month comparison available';
  const number=v=>{const raw=txt(v).replace(/,/g,'');return raw!==''&&/^-?\d+(?:\.\d+)?$/.test(raw)?Number(raw):null};
