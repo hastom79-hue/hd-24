@@ -254,7 +254,19 @@ async function captureFeedbackDashboards(){
   let stage=null;
   try{
    stage=document.createElement('div');stage.style.cssText='position:fixed;left:0;top:0;width:1180px;height:auto;overflow:visible;background:#fff;z-index:-9999;pointer-events:none;visibility:visible';
-   const copy=el.cloneNode(true);copy.style.display='block';copy.style.visibility='visible';copy.style.width='1120px';copy.style.maxWidth='none';copy.querySelectorAll('button,input,select,textarea,[contenteditable="true"],.hd24-dashboard-language-control,#hd24DashboardLanguageControl,#hd24DeepDetailBox,#hd24ExportDeepAnalysis').forEach(n=>n.remove());stage.appendChild(copy);document.body.appendChild(stage);if(id==='hd24ExecutiveDashboard'){translateExecutiveLegend(copy,'en');normalizeExecutiveEnglish(copy);}if(id==='hd24DeepValidation')translateDeepLegend(copy,'en');englishDashboardClone(copy);
+   const copy=el.cloneNode(true);copy.style.display='block';copy.style.visibility='visible';copy.style.width='1120px';copy.style.maxWidth='none';copy.querySelectorAll('button,input,select,textarea,[contenteditable="true"],.hd24-dashboard-language-control,#hd24DashboardLanguageControl,#hd24DeepDetailBox,#hd24ExportDeepAnalysis').forEach(n=>n.remove());
+if (id === 'hd24ExecutiveDashboard') {
+  const interpretation = copy.lastElementChild;
+  if (
+    interpretation?.textContent?.includes('관리 해석') ||
+    interpretation?.textContent?.includes('Management Interpretation')
+  ) {
+    interpretation.remove();
+  }
+}
+stage.appendChild(copy);
+document.body.appendChild(stage);
+  ;if(id==='hd24ExecutiveDashboard'){translateExecutiveLegend(copy,'en');normalizeExecutiveEnglish(copy);}if(id==='hd24DeepValidation')translateDeepLegend(copy,'en');englishDashboardClone(copy);
    const canvas=await Promise.race([window.html2canvas(copy,{backgroundColor:'#ffffff',scale:1.2,useCORS:true,logging:false,windowWidth:1400,scrollX:0,scrollY:0}),new Promise((_,reject)=>setTimeout(()=>reject(new Error('캡처 시간 초과')),12000))]);
    const base64=canvas.toDataURL('image/png').split(',')[1];if(canvas.width<200||canvas.height<100||!base64?.startsWith('iVBORw0KGgo')||base64.length<1500)throw new Error('PNG 크기 또는 인코딩 불량');
    out.push({filename,cid,mimeType:'image/png',base64});
