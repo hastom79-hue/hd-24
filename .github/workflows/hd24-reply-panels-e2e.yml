@@ -157,8 +157,10 @@ jobs:
                 ]));
                 window.hd24ReplyFeedback.render();
                 window.hd24DeepReplyValidation.render();
-                document.querySelector('.hd24-tab[data-tab="replyanalysis"]')?.click();
               }""")
+              page.wait_for_function("typeof window.hd24SwitchTab === 'function'",timeout=15000)
+              page.evaluate("window.hd24SwitchTab('replyanalysis')")
+              page.wait_for_function("document.querySelector('.hd24-tab.active')?.dataset.tab === 'replyanalysis' && sessionStorage.getItem('hd24_active_tab') === 'replyanalysis'",timeout=15000)
               page.wait_for_selector('#hd24DashboardLanguageSelect',state='attached',timeout=15000)
               page.evaluate("""() => { const el=document.getElementById('hd24DashboardLanguageSelect'); if(!el)throw new Error('Dashboard language selector missing'); el.value='en'; el.dispatchEvent(new Event('change',{bubbles:true})); }""")
               page.wait_for_timeout(350)
