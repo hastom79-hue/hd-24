@@ -115,10 +115,14 @@ jobs:
                   remaining=re.findall(r'[가-힣]+',content)
                   assert not remaining, f'{ident} has untranslated Korean: {remaining[:20]}'
               assert not errors, errors
-              page.reload(wait_until='networkidle')
-              page.wait_for_function("document.querySelector('.hd24-tab.active')?.dataset.tab === 'replyanalysis'",timeout=15000)
-              assert not errors, errors
-              print('PASS: English dashboards contain no Korean and refresh preserves selected tab')
+              for attempt in range(3):
+                  page.reload(wait_until='networkidle')
+                  page.wait_for_function("document.querySelector('.hd24-tab.active')?.dataset.tab === 'replyanalysis'",timeout=15000)
+                  page.wait_for_function("window.hd24ReplyFeedback && window.hd24DeepReplyValidation",timeout=15000)
+                  assert page.locator('#hd24ExecutiveDashboard').inner_text().strip(), f'Empty executive dashboard after reload {attempt+1}'
+                  assert page.locator('#hd24DeepValidation').inner_text().strip(), f'Empty deep validation after reload {attempt+1}'
+                  assert not errors, f'Browser errors after reload {attempt+1}: {errors}'
+              print('PASS: English dashboards and three consecutive refreshes preserve selected tab and nonempty panels')
               browser.close()
           PY
       - name: End-to-end Outlook package generation with embedded PNGs and Excel
