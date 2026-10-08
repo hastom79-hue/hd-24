@@ -106,6 +106,59 @@ jobs:
               print('PASS: English dashboards contain no Korean and refresh preserves selected tab')
               browser.close()
           PY
+      - name: End-to-end Outlook package generation with embedded PNGs and Excel
+        run: |
+          python - <<'PY'
+          import re, email, zipfile, io
+          from playwright.sync_api import sync_playwright
+          with sync_playwright() as p:
+              browser=p.chromium.launch(headless=True,accept_downloads=True)
+              page=browser.new_page(accept_downloads=True)
+              page.goto('http://127.0.0.1:8768/index.html',wait_until='networkidle',timeout=120000)
+              page.wait_for_function("window.hd24ReplyFeedback && window.hd24DeepReplyValidation",timeout=30000)
+              page.evaluate("""() => {
+                localStorage.removeItem('hd24_mail_endpoint_v1');
+                window.HD24_MAIL_ENDPOINT='';
+                localStorage.setItem('hd24_kpi_reply_history_v2',JSON.stringify([
+                  {plant:'india',targetYear:2026,targetMonth:7,kpi:'Sample KPI',kpiEn:'Sample KPI',
+                   reason:'Specific production delay',rootCause:'Material shortage',
+                   recoveryPlan:'Supplier escalation and weekly verification',actionOwner:'Owner A',
+                   plannedCompletionDate:'2026-10-31',replySequence:1},
+                  {plant:'india',targetYear:2026,targetMonth:8,kpi:'Sample KPI',kpiEn:'Sample KPI',
+                   reason:'Specific production delay',rootCause:'Material shortage',
+                   recoveryPlan:'Supplier escalation and weekly verification',actionOwner:'Owner A',
+                   plannedCompletionDate:'2026-10-31',replySequence:1}
+                ]));
+                document.getElementById('plantSelect').value='india';
+                document.getElementById('mailTo').value='qa-example@example.invalid';
+                window.hd24ReplyFeedback.render();
+                window.hd24DeepReplyValidation.render();
+                window.hd24SwitchTab('replymail');
+              }""")
+              page.wait_for_selector('#hd24FeedbackSend',timeout=15000)
+              page.locator('#hd24DashboardLanguageSelect').select_option('en')
+              page.wait_for_timeout(300)
+              with page.expect_download(timeout=60000) as downloaded:
+                  page.locator('#hd24FeedbackSend').click()
+              artifact=downloaded.value
+              data=open(artifact.path(),'rb').read()
+              msg=email.message_from_bytes(data)
+              assert msg.get('X-Unsent')=='1','Package must be an unsent Outlook draft'
+              parts=list(msg.walk())
+              png=[part for part in parts if part.get_content_type()=='image/png']
+              xlsx=[part for part in parts if part.get_content_type()=='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+              assert len(png)==2,f'Expected 2 PNG dashboards, got {len(png)}'
+              assert len(xlsx)==1,f'Expected 1 Excel attachment, got {len(xlsx)}'
+              assert all((part.get_payload(decode=True) or b'').startswith(b'\\x89PNG') for part in png),'Invalid PNG payload'
+              with zipfile.ZipFile(io.BytesIO(xlsx[0].get_payload(decode=True))) as z:
+                  names=z.namelist()
+                  assert 'xl/workbook.xml' in names,'Invalid Excel workbook'
+                  assert len([n for n in names if re.fullmatch(r'xl/worksheets/sheet\\d+\\.xml',n)])>=3,'Missing workbook evidence/detail sheets'
+              html=' '.join((part.get_payload(decode=True) or b'').decode('utf-8','replace') for part in parts if part.get_content_type()=='text/html')
+              assert all('cid:'+part.get('Content-ID','').strip('<>') in html for part in png),'Missing embedded dashboard CID reference'
+              print('PASS: unsent EML includes two valid inline PNG dashboards and three-sheet Excel')
+              browser.close()
+          PY
       - name: Reply analysis and feedback mail must never render blank
         run: |
           python - <<'PY'
