@@ -1,6 +1,7 @@
 (()=>{'use strict';
 const KEY='hd24_kpi_reply_history_v2', $=id=>document.getElementById(id), norm=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
 const kpiKey=r=>norm(r.kpiEn||r.kpi).replace(/[^a-z0-9가-힣]/g,'');
+const samePlant=(a,b)=>{const pa=norm(a?.plant),pb=norm(b?.plant);return !!pa&&!!pb&&pa===pb};
 const sameKpi=(a,b)=>{const ak=[kpiKey(a),norm(a.kpi),norm(a.kpiEn)].filter(Boolean),bk=[kpiKey(b),norm(b.kpi),norm(b.kpiEn)].filter(Boolean);return ak.some(x=>bk.includes(x))};
 const yearOf=r=>Number(r?.targetYear)||2026, periodOf=r=>yearOf(r)*12+Number(r?.targetMonth||0)-1;
 const val=x=>{if(typeof x==='number')return Number.isFinite(x)?x:null;const raw=String(x??'').trim().replace(/,/g,'');const m=raw.match(/[-+]?\d*\.?\d+/);if(!m)return null;const n=Number(m[0]);return Number.isFinite(n)?n:null};
@@ -27,7 +28,7 @@ function flagsFor(r,all){
   else if(distinctPeriods>=1)f.push(['MEDIUM','동일 담당자 완료기한 초과 반복 — 조치 일정관리 점검 필요']);
   else f.push(['MEDIUM','완료예정일이 회신 접수시점보다 이전 — 지연조치 상태 확인 필요']);
  }
- const same=all.filter(x=>sameKpi(x,r)&&periodOf(x)<periodOf(r));
+ const same=all.filter(x=>samePlant(x,r)&&sameKpi(x,r)&&periodOf(x)<periodOf(r));
  const consecutiveCount=field=>{const cur=norm(r[field]);if(!cur)return 0;let count=1,p=periodOf(r)-1;while(true){const prev=same.filter(x=>periodOf(x)===p).sort((a,b)=>Number(b.replySequence||0)-Number(a.replySequence||0))[0];if(!prev||norm(prev[field])!==cur)break;count++;p--}return count};
  const reasonRun=consecutiveCount('reason'),rootRun=consecutiveCount('rootCause'),planRun=consecutiveCount('recoveryPlan');
  if(reasonRun>=3)f.push(['HIGH',reasonRun+'개월 연속 동일 사유 반복 — 원인분석 및 제거대책 재설계 필요']);else if(reasonRun===2)f.push(['MEDIUM','2개월 연속 동일 사유 반복 — 근인 제거 효과 재검증']);
@@ -38,8 +39,8 @@ function flagsFor(r,all){
 function directionOf(r){try{const matrix=window.HD24_RULE_MATRIX_V1||window.HD24RuleMatrix,d=matrix?.direction?.(r);if(d==='LOWER'||d==='HIGHER')return d}catch(_){}const d=norm(r.direction);if(d.includes('하향')||d==='lower'||d==='down')return'LOWER';if(d.includes('상향')||d==='higher'||d==='up')return'HIGHER';const k=norm(r.kpiEn||r.kpi);return /(dio|days inventory|재고회전일수|defect|ppm|complaint|downtime|lead time|recurrence|variation|loss)/.test(k)?'LOWER':'HIGHER'}
 function achieved(r){const pair=comparable(r.actual,r.target,r.unit);if(!pair)return null;const [a,t]=pair;return directionOf(r)==='LOWER'?a<=t:a>=t}
 function closedLoop(all){
- const out=[],latest=new Map();all.forEach(r=>{const k=kpiKey(r)+'|'+yearOf(r)+'|'+Number(r.targetMonth),cur=latest.get(k);if(!cur||Number(r.replySequence||0)>Number(cur.replySequence||0)||String(r.replyReceivedAt||'')>String(cur.replyReceivedAt||''))latest.set(k,r)});const ordered=[...latest.values()].sort((a,b)=>Number(a.targetMonth)-Number(b.targetMonth));
- for(const prev of ordered){const pm=Number(prev.targetMonth),next=ordered.find(x=>sameKpi(x,prev)&&periodOf(x)===periodOf(prev)+1);if(!next)continue;
+ const out=[],latest=new Map();all.forEach(r=>{const k=norm(r.plant)+'|'+kpiKey(r)+'|'+yearOf(r)+'|'+Number(r.targetMonth),cur=latest.get(k);if(!cur||Number(r.replySequence||0)>Number(cur.replySequence||0)||String(r.replyReceivedAt||'')>String(cur.replyReceivedAt||''))latest.set(k,r)});const ordered=[...latest.values()].sort((a,b)=>Number(a.targetMonth)-Number(b.targetMonth));
+ for(const prev of ordered){const pm=Number(prev.targetMonth),next=ordered.find(x=>samePlant(x,prev)&&sameKpi(x,prev)&&periodOf(x)===periodOf(prev)+1);if(!next)continue;
   const nextAch=achieved(next),prevAch=achieved(prev),plan=norm(prev.recoveryPlan),root=norm(prev.rootCause),sameRoot=root&&norm(next.rootCause)===root,samePlan=plan&&norm(next.recoveryPlan)===plan;
   if(prevAch===false&&nextAch===false&&(sameRoot||samePlan))out.push({sev:'HIGH',year:yearOf(next),month:next.targetMonth,kpi:next.kpiEn||next.kpi,msg:'전월 미달 후 차월도 미달이며 '+(sameRoot&&samePlan?'근본원인·대책이 모두 반복':'문제해결 논리가 반복')+' — 기존 대책 효과 미입증'});
   else if(prevAch===false&&nextAch===false)out.push({sev:'MEDIUM',year:yearOf(next),month:next.targetMonth,kpi:next.kpiEn||next.kpi,msg:'전월 미달 후 차월도 미달 — 변경 대책의 실행성과와 추가 근인 확인 필요'});
@@ -49,7 +50,6 @@ function closedLoop(all){
 }
 function contradictions(all){
  const out=[],n=s=>norm(s).replace(/\s/g,''),names=r=>[r.kpiEn,r.kpi].map(n).filter(Boolean),has=(r,arr)=>names(r).some(v=>arr.some(t=>v.includes(n(t))));
- const samePlant=(a,b)=>{const pa=norm(a?.plant),pb=norm(b?.plant);return !!pa&&!!pb&&pa===pb};
  const qualityAliases=['IQ 200 (Initial Quality)','IQ 200 (Production attributable)','IQ 200 Issues with Production responsibility','생산귀책 조립품질','생산귀책조립품질','Production attributable assembly quality','Production attributable quality'];
  const complianceAliases=['Standard Work Compliance','Production Instruction Compliance Rate','Sequence Compliance','표준작업준수율','표준작업 준수율','Standard Work Adherence','Standardized Work Compliance'];
  const recurrenceAliases=['Issue Recurrence Rate','Non-Compliance Recurrence Rate','Standard Non-compliance Recurrence','표준미준수재발','표준미준수 재발','비표준작업 재발율','비표준작업 재발률','Non-standard Work Recurrence','Nonstandard Work Recurrence'];
