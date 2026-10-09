@@ -198,3 +198,8 @@ for(const vagueDate of ['Monthly','TBD','to be confirmed']){
  assert.ok(warnings.some(x=>x[0]==='MEDIUM'&&x[1].includes('구체적 날짜가 아님')),'vague due date '+vagueDate+' must trigger follow-up');
 }
 console.log('PASS: vague completion deadlines trigger explicit schedule verification');
+const excelSerialDue=sourceContext.dueInfo({...incompleteBase,plannedCompletionDate:46357});
+assert.equal(excelSerialDue.kind,'date','Excel date serial must be a date, not vague text');
+assert.equal(new Date(excelSerialDue.time).toISOString().slice(0,10),'2026-12-01','Excel serial 46357 must map to Dec 1 2026');
+assert.ok(!sourceContext.flagsFor({...incompleteBase,plannedCompletionDate:46357},[incompleteBase]).some(x=>x[1].includes('구체적 날짜가 아님')),'valid Excel serial must not trigger vague-date warning');
+console.log('PASS: Excel serial 46357 completion date normalized without false warning');
