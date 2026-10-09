@@ -44,9 +44,11 @@ function flagsFor(r,all){
  const isPercent=norm(effectiveUnit(r)).includes('%'),value=val(r.actual);
  if(isPercent&&value!==null){
   const pct=percentPoints(value),history=all.filter(x=>samePlant(x,r)&&sameKpi(x,r)&&periodOf(x)<=periodOf(r)&&norm(effectiveUnit(x)).includes('%')).sort((a,b)=>periodOf(a)-periodOf(b));
-  const last=history.slice(-3),series=last.map(x=>percentPoints(x.actual));
-  const atCeiling=series.length>=3&&series.every(x=>x!==null&&Math.abs(x-100)<1e-6);
-  const atZero=series.length>=3&&series.every(x=>x!==null&&Math.abs(x)<1e-6);
+  const byPeriod=new Map(history.map(x=>[periodOf(x),x]));
+  const recent=[periodOf(r)-2,periodOf(r)-1,periodOf(r)].map(p=>byPeriod.get(p));
+  const series=recent.map(x=>x?percentPoints(x.actual):null);
+  const atCeiling=recent.every(Boolean)&&series.every(x=>x!==null&&Math.abs(x-100)<1e-6);
+  const atZero=recent.every(Boolean)&&series.every(x=>x!==null&&Math.abs(x)<1e-6);
   const first100=history.find(x=>{const n=percentPoints(x.actual);return n!==null&&Math.abs(n-100)<1e-6});
   if(first100&&Number(first100.targetMonth)<=3&&pct!==null&&Math.abs(pct-100)<1e-6&&periodOf(r)>periodOf(first100))
    f.push(['MEDIUM','1분기 내 100% 조기 달성 후 유지 — 목표 도전성·지표 변별력 및 개선 여지 검토 필요']);
