@@ -89,7 +89,7 @@ const numericContext={norm:context.norm};
 vm.createContext(numericContext);
 const numericHelpers=source.match(/const val=x=>[^\n]+\nfunction comparable\(actual,target,unit\)\{[^\n]+/);
 assert.ok(numericHelpers,'production numeric comparison helpers must exist');
-vm.runInContext(numericHelpers[0],numericContext);
+vm.runInContext(numericHelpers[0]+'\nthis.val=val;',numericContext);
 for(const missing of [null,undefined,'','  ','N/A','-'])assert.equal(numericContext.val(missing),null,'missing KPI value must not be converted to zero');
 assert.equal(numericContext.val(0),0,'numeric zero is a valid KPI value');
 assert.equal(numericContext.val('0%'),0,'explicit zero percentage is a valid KPI value');
