@@ -9,8 +9,8 @@ function uniqueRiskKpiCount(rows,findings,loop,cons){
  const join=(a,b)=>{const ra=root(a),rb=root(b);if(ra!==rb)parent.set(ra,rb)};
  const alias=r=>[norm(r?.kpiEn),norm(r?.kpi)].filter(Boolean);
  rows.forEach(r=>{const keys=alias(r).map(k=>norm(r.plant)+'|'+k);keys.forEach(k=>root(k));for(let i=1;i<keys.length;i++)join(keys[0],keys[i])});
- const plant=norm(rows[0]?.plant),keys=[...findings.map(x=>alias(x.r)[0]||''),...loop.map(x=>norm(x.kpi)),...cons.map(x=>norm(x.kpi))].filter(Boolean);
- return new Set(keys.map(k=>root(plant+'|'+k))).size;
+ const plant=norm(rows[0]?.plant),keys=[...findings.map(x=>norm(x.r?.plant||rows[0]?.plant)+'|'+(alias(x.r)[0]||'')),...loop.map(x=>plant+'|'+norm(x.kpi)),...cons.map(x=>plant+'|'+norm(x.kpi))].filter(k=>!k.endsWith('|'));
+ return new Set(keys.map(root)).size;
 }
 const yearOf=r=>Number(r?.targetYear)||2026, periodOf=r=>yearOf(r)*12+Number(r?.targetMonth||0)-1;
 const val=x=>{if(typeof x==='number')return Number.isFinite(x)?x:null;const raw=String(x??'').trim().replace(/,/g,'');const m=raw.match(/[-+]?\d*\.?\d+/);if(!m)return null;const n=Number(m[0]);return Number.isFinite(n)?n:null};
