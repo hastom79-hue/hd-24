@@ -109,6 +109,16 @@ assert.equal(numericContext.percentPoints(0),0,'Rate numeric zero must remain ze
 assert.equal(numericContext.percentPoints(''),null,'missing Rate must remain missing');
 assert.equal(numericContext.effectiveUnit({kpiEn:'WIP Compliance Rate',unit:''}),'%','Rate KPI must use percent even when source unit missing');
 console.log('PASS: Rate Excel normalization samples and missing-value handling');
+const dashboardFormat=html.match(/function fmtValWithUnit\(v, unit\)\{[\s\S]*?\n\}/);
+assert.ok(dashboardFormat,'dashboard KPI formatter must exist');
+const displayContext={round:n=>Math.round(n*100)/100,Math,Number,isFinite};
+vm.createContext(displayContext);
+vm.runInContext(dashboardFormat[0],displayContext);
+assert.equal(displayContext.fmtValWithUnit(0.85,'%'),'85%','fractional Rate must display 85%');
+assert.equal(displayContext.fmtValWithUnit(85,'%'),'85%','percentage-point Rate must not display 8500%');
+assert.equal(displayContext.fmtValWithUnit(0.975,'%'),'97.5%','fractional Rate must display 97.5%');
+console.log('PASS: dashboard Rate display 0.85/85/0.975');
+
 
 const missingMonthQuality={...quality,targetMonth:null};
 const missingMonthCompliance={...compliance,targetMonth:null};
