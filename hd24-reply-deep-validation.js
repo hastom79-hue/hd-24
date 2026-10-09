@@ -95,8 +95,9 @@ function flagsFor(r,all){
  if(planRun>=3){
   const months=[periodOf(r)-2,periodOf(r)-1,periodOf(r)];
   const series=months.map(p=>[...all].filter(x=>samePlant(x,r)&&sameKpi(x,r)&&periodOf(x)===p).sort((a,b)=>Number(b.replySequence||0)-Number(a.replySequence||0))[0]);
-  const dir=directionOf(r),values=series.map(x=>x?val(x.actual):null);
-  if(series.every(Boolean)&&values.every(Number.isFinite)&&series.every(x=>norm(x.recoveryPlan)===plan)){
+  const dir=directionOf(r),units=series.map(x=>x?norm(effectiveUnit(x)):''),values=series.map(x=>x?(norm(effectiveUnit(x)).includes('%')?comparable(x.actual,x.target,effectiveUnit(x))?.[0]??null:val(x.actual)):null);
+  const comparableSeries=series.every(Boolean)&&units.every(u=>u===units[0])&&series.every(x=>directionOf(x)===dir);
+  if(comparableSeries&&values.every(Number.isFinite)&&series.every(x=>norm(x.recoveryPlan)===plan)){
    const bad=(a,b)=>dir==='LOWER'?b>a:b<a;
    if(bad(values[0],values[1])&&bad(values[1],values[2]))f.push(['HIGH','3개월 동일 회복계획에도 실적 연속 악화 ('+values.join(' → ')+') — 대책 실효성 재검토 필요']);
    else if(bad(values[1],values[2]))f.push(['HIGH','3개월 동일 회복계획 중 최근 실적 재악화 ('+values.join(' → ')+') — 개선 지속성 검증 필요']);
