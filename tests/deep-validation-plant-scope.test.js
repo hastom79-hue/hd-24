@@ -103,6 +103,6 @@ check([missingMonthQuality,missingMonthCompliance],0,'missing month must not mat
 check([{...quality,targetMonth:0},{...compliance,targetMonth:0}],0,'month zero must not be a valid matching period');
 console.log('PASS: cross-KPI comparisons reject missing or invalid target month');
 
-const dioFallbacks=[...html.matchAll(/currentPlant==='india'\\?93:currentPlant==='brazil'\\?-24001:102/g)];
-assert.equal(dioFallbacks.length,2,'both paths must preserve the Brazil synthetic DIO key to prevent row collision');
+const dioFallback="currentPlant==='india'?93:currentPlant==='brazil'?-24001:102";
+assert.equal(html.split(dioFallback).length-1,2,'both paths must preserve the Brazil synthetic DIO key to prevent row collision');
 console.log('PASS: Brazil derived DIO uses isolated synthetic row key');
