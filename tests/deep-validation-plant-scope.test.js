@@ -203,3 +203,12 @@ assert.equal(excelSerialDue.kind,'date','Excel date serial must be a date, not v
 assert.equal(new Date(excelSerialDue.time).toISOString().slice(0,10),'2026-12-01','Excel serial 46357 must map to Dec 1 2026');
 assert.ok(!sourceContext.flagsFor({...incompleteBase,plannedCompletionDate:46357},[incompleteBase]).some(x=>x[1].includes('구체적 날짜가 아님')),'valid Excel serial must not trigger vague-date warning');
 console.log('PASS: Excel serial 46357 completion date normalized without false warning');
+
+for(const weekDue of ['W1, Aug-2026','W3, Sep-2026','W2/08/2026']){
+ const due=sourceContext.dueInfo({...incompleteBase,plannedCompletionDate:weekDue});
+ assert.equal(due.kind,'week','week-only due date should be recognized: '+weekDue);
+ const flags=sourceContext.flagsFor({...incompleteBase,plannedCompletionDate:weekDue},[incompleteBase]);
+ assert.ok(flags.some(x=>x[0]==='MEDIUM'&&x[1].includes('주차 단위')),'week-only due date should trigger precise-date request: '+weekDue);
+ assert.ok(!flags.some(x=>x[1].includes('완료예정일 미지정')),'week-only due date is not blank: '+weekDue);
+}
+console.log('PASS: week-only completion dates are recognized and require exact date confirmation');
