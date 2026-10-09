@@ -102,3 +102,8 @@ const missingMonthCompliance={...compliance,targetMonth:null};
 check([missingMonthQuality,missingMonthCompliance],0,'missing month must not match missing month in contradiction checks');
 check([{...quality,targetMonth:0},{...compliance,targetMonth:0}],0,'month zero must not be a valid matching period');
 console.log('PASS: cross-KPI comparisons reject missing or invalid target month');
+
+const dioFallbacks=[...html.matchAll(/currentPlant==='india'\?93:currentPlant==='brazil'\?96:102/g)];
+assert.equal(dioFallbacks.length,2,'both source and master-only DIO paths must use India row 93 and Brazil row 96');
+assert.ok(!html.includes("currentPlant==='brazil'?-24001"),'Brazil DIO must never use a synthetic negative fallback row');
+console.log('PASS: India and Brazil derived DIO fallback row mapping');
