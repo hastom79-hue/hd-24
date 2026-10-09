@@ -47,6 +47,12 @@ function flagsFor(r,all){
   const last=history.slice(-3),series=last.map(x=>percentPoints(x.actual));
   const atCeiling=series.length>=3&&series.every(x=>x!==null&&Math.abs(x-100)<1e-6);
   const atZero=series.length>=3&&series.every(x=>x!==null&&Math.abs(x)<1e-6);
+  const first100=history.find(x=>{const n=percentPoints(x.actual);return n!==null&&Math.abs(n-100)<1e-6});
+  if(first100&&Number(first100.targetMonth)<=3&&pct!==null&&Math.abs(pct-100)<1e-6&&periodOf(r)>periodOf(first100))
+   f.push(['MEDIUM','1분기 내 100% 조기 달성 후 유지 — 목표 도전성·지표 변별력 및 개선 여지 검토 필요']);
+  const targetPct=percentPoints(r.target);
+  if(targetPct!==null&&pct!==null&&directionOf(r)==='HIGHER'&&targetPct>0&&pct-targetPct>=20&&pct<=100)
+   f.push(['MEDIUM','목표 대비 실적 '+(pct-targetPct).toFixed(1)+'%p 초과 — 목표 도전성·산출 기준 및 성과 지속성 검증 필요']);
   if(atCeiling)f.push(['MEDIUM','최근 3개 기간 100% 반복 — KPI 포화·변별력·집계 증빙 및 목표 적정성 검증 필요']);
   if(atZero){
    const zeroIsDesired=directionOf(r)==='LOWER';
