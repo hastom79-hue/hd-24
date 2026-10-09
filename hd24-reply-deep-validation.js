@@ -151,8 +151,11 @@ function showDrill(kind,title,rows,findings,loop,cons){
 }
 function latestReplyRows(rows){
  const latest=new Map();
- rows.forEach((r,i)=>{const key=norm(r.plant)+'|'+yearOf(r)+'|'+Number(r.targetMonth)+'|'+kpiKey(r),old=latest.get(key);
- if(!old||Number(r.replySequence||0)>Number(old.r.replySequence||0)||(Number(r.replySequence||0)===Number(old.r.replySequence||0)&&String(r.replyReceivedAt||'')>String(old.r.replyReceivedAt||''))latest.set(key,{r,i});
+ rows.forEach((r,i)=>{
+  const key=[norm(r.plant),yearOf(r),Number(r.targetMonth),kpiKey(r)].join('|');
+  const previous=latest.get(key);
+  const newer=!previous||Number(r.replySequence||0)>Number(previous.r.replySequence||0)||(Number(r.replySequence||0)===Number(previous.r.replySequence||0)&&String(r.replyReceivedAt||'')>String(previous.r.replyReceivedAt||''));
+  if(newer)latest.set(key,{r,i});
  });
  return [...latest.values()].sort((a,b)=>a.i-b.i).map(x=>x.r);
 }
