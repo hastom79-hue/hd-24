@@ -735,9 +735,11 @@ function normalizeKpiPair(target,actual,unit,kpiName){
   const points=v=>Math.abs(v)>0&&Math.abs(v)<1?v*100:v;
   return [points(target),points(actual)];
 }
-function makeHistEntry(month, target, actual, direction){
+function makeHistEntry(month, target, actual, direction, kpiName){
   let achieved;
-  if (direction==='상향') achieved = actual >= target;
+  const orderIntake=/order\s*intake\s*fulfillment/i.test(String(kpiName||''));
+  if(orderIntake) achieved=Math.abs(actual-target)<1e-6;
+  else if (direction==='상향') achieved = actual >= target;
   else if (direction==='하향') achieved = actual <= target;
   else achieved = Math.abs(actual-target) < 1e-6;
   let ratio;
@@ -774,7 +776,7 @@ document.getElementById('btnJudge').addEventListener('click', (clickEvent) => {
           if (target===null || actual===null) continue;
           if (masterMonths && masterMonths[mo] && isCumulativeCell(getCell(masterWs, m.masterRow, masterMonths[mo]))) isCumulative = true;
           const [alignedTarget,alignedActual]=normalizeKpiPair(target,actual,m.unit,m.kpiEn||m.kpiKr);
-          hist.push(makeHistEntry(mo, alignedTarget, alignedActual, m.direction));
+          hist.push(makeHistEntry(mo, alignedTarget, alignedActual, m.direction, m.kpiEn||m.kpiKr));
         }
         if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, kpiEn:m.kpiEn||m.kpiKr, direction:m.direction, unit:m.unit||"", months:hist, isCumulative};
       }
@@ -800,7 +802,7 @@ document.getElementById('btnJudge').addEventListener('click', (clickEvent) => {
           const actual = normalizeValue(cellRaw, getCellRaw(masterWsRaw, m.masterRow, startCol+mo-1));
           if (actual===null) continue;
           const [alignedTarget,alignedActual]=normalizeKpiPair(target,actual,m.unit,m.kpiEn||m.kpiKr);
-          hist.push(makeHistEntry(mo, alignedTarget, alignedActual, m.direction));
+          hist.push(makeHistEntry(mo, alignedTarget, alignedActual, m.direction, m.kpiEn||m.kpiKr));
         }
         if (hist.length) byRow[m.masterRow] = {kpi:m.kpiKr, kpiEn:m.kpiEn||m.kpiKr, direction:m.direction, unit:m.unit||"", months:hist, isCumulative};
       }
