@@ -771,7 +771,7 @@ document.getElementById('btnJudge').addEventListener('click', (clickEvent) => {
       }
       const turnEntry=Object.values(byRow).find(x=>/Parts Inventory Turnover/i.test(String(x.kpiEn||''))||/부품재고\s*회전율/.test(String(x.kpi||'')));
       const existingDio=Object.entries(byRow).find(([,x])=>/DIO \(Days Inventory Outstanding\)/i.test(String(x.kpiEn||'')));
-      if(turnEntry) appendDerivedDio(byRow,turnEntry,existingDio?Number(existingDio[0]):(currentPlant==='india'?93:currentPlant==='brazil'?96:102));
+      if(turnEntry) appendDerivedDio(byRow,turnEntry,existingDio?Number(existingDio[0]):(currentPlant==='india'?93:currentPlant==='brazil'?-24001:102));
     } else {
       // 원본파일 없이 총괄파일만 있는 경우(울산은 원래 구조가 이렇고, 인도/브라질도 원본을
       // 아직 안 올렸으면 이 경로로) — 총괄파일 안의 (연간 고정)목표와 월별 실적을 그대로 사용.
@@ -796,7 +796,7 @@ document.getElementById('btnJudge').addEventListener('click', (clickEvent) => {
       }
       const turnEntry=Object.values(byRow).find(x=>/Parts Inventory Turnover/i.test(String(x.kpiEn||''))||/부품재고\s*회전율/.test(String(x.kpi||'')));
       const existingDio=Object.entries(byRow).find(([,x])=>/DIO \(Days Inventory Outstanding\)/i.test(String(x.kpiEn||'')));
-      if(turnEntry) appendDerivedDio(byRow,turnEntry,existingDio?Number(existingDio[0]):(currentPlant==='india'?93:currentPlant==='brazil'?96:102));
+      if(turnEntry) appendDerivedDio(byRow,turnEntry,existingDio?Number(existingDio[0]):(currentPlant==='india'?93:currentPlant==='brazil'?-24001:102));
       if (!cfg().hasSource) {
         log('⚠ 울산은 월별 목표가 아닌 연간 고정목표로 판정합니다 (원본파일이 없어 인도/브라질과 정확도가 다를 수 있음)');
       } else {
