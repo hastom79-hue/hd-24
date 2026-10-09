@@ -19,7 +19,7 @@ function dueInfo(r){
 function flagsFor(r,all){
  const f=[], reason=norm(r.reason),root=norm(r.rootCause),plan=norm(r.recoveryPlan),status=norm(r.statusTrend);
  const kpi=norm(r.kpiEn||r.kpi),pair=comparable(r.actual,r.target,effectiveUnit(r));
- const orderIntake=/order\\s*intake\\s*fulfillment/.test(kpi);
+ const orderIntake=/order\s*intake\s*fulfillment/.test(kpi);
  if(orderIntake&&pair&&Math.abs(pair[0]-pair[1])<=1e-6){
   f.push(['MEDIUM','확정오더 이행률 수치상 100% — 추가·취소·수량/납기 변경이 상쇄됐는지 원본 오더 변경이력 및 승인 근거 확인 필요']);
  }
