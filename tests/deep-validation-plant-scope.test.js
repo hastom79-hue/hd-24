@@ -79,3 +79,8 @@ const zeroTargetPrevious={...previous,direction:'LOWER',nextMonthRecoveryTarget:
 const zeroTargetNext={...sameCurrent,direction:'LOWER',actual:2};
 assert.ok(sourceContext.closedLoop([zeroTargetPrevious,zeroTargetNext]).some(x=>String(x.msg).includes('차월 회복목표 미달')),'explicit zero recovery target must be evaluated');
 console.log('PASS: zero-valued next-month recovery target evaluated');
+
+const recurrence=(actual)=>({...row('india','Non-standard Work Recurrence',null,actual),target:0});
+for(const missing of [null,'',undefined])check([quality,recurrence(missing)],0,'missing recurrence actual must not be treated as zero');
+check([quality,recurrence(0)],1,'explicit zero recurrence must remain a contradiction signal');
+console.log('PASS: missing recurrence actual is distinct from numeric zero');
