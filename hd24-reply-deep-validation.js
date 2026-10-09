@@ -8,7 +8,7 @@ const yearOf=r=>Number(r?.targetYear)||2026, periodOf=r=>yearOf(r)*12+Number(r?.
 const val=x=>{if(typeof x==='number')return Number.isFinite(x)?x:null;const raw=String(x??'').trim().replace(/,/g,'');const m=raw.match(/[-+]?\d*\.?\d+/);if(!m)return null;const n=Number(m[0]);return Number.isFinite(n)?n:null};
 const effectiveUnit=r=>/\brate\b/i.test(String(r?.kpiEn||r?.kpi||''))?'%':r?.unit;
 const percentPoints=x=>{const n=val(x);return n===null?null:(Math.abs(n)>0&&Math.abs(n)<1?n*100:n)};
-function comparable(actual,target,unit){let a=val(actual),t=val(target);if(a===null||t===null)return null;const u=norm(unit);if(u.includes('%')){if(Math.abs(t)===1&&Math.abs(a)>0&&Math.abs(a)<=2)return[a*100,t*100];const ratio=(Math.abs(a)<=1&&Math.abs(t)>1)||(Math.abs(t)<=1&&Math.abs(a)>1);if(ratio){if(Math.abs(a)<=1)a*=100;if(Math.abs(t)<=1)t*=100}}return[a,t]};
+function comparable(actual,target,unit){let a=val(actual),t=val(target);if(a===null||t===null)return null;const u=norm(unit);if(u.includes('%')){if(Math.abs(t)===1&&Math.abs(a)<=2)return[a*100,t*100];if(Math.abs(a)<=1&&Math.abs(t)<=1)return[a*100,t*100];const ratio=(Math.abs(a)<=1&&Math.abs(t)>1)||(Math.abs(t)<=1&&Math.abs(a)>1);if(ratio){if(Math.abs(a)<=1)a*=100;if(Math.abs(t)<=1)t*=100}}return[a,t]};
 function dueInfo(r){
  const raw=String(r?.plannedCompletionDate||'').trim(),done=/완료|complete|done/i.test(String(r?.actionStatus||r?.status||r?.completionStatus||''));
  if(!raw)return {kind:'missing',time:null,done};
