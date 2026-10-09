@@ -43,4 +43,14 @@ assert.ok(sourceContext.closedLoop([previous,sameCurrent]).length>0,'same plant 
 const flagged=sourceContext.flagsFor(current,[previous,current]);
 assert.ok(!flagged.some(x=>String(x[1]).includes('연속 동일')),'cross-plant root cause must not be counted as repeated');
 console.log('PASS: cross-plant recovery history and repeated root-cause isolation');
+const overdue=(plant,month)=>({...row(plant,'Other KPI',false,80),targetMonth:month,actionOwner:'Shared Owner',plannedCompletionDate:'2026-06-01',replyReceivedAt:'2026-09-01'});
+const currentOverdue=overdue('india',8);
+const crossOverdue=[overdue('brazil',6),overdue('brazil',7),currentOverdue];
+const isolated=sourceContext.flagsFor(currentOverdue,crossOverdue);
+assert.ok(!isolated.some(x=>String(x[1]).includes('반복')),'same owner across different plants must not trigger repeated overdue warning');
+const sameOverdue=[overdue('india',6),overdue('india',7),currentOverdue];
+const repeated=sourceContext.flagsFor(currentOverdue,sameOverdue);
+assert.ok(repeated.some(x=>String(x[1]).includes('기한 초과 반복')),'same owner and plant across periods must trigger repeated overdue warning');
+console.log('PASS: repeated overdue action-owner plant isolation');
+
 
