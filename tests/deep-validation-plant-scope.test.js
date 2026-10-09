@@ -7,7 +7,7 @@ const match=source.match(/function contradictions\(all\)\{[\s\S]*?\n\}\nasync fu
 assert.ok(match,'production contradictions() function must be found');
 const context={norm:s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim(),yearOf:r=>Number(r?.targetYear)||2026,achieved:r=>r.achieved};
 vm.createContext(context);
-vm.runInContext(source.match(/const samePlant=[^\n]+/)[0]+'\n'+match[0].replace(/\nasync function exportXlsx$/,''),context);
+vm.runInContext(source.match(/const samePlant=[^\n]+/)[0]+'\n'+source.match(/const validSameMonth=[^\n]+/)[0]+'\n'+match[0].replace(/\nasync function exportXlsx$/,''),context);
 const row=(plant,kpi,achieved,actual)=>({plant,kpiEn:kpi,targetYear:2026,targetMonth:8,achieved,actual});
 const quality=row('india','Production attributable assembly quality',false,50);
 const compliance=row('india','Standard Work Compliance',true,99);
@@ -96,3 +96,9 @@ assert.equal(numericContext.val('0%'),0,'explicit zero percentage is a valid KPI
 assert.equal(numericContext.comparable('',0,'%'),null,'missing actual versus zero target is not comparable');
 assert.equal(numericContext.comparable(0,0,'%')[0],0,'explicit zero actual and target are comparable');
 console.log('PASS: missing versus zero numeric KPI comparison contract');
+
+const missingMonthQuality={...quality,targetMonth:null};
+const missingMonthCompliance={...compliance,targetMonth:null};
+check([missingMonthQuality,missingMonthCompliance],0,'missing month must not match missing month in contradiction checks');
+check([{...quality,targetMonth:0},{...compliance,targetMonth:0}],0,'month zero must not be a valid matching period');
+console.log('PASS: cross-KPI comparisons reject missing or invalid target month');
