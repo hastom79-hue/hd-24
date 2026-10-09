@@ -193,3 +193,8 @@ for(const missing of ['', 'NA', 'N/A', 'not applicable']){
 console.log('PASS: blank/NA/N/A recovery root, plan, owner and due date classified HIGH');
 assert.ok(source.includes('detailRows:input=>{const rows=latestReplyRows(Array.isArray(input)?input:[]);'),'detailRows must dedupe latest KPI replies before findings, loop and contradiction checks');
 console.log('PASS: detailRows uses same latest-reply dedup as dashboard');
+for(const vagueDate of ['Monthly','TBD','to be confirmed']){
+ const warnings=sourceContext.flagsFor({...incompleteBase,plannedCompletionDate:vagueDate},[incompleteBase]);
+ assert.ok(warnings.some(x=>x[0]==='MEDIUM'&&x[1].includes('구체적 날짜가 아님')),'vague due date '+vagueDate+' must trigger follow-up');
+}
+console.log('PASS: vague completion deadlines trigger explicit schedule verification');
