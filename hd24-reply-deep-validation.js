@@ -59,7 +59,7 @@ function contradictions(all){
  for(const q of quality){
   const qBad=achieved(q)===false||/miss|decline|미달|악화/.test(norm(q.statusTrend));if(!qBad)continue;
   for(const c of controls.filter(x=>samePlant(x,q)&&yearOf(x)===yearOf(q)&&Number(x.targetMonth)===Number(q.targetMonth))){
-   const isCompliance=has(c,complianceAliases),isRecurrence=has(c,recurrenceAliases),zeroRecurrence=isRecurrence&&Number(c.actual)===0;
+   const isCompliance=has(c,complianceAliases),isRecurrence=has(c,recurrenceAliases),zeroRecurrence=isRecurrence&&c.actual!==null&&c.actual!==undefined&&String(c.actual).trim()!==''&&Number(c.actual)===0;
    if(achieved(c)===true||zeroRecurrence)out.push({sev:'HIGH',year:yearOf(q),month:q.targetMonth,kpi:q.kpiEn||q.kpi,related:c.kpiEn||c.kpi,msg:'생산귀책/초기 품질 결과는 미달·악화인데 '+(isCompliance?'표준작업 준수 관리지표는 정상/목표 달성':zeroRecurrence?'비표준작업 재발지표는 0':'관련 공정관리 지표는 정상/목표 달성')+'입니다. 점검대상·표본·판정기준 및 원인 연결을 교차 검증할 필요'});
   }
  }
