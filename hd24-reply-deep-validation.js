@@ -75,7 +75,7 @@ function flagsFor(r,all){
  return f;
 }
 function directionOf(r){try{const matrix=window.HD24_RULE_MATRIX_V1||window.HD24RuleMatrix,d=matrix?.direction?.(r);if(d==='LOWER'||d==='HIGHER')return d}catch(_){}const d=norm(r.direction);if(d.includes('하향')||d==='lower'||d==='down')return'LOWER';if(d.includes('상향')||d==='higher'||d==='up')return'HIGHER';const k=norm(r.kpiEn||r.kpi);return /(dio|days inventory|재고회전일수|defect|ppm|complaint|downtime|lead time|recurrence|variation|loss)/.test(k)?'LOWER':'HIGHER'}
-function achieved(r){const pair=comparable(r.actual,r.target,effectiveUnit(r));if(!pair)return null;const [a,t]=pair;return directionOf(r)==='LOWER'?a<=t:a>=t}
+function achieved(r){const pair=comparable(r.actual,r.target,effectiveUnit(r));if(!pair)return null;const [a,t]=pair;if(/order\s*intake\s*fulfillment/i.test(String(r.kpiEn||r.kpi||'')))return Math.abs(a-t)<1e-6;return directionOf(r)==='LOWER'?a<=t:a>=t}
 function closedLoop(all){
  const out=[],latest=new Map();all.forEach(r=>{const k=norm(r.plant)+'|'+kpiKey(r)+'|'+yearOf(r)+'|'+Number(r.targetMonth),cur=latest.get(k);if(!cur||Number(r.replySequence||0)>Number(cur.replySequence||0)||(Number(r.replySequence||0)===Number(cur.replySequence||0)&&String(r.replyReceivedAt||'')>String(cur.replyReceivedAt||'')))latest.set(k,r)});const ordered=[...latest.values()].sort((a,b)=>Number(a.targetMonth)-Number(b.targetMonth));
  for(const prev of ordered){const pm=Number(prev.targetMonth),next=ordered.find(x=>samePlant(x,prev)&&sameKpi(x,prev)&&periodOf(x)===periodOf(prev)+1);if(!next)continue;
