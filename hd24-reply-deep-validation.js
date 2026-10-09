@@ -51,7 +51,7 @@ function flagsFor(r,all){
   const atZero=recent.every(Boolean)&&series.every(x=>x!==null&&Math.abs(x)<1e-6);
   const first100=history.find(x=>{const n=percentPoints(x.actual);return n!==null&&Math.abs(n-100)<1e-6});
   const first100Evidence=first100&&history.filter(x=>periodOf(x)>=periodOf(first100)&&periodOf(x)<=periodOf(r));
-  const sustainedFromFirst=first100Evidence&&first100Evidence.length>=2&&first100Evidence.every(x=>{const n=percentPoints(x.actual);return n!==null&&Math.abs(n-100)<1e-6});
+  const sustainedFromFirst=first100Evidence&&first100Evidence.length>=2&&first100Evidence.length===periodOf(r)-periodOf(first100)+1&&new Set(first100Evidence.map(periodOf)).size===first100Evidence.length&&first100Evidence.every(x=>{const n=percentPoints(x.actual);return n!==null&&Math.abs(n-100)<1e-6});
   if(first100&&Number(first100.targetMonth)<=3&&pct!==null&&Math.abs(pct-100)<1e-6&&periodOf(r)>periodOf(first100)&&sustainedFromFirst)
    f.push(['MEDIUM','1분기 내 100% 조기 달성 후 유지 — 목표 도전성·지표 변별력 및 개선 여지 검토 필요']);
   const targetPct=percentPoints(r.target);
