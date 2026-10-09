@@ -35,8 +35,8 @@ const sourceContext={
 vm.createContext(sourceContext);
 const scope=source.slice(source.indexOf('const kpiKey='),source.indexOf('function contradictions(all)'));
 vm.runInContext(scope,sourceContext);
-const previous={...row('india','Test KPI',false,80),targetMonth:7,rootCause:'Recurring delay',recoveryPlan:'Daily review',reason:'Supplier delay'};
-const current={...row('brazil','Test KPI',false,70),targetMonth:8,rootCause:'Recurring delay',recoveryPlan:'Daily review',reason:'Supplier delay'};
+const previous={...row('india','Test KPI',false,80),target:100,targetMonth:7,rootCause:'Recurring delay',recoveryPlan:'Daily review',reason:'Supplier delay'};
+const current={...row('brazil','Test KPI',false,70),target:100,targetMonth:8,rootCause:'Recurring delay',recoveryPlan:'Daily review',reason:'Supplier delay'};
 assert.equal(sourceContext.closedLoop([previous,current]).length,0,'different plants must not form consecutive-month recovery history');
 const sameCurrent={...current,plant:'india'};
 assert.ok(sourceContext.closedLoop([previous,sameCurrent]).length>0,'same plant consecutive-month history must remain detectable');
