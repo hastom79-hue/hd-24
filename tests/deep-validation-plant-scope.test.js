@@ -52,5 +52,13 @@ const sameOverdue=[overdue('india',6),overdue('india',7),currentOverdue];
 const repeated=sourceContext.flagsFor(currentOverdue,sameOverdue);
 assert.ok(repeated.some(x=>String(x[1]).includes('기한 초과 반복')),'same owner and plant across periods must trigger repeated overdue warning');
 console.log('PASS: repeated overdue action-owner plant isolation');
+// A lower reply sequence with a later timestamp must never replace the approved latest reply.
+const seqPrev={...previous,replySequence:2,replyReceivedAt:'2026-08-01',rootCause:'Recurring delay'};
+const stalePrev={...previous,replySequence:1,replyReceivedAt:'2026-10-01',rootCause:'Different cause'};
+const seqNext={...sameCurrent,replySequence:2,replyReceivedAt:'2026-09-01',rootCause:'Recurring delay'};
+const seqFindings=sourceContext.closedLoop([seqPrev,stalePrev,seqNext]);
+assert.ok(seqFindings.some(x=>String(x.msg).includes('근본원인')),'latest reply sequence must win over later timestamp on older sequence');
+console.log('PASS: recovery history reply-sequence precedence');
+
 
 
