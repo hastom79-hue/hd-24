@@ -25,7 +25,7 @@ function flagsFor(r,all){
   f.push(['HIGH','확정오더 이행 편차 '+(diff>0?'+':'')+diff.toFixed(1)+'%p — 추가·취소·수량/납기변경 및 승인 이력 확인 필요 (초과 실적도 정상 달성 아님)']);
  }
  if(achieved(r)===true&&!orderIntake){
-  const related=contradictions(all).filter(x=>samePlant(r,{plant:r.plant})&&yearOf(x)===yearOf(r)&&Number(x.month)===Number(r.targetMonth)&&[norm(x.kpi),norm(x.related)].includes(kpi));
+  const related=contradictions(all.filter(x=>samePlant(x,r))).filter(x=>yearOf(x)===yearOf(r)&&Number(x.month)===Number(r.targetMonth)&&[norm(x.kpi),norm(x.related)].includes(kpi));
   if(related.length)f.push(['MEDIUM','목표 달성이나 동일 기간 연계 KPI와 정합성 검증 필요 — 정상 운영 확정 보류']);
  }
  if(/find attached|see attached|refer attached/.test(reason))f.push(['HIGH','첨부자료 참조만으로는 원인 검증 불가']);
