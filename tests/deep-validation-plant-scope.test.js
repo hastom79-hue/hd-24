@@ -229,3 +229,9 @@ assert.ok(sourceContext.flagsFor(reboundRows[2],reboundRows).some(x=>x[0]==='HIG
 const improvedRows=repeatedPlanRows.map((r,i)=>({...r,actual:[34.2,31.54,30.35][i]}));
 assert.ok(!sourceContext.flagsFor(improvedRows[2],improvedRows).some(x=>x[1].includes('실적 연속 악화')||x[1].includes('최근 실적 재악화')),'improving KPI must not be mislabeled worsening');
 console.log('PASS: repeated three-month recovery plan flags continuous deterioration and relapse, not improvement');
+
+const rateRows=repeatedPlanRows.map((r,i)=>({...r,kpi:'Compliance Rate',kpiEn:'Compliance Rate',unit:'Rate',direction:'HIGHER',target:1,actual:[0.85,80,0.75][i]}));
+assert.ok(sourceContext.flagsFor(rateRows[2],rateRows).some(x=>x[0]==='HIGH'&&x[1].includes('실적 연속 악화')&&x[1].includes('85 → 80 → 75')),'rate trends must compare normalized percentage points');
+const mixedUnitRows=repeatedPlanRows.map((r,i)=>({...r,unit:i===1?'hours':'USD'}));
+assert.ok(!sourceContext.flagsFor(mixedUnitRows[2],mixedUnitRows).some(x=>x[1].includes('실적 연속 악화')||x[1].includes('최근 실적 재악화')),'mixed units must not generate deterioration warning');
+console.log('PASS: percentage point normalization and mixed-unit protection for repeated plans');
