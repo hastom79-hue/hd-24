@@ -92,6 +92,16 @@ function flagsFor(r,all){
  const reasonRun=consecutiveCount('reason'),rootRun=consecutiveCount('rootCause'),planRun=consecutiveCount('recoveryPlan');
  if(reasonRun>=3)f.push(['HIGH',reasonRun+'개월 연속 동일 사유 반복 — 원인분석 및 제거대책 재설계 필요']);else if(reasonRun===2)f.push(['MEDIUM','2개월 연속 동일 사유 반복 — 근인 제거 효과 재검증']);
  if(rootRun>=3)f.push(['HIGH',rootRun+'개월 연속 동일 근본원인 반복 — 근인 제거 실패 가능성 높음']);else if(rootRun===2)f.push(['HIGH','2개월 연속 동일 근본원인 반복']);
+ if(planRun>=3){
+  const months=[periodOf(r)-2,periodOf(r)-1,periodOf(r)];
+  const series=months.map(p=>[...all].filter(x=>samePlant(x,r)&&sameKpi(x,r)&&periodOf(x)===p).sort((a,b)=>Number(b.replySequence||0)-Number(a.replySequence||0))[0]);
+  const dir=directionOf(r),values=series.map(x=>x?val(x.actual):null);
+  if(series.every(Boolean)&&values.every(Number.isFinite)&&series.every(x=>norm(x.recoveryPlan)===plan)){
+   const bad=(a,b)=>dir==='LOWER'?b>a:b<a;
+   if(bad(values[0],values[1])&&bad(values[1],values[2]))f.push(['HIGH','3개월 동일 회복계획에도 실적 연속 악화 ('+values.join(' → ')+') — 대책 실효성 재검토 필요']);
+   else if(bad(values[1],values[2]))f.push(['HIGH','3개월 동일 회복계획 중 최근 실적 재악화 ('+values.join(' → ')+') — 개선 지속성 검증 필요']);
+  }
+ }
  if(planRun>=3)f.push(['HIGH',planRun+'개월 연속 동일 만회계획 반복 — 기존 대책 효과 미입증, 대책 재설계 필요']);else if(planRun===2)f.push(['MEDIUM','2개월 연속 동일 만회계획 반복 — 실행 효과 확인 필요']);
  return f;
 }
