@@ -2,6 +2,7 @@
 const KEY='hd24_kpi_reply_history_v2', $=id=>document.getElementById(id), norm=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
 const kpiKey=r=>norm(r.kpiEn||r.kpi).replace(/[^a-z0-9가-힣]/g,'');
 const samePlant=(a,b)=>{const pa=norm(a?.plant),pb=norm(b?.plant);return !!pa&&!!pb&&pa===pb};
+const validSameMonth=(a,b)=>{const ma=Number(a?.targetMonth),mb=Number(b?.targetMonth);return Number.isInteger(ma)&&ma>=1&&ma<=12&&Number.isInteger(mb)&&ma===mb};
 const sameKpi=(a,b)=>{const ak=[kpiKey(a),norm(a.kpi),norm(a.kpiEn)].filter(Boolean),bk=[kpiKey(b),norm(b.kpi),norm(b.kpiEn)].filter(Boolean);return ak.some(x=>bk.includes(x))};
 const yearOf=r=>Number(r?.targetYear)||2026, periodOf=r=>yearOf(r)*12+Number(r?.targetMonth||0)-1;
 const val=x=>{if(typeof x==='number')return Number.isFinite(x)?x:null;const raw=String(x??'').trim().replace(/,/g,'');const m=raw.match(/[-+]?\d*\.?\d+/);if(!m)return null;const n=Number(m[0]);return Number.isFinite(n)?n:null};
@@ -58,19 +59,19 @@ function contradictions(all){
  const quality=all.filter(r=>has(r,qualityAliases)),controls=all.filter(r=>has(r,[...complianceAliases,...recurrenceAliases])),wips=all.filter(r=>has(r,wipAliases)),leads=all.filter(r=>has(r,leadAliases));
  for(const q of quality){
   const qBad=achieved(q)===false||/miss|decline|미달|악화/.test(norm(q.statusTrend));if(!qBad)continue;
-  for(const c of controls.filter(x=>samePlant(x,q)&&yearOf(x)===yearOf(q)&&Number(x.targetMonth)===Number(q.targetMonth))){
+  for(const c of controls.filter(x=>samePlant(x,q)&&yearOf(x)===yearOf(q)&&validSameMonth(x,q))){
    const isCompliance=has(c,complianceAliases),isRecurrence=has(c,recurrenceAliases),zeroRecurrence=isRecurrence&&c.actual!==null&&c.actual!==undefined&&String(c.actual).trim()!==''&&Number(c.actual)===0;
    if(achieved(c)===true||zeroRecurrence)out.push({sev:'HIGH',year:yearOf(q),month:q.targetMonth,kpi:q.kpiEn||q.kpi,related:c.kpiEn||c.kpi,msg:'생산귀책/초기 품질 결과는 미달·악화인데 '+(isCompliance?'표준작업 준수 관리지표는 정상/목표 달성':zeroRecurrence?'비표준작업 재발지표는 0':'관련 공정관리 지표는 정상/목표 달성')+'입니다. 점검대상·표본·판정기준 및 원인 연결을 교차 검증할 필요'});
   }
  }
  for(const w of wips){
   const wBad=achieved(w)===false||/miss|decline|미달|악화|증가/.test(norm(w.statusTrend));if(!wBad)continue;
-  for(const l of leads.filter(x=>samePlant(x,w)&&yearOf(x)===yearOf(w)&&Number(x.targetMonth)===Number(w.targetMonth))){
+  for(const l of leads.filter(x=>samePlant(x,w)&&yearOf(x)===yearOf(w)&&validSameMonth(x,w))){
    if(achieved(l)===true||/improv|shorten|reduc|개선|단축/.test(norm(l.statusTrend)))out.push({sev:'HIGH',year:yearOf(w),month:w.targetMonth,kpi:w.kpiEn||w.kpi,related:l.kpiEn||l.kpi,msg:'WIP/재공은 미달·악화인데 Cutting-to-Dispatch 제조 리드타임은 목표 달성·단축으로 나타납니다. 동일 범위·동일 물동량 기준인지 WIP 정의, Throughput, Lead Time 시작·종료점 및 재공 포함범위를 교차 검증할 필요'});
   }
  }
  const downtimeAliases=['Equipment Downtime Loss'],mtbfAliases=['MTBF'],mttrAliases=['MTTR'],mttdAliases=['MTTD'];
- const samePeriod=(a,b)=>samePlant(a,b)&&yearOf(a)===yearOf(b)&&Number(a.targetMonth)===Number(b.targetMonth),bad=r=>achieved(r)===false,good=r=>achieved(r)===true;
+ const samePeriod=(a,b)=>samePlant(a,b)&&yearOf(a)===yearOf(b)&&validSameMonth(a,b),bad=r=>achieved(r)===false,good=r=>achieved(r)===true;
  const pushUnique=x=>{const key=[x.year,x.month,n(x.kpi),n(x.related),x.msg].join('|');if(!out.some(y=>[y.year,y.month,n(y.kpi),n(y.related),y.msg].join('|')===key))out.push(x)};
  const cross=(aa,bb,msg)=>all.filter(r=>has(r,aa)&&bad(r)).forEach(a=>all.filter(b=>b!==a&&samePeriod(a,b)&&has(b,bb)&&good(b)).forEach(b=>pushUnique({sev:'MEDIUM',year:yearOf(a),month:a.targetMonth,kpi:a.kpiEn||a.kpi,related:b.kpiEn||b.kpi,msg})));
  cross(downtimeAliases,mtbfAliases,'Equipment Downtime Loss는 미달인데 MTBF는 정상입니다. 고장빈도와 비가동손실 산정범위를 교차 검증할 필요');
