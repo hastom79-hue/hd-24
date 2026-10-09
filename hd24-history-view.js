@@ -11,7 +11,7 @@ function dt(v){if(!v)return '-';try{return new Date(v).toLocaleString()}catch(_)
 function aliases(x){return [norm(x.kpiEn||''),norm(x.kpi||'')].filter(Boolean)}
 function sameKpi(a,b){const A=aliases(a),B=aliases(b);return A.some(k=>B.includes(k))}
 function sameGroup(a,b){return a.plant===b.plant&&Number(a.targetMonth)===Number(b.targetMonth)&&sameKpi(a,b)}
-function eventTime(x,type){return type==='reply'?(x.replyReceivedAt||''):(x.sentAt||x.mailOpenedAt||x.preparedAt||'')}
+function eventTime(x,type){return type==='reply'?(x.replyReceivedAt||''):(x.sentAt||x.packagedAt||x.mailOpenedAt||x.preparedAt||'')}
 function buildRows(){
   const mails=load(MAIL_KEY),replies=load(REPLY_KEY),kpiMails=mails.filter(x=>x.status!=='seven-day-reminder-sent'&&x.status!=='seven-day-reminder-failed'),all=[...kpiMails,...replies],groups=[],out=[];
   for(const item of all){let g=groups.find(x=>sameGroup(x.seed,item));if(!g){g={seed:item,items:[]};groups.push(g)}g.items.push(item)}
@@ -22,7 +22,7 @@ function buildRows(){
     const cause=norm(latestReply.rootCause||latestReply.reason||'');
     const same=Number.isFinite(Number(latestReply.sameCauseCount))?Number(latestReply.sameCauseCount):(cause?rs.filter(x=>{const c=norm(x.rootCause||x.reason||'');return c&&(c===cause||c.includes(cause)||cause.includes(c))}).length:0);
     const recurrence=latestReply.isRecurrence===true||same>=2;
-    out.push({plant:base.plant,targetMonth:base.targetMonth,kpi:base.kpi||'',kpiEn:base.kpiEn||'',preparedAt:latestMail.preparedAt||'',sentAt:latestSent.sentAt||'',openedAt:latestOpened.mailOpenedAt||'',packagedAt:latestPackaged.mailOpenedAt||latestPackaged.preparedAt||'',mailStatus:latestMail.status||'',replyAt:latestReply.replyReceivedAt||'',replySequence:latestReply.replySequence||rs.length||0,responder:latestReply.responder||'',reason:latestReply.reason||'',rootCause:latestReply.rootCause||'',plan:latestReply.recoveryPlan||'',owner:latestReply.actionOwner||'',due:latestReply.plannedCompletionDate||'',nextTarget:latestReply.nextMonthRecoveryTarget||'',replyFile:latestReply.replyFileName||'',recurrence:recurrence?`Repeated Issue x${same}`:'',mailCount:ms.filter(x=>!!x.sentAt).length,replyCount:rs.length});
+    out.push({plant:base.plant,targetMonth:base.targetMonth,kpi:base.kpi||'',kpiEn:base.kpiEn||'',preparedAt:latestMail.preparedAt||'',sentAt:latestSent.sentAt||'',openedAt:latestOpened.mailOpenedAt||'',packagedAt:latestPackaged.packagedAt||latestPackaged.mailOpenedAt||latestPackaged.preparedAt||'',mailStatus:latestMail.status||'',replyAt:latestReply.replyReceivedAt||'',replySequence:latestReply.replySequence||rs.length||0,responder:latestReply.responder||'',reason:latestReply.reason||'',rootCause:latestReply.rootCause||'',plan:latestReply.recoveryPlan||'',owner:latestReply.actionOwner||'',due:latestReply.plannedCompletionDate||'',nextTarget:latestReply.nextMonthRecoveryTarget||'',replyFile:latestReply.replyFileName||'',recurrence:recurrence?`Repeated Issue x${same}`:'',mailCount:ms.filter(x=>!!x.sentAt).length,replyCount:rs.length});
   }
   const latestTime=r=>[r.replyAt,r.sentAt,r.openedAt,r.preparedAt].filter(Boolean).sort().pop()||'';
   return out.sort((a,b)=>String(latestTime(b)).localeCompare(String(latestTime(a))));
