@@ -150,12 +150,17 @@ function showDrill(kind,title,rows,findings,loop,cons){
  $('hd24DeepDrillClose').onclick=()=>modal.style.display='none';modal.onclick=e=>{if(e.target===modal)modal.style.display='none'};
 }
 function latestReplyRows(rows){
+ const parent=new Map();
+ const root=k=>{if(!parent.has(k))parent.set(k,k);const p=parent.get(k);if(p!==k)parent.set(k,root(p));return parent.get(k)};
+ const join=(a,b)=>{const ra=root(a),rb=root(b);if(ra!==rb)parent.set(ra,rb)};
+ const aliases=r=>[r.kpiEn,r.kpi].map(x=>norm(x).replace(/[^a-z0-9가-힣]/g,'')).filter(Boolean).map(k=>norm(r.plant)+'|'+k);
+ rows.forEach(r=>{const keys=aliases(r);keys.forEach(root);for(let i=1;i<keys.length;i++)join(keys[0],keys[i])});
  const latest=new Map();
  rows.forEach((r,i)=>{
-  const key=[norm(r.plant),yearOf(r),Number(r.targetMonth),kpiKey(r)].join('|');
-  const previous=latest.get(key);
-  const newer=!previous||Number(r.replySequence||0)>Number(previous.r.replySequence||0)||(Number(r.replySequence||0)===Number(previous.r.replySequence||0)&&String(r.replyReceivedAt||'')>String(previous.r.replyReceivedAt||''));
-  if(newer)latest.set(key,{r,i});
+  const keys=aliases(r),identity=keys.length?root(keys[0]):'unnamed|'+i;
+  const key=[norm(r.plant),yearOf(r),Number(r.targetMonth),identity].join('|');
+  const previous=latest.get(key),seq=Number(r.replySequence||0),oldSeq=Number(previous?.r.replySequence||0),received=String(r.replyReceivedAt||''),oldReceived=String(previous?.r.replyReceivedAt||'');
+  if(!previous||seq>oldSeq||(seq===oldSeq&&received>=oldReceived))latest.set(key,{r,i});
  });
  return [...latest.values()].sort((a,b)=>a.i-b.i).map(x=>x.r);
 }
