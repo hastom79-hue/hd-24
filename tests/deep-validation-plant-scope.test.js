@@ -212,3 +212,11 @@ for(const weekDue of ['W1, Aug-2026','W3, Sep-2026','W2/08/2026']){
  assert.ok(!flags.some(x=>x[1].includes('완료예정일 미지정')),'week-only due date is not blank: '+weekDue);
 }
 console.log('PASS: week-only completion dates are recognized and require exact date confirmation');
+
+for(const shortYear of ['W2, Dec-26','W4, Aug-26']){
+ assert.equal(sourceContext.dueInfo({plannedCompletionDate:shortYear}).kind,'week','two-digit year week must be recognized');
+}
+const multiple=sourceContext.dueInfo({plannedCompletionDate:'W2, Sep-26\n\nW1, Nov-26'});
+assert.equal(multiple.kind,'multiweek','multiple weekly milestones must be preserved as distinct schedule class');
+assert.ok(sourceContext.flagsFor({...incompleteBase,plannedCompletionDate:'W2, Sep-26\n\nW1, Nov-26'},[incompleteBase]).some(x=>x[1].includes('복수 주차 일정')),'multiple milestones require final-completion clarification');
+console.log('PASS: two-digit year weeks and multiple milestone deadlines');
