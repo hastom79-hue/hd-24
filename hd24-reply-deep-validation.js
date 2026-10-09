@@ -50,6 +50,7 @@ function flagsFor(r,all){
  if(missingReply(norm(r.actionOwner)))f.push(['HIGH','Action Owner 미지정']); if(missingReply(norm(r.plannedCompletionDate)))f.push(['HIGH','완료예정일 미지정']);
  const owner=norm(r.actionOwner),di=dueInfo(r),due=di.time,received=Date.parse(r.replyReceivedAt||'');
  if(!missingReply(norm(r.plannedCompletionDate))&&(di.kind==='broad'||di.kind==='text'))f.push(['MEDIUM','완료예정일이 구체적 날짜가 아님 — 일정 확정 및 지연 여부 검증 필요']);
+ if(di.kind==='week')f.push(['MEDIUM','완료예정일이 주차 단위 — 정확한 완료일·담당자 합의 및 지연 여부 확인 필요']);
  if(owner&&!di.done&&di.kind==='date'&&Number.isFinite(due)&&Number.isFinite(received)&&due<received){
   const priorOverdue=all.filter(x=>{if(x===r||!samePlant(x,r)||norm(x.actionOwner)!==owner||periodOf(x)>=periodOf(r))return false;const xi=dueInfo(x),xr=Date.parse(x.replyReceivedAt||'');return !xi.done&&xi.kind==='date'&&Number.isFinite(xi.time)&&Number.isFinite(xr)&&xi.time<xr});
   const distinctPeriods=new Set(priorOverdue.map(periodOf)).size;
