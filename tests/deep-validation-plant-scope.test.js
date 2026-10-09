@@ -175,3 +175,18 @@ assert.equal(deduped.length,3,'different plants or months must remain separate')
 deduped=sourceContext.latestReplyRows([{plant:'india',targetMonth:8},{plant:'india',targetMonth:8}]);
 assert.equal(deduped.length,2,'unnamed KPI records must not be merged');
 console.log('PASS: latest reply bilingual aliases, sequence, timestamp ties, plant/month boundaries and unnamed records');
+
+
+// Missing recovery evidence: blank, NA and N/A must not silently pass validation.
+const incompleteBase={...row('india','IQ 200 (Initial Quality)',false,35),target:24,reason:'Quality issue',rootCause:'Identified defect cause',recoveryPlan:'Contain and verify',actionOwner:'Owner',plannedCompletionDate:'2026-10-31'};
+for(const missing of ['', 'NA', 'N/A', 'not applicable']){
+ const flaggedRoot=sourceContext.flagsFor({...incompleteBase,rootCause:missing},[incompleteBase]);
+ assert.ok(flaggedRoot.some(x=>x[0]==='HIGH'&&x[1].includes('근본원인 미기재')),'missing root cause '+JSON.stringify(missing)+' must be HIGH');
+ const flaggedPlan=sourceContext.flagsFor({...incompleteBase,recoveryPlan:missing},[incompleteBase]);
+ assert.ok(flaggedPlan.some(x=>x[0]==='HIGH'&&x[1].includes('회복계획 미기재')),'missing recovery plan '+JSON.stringify(missing)+' must be HIGH');
+ const flaggedOwner=sourceContext.flagsFor({...incompleteBase,actionOwner:missing},[incompleteBase]);
+ assert.ok(flaggedOwner.some(x=>x[0]==='HIGH'&&x[1].includes('Action Owner 미지정')),'missing owner '+JSON.stringify(missing)+' must be HIGH');
+ const flaggedDate=sourceContext.flagsFor({...incompleteBase,plannedCompletionDate:missing},[incompleteBase]);
+ assert.ok(flaggedDate.some(x=>x[0]==='HIGH'&&x[1].includes('완료예정일 미지정')),'missing due date '+JSON.stringify(missing)+' must be HIGH');
+}
+console.log('PASS: blank/NA/N/A recovery root, plan, owner and due date classified HIGH');
