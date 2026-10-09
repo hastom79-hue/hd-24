@@ -49,7 +49,7 @@ function closedLoop(all){
 }
 function contradictions(all){
  const out=[],n=s=>norm(s).replace(/\s/g,''),names=r=>[r.kpiEn,r.kpi].map(n).filter(Boolean),has=(r,arr)=>names(r).some(v=>arr.some(t=>v.includes(n(t))));
- const samePlant=(a,b)=>{const pa=norm(a?.plant),pb=norm(b?.plant);return !pa||!pb||pa===pb};
+ const samePlant=(a,b)=>{const pa=norm(a?.plant),pb=norm(b?.plant);return !!pa&&!!pb&&pa===pb};
  const qualityAliases=['IQ 200 (Initial Quality)','IQ 200 (Production attributable)','IQ 200 Issues with Production responsibility','생산귀책 조립품질','생산귀책조립품질','Production attributable assembly quality','Production attributable quality'];
  const complianceAliases=['Standard Work Compliance','Production Instruction Compliance Rate','Sequence Compliance','표준작업준수율','표준작업 준수율','Standard Work Adherence','Standardized Work Compliance'];
  const recurrenceAliases=['Issue Recurrence Rate','Non-Compliance Recurrence Rate','Standard Non-compliance Recurrence','표준미준수재발','표준미준수 재발','비표준작업 재발율','비표준작업 재발률','Non-standard Work Recurrence','Nonstandard Work Recurrence'];
