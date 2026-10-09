@@ -84,3 +84,15 @@ const recurrence=(actual)=>({...row('india','Non-standard Work Recurrence',null,
 for(const missing of [null,'',undefined])check([quality,recurrence(missing)],0,'missing recurrence actual must not be treated as zero');
 check([quality,recurrence(0)],1,'explicit zero recurrence must remain a contradiction signal');
 console.log('PASS: missing recurrence actual is distinct from numeric zero');
+
+const numericContext={norm:context.norm};
+vm.createContext(numericContext);
+const numericHelpers=source.match(/const val=x=>[^\n]+\nfunction comparable\(actual,target,unit\)\{[^\n]+/);
+assert.ok(numericHelpers,'production numeric comparison helpers must exist');
+vm.runInContext(numericHelpers[0],numericContext);
+for(const missing of [null,undefined,'','  ','N/A','-'])assert.equal(numericContext.val(missing),null,'missing KPI value must not be converted to zero');
+assert.equal(numericContext.val(0),0,'numeric zero is a valid KPI value');
+assert.equal(numericContext.val('0%'),0,'explicit zero percentage is a valid KPI value');
+assert.equal(numericContext.comparable('',0,'%'),null,'missing actual versus zero target is not comparable');
+assert.equal(numericContext.comparable(0,0,'%')[0],0,'explicit zero actual and target are comparable');
+console.log('PASS: missing versus zero numeric KPI comparison contract');
