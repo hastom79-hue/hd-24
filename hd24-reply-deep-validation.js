@@ -41,6 +41,19 @@ function flagsFor(r,all){
   else if(distinctPeriods>=1)f.push(['MEDIUM','동일 담당자 완료기한 초과 반복 — 조치 일정관리 점검 필요']);
   else f.push(['MEDIUM','완료예정일이 회신 접수시점보다 이전 — 지연조치 상태 확인 필요']);
  }
+ const isPercent=norm(effectiveUnit(r)).includes('%'),value=val(r.actual);
+ if(isPercent&&value!==null){
+  const pct=percentPoints(value),history=all.filter(x=>samePlant(x,r)&&sameKpi(x,r)&&periodOf(x)<=periodOf(r)&&norm(effectiveUnit(x)).includes('%')).sort((a,b)=>periodOf(a)-periodOf(b));
+  const last=history.slice(-3),series=last.map(x=>percentPoints(x.actual));
+  const atCeiling=series.length>=3&&series.every(x=>x!==null&&Math.abs(x-100)<1e-6);
+  const atZero=series.length>=3&&series.every(x=>x!==null&&Math.abs(x)<1e-6);
+  if(atCeiling)f.push(['MEDIUM','최근 3개 기간 100% 반복 — KPI 포화·변별력·집계 증빙 및 목표 적정성 검증 필요']);
+  if(atZero){
+   const zeroIsDesired=directionOf(r)==='LOWER';
+   if(!zeroIsDesired)f.push(['HIGH','최근 3개 기간 0% 반복 — 실행 미흡·집계 누락·산식/목표 유효성 검증 필요']);
+   else f.push(['MEDIUM','최근 3개 기간 0% 반복 — 낮을수록 좋은 KPI이므로 미달로 단정하지 않고 측정 증빙·분모 유효성 확인']);
+  }
+ }
  const same=all.filter(x=>samePlant(x,r)&&sameKpi(x,r)&&periodOf(x)<periodOf(r));
  const consecutiveCount=field=>{const cur=norm(r[field]);if(!cur)return 0;let count=1,p=periodOf(r)-1;while(true){const prev=same.filter(x=>periodOf(x)===p).sort((a,b)=>Number(b.replySequence||0)-Number(a.replySequence||0))[0];if(!prev||norm(prev[field])!==cur)break;count++;p--}return count};
  const reasonRun=consecutiveCount('reason'),rootRun=consecutiveCount('rootCause'),planRun=consecutiveCount('recoveryPlan');
