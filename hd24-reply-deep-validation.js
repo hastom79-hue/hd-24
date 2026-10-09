@@ -41,9 +41,11 @@ function flagsFor(r,all){
  }
  if(/find attached|see attached|refer attached/.test(reason))f.push(['HIGH','첨부자료 참조만으로는 원인 검증 불가']);
  if(/same as|last above|as mentioned/.test(reason+' '+root))f.push(['HIGH','타 KPI/이전 항목 참조형 회신 — KPI별 독립 근인 필요']);
- if(/^(na|n\/a|not applicable)$/.test(root))f.push(['MEDIUM','근본원인 NA — 사유→근인 연결 검증 불가']);
+ const missingReply=x=>!x||/^(na|n\/a|n\.a\.|not applicable|none|null|-)$/i.test(x);
+ if(missingReply(root))f.push(['HIGH','근본원인 미기재/NA — 사유→근인 연결 및 회복조치 적합성 검증 불가']);
+ if(missingReply(plan))f.push(['HIGH','회복계획 미기재/NA — 실행대책·완료조건·효과 검증 불가']);
  if(/ongoing|monthly|training|awareness/.test(plan)&&plan.length<90)f.push(['MEDIUM','반복관리/교육 중심 대책 — 완료조건·정량 효과 불명확']);
- if(!r.actionOwner)f.push(['HIGH','Action Owner 미지정']); if(!r.plannedCompletionDate)f.push(['HIGH','완료예정일 미지정']);
+ if(missingReply(norm(r.actionOwner)))f.push(['HIGH','Action Owner 미지정']); if(missingReply(norm(r.plannedCompletionDate)))f.push(['HIGH','완료예정일 미지정']);
  const owner=norm(r.actionOwner),di=dueInfo(r),due=di.time,received=Date.parse(r.replyReceivedAt||'');
  if(owner&&!di.done&&di.kind==='date'&&Number.isFinite(due)&&Number.isFinite(received)&&due<received){
   const priorOverdue=all.filter(x=>{if(x===r||!samePlant(x,r)||norm(x.actionOwner)!==owner||periodOf(x)>=periodOf(r))return false;const xi=dueInfo(x),xr=Date.parse(x.replyReceivedAt||'');return !xi.done&&xi.kind==='date'&&Number.isFinite(xi.time)&&Number.isFinite(xr)&&xi.time<xr});
