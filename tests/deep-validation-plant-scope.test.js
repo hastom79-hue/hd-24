@@ -1,0 +1,28 @@
+// Cross-plant contradiction regression: actual production function, no browser needed.
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const source=fs.readFileSync('hd24-reply-deep-validation.js','utf8');
+const match=source.match(/function contradictions\(all\)\{[\s\S]*?\n\}\nasync function exportXlsx/);
+assert.ok(match,'production contradictions() function must be found');
+const context={norm:s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim(),yearOf:r=>Number(r?.targetYear)||2026,achieved:r=>r.achieved};
+vm.createContext(context);
+vm.runInContext(match[0].replace(/\nasync function exportXlsx$/,''),context);
+const row=(plant,kpi,achieved,actual)=>({plant,kpiEn:kpi,targetYear:2026,targetMonth:8,achieved,actual});
+const quality=row('india','Production attributable assembly quality',false,50);
+const compliance=row('india','Standard Work Compliance',true,99);
+const otherPlant=row('brazil','Standard Work Compliance',true,99);
+const missingPlant=row('','Standard Work Compliance',true,99);
+const check=(rows,expected,label)=>assert.equal(context.contradictions(rows).length,expected,label);
+check([quality,compliance],1,'same plant quality/compliance must flag');
+check([quality,otherPlant],0,'cross plant quality/compliance must not flag');
+check([quality,missingPlant],0,'missing plant must fail closed');
+const wip=row('india','WIP compliance rate (Fabrication)',false,60);
+const lead=row('india','Cutting to Dispatch Lead Time',true,12);
+check([wip,lead],1,'same plant WIP/lead time must flag');
+check([wip,{...lead,plant:'brazil'}],0,'cross plant WIP/lead time must not flag');
+const downtime=row('india','Equipment Downtime Loss',false,8);
+const mtbf=row('india','MTBF',true,40);
+check([downtime,mtbf],1,'same plant equipment metrics must flag');
+check([downtime,{...mtbf,plant:'brazil'}],0,'cross plant equipment metrics must not flag');
+console.log('PASS: 7 cross-KPI same-plant, cross-plant, and missing-plant assertions');
