@@ -178,6 +178,7 @@ console.log('PASS: latest reply bilingual aliases, sequence, timestamp ties, pla
 
 
 // Missing recovery evidence: blank, NA and N/A must not silently pass validation.
+sourceContext.contradictions=()=>[]; // isolated missing-evidence test: no cross-KPI counterpart
 const incompleteBase={...row('india','IQ 200 (Initial Quality)',false,35),target:24,reason:'Quality issue',rootCause:'Identified defect cause',recoveryPlan:'Contain and verify',actionOwner:'Owner',plannedCompletionDate:'2026-10-31'};
 for(const missing of ['', 'NA', 'N/A', 'not applicable']){
  const flaggedRoot=sourceContext.flagsFor({...incompleteBase,rootCause:missing},[incompleteBase]);
