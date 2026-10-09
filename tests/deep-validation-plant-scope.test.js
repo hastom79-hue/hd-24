@@ -118,6 +118,18 @@ assert.equal(displayContext.fmtValWithUnit(0.85,'%'),'85%','fractional Rate must
 assert.equal(displayContext.fmtValWithUnit(85,'%'),'85%','percentage-point Rate must not display 8500%');
 assert.equal(displayContext.fmtValWithUnit(0.975,'%'),'97.5%','fractional Rate must display 97.5%');
 console.log('PASS: dashboard Rate display 0.85/85/0.975');
+const pairSource=html.match(/function normalizeKpiPair\(target,actual,unit,kpiName\)\{[\s\S]*?\n\}/);
+assert.ok(pairSource,'production achievement normalization function must exist');
+vm.runInContext(pairSource[0],displayContext);
+const checkPair=(target,actual,unit,name,expected)=>assert.equal(JSON.stringify(Array.from(displayContext.normalizeKpiPair(target,actual,unit,name))),JSON.stringify(expected));
+checkPair(85,0.90,'','WIP Compliance Rate',[85,90]);
+checkPair(0.85,90,'%','Standard Work Compliance',[85,90]);
+checkPair(0.85,0.90,'%','Quality Rate',[85,90]);
+checkPair(85,90,'%','Quality Rate',[85,90]);
+checkPair(0,0,'%','Quality Rate',[0,0]);
+checkPair(0.85,0.90,'days','Manufacturing Lead Time',[0.85,0.90]);
+console.log('PASS: achievement normalization mixed ratio/percent-point and non-percent units');
+
 
 
 const missingMonthQuality={...quality,targetMonth:null};
