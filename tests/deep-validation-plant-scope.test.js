@@ -7,7 +7,7 @@ const match=source.match(/function contradictions\(all\)\{[\s\S]*?\n\}\nasync fu
 assert.ok(match,'production contradictions() function must be found');
 const context={norm:s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim(),yearOf:r=>Number(r?.targetYear)||2026,achieved:r=>r.achieved};
 vm.createContext(context);
-vm.runInContext(match[0].replace(/\nasync function exportXlsx$/,''),context);
+vm.runInContext(source.match(/const samePlant=[^\n]+/)[0]+'\n'+match[0].replace(/\nasync function exportXlsx$/,''),context);
 const row=(plant,kpi,achieved,actual)=>({plant,kpiEn:kpi,targetYear:2026,targetMonth:8,achieved,actual});
 const quality=row('india','Production attributable assembly quality',false,50);
 const compliance=row('india','Standard Work Compliance',true,99);
