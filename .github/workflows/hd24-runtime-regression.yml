@@ -73,3 +73,4 @@ jobs:
           node tests/followup-import.test.js
           node tests/followup-mailto.test.js
           node tests/outlook-bridge.test.js
+          node tests/deep-validation-plant-scope.test.js
