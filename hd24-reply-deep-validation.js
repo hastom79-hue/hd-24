@@ -7,6 +7,7 @@ const sameKpi=(a,b)=>{const ak=[kpiKey(a),norm(a.kpi),norm(a.kpiEn)].filter(Bool
 const yearOf=r=>Number(r?.targetYear)||2026, periodOf=r=>yearOf(r)*12+Number(r?.targetMonth||0)-1;
 const val=x=>{if(typeof x==='number')return Number.isFinite(x)?x:null;const raw=String(x??'').trim().replace(/,/g,'');const m=raw.match(/[-+]?\d*\.?\d+/);if(!m)return null;const n=Number(m[0]);return Number.isFinite(n)?n:null};
 const effectiveUnit=r=>/\brate\b/i.test(String(r?.kpiEn||r?.kpi||''))?'%':r?.unit;
+const percentPoints=x=>{const n=val(x);return n===null?null:(Math.abs(n)>0&&Math.abs(n)<1?n*100:n)};
 function comparable(actual,target,unit){let a=val(actual),t=val(target);if(a===null||t===null)return null;const u=norm(unit);if(u.includes('%')){const ratio=(Math.abs(a)<=1&&Math.abs(t)>1)||(Math.abs(t)<=1&&Math.abs(a)>1);if(ratio){if(Math.abs(a)<=1)a*=100;if(Math.abs(t)<=1)t*=100}}return[a,t]};
 function dueInfo(r){
  const raw=String(r?.plannedCompletionDate||'').trim(),done=/완료|complete|done/i.test(String(r?.actionStatus||r?.status||r?.completionStatus||''));
@@ -81,8 +82,8 @@ function contradictions(all){
 }
 async function exportXlsx(rows,cons){
  if(typeof ExcelJS==='undefined')throw Error('ExcelJS unavailable');const wb=new ExcelJS.Workbook(),ws=wb.addWorksheet('Reply Deep Analysis');
- ws.columns=[['Plant',12],['Year',10],['Month',8],['KPI',36],['Target',12],['Actual',12],['Status/Trend',28],['Severity',12],['Validation Finding',58],['Reason',55],['Root Cause',55],['Recovery Plan',60],['Owner',18],['Due',18]].map(([header,width])=>({header,width}));
- rows.forEach(r=>{const fs=flagsFor(r,rows);if(!fs.length)fs.push(['INFO','특이 검증사항 없음 — 차기 실적 효과 확인']);fs.forEach(([sev,msg])=>ws.addRow([r.plant,yearOf(r),r.targetMonth,r.kpiEn||r.kpi,r.target,r.actual,r.statusTrend,sev,msg,r.reason,r.rootCause,r.recoveryPlan,r.actionOwner,r.plannedCompletionDate]))});
+ ws.columns=[['Plant',12],['Year',10],['Month',8],['KPI',36],['Unit',10],['Target',12],['Actual',12],['Status/Trend',28],['Severity',12],['Validation Finding',58],['Reason',55],['Root Cause',55],['Recovery Plan',60],['Owner',18],['Due',18]].map(([header,width])=>({header,width}));
+ rows.forEach(r=>{const fs=flagsFor(r,rows);if(!fs.length)fs.push(['INFO','특이 검증사항 없음 — 차기 실적 효과 확인']);fs.forEach(([sev,msg])=>ws.addRow([r.plant,yearOf(r),r.targetMonth,r.kpiEn||r.kpi,effectiveUnit(r)||'',effectiveUnit(r)==='%'?percentPoints(r.target):r.target,effectiveUnit(r)==='%'?percentPoints(r.actual):r.actual,r.statusTrend,sev,msg,r.reason,r.rootCause,r.recoveryPlan,r.actionOwner,r.plannedCompletionDate]))});
  const cs=wb.addWorksheet('Cross KPI Validation');cs.columns=[{header:'Year',width:10},{header:'Month',width:10},{header:'Outcome KPI',width:38},{header:'Related Control KPI',width:40},{header:'Logical Validation',width:80}];cons.forEach(x=>cs.addRow([Number(x.year)||2026,x.month,x.kpi,x.related,x.msg]));
  const ls=wb.addWorksheet('Closed Loop Validation');ls.columns=[{header:'Severity',width:12},{header:'Year',width:10},{header:'Month',width:10},{header:'KPI',width:42},{header:'Closed-Loop Finding',width:90}];closedLoop(rows).forEach(x=>ls.addRow([x.sev,Number(x.year)||2026,x.month,x.kpi,x.msg]));
  [ws,cs,ls].forEach(s=>{s.views=[{state:'frozen',ySplit:1}];s.getRow(1).font={bold:true};s.autoFilter={from:'A1',to:s.getRow(1).getCell(s.columnCount).address}});
