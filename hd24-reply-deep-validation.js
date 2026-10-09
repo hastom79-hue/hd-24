@@ -8,7 +8,7 @@ const yearOf=r=>Number(r?.targetYear)||2026, periodOf=r=>yearOf(r)*12+Number(r?.
 const val=x=>{if(typeof x==='number')return Number.isFinite(x)?x:null;const raw=String(x??'').trim().replace(/,/g,'');const m=raw.match(/[-+]?\d*\.?\d+/);if(!m)return null;const n=Number(m[0]);return Number.isFinite(n)?n:null};
 const effectiveUnit=r=>/\brate\b/i.test(String(r?.kpiEn||r?.kpi||''))?'%':r?.unit;
 const percentPoints=x=>{const n=val(x);return n===null?null:(Math.abs(n)>0&&Math.abs(n)<1?n*100:n)};
-function comparable(actual,target,unit){let a=val(actual),t=val(target);if(a===null||t===null)return null;const u=norm(unit);if(u.includes('%')){const ratio=(Math.abs(a)<=1&&Math.abs(t)>1)||(Math.abs(t)<=1&&Math.abs(a)>1);if(ratio){if(Math.abs(a)<=1)a*=100;if(Math.abs(t)<=1)t*=100}}return[a,t]};
+function comparable(actual,target,unit){let a=val(actual),t=val(target);if(a===null||t===null)return null;const u=norm(unit);if(u.includes('%')){if(Math.abs(t)===1&&Math.abs(a)>0&&Math.abs(a)<=2)return[a*100,t*100];const ratio=(Math.abs(a)<=1&&Math.abs(t)>1)||(Math.abs(t)<=1&&Math.abs(a)>1);if(ratio){if(Math.abs(a)<=1)a*=100;if(Math.abs(t)<=1)t*=100}}return[a,t]};
 function dueInfo(r){
  const raw=String(r?.plannedCompletionDate||'').trim(),done=/완료|complete|done/i.test(String(r?.actionStatus||r?.status||r?.completionStatus||''));
  if(!raw)return {kind:'missing',time:null,done};
@@ -18,6 +18,16 @@ function dueInfo(r){
 }
 function flagsFor(r,all){
  const f=[], reason=norm(r.reason),root=norm(r.rootCause),plan=norm(r.recoveryPlan),status=norm(r.statusTrend);
+ const kpi=norm(r.kpiEn||r.kpi),pair=comparable(r.actual,r.target,effectiveUnit(r));
+ const orderIntake=/order\\s*intake\\s*fulfillment/.test(kpi);
+ if(orderIntake&&pair&&Math.abs(pair[0]-pair[1])>1e-6){
+  const diff=pair[0]-pair[1];
+  f.push(['HIGH','확정오더 이행 편차 '+(diff>0?'+':'')+diff.toFixed(1)+'%p — 추가·취소·수량/납기변경 및 승인 이력 확인 필요 (초과 실적도 정상 달성 아님)']);
+ }
+ if(achieved(r)===true&&!orderIntake){
+  const related=contradictions(all).filter(x=>samePlant(r,{plant:r.plant})&&yearOf(x)===yearOf(r)&&Number(x.month)===Number(r.targetMonth)&&[norm(x.kpi),norm(x.related)].includes(kpi));
+  if(related.length)f.push(['MEDIUM','목표 달성이나 동일 기간 연계 KPI와 정합성 검증 필요 — 정상 운영 확정 보류']);
+ }
  if(/find attached|see attached|refer attached/.test(reason))f.push(['HIGH','첨부자료 참조만으로는 원인 검증 불가']);
  if(/same as|last above|as mentioned/.test(reason+' '+root))f.push(['HIGH','타 KPI/이전 항목 참조형 회신 — KPI별 독립 근인 필요']);
  if(/^(na|n\/a|not applicable)$/.test(root))f.push(['MEDIUM','근본원인 NA — 사유→근인 연결 검증 불가']);
