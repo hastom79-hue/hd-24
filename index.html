@@ -730,6 +730,8 @@ function replaceCell(xml, ref, val){
 function normalizeKpiPair(target,actual,unit,kpiName){
   const percent=String(unit||'').includes('%')||/\brate\b/i.test(String(kpiName||''));
   if(!percent)return [target,actual];
+  const ratioScale=Math.abs(target)===1&&Math.abs(actual)>0&&Math.abs(actual)<=2;
+  if(ratioScale)return [target*100,actual*100];
   const points=v=>Math.abs(v)>0&&Math.abs(v)<1?v*100:v;
   return [points(target),points(actual)];
 }
