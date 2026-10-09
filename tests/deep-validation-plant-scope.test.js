@@ -131,6 +131,16 @@ checkPair(1,1.08,'%','Order Intake Fulfillment',[100,108]);
 checkPair(1,0.98,'%','Order Intake Fulfillment',[100,98]);
 checkPair(0.85,0.90,'days','Manufacturing Lead Time',[0.85,0.90]);
 console.log('PASS: achievement normalization mixed ratio/percent-point and non-percent units');
+const histSource=html.match(/function makeHistEntry\(month, target, actual, direction, kpiName\)\{[\s\S]*?\n\}/);
+assert.ok(histSource,'production KPI achievement function must exist');
+vm.runInContext(histSource[0],displayContext);
+const order='Order Intake Fulfillment (W+4 - Rolling Plan)';
+assert.equal(displayContext.makeHistEntry(6,100,108,'상향',order).achieved,false,'108% order intake must not be normal achievement');
+assert.equal(displayContext.makeHistEntry(7,100,98,'상향',order).achieved,false,'98% order intake must not be normal achievement');
+assert.equal(displayContext.makeHistEntry(8,100,100,'상향',order).achieved,true,'100% order intake can pass numeric comparison pending order-change audit');
+assert.equal(displayContext.makeHistEntry(6,100,108,'상향','Other KPI').achieved,true,'non-order-intake upward KPI must retain >= comparison');
+console.log('PASS: Order Intake 108% and 98% are not normal achievement');
+
 
 
 
