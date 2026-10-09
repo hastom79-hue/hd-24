@@ -22,7 +22,7 @@ function flagsFor(r,all){
  if(!r.actionOwner)f.push(['HIGH','Action Owner 미지정']); if(!r.plannedCompletionDate)f.push(['HIGH','완료예정일 미지정']);
  const owner=norm(r.actionOwner),di=dueInfo(r),due=di.time,received=Date.parse(r.replyReceivedAt||'');
  if(owner&&!di.done&&di.kind==='date'&&Number.isFinite(due)&&Number.isFinite(received)&&due<received){
-  const priorOverdue=all.filter(x=>{if(x===r||norm(x.actionOwner)!==owner||periodOf(x)>=periodOf(r))return false;const xi=dueInfo(x),xr=Date.parse(x.replyReceivedAt||'');return !xi.done&&xi.kind==='date'&&Number.isFinite(xi.time)&&Number.isFinite(xr)&&xi.time<xr});
+  const priorOverdue=all.filter(x=>{if(x===r||!samePlant(x,r)||norm(x.actionOwner)!==owner||periodOf(x)>=periodOf(r))return false;const xi=dueInfo(x),xr=Date.parse(x.replyReceivedAt||'');return !xi.done&&xi.kind==='date'&&Number.isFinite(xi.time)&&Number.isFinite(xr)&&xi.time<xr});
   const distinctPeriods=new Set(priorOverdue.map(periodOf)).size;
   if(distinctPeriods>=2)f.push(['HIGH','동일 담당자 3개 기간 이상 완료기한 초과 반복 — 실행관리 및 부하/책임배분 점검 필요']);
   else if(distinctPeriods>=1)f.push(['MEDIUM','동일 담당자 완료기한 초과 반복 — 조치 일정관리 점검 필요']);
