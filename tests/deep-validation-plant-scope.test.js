@@ -26,3 +26,21 @@ const mtbf=row('india','MTBF',true,40);
 check([downtime,mtbf],1,'same plant equipment metrics must flag');
 check([downtime,{...mtbf,plant:'brazil'}],0,'cross plant equipment metrics must not flag');
 console.log('PASS: 7 cross-KPI same-plant, cross-plant, and missing-plant assertions');
+// Guard monthly follow-up and repeated root cause against another plant's history.
+const sourceContext={
+ norm:context.norm,yearOf:context.yearOf,achieved:context.achieved,
+ window:{HD24_RULE_MATRIX_V1:{direction:()=> 'HIGHER'}},
+ document:{},Date,Number,Map,Set
+};
+vm.createContext(sourceContext);
+const scope=source.slice(source.indexOf('const kpiKey='),source.indexOf('function contradictions(all)'));
+vm.runInContext(scope,sourceContext);
+const previous={...row('india','Test KPI',false,80),targetMonth:7,rootCause:'Recurring delay',recoveryPlan:'Daily review',reason:'Supplier delay'};
+const current={...row('brazil','Test KPI',false,70),targetMonth:8,rootCause:'Recurring delay',recoveryPlan:'Daily review',reason:'Supplier delay'};
+assert.equal(sourceContext.closedLoop([previous,current]).length,0,'different plants must not form consecutive-month recovery history');
+const sameCurrent={...current,plant:'india'};
+assert.ok(sourceContext.closedLoop([previous,sameCurrent]).length>0,'same plant consecutive-month history must remain detectable');
+const flagged=sourceContext.flagsFor(current,[previous,current]);
+assert.ok(!flagged.some(x=>String(x[1]).includes('연속 동일')),'cross-plant root cause must not be counted as repeated');
+console.log('PASS: cross-plant recovery history and repeated root-cause isolation');
+
