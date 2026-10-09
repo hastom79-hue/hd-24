@@ -22,7 +22,7 @@ const vm=ui.match(/hd24-followup\.js\?v=(\d+)/);ok(vm,'production loader missing
 ok(refresh.includes('hd24-followup.js?v='+vm[1]),'refresh/followup cache version mismatch');
 ok(src.includes("statusRich(r,isKo,darkStatus)"),'status font must follow selected language and dark background');
 ok(src.includes("if(dark)color='FFFFFFFF'"),'every dark-red status category must use white rich-text runs');
-ok(src.includes("unitForFile(r.unit,isKo)"),'Excel Unit column must use localized units');
+ok(src.includes("unitForFile(isPct?'%':r.unit,isKo)"),'Excel Unit column must use localized units');
 for(const unit of ["MH/unit","days","cases/year","persons/case","turns","points"]){
   ok(src.includes(unit),'English unit conversion missing: '+unit);
 }
@@ -91,7 +91,9 @@ ok(src.includes("last.rootCause||last.reason||''")&&src.includes("last.recoveryP
 
 ok(src.includes("const seen=new Set(),uniqueItems=items.filter"),'KPI x target-month workbook dedupe missing');
 ok(src.includes("회신 Excel KPI×월 중복 차단"),'KPI x target-month duplicate diagnostic missing');
-ok(src.includes("unitForFile(r.unit,isKo)")&&src.includes("r.target")&&src.includes("r.actual"),'reply workbook must preserve localized unit target actual');
+ok(src.includes("unitForFile(isPct?'%':r.unit,isKo)")&&src.includes("r.target")&&src.includes("r.actual"),'reply workbook must preserve localized unit target actual');
+ok(src.includes('isPct?pctValue(r.target)')&&src.includes('isPct?pctValue(r.actual)'),'Rate Excel target and actual must normalize fractional percentages');
+ok(src.includes("row.getCell(6).numFmt='0.0\"%\"'")&&src.includes("row.getCell(7).numFmt='0.0\"%\"'"),'Excel percentage formatting must apply to Target and Actual columns');
 
 ok(src.includes("const buildPlant=pkey(),buildMonth=month(),buildState="),'follow-up workbook stale snapshot missing');
 ok(src.includes("pkey()!==buildPlant||month()!==buildMonth||currentState!==buildState"),'follow-up workbook stale comparison missing');
