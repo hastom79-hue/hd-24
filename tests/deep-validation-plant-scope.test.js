@@ -29,7 +29,7 @@ console.log('PASS: 7 cross-KPI same-plant, cross-plant, and missing-plant assert
 // Guard monthly follow-up and repeated root cause against another plant's history.
 const sourceContext={
  norm:context.norm,yearOf:context.yearOf,achieved:context.achieved,
- window:{HD24_RULE_MATRIX_V1:{direction:()=> 'HIGHER'}},
+ window:{HD24_RULE_MATRIX_V1:{direction:r=>r.direction==='LOWER'?'LOWER':'HIGHER'}},
  document:{},Date,Number,Map,Set
 };
 vm.createContext(sourceContext);
@@ -74,3 +74,8 @@ assert.equal(dioContext.deriveDioValue(10),36.5,'turnover 10 must yield 36.5 day
 for(const invalid of [0,-1,'',null,'not-a-number'])assert.equal(dioContext.deriveDioValue(invalid),null,'invalid turnover must not generate a DIO value');
 assert.ok(html.includes("unit:'일'"),'derived DIO must be labeled in days');
 console.log('PASS: production DIO derivation, invalid input, and day-unit contract');
+
+const zeroTargetPrevious={...previous,direction:'LOWER',nextMonthRecoveryTarget:0};
+const zeroTargetNext={...sameCurrent,direction:'LOWER',actual:2};
+assert.ok(sourceContext.closedLoop([zeroTargetPrevious,zeroTargetNext]).some(x=>String(x.msg).includes('차월 회복목표 미달')),'explicit zero recovery target must be evaluated');
+console.log('PASS: zero-valued next-month recovery target evaluated');
