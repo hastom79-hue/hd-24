@@ -87,7 +87,7 @@ console.log('PASS: missing recurrence actual is distinct from numeric zero');
 
 const numericContext={norm:context.norm};
 vm.createContext(numericContext);
-const numericHelpers=source.match(/const val=x=>[^\n]+\nfunction comparable\(actual,target,unit\)\{[^\n]+/);
+const numericHelpers=source.match(/const val=x=>[^\n]+\n(?:const effectiveUnit=r=>[^\n]+\n)?function comparable\(actual,target,unit\)\{[^\n]+/);
 assert.ok(numericHelpers,'production numeric comparison helpers must exist');
 vm.runInContext(numericHelpers[0]+'\nthis.val=val;',numericContext);
 for(const missing of [null,undefined,'','  ','N/A','-'])assert.equal(numericContext.val(missing),null,'missing KPI value must not be converted to zero');
@@ -96,6 +96,10 @@ assert.equal(numericContext.val('0%'),0,'explicit zero percentage is a valid KPI
 assert.equal(numericContext.comparable('',0,'%'),null,'missing actual versus zero target is not comparable');
 assert.equal(numericContext.comparable(0,0,'%')[0],0,'explicit zero actual and target are comparable');
 console.log('PASS: missing versus zero numeric KPI comparison contract');
+assert.equal(numericContext.comparable(0.85,85,'%')[0],85,'ratio-form actual should normalize to percent when target is percent points');
+assert.equal(numericContext.comparable(85,85,'%')[0],85,'percent-point actual should remain unchanged');
+assert.ok(source.includes("comparable(r.actual,r.target,effectiveUnit(r))"),'Rate KPI comparison must use effective percentage unit');
+console.log('PASS: Rate KPI percent normalization and effective-unit wiring');
 
 const missingMonthQuality={...quality,targetMonth:null};
 const missingMonthCompliance={...compliance,targetMonth:null};
