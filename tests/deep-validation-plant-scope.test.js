@@ -220,3 +220,12 @@ const multiple=sourceContext.dueInfo({plannedCompletionDate:'W2, Sep-26\n\nW1, N
 assert.equal(multiple.kind,'multiweek','multiple weekly milestones must be preserved as distinct schedule class');
 assert.ok(sourceContext.flagsFor({...incompleteBase,plannedCompletionDate:'W2, Sep-26\n\nW1, Nov-26'},[incompleteBase]).some(x=>x[1].includes('복수 주차 일정')),'multiple milestones require final-completion clarification');
 console.log('PASS: two-digit year weeks and multiple milestone deadlines');
+
+const repeatedPlanRows=[6,7,8].map((month,i)=>({...incompleteBase,plant:'india',targetYear:2026,targetMonth:month,kpi:'Aging Inventory',kpiEn:'Aging Inventory',unit:'USD',direction:'LOWER',actual:[30.35,31.54,34.20][i],recoveryPlan:'same corrective action'}));
+const worseningFlags=sourceContext.flagsFor(repeatedPlanRows[2],repeatedPlanRows);
+assert.ok(worseningFlags.some(x=>x[0]==='HIGH'&&x[1].includes('실적 연속 악화')&&x[1].includes('30.35 → 31.54 → 34.2')),'three-month repeated plan with deteriorating lower-is-better KPI must flag HIGH with trend');
+const reboundRows=repeatedPlanRows.map((r,i)=>({...r,actual:[52,42.74,49.18][i]}));
+assert.ok(sourceContext.flagsFor(reboundRows[2],reboundRows).some(x=>x[0]==='HIGH'&&x[1].includes('최근 실적 재악화')),'repeated plan and relapse after improvement must flag HIGH');
+const improvedRows=repeatedPlanRows.map((r,i)=>({...r,actual:[34.2,31.54,30.35][i]}));
+assert.ok(!sourceContext.flagsFor(improvedRows[2],improvedRows).some(x=>x[1].includes('실적 연속 악화')||x[1].includes('최근 실적 재악화')),'improving KPI must not be mislabeled worsening');
+console.log('PASS: repeated three-month recovery plan flags continuous deterioration and relapse, not improvement');
