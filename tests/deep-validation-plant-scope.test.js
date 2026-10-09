@@ -62,3 +62,15 @@ console.log('PASS: recovery history reply-sequence precedence');
 
 
 
+
+
+// Production DIO formula: inventory turnover ratio -> inventory days, never percentage.
+const html=fs.readFileSync('index.html','utf8');
+const dioFn=html.match(/function deriveDioValue\(turnover\)\{[^}]+\}/);
+assert.ok(dioFn,'production DIO derivation must exist');
+const dioContext={};vm.createContext(dioContext);vm.runInContext(dioFn[0],dioContext);
+assert.equal(dioContext.deriveDioValue(5),73,'turnover 5 must yield 73 days, not 73%');
+assert.equal(dioContext.deriveDioValue(10),36.5,'turnover 10 must yield 36.5 days');
+for(const invalid of [0,-1,'',null,'not-a-number'])assert.equal(dioContext.deriveDioValue(invalid),null,'invalid turnover must not generate a DIO value');
+assert.ok(html.includes("unit:'일'"),'derived DIO must be labeled in days');
+console.log('PASS: production DIO derivation, invalid input, and day-unit contract');
