@@ -191,3 +191,5 @@ for(const missing of ['', 'NA', 'N/A', 'not applicable']){
  assert.ok(flaggedDate.some(x=>x[0]==='HIGH'&&x[1].includes('완료예정일 미지정')),'missing due date '+JSON.stringify(missing)+' must be HIGH');
 }
 console.log('PASS: blank/NA/N/A recovery root, plan, owner and due date classified HIGH');
+assert.ok(source.includes('detailRows:input=>{const rows=latestReplyRows(Array.isArray(input)?input:[]);'),'detailRows must dedupe latest KPI replies before findings, loop and contradiction checks');
+console.log('PASS: detailRows uses same latest-reply dedup as dashboard');
