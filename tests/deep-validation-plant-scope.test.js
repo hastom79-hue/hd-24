@@ -153,3 +153,25 @@ console.log('PASS: cross-KPI comparisons reject missing or invalid target month'
 const dioFallback="currentPlant==='india'?93:currentPlant==='brazil'?-24001:102";
 assert.equal(html.split(dioFallback).length-1,2,'both paths must preserve the Brazil synthetic DIO key to prevent row collision');
 console.log('PASS: Brazil derived DIO uses isolated synthetic row key');
+
+
+// Latest-reply regression: bilingual aliases, plant/month boundaries, sequence and tie handling.
+const latestSource=source.slice(source.indexOf('function latestReplyRows('),source.indexOf('function render(){'));
+assert.ok(latestSource.startsWith('function latestReplyRows('),'production latestReplyRows() must be found');
+vm.runInContext(latestSource,sourceContext);
+const aliasBase={plant:'india',targetYear:2026,targetMonth:8,kpi:'표준작업준수율',kpiEn:'Standard Work Compliance',replySequence:1,replyReceivedAt:'2026-09-01'};
+const aliasUpdated={...aliasBase,kpiEn:'',replySequence:2,replyReceivedAt:'2026-09-02'};
+const aliasOlder={...aliasBase,kpi:'',replySequence:1,replyReceivedAt:'2026-10-01'};
+let deduped=sourceContext.latestReplyRows([aliasBase,aliasUpdated,aliasOlder]);
+assert.equal(deduped.length,1,'Korean and English KPI aliases must collapse within same plant/month');
+assert.equal(deduped[0].replySequence,2,'higher reply sequence must win despite older timestamp');
+deduped=sourceContext.latestReplyRows([aliasBase,{...aliasBase,replyReceivedAt:'2026-09-03'}]);
+assert.equal(deduped.length,1,'identical KPI and period must dedupe');
+assert.equal(deduped[0].replyReceivedAt,'2026-09-03','later timestamp must win on equal sequence');
+deduped=sourceContext.latestReplyRows([aliasBase,{...aliasBase,rootCause:'last entry'}]);
+assert.equal(deduped[0].rootCause,'last entry','last stored entry must win exact ties');
+deduped=sourceContext.latestReplyRows([aliasBase,{...aliasBase,plant:'brazil'},{...aliasBase,targetMonth:7}]);
+assert.equal(deduped.length,3,'different plants or months must remain separate');
+deduped=sourceContext.latestReplyRows([{plant:'india',targetMonth:8},{plant:'india',targetMonth:8}]);
+assert.equal(deduped.length,2,'unnamed KPI records must not be merged');
+console.log('PASS: latest reply bilingual aliases, sequence, timestamp ties, plant/month boundaries and unnamed records');
