@@ -101,6 +101,14 @@ assert.equal(numericContext.comparable(85,85,'%')[0],85,'percent-point actual sh
 assert.ok(source.includes("comparable(r.actual,r.target,effectiveUnit(r))"),'Rate KPI comparison must use effective percentage unit');
 console.log('PASS: Rate KPI percent normalization and effective-unit wiring');
 assert.ok(source.includes("['Unit',10]")&&source.includes("effectiveUnit(r)==='%'?percentPoints(r.target)"),'deep-analysis Excel must include Rate percent unit and normalized target');
+vm.runInContext('this.percentPoints=percentPoints;this.effectiveUnit=effectiveUnit;',numericContext);
+assert.equal(numericContext.percentPoints(0.85),85,'Rate ratio 0.85 must export as 85 percentage points');
+assert.equal(numericContext.percentPoints(0.975),97.5,'Rate ratio 0.975 must export as 97.5 percentage points');
+assert.equal(numericContext.percentPoints(85),85,'Rate already in percentage points must not multiply');
+assert.equal(numericContext.percentPoints(0),0,'Rate numeric zero must remain zero');
+assert.equal(numericContext.percentPoints(''),null,'missing Rate must remain missing');
+assert.equal(numericContext.effectiveUnit({kpiEn:'WIP Compliance Rate',unit:''}),'%','Rate KPI must use percent even when source unit missing');
+console.log('PASS: Rate Excel normalization samples and missing-value handling');
 
 const missingMonthQuality={...quality,targetMonth:null};
 const missingMonthCompliance={...compliance,targetMonth:null};
