@@ -20,6 +20,8 @@ function comparable(actual,target,unit){let a=val(actual),t=val(target);if(a===n
 function dueInfo(r){
  const raw=String(r?.plannedCompletionDate||'').trim(),done=/완료|complete|done/i.test(String(r?.actionStatus||r?.status||r?.completionStatus||''));
  if(!raw)return {kind:'missing',time:null,done};
+ // Excel stores dates as serial days from 1899-12-30; never parse them as year strings.
+ if(/^\d{5}(?:\.\d+)?$/.test(raw)){const serial=Number(raw),time=Date.UTC(1899,11,30)+serial*86400000;if(serial>=20000&&serial<=100000&&Number.isFinite(time))return {kind:'date',time,done}}
  if(/^(monthly|-|n\/?a)$/i.test(raw))return {kind:'broad',time:null,done};
  if(/^(?:w(?:eek)?\s*)?[1-5]\s*[,\/-]?\s*[A-Za-z]{3,9}[-\s,]*20\d{2}$/i.test(raw)||/^w[1-5]\s*[,\/-]?\s*(?:0?[1-9]|1[0-2])[-\/]20\d{2}$/i.test(raw))return {kind:'week',time:null,done};
  const t=Date.parse(raw);return Number.isFinite(t)?{kind:'date',time:t,done}:{kind:'text',time:null,done};
