@@ -127,6 +127,8 @@ checkPair(0.85,90,'%','Standard Work Compliance',[85,90]);
 checkPair(0.85,0.90,'%','Quality Rate',[85,90]);
 checkPair(85,90,'%','Quality Rate',[85,90]);
 checkPair(0,0,'%','Quality Rate',[0,0]);
+checkPair(1,1.08,'%','Order Intake Fulfillment',[100,108]);
+checkPair(1,0.98,'%','Order Intake Fulfillment',[100,98]);
 checkPair(0.85,0.90,'days','Manufacturing Lead Time',[0.85,0.90]);
 console.log('PASS: achievement normalization mixed ratio/percent-point and non-percent units');
 
