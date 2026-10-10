@@ -49,3 +49,12 @@ assert.equal(api.plateauReview(blank[2],blank).state,'INVALID_VALUES','blank mus
 const mixed=[rate('india',6,100),rate('india',7,95),rate('india',8,100)];
 assert.equal(api.plateauReview(mixed[2],mixed).state,'NO_PLATEAU','mixed rates must not trigger plateau');
 console.log('PASS: 16 production rule-matrix regression assertions');
+
+const lowerKorean={kpiEn:'Unregistered metric',direction:'하향',target:10,actual:8};
+assert.equal(api.direction(lowerKorean),'LOWER','Korean downward direction must be lower-is-better');
+assert.equal(api.targetState(lowerKorean).state,'ACHIEVED','Korean downward target must be achieved below target');
+assert.equal(api.direction({...lowerKorean,direction:'상향'}),'HIGHER','Korean upward direction must be higher-is-better');
+assert.equal(api.targetState({...lowerKorean,actual:''}).state,'UNKNOWN','blank actual must not be treated as zero');
+assert.equal(api.targetState({...lowerKorean,target:''}).state,'UNKNOWN','blank target must not be treated as zero');
+assert.equal(api.direction({...lowerKorean,direction:'ambiguous'}),'UNKNOWN','unknown explicit direction must fail closed');
+console.log('PASS: 22 production rule-matrix regression assertions');
