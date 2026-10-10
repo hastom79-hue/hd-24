@@ -301,3 +301,15 @@ assert.ok(sourceContext.flagsFor(fabricationJulyStatusRows[1],fabricationJulySta
 const downtimeRows=assemblyStatusRows.map((r,i)=>({...r,kpi:'Equipment Downtime Loss',kpiEn:'Equipment Downtime Loss',unit:'%',direction:'LOWER',target:0.1,actual:[0.177,0.134][i]}));
 assert.ok(sourceContext.flagsFor(downtimeRows[1],downtimeRows).some(x=>x[1].includes('Recent decline')),'India downtime loss July 17.7 to August 13.4 improved despite August recent decline');
 console.log('PASS: actual India fabrication July and downtime August status-trend contradictions');
+
+const qualityCases=[
+ ['IQ 200 (Initial Quality)',25,36],
+ ['W.Q. (Warranty Quality)',411,445],
+ ['Issues with Production Responsibility',10,15]
+];
+for(const [name,target,actual] of qualityCases){
+ const qualityRow={...assemblyStatusRows[1],kpi:name,kpiEn:name,unit:'count',direction:'',target,actual,statusTrend:''};
+ assert.equal(sourceContext.directionOf(qualityRow),'LOWER',name+' must be lower-is-better');
+ assert.equal(sourceContext.achieved(qualityRow),false,name+' actual worse than target must miss');
+}
+console.log('PASS: India IQ200, warranty quality, and production-responsibility defect direction');
