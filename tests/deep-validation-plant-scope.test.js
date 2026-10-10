@@ -242,3 +242,10 @@ for(const kpi of ['Long-Term Inventory Value (6 month basis)','OT MH per Unit'])
  assert.ok(flags.some(x=>x[0]==='HIGH'&&(x[1].includes('실적 연속 악화')||x[1].includes('최근 실적 재악화'))),'actual India lower-is-better KPI '+kpi+' must flag deterioration');
 }
 console.log('PASS: actual India long-term inventory and overtime MH directions');
+
+const placeholderRows=repeatedPlanRows.map(r=>({...r,reason:'NA',rootCause:'NA',recoveryPlan:'-'}));
+const placeholderFlags=sourceContext.flagsFor(placeholderRows[2],placeholderRows);
+assert.ok(placeholderFlags.some(x=>x[1].includes('근본원인 미기재')),'placeholder root must remain missing HIGH');
+assert.ok(placeholderFlags.some(x=>x[1].includes('회복계획 미기재')),'placeholder plan must remain missing HIGH');
+assert.ok(!placeholderFlags.some(x=>x[1].includes('연속 동일 근본원인')||x[1].includes('연속 동일 만회계획')||x[1].includes('실적 연속 악화')),'NA and dash placeholders must not count as substantive repeated recovery actions');
+console.log('PASS: repeated NA placeholders are missing data, not repeated substantive actions');
