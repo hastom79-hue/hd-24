@@ -106,6 +106,24 @@ function trend(r,all){
  if(cur.state==='ACHIEVED'&&dg>0)return {state:'ACHIEVED_DETERIORATING',deltaGap:dg};
  return {state:'STABLE',deltaGap:dg};
 }
+function plateauReview(r,all){
+ const s=seriesFor(r,all),i=s.findIndex(x=>x===r);
+ if(i<2)return {state:'INSUFFICIENT_HISTORY',months:i+1};
+ const last=s.slice(i-2,i+1);
+ // A plateau is only meaningful across consecutive calendar months.
+ const period=x=>Number(x.targetYear??x.year??2026)*12+monthOf(x);
+ if(last.some((x,j)=>j>0&&period(x)!==period(last[j-1])+1))
+  return {state:'NON_CONSECUTIVE_HISTORY',months:last.length};
+ const values=last.map(x=>num(x.actual));
+ if(values.some(x=>x===null))return {state:'INVALID_VALUES',months:3};
+ const unit=norm(r.unit||r.valueUnit||'');
+ const isRate=unit==='%'||/rate|율|비율|compliance|achievement/.test(norm(kpiOf(r)));
+ if(!isRate)return {state:'NOT_RATE_KPI',months:3};
+ const constant=values.every(x=>x===values[0]);
+ if(!constant||![0,100].includes(values[0]))return {state:'NO_PLATEAU',months:3};
+ return {state:'MEASUREMENT_REVIEW',months:3,value:values[0],confidence:'MEDIUM',
+  reason:'Three consecutive months fixed at 0% or 100%; review denominator, sampling, target challenge, and source evidence. Not automatic failure or achievement.'};
+}
 function textFields(r){return norm([r.reason,r.rootCause,r.recoveryPlan].filter(Boolean).join(' '))}
 function analysisDate(r){
  const y=Number(r.year||2026),m=monthOf(r);return m?new Date(y,m,0,23,59,59):null;
@@ -174,9 +192,10 @@ function clusterFindings(rows){
  return out;
 }
 function analyze(r,all){
- const fs=[],ts=targetState(r),tr=trend(r,all),act=actionState(r),txt=textFields(r),s=seriesFor(r,all),idx=s.findIndex(x=>x===r),prev=idx>0?s[idx-1]:null; const integrity=sourceIntegrity(r); if(integrity)fs.push(integrity);
+ const fs=[],ts=targetState(r),tr=trend(r,all),plateau=plateauReview(r,all),act=actionState(r),txt=textFields(r),s=seriesFor(r,all),idx=s.findIndex(x=>x===r),prev=idx>0?s[idx-1]:null; const integrity=sourceIntegrity(r); if(integrity)fs.push(integrity);
  fs.push(finding('R01','PERFORMANCE',ts.state,`Target=${r.target??'-'}, Actual=${r.actual??'-'}, Direction=${direction(r)}`,'HIGH'));
  if(tr.state!=='NO_TREND'&&tr.state!=='STABLE')fs.push(finding(tr.state==='RECOVERING'?'R02':tr.state==='RECOVERY_CONFIRMED'?'R04':tr.state==='NEW_REGRESSION'?'R05':'R03','TREND',tr.state,`Target-gap change=${tr.deltaGap??'-'}`,'HIGH',tr.state==='NEW_REGRESSION'));
+ if(plateau.state==='MEASUREMENT_REVIEW')fs.push(finding('R29','MEASUREMENT','KPI_PLATEAU_REVIEW',`Consecutive 3 months at ${plateau.value}%; verify measurement validity and target suitability, not automatic achievement/failure.`,'MEDIUM',true));
  if(act.attachment)fs.push(finding('R15','REPLY_VALIDATION','REPLY_TRACEABILITY_GAP','Attachment-only reply; structured root/action/owner/due is not traceable','HIGH',true));
  if(act.structural&&act.due){
   const asOf=analysisDate(r)||new Date(), future=act.dueDate&&act.dueDate>asOf;
@@ -367,6 +386,6 @@ function integrityGate(r){
 function analyzeAll(rows){
  return rows.map(r=>{const findings=analyze(r,rows);return {record:r,direction:direction(r),target:targetState(r),trend:trend(r,rows),findings,managementState:managementState(findings),questions:consolidateQuestions(findings),actionAttribution:actionAttribution(r,rows),causeDynamics:causeDynamics(r,rows),pdcaClosure:pdcaClosure(r,rows)}})
 }
-window.HD24_RULE_MATRIX_V1={...API,KPI_DIRECTION_MASTER,masterDirection,direction,auditSummary,integrityGate,causeDynamics,standardControlEligibility,actionAttribution,pdcaClosure,issueIdentity,issueTimeline,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,issueKeyFor,consolidateIssueFollowups,analysisDate,dueDate,effectState,actionDetail,analyze,analyzeAll,consolidateQuestions};
+window.HD24_RULE_MATRIX_V1={...API,KPI_DIRECTION_MASTER,masterDirection,direction,plateauReview,auditSummary,integrityGate,causeDynamics,standardControlEligibility,actionAttribution,pdcaClosure,issueIdentity,issueTimeline,targetState,trend,sourceIntegrity,actionMechanism,clusterFindings,issueKeyFor,consolidateIssueFollowups,analysisDate,dueDate,effectState,actionDetail,analyze,analyzeAll,consolidateQuestions};
 document.dispatchEvent(new CustomEvent('hd24:rule-matrix-ready',{detail:API}));
 })();
