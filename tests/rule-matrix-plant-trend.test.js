@@ -73,3 +73,15 @@ assert.equal(api.actionAttribution(attrCur,[attrPrev,attrCur]).state,'EFFECT SIG
 const attrMissing={...row('india',2026,8,90),rootCause:'WIP capacity bottleneck'};
 assert.equal(api.actionAttribution(attrMissing,[attrPrev,attrMissing]).state,'RECOVERY OBSERVED · ATTRIBUTION UNCERTAIN','missing action cannot be credited for recovery');
 console.log('PASS: 27 production rule-matrix regression scenarios');
+
+const timelineRows=[
+ {...row('india',2025,12,80)},
+ {...row('india',2026,1,85)},
+ {...row('brazil',2026,1,70)}
+];
+const timeline=api.issueTimeline(timelineRows.map(record=>({record,pdcaClosure:{state:'OPEN',closed:false}})));
+assert.equal(timeline.length,2,'same KPI in India and Brazil must create separate issue timelines');
+const indiaTimeline=timeline.find(x=>x.issueId.startsWith('india::'));
+assert.equal(indiaTimeline.firstMonth,12,'timeline must start in prior-year December');
+assert.equal(indiaTimeline.latestMonth,1,'timeline must end in following-year January');
+console.log('PASS: 30 production rule-matrix regression scenarios');
