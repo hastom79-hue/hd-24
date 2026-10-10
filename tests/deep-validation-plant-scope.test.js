@@ -313,3 +313,7 @@ for(const [name,target,actual] of qualityCases){
  assert.equal(sourceContext.achieved(qualityRow),false,name+' actual worse than target must miss');
 }
 console.log('PASS: India IQ200, warranty quality, and production-responsibility defect direction');
+
+const downtimeStatusRows=assemblyStatusRows.map((r,i)=>({...r,kpi:'Equipment Downtime Loss',kpiEn:'Equipment Downtime Loss',direction:'LOWER',unit:'%',target:0.15,actual:[0.177,0.134][i]}));
+assert.ok(sourceContext.flagsFor(downtimeStatusRows[1],downtimeStatusRows).some(x=>x[0]==='MEDIUM'&&x[1].includes('Recent decline')),'India equipment downtime improved from 17.7% to 13.4% despite recent-decline text');
+console.log('PASS: actual India equipment downtime trend/status contradiction');
