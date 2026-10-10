@@ -139,19 +139,19 @@ function contradictions(all){
   const qBad=achieved(q)===false||/miss|decline|미달|악화/.test(norm(q.statusTrend));if(!qBad)continue;
   for(const c of controls.filter(x=>samePlant(x,q)&&yearOf(x)===yearOf(q)&&validSameMonth(x,q))){
    const isCompliance=has(c,complianceAliases),isRecurrence=has(c,recurrenceAliases),zeroRecurrence=isRecurrence&&c.actual!==null&&c.actual!==undefined&&String(c.actual).trim()!==''&&Number(c.actual)===0;
-   if(achieved(c)===true||zeroRecurrence)out.push({sev:'HIGH',year:yearOf(q),month:q.targetMonth,kpi:q.kpiEn||q.kpi,related:c.kpiEn||c.kpi,msg:'생산귀책/초기 품질 결과는 미달·악화인데 '+(isCompliance?'표준작업 준수 관리지표는 정상/목표 달성':zeroRecurrence?'비표준작업 재발지표는 0':'관련 공정관리 지표는 정상/목표 달성')+'입니다. 점검대상·표본·판정기준 및 원인 연결을 교차 검증할 필요'});
+   if(achieved(c)===true||zeroRecurrence)out.push({sev:'HIGH',plant:q.plant,year:yearOf(q),month:q.targetMonth,kpi:q.kpiEn||q.kpi,related:c.kpiEn||c.kpi,msg:'생산귀책/초기 품질 결과는 미달·악화인데 '+(isCompliance?'표준작업 준수 관리지표는 정상/목표 달성':zeroRecurrence?'비표준작업 재발지표는 0':'관련 공정관리 지표는 정상/목표 달성')+'입니다. 점검대상·표본·판정기준 및 원인 연결을 교차 검증할 필요'});
   }
  }
  for(const w of wips){
   const wBad=achieved(w)===false||/miss|decline|미달|악화|증가/.test(norm(w.statusTrend));if(!wBad)continue;
   for(const l of leads.filter(x=>samePlant(x,w)&&yearOf(x)===yearOf(w)&&validSameMonth(x,w))){
-   if(achieved(l)===true||/improv|shorten|reduc|개선|단축/.test(norm(l.statusTrend)))out.push({sev:'HIGH',year:yearOf(w),month:w.targetMonth,kpi:w.kpiEn||w.kpi,related:l.kpiEn||l.kpi,msg:'WIP/재공은 미달·악화인데 Cutting-to-Dispatch 제조 리드타임은 목표 달성·단축으로 나타납니다. 동일 범위·동일 물동량 기준인지 WIP 정의, Throughput, Lead Time 시작·종료점 및 재공 포함범위를 교차 검증할 필요'});
+   if(achieved(l)===true||/improv|shorten|reduc|개선|단축/.test(norm(l.statusTrend)))out.push({sev:'HIGH',plant:w.plant,year:yearOf(w),month:w.targetMonth,kpi:w.kpiEn||w.kpi,related:l.kpiEn||l.kpi,msg:'WIP/재공은 미달·악화인데 Cutting-to-Dispatch 제조 리드타임은 목표 달성·단축으로 나타납니다. 동일 범위·동일 물동량 기준인지 WIP 정의, Throughput, Lead Time 시작·종료점 및 재공 포함범위를 교차 검증할 필요'});
   }
  }
  const downtimeAliases=['Equipment Downtime Loss'],mtbfAliases=['MTBF'],mttrAliases=['MTTR'],mttdAliases=['MTTD'];
  const samePeriod=(a,b)=>samePlant(a,b)&&yearOf(a)===yearOf(b)&&validSameMonth(a,b),bad=r=>achieved(r)===false,good=r=>achieved(r)===true;
- const pushUnique=x=>{const key=[x.year,x.month,n(x.kpi),n(x.related),x.msg].join('|');if(!out.some(y=>[y.year,y.month,n(y.kpi),n(y.related),y.msg].join('|')===key))out.push(x)};
- const cross=(aa,bb,msg)=>all.filter(r=>has(r,aa)&&bad(r)).forEach(a=>all.filter(b=>b!==a&&samePeriod(a,b)&&has(b,bb)&&good(b)).forEach(b=>pushUnique({sev:'MEDIUM',year:yearOf(a),month:a.targetMonth,kpi:a.kpiEn||a.kpi,related:b.kpiEn||b.kpi,msg})));
+ const pushUnique=x=>{const key=[norm(x.plant),x.year,x.month,n(x.kpi),n(x.related),x.msg].join('|');if(!out.some(y=>[norm(y.plant),y.year,y.month,n(y.kpi),n(y.related),y.msg].join('|')===key))out.push(x)};
+ const cross=(aa,bb,msg)=>all.filter(r=>has(r,aa)&&bad(r)).forEach(a=>all.filter(b=>b!==a&&samePeriod(a,b)&&has(b,bb)&&good(b)).forEach(b=>pushUnique({sev:'MEDIUM',plant:a.plant,year:yearOf(a),month:a.targetMonth,kpi:a.kpiEn||a.kpi,related:b.kpiEn||b.kpi,msg})));
  cross(downtimeAliases,mtbfAliases,'Equipment Downtime Loss는 미달인데 MTBF는 정상입니다. 고장빈도와 비가동손실 산정범위를 교차 검증할 필요');
  cross([...mttrAliases,...mttdAliases],downtimeAliases,'MTTR/MTTD는 미달인데 Equipment Downtime Loss는 정상입니다. 고장건수·정지시간·탐지/복구 산식 범위를 확인할 필요');
  return out;
@@ -168,7 +168,7 @@ async function exportXlsx(rows,cons){
 function drillRows(kind,rows,findings,loop,cons){
  const mapFinding=x=>({plant:x.r.plant,year:yearOf(x.r),month:x.r.targetMonth,kpi:x.r.kpiEn||x.r.kpi,related:'',sev:x.sev,type:'심층 검증',msg:x.msg,reason:x.r.reason||'',root:x.r.rootCause||'',plan:x.r.recoveryPlan||'',owner:x.r.actionOwner||'',due:x.r.plannedCompletionDate||'',seq:x.r.replySequence||''});
  const mapLoop=x=>({plant:rows.find(r=>yearOf(r)===Number(x.year)&&Number(r.targetMonth)===Number(x.month)&&sameKpi(r,{kpiEn:x.kpi,kpi:x.kpi}))?.plant||'',year:Number(x.year)||2026,month:x.month,kpi:x.kpi,related:x.related||'',sev:x.sev,type:'대책 효과검증 미흡',msg:x.msg,reason:'',root:'',plan:'',owner:'',due:'',seq:''});
- const mapCons=x=>({plant:rows.find(r=>yearOf(r)===Number(x.year)&&Number(r.targetMonth)===Number(x.month)&&norm(r.kpiEn||r.kpi)===norm(x.kpi))?.plant||'',year:Number(x.year)||2026,month:x.month,kpi:x.kpi,related:x.related||'',sev:x.sev||'HIGH',type:'KPI 간 모순',msg:x.msg,reason:'',root:'',plan:'',owner:'',due:'',seq:''});
+ const mapCons=x=>({plant:x.plant||rows.find(r=>yearOf(r)===Number(x.year)&&Number(r.targetMonth)===Number(x.month)&&norm(r.kpiEn||r.kpi)===norm(x.kpi))?.plant||'',year:Number(x.year)||2026,month:x.month,kpi:x.kpi,related:x.related||'',sev:x.sev||'HIGH',type:'KPI 간 모순',msg:x.msg,reason:'',root:'',plan:'',owner:'',due:'',seq:''});
  const all=[...findings.map(mapFinding),...loop.map(mapLoop),...cons.map(mapCons)];
  if(kind==='all')return all;if(kind==='high')return all.filter(x=>x.sev==='HIGH');if(kind==='medium')return all.filter(x=>x.sev==='MEDIUM');if(kind==='contradiction')return cons.map(mapCons);if(kind==='loop')return loop.map(mapLoop);
  const phrase={reason:'동일 사유 반복',root:'동일 근본원인 반복',plan:'동일 만회계획 반복'}[kind];return findings.filter(x=>x.msg.includes(phrase)).map(mapFinding);
