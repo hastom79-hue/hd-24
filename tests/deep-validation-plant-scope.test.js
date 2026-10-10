@@ -317,3 +317,7 @@ console.log('PASS: India IQ200, warranty quality, and production-responsibility 
 const downtimeStatusRows=assemblyStatusRows.map((r,i)=>({...r,kpi:'Equipment Downtime Loss',kpiEn:'Equipment Downtime Loss',direction:'LOWER',unit:'%',target:0.15,actual:[0.177,0.134][i]}));
 assert.ok(sourceContext.flagsFor(downtimeStatusRows[1],downtimeStatusRows).some(x=>x[0]==='MEDIUM'&&x[1].includes('Recent decline')),'India equipment downtime improved from 17.7% to 13.4% despite recent-decline text');
 console.log('PASS: actual India equipment downtime trend/status contradiction');
+
+const orderStatusRows=assemblyStatusRows.map((r,i)=>({...r,kpi:'Order Intake Fulfillment (W+4 - Rolling Plan) Domestic + Export Production Plan',kpiEn:'Order Intake Fulfillment (W+4 - Rolling Plan) Domestic + Export Production Plan',target:1,actual:[1.08,0.98][i],statusTrend:i===1?'Current Month: Target Miss / Recent decline':''}));
+assert.ok(!sourceContext.flagsFor(orderStatusRows[1],orderStatusRows).some(x=>x[1].includes('회신의 Recent decline 표기와 전월 실적 개선이 불일치')),'order intake 108% to 98% is a numeric decline, not contradictory trend text');
+console.log('PASS: India order intake 108 to 98 does not trigger false status conflict');
