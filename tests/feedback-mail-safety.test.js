@@ -27,4 +27,5 @@ assert.equal(evaluate([log],'india','different','KPI'),'');
 assert.equal(evaluate([log],'india','recipient','Other'),'');
 assert.equal(evaluate([log],'india','recipient','KPI',''),'','Outlook file creation must not be blocked by uncertain API send');
 assert.equal(evaluate([log],'india','recipient','KPI','https://mail.example.test','rev2'),'','updated analysis must not be blocked by old uncertain send');
+assert.match(evaluate([{status:'send-unconfirmed',plant:'india',to:'recipient',subject:'KPI'}],'india','recipient','KPI'),/중복 발송/,'legacy uncertain log without exportKey must remain protected');
 console.log('HD24 feedback mail safety regression: PASS');
