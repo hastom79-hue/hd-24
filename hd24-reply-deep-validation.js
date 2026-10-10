@@ -9,7 +9,7 @@ function uniqueRiskKpiCount(rows,findings,loop,cons){
  const join=(a,b)=>{const ra=root(a),rb=root(b);if(ra!==rb)parent.set(ra,rb)};
  const alias=r=>[norm(r?.kpiEn),norm(r?.kpi)].filter(Boolean);
  rows.forEach(r=>{const keys=alias(r).map(k=>norm(r.plant)+'|'+k);keys.forEach(k=>root(k));for(let i=1;i<keys.length;i++)join(keys[0],keys[i])});
- const plant=norm(rows[0]?.plant),keys=[...findings.map(x=>norm(x.r?.plant||rows[0]?.plant)+'|'+(alias(x.r)[0]||'')),...loop.map(x=>plant+'|'+norm(x.kpi)),...cons.map(x=>plant+'|'+norm(x.kpi))].filter(k=>!k.endsWith('|'));
+ const plant=norm(rows[0]?.plant),keys=[...findings.map(x=>norm(x.r?.plant||rows[0]?.plant)+'|'+(alias(x.r)[0]||'')),...loop.map(x=>norm(x.plant||rows.find(r=>sameKpi(r,{kpiEn:x.kpi,kpi:x.kpi}))?.plant||plant)+'|'+norm(x.kpi)),...cons.map(x=>norm(x.plant||rows.find(r=>sameKpi(r,{kpiEn:x.kpi,kpi:x.kpi}))?.plant||plant)+'|'+norm(x.kpi))].filter(k=>!k.endsWith('|'));
  return new Set(keys.map(root)).size;
 }
 const yearOf=r=>Number(r?.targetYear)||2026, periodOf=r=>yearOf(r)*12+Number(r?.targetMonth||0)-1;
