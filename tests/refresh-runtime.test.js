@@ -3,7 +3,7 @@ const fs=require('node:fs');
 const html=fs.readFileSync('refresh-runtime.html','utf8');
 const script=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
 assert.ok(script,'refresh script exists');
-const assets=[...html.matchAll(/'\.\/([^']+)'/g)].map(m=>m[1]);
+const assets=[...script.match(/const assets=\[([\s\S]*?)\]/)[1].matchAll(/'\.\/([^']+)'/g)].map(m=>m[1]);
 assert.equal(assets.length,20,'20 assets in refresh manifest');
 assert.equal(new Set(assets).size,20,'no duplicate assets');
 assert.ok(!script.includes('caches.delete('),'do not delete unrelated caches');
