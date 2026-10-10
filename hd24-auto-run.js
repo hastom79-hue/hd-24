@@ -134,7 +134,7 @@ function wire(){
   [reflectBtn,judgeBtn].forEach(btn=>btn&&new MutationObserver(()=>tryAutoRun('readiness enabled')).observe(btn,{attributes:true,attributeFilter:['disabled','data-safe-reflect-ready']}));
   document.addEventListener('hd24-safe-reflect-success',syncSuccess);
   window.addEventListener('hd24-safe-reflect-complete',syncSuccess);
-  watchdog=setInterval(()=>{const sig=getSignature();if(!sig||sig===completedSignature)return;if(runningSignature===sig&&Date.now()-runningSince<15000)return;tryAutoRun('watchdog')},15000);
+  watchdog=setInterval(()=>{const sig=getSignature();if(!sig||sig===completedSignature)return;if(runningSignature===sig)return;tryAutoRun('watchdog')},15000);
   window.addEventListener('beforeunload',()=>watchdog&&clearInterval(watchdog),{once:true});
   resetAndRun('startup');
 }
