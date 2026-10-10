@@ -94,6 +94,10 @@ function trend(r,all){
  const s=seriesFor(r,all),i=s.findIndex(x=>x===r),cur=targetState(r);
  if(i<1||cur.gap===null)return {state:'NO_TREND',deltaGap:null};
  const prev=targetState(s[i-1]);if(prev.gap===null)return {state:'NO_TREND',deltaGap:null};
+ // A target revision changes the gap even when operational performance does not.
+ // Keep target achievement for the current month, but withhold a recovery/worsening claim.
+ if(num(r.target)!==num(s[i-1].target)||direction(r)!==direction(s[i-1]))
+  return {state:'TARGET_CHANGED',deltaGap:null,previousTarget:num(s[i-1].target),currentTarget:num(r.target)};
  const dg=cur.gap-prev.gap;
  if(prev.state==='TARGET_MISS'&&cur.state==='ACHIEVED')return {state:'RECOVERY_CONFIRMED',deltaGap:dg};
  if(prev.state==='ACHIEVED'&&cur.state==='TARGET_MISS')return {state:'NEW_REGRESSION',deltaGap:dg};
