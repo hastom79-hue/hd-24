@@ -143,7 +143,7 @@ function contradictions(all){
   }
  }
  for(const w of wips){
-  const wBad=achieved(w)===false||/miss|decline|미달|악화|증가/.test(norm(w.statusTrend));if(!wBad)continue;
+  const wBad=achieved(w)===false||/miss|decline|미달|악화/.test(norm(w.statusTrend));if(!wBad)continue;
   for(const l of leads.filter(x=>samePlant(x,w)&&yearOf(x)===yearOf(w)&&validSameMonth(x,w))){
    if(achieved(l)===true||/improv|shorten|reduc|개선|단축/.test(norm(l.statusTrend)))out.push({sev:'HIGH',plant:w.plant,year:yearOf(w),month:w.targetMonth,kpi:w.kpiEn||w.kpi,related:l.kpiEn||l.kpi,msg:(/compliance|준수율|준수률|min\/max/i.test(String(w.kpiEn||w.kpi||''))?'WIP 관리 준수율이 미달·악화인데':'WIP/재공 지표가 미달·악화인데')+' Cutting-to-Dispatch 제조 리드타임은 목표 달성·단축으로 나타납니다. 이는 곧바로 물리적 재공량 증가를 뜻하지 않습니다. WIP 지표의 단위·산식·측정범위, 실제 재공량과 Throughput, 리드타임의 시작·종료점 및 대상 물동량을 교차 검증할 필요'});
   }
