@@ -106,3 +106,16 @@ assert.equal(scopedFollowups.length,2,'same cross-KPI cluster in different plant
 assert.ok(scopedFollowups.some(x=>x.issueKey.startsWith('india::CLUSTER:')),'India cluster follow-up must preserve plant');
 assert.ok(scopedFollowups.some(x=>x.issueKey.startsWith('brazil::CLUSTER:')),'Brazil cluster follow-up must preserve plant');
 console.log('PASS: cross-plant cluster follow-up isolation');
+
+// End-to-end cluster discovery must retain the plant/year/month metadata used by follow-up grouping.
+const qualityScopeRows=[
+ {...process('india',2026,8,1,2)}, {...quality('india',2026,8,5,3)},
+ {...process('brazil',2026,8,1,2)}, {...quality('brazil',2026,8,5,3)}
+];
+const discovered=api.clusterFindings(qualityScopeRows).filter(x=>x.cluster==='QUALITY / PROCESS');
+assert.equal(discovered.length,2,'quality conflict should be discovered independently in both plants');
+assert.ok(discovered.every(x=>x.year===2026&&x.month===8),'discovered clusters must retain reporting period');
+assert.deepEqual([...discovered.map(x=>x.plant)].sort(),['brazil','india'],'discovered clusters must retain source plant');
+const generated=api.consolidateIssueFollowups([],discovered);
+assert.equal(generated.length,2,'real discovered clusters must produce two plant-scoped follow-ups');
+console.log('PASS: end-to-end cross-plant KPI cluster discovery and follow-up grouping');
