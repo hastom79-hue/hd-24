@@ -265,3 +265,9 @@ const wipFlags=sourceContext.flagsFor(wipRows[2],wipRows);
 assert.ok(wipFlags.some(x=>x[0]==='MEDIUM'&&x[1].includes('최근 실적 전월 대비 후퇴')),'fabrication WIP 57->63.3->62.3 is net improved with minor monthly pullback');
 assert.ok(!wipFlags.some(x=>x[0]==='HIGH'&&x[1].includes('최근 실적 전월 대비 후퇴')),'fabrication WIP monthly pullback alone must not be HIGH');
 console.log('PASS: actual India fabrication WIP net improvement with minor pullback');
+
+const wipMissFlags=sourceContext.flagsFor(wipRows[2],wipRows);
+assert.ok(wipMissFlags.some(x=>x[0]==='HIGH'&&x[1].includes('최근 3개월 연속 목표 미달')&&x[1].includes('21.7%p')),'fabrication WIP must flag sustained target misses separately from trend');
+const assemblyRows=wipRows.map((r,i)=>({...r,kpi:'WIP Compliance (Assembly)',kpiEn:'WIP Compliance (Assembly)',target:[64,65,66][i],actual:[60,64,68][i]}));
+assert.ok(!sourceContext.flagsFor(assemblyRows[2],assemblyRows).some(x=>x[1].includes('최근 3개월 연속 목표 미달')),'assembly WIP achieved in August must not be flagged as three consecutive misses');
+console.log('PASS: fabrication WIP persistent target miss is separate from assembly recovery');
