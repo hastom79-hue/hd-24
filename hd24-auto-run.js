@@ -40,7 +40,7 @@ function readiness(){
   const core=coreReady();
   const safe=masterOnly ? !!btn : (window.hd24SafeReflectReady===true&&!!btn);
   if(sig&&btn&&btn.disabled&&safe&&core.ok){
-    btn.disabled=false;
+    // Let the canonical readiness check decide; never force-enable a guarded action.
     if(typeof window.checkReady==='function'){
       try{window.checkReady()}catch(_){ }
     }
