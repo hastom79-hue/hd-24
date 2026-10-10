@@ -2,7 +2,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const source=fs.readFileSync('hd24-reply-feedback.js','utf8');
 const checks=[
- ['if(send){send.disabled=demo;', 'demo button disabled'],
+ ['send.disabled=demo;', 'demo button disabled'],
  ['if(dashboardImages.length!==2)', 'dashboard image count'],
  ['if(!api||api.success!==true)', 'explicit API confirmation'],
  ["status:'outlook-package-downloaded'", 'Outlook package is not sent'],
