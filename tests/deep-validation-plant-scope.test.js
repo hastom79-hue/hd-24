@@ -295,3 +295,9 @@ const lowerWorseRows=lowerTrendRows.map((r,i)=>({...r,actual:[31.54,34.2][i]}));
 assert.ok(!sourceContext.flagsFor(lowerWorseRows[1],lowerWorseRows).some(x=>x[1].includes('Recent decline')),'lower-is-better KPI rising is actual deterioration, not status contradiction');
 assert.ok(!sourceContext.flagsFor(assemblyStatusRows[1],[assemblyStatusRows[1]]).some(x=>x[1].includes('Recent decline')),'no preceding month means status contradiction must not be inferred');
 console.log('PASS: status trend comparison respects lower-is-better direction and missing history');
+
+const fabricationJulyStatusRows=wipRows.slice(0,2).map((r,i)=>({...r,statusTrend:i===1?'Current Month: Target Miss\\nRecent decline':''}));
+assert.ok(sourceContext.flagsFor(fabricationJulyStatusRows[1],fabricationJulyStatusRows).some(x=>x[1].includes('Recent decline')),'India fabrication WIP June 57 to July 63.3 improved despite July recent decline');
+const downtimeRows=assemblyStatusRows.map((r,i)=>({...r,kpi:'Equipment Downtime Loss',kpiEn:'Equipment Downtime Loss',unit:'%',direction:'LOWER',target:0.1,actual:[0.177,0.134][i]}));
+assert.ok(sourceContext.flagsFor(downtimeRows[1],downtimeRows).some(x=>x[1].includes('Recent decline')),'India downtime loss July 17.7 to August 13.4 improved despite August recent decline');
+console.log('PASS: actual India fabrication July and downtime August status-trend contradictions');
