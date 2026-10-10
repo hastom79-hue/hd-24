@@ -225,7 +225,7 @@ const repeatedPlanRows=[6,7,8].map((month,i)=>({...incompleteBase,plant:'india',
 const worseningFlags=sourceContext.flagsFor(repeatedPlanRows[2],repeatedPlanRows);
 assert.ok(worseningFlags.some(x=>x[0]==='HIGH'&&x[1].includes('실적 연속 악화')&&x[1].includes('30.35 → 31.54 → 34.2')),'three-month repeated plan with deteriorating lower-is-better KPI must flag HIGH with trend');
 const reboundRows=repeatedPlanRows.map((r,i)=>({...r,actual:[52,42.74,49.18][i]}));
-assert.ok(sourceContext.flagsFor(reboundRows[2],reboundRows).some(x=>x[0]==='HIGH'&&x[1].includes('최근 실적 전월 대비 후퇴')),'repeated plan and relapse after improvement must flag HIGH');
+assert.ok(sourceContext.flagsFor(reboundRows[2],reboundRows).some(x=>x[0]==='MEDIUM'&&x[1].includes('최근 실적 전월 대비 후퇴')),'repeated plan with net improvement and recent pullback must flag MEDIUM');
 const improvedRows=repeatedPlanRows.map((r,i)=>({...r,actual:[34.2,31.54,30.35][i]}));
 assert.ok(!sourceContext.flagsFor(improvedRows[2],improvedRows).some(x=>x[1].includes('실적 연속 악화')||x[1].includes('최근 실적 전월 대비 후퇴')),'improving KPI must not be mislabeled worsening');
 console.log('PASS: repeated three-month recovery plan flags continuous deterioration and relapse, not improvement');
@@ -239,7 +239,7 @@ console.log('PASS: percentage point normalization and mixed-unit protection for 
 for(const kpi of ['Long-Term Inventory Value (6 month basis)','OT MH per Unit']){
  const rows=repeatedPlanRows.map((r,i)=>({...r,kpi,kpiEn:kpi,unit:kpi.startsWith('OT')?'MH/unit':'INR',actual:kpi.startsWith('OT')?[52,42.74,49.18][i]:[30.35,31.54,34.2][i]}));
  const flags=sourceContext.flagsFor(rows[2],rows);
- assert.ok(flags.some(x=>x[0]==='HIGH'&&(x[1].includes('실적 연속 악화')||x[1].includes('최근 실적 전월 대비 후퇴'))),'actual India lower-is-better KPI '+kpi+' must flag deterioration');
+ assert.ok(flags.some(x=>(x[1].includes('실적 연속 악화')&&x[0]==='HIGH')||(x[1].includes('최근 실적 전월 대비 후퇴')&&x[0]==='MEDIUM')),'actual India lower-is-better KPI '+kpi+' must flag deterioration');
 }
 console.log('PASS: actual India long-term inventory and overtime MH directions');
 
@@ -259,3 +259,9 @@ const tieRows=[
 const tieFlags=sourceContext.flagsFor(tieRows[3],tieRows);
 assert.ok(tieFlags.some(x=>x[0]==='HIGH'&&x[1].includes('3개월 연속 동일 만회계획 반복')),'latest timestamp must win when replySequence is equal');
 console.log('PASS: equal reply sequence selects latest received timestamp for repeated plans');
+
+const wipRows=repeatedPlanRows.map((r,i)=>({...r,kpi:'WIP Compliance (Fabrication)',kpiEn:'WIP Compliance (Fabrication)',unit:'%',direction:'HIGHER',target:[83.5,83.75,84][i],actual:[57,63.3,62.3][i]}));
+const wipFlags=sourceContext.flagsFor(wipRows[2],wipRows);
+assert.ok(wipFlags.some(x=>x[0]==='MEDIUM'&&x[1].includes('최근 실적 전월 대비 후퇴')),'fabrication WIP 57->63.3->62.3 is net improved with minor monthly pullback');
+assert.ok(!wipFlags.some(x=>x[0]==='HIGH'&&x[1].includes('최근 실적 전월 대비 후퇴')),'fabrication WIP monthly pullback alone must not be HIGH');
+console.log('PASS: actual India fabrication WIP net improvement with minor pullback');
