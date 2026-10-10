@@ -14,10 +14,10 @@ const start=source.indexOf('let priorUnconfirmed=[];');
 const end=source.indexOf('if(!to){',start);
 assert.ok(start>=0&&end>start,'guard exists before send');
 const guard=source.slice(start,end);
-const evaluate=(logs,plant,to,subject)=>{
+const evaluate=(logs,plant,to,subject,endpoint='https://mail.example.test')=>{
  const status={textContent:''},send={disabled:true},window={__HD24_FEEDBACK_SEND_BUSY__:true};
  const localStorage={getItem:()=>JSON.stringify(logs)};
- new Function('localStorage','SEND_LOG','plant','to','subject','status','send','window',guard)(localStorage,'log',plant,to,subject,status,send,window);
+ new Function('localStorage','SEND_LOG','plant','to','subject','status','send','window','endpoint',guard)(localStorage,'log',plant,to,subject,status,send,window,endpoint);
  return status.textContent;
 };
 const log={status:'send-unconfirmed',plant:'india',to:'recipient',subject:'KPI'};
@@ -25,4 +25,5 @@ assert.match(evaluate([log],'india','recipient','KPI'),/중복 발송/);
 assert.equal(evaluate([log],'brazil','recipient','KPI'),'');
 assert.equal(evaluate([log],'india','different','KPI'),'');
 assert.equal(evaluate([log],'india','recipient','Other'),'');
+assert.equal(evaluate([log],'india','recipient','KPI',''),'','Outlook file creation must not be blocked by uncertain API send');
 console.log('HD24 feedback mail safety regression: PASS');
