@@ -4,6 +4,7 @@ const source=fs.readFileSync('hd24-reply-feedback.js','utf8');
 const checks=[
  ['send.disabled=demo;', 'demo button disabled'],
  ['if(dashboardImages.length!==2)', 'dashboard image count'],
+ ['packageLogSaved?'':' · 발송 로그 저장 실패', 'Outlook export log failure warning'],
  ['if(!api||api.success!==true)', 'explicit API confirmation'],
  ['deliveryUncertain:!api||api.success!==false', 'ambiguous API response must be treated as unconfirmed'],
  ["e?.deliveryUncertain===true", 'uncertain response error classification'],
