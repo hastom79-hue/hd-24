@@ -12,7 +12,7 @@ async function run(failedUrl){
  const document={getElementById:()=>status};
  const fetch=async url=>{calls.push(['fetch',url]);return {ok:!failedUrl||!url.includes(failedUrl),status:404}};
  const setTimeout=fn=>fn();
- await new Function('document','fetch','location','setTimeout','Date',script+';return new Promise(resolve=>setTimeout(resolve,0))')(document,fetch,location,setTimeout,Date);
+ await new Function('document','fetch','location','setTimeout','Date','return '+script)(document,fetch,location,setTimeout,Date);
  return {status:status.textContent,calls};
 }
 (async()=>{
