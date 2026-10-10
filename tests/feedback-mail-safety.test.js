@@ -5,6 +5,8 @@ const checks=[
  ['send.disabled=demo;', 'demo button disabled'],
  ['if(dashboardImages.length!==2)', 'dashboard image count'],
  ['if(!api||api.success!==true)', 'explicit API confirmation'],
+ ['deliveryUncertain:!api||api.success!==false', 'ambiguous API response must be treated as unconfirmed'],
+ ["e?.deliveryUncertain===true", 'uncertain response error classification'],
  ["status:'outlook-package-downloaded'", 'Outlook package is not sent'],
  ["status:uncertain?'send-unconfirmed':'send-failed'", 'uncertain delivery state'],
  ["priorUnconfirmed.some(x=>x.status==='send-unconfirmed'", 'duplicate prevention']
