@@ -26,4 +26,14 @@ for(const nonzero of ['1%','N/A','',null]){
 }
 assert.ok(source.includes("ls.addRow([x.plant||'',x.sev"),'closed-loop export must identify plant');
 assert.ok(source.includes("cs.addRow([x.plant||'',Number(x.year)"),'cross-KPI export must identify plant');
+const riskStart=source.indexOf('function uniqueRiskKpiCount(');
+const riskEnd=source.indexOf('const yearOf=',riskStart);
+assert.ok(riskStart>=0&&riskEnd>riskStart,'production risk count function exists');
+const riskCount=new Function('norm','sameKpi',source.slice(riskStart,riskEnd)+';return uniqueRiskKpiCount')(
+ norm,(a,b)=>norm(a.kpiEn||a.kpi)===norm(b.kpiEn||b.kpi)
+);
+const plants=[{plant:'india',kpiEn:'WIP',kpi:'재공 준수율'},{plant:'brazil',kpiEn:'WIP',kpi:'재공 준수율'}];
+assert.equal(riskCount(plants,[],[{plant:'india',kpi:'재공 준수율'},{plant:'brazil',kpi:'재공 준수율'}],[]),2,'same KPI in different plants counts separately');
+assert.equal(riskCount(plants,[],[],[{plant:'india',kpi:'WIP'},{plant:'brazil',kpi:'WIP'}]),2,'cross-KPI findings preserve plant');
+assert.equal(riskCount(plants,[],[{plant:'india',kpi:'재공 준수율'}],[{plant:'india',kpi:'WIP'}]),1,'Korean and English aliases in one plant count once');
 console.log('HD24 deep validation regression: PASS');
