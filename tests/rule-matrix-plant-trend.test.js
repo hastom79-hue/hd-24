@@ -66,3 +66,10 @@ assert.equal(api.trend(copyAug,[copyJul,copyAug,{...copyAug,actual:75}]).state,'
 const copiedPlateau=[rate('india',6,100),rate('india',7,100),rate('india',8,100)];
 assert.equal(api.plateauReview({...copiedPlateau[2]},copiedPlateau).state,'MEASUREMENT_REVIEW','copied plateau record must resolve correctly');
 console.log('PASS: 25 production rule-matrix regression assertions');
+
+const attrPrev={...row('india',2026,7,80),rootCause:'WIP capacity bottleneck'};
+const attrCur={...row('india',2026,8,90),rootCause:'WIP capacity bottleneck',recoveryPlan:'Completed robot capacity installation'};
+assert.equal(api.actionAttribution(attrCur,[attrPrev,attrCur]).state,'EFFECT SIGNAL OBSERVED','recorded completed capacity action should be considered for attribution, without claiming causal proof');
+const attrMissing={...row('india',2026,8,90),rootCause:'WIP capacity bottleneck'};
+assert.equal(api.actionAttribution(attrMissing,[attrPrev,attrMissing]).state,'RECOVERY OBSERVED · ATTRIBUTION UNCERTAIN','missing action cannot be credited for recovery');
+console.log('PASS: 27 production rule-matrix regression scenarios');
