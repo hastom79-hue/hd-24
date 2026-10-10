@@ -5,6 +5,7 @@ let runningSignature='';
 let runningSince=0;
 let watchdog=null;
 let lastWaitState='';
+let selectedSignature='';
 
 function isMasterOnly(){
   try{return typeof cfg==='function' && cfg().hasSource===false;}catch(_){return document.getElementById('plantSelect')?.value==='ulsan';}
@@ -113,6 +114,9 @@ function tryAutoRun(reason){
 }
 
 function resetAndRun(reason){
+  const nextSignature=getSignature();
+  if(nextSignature===selectedSignature)return;
+  selectedSignature=nextSignature;
   completedSignature='';
   runningSignature='';
   runningSince=0;
