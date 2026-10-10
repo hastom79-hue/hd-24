@@ -114,7 +114,7 @@ function plateauReview(r,all){
  const period=x=>Number(x.targetYear??x.year??2026)*12+monthOf(x);
  if(last.some((x,j)=>j>0&&period(x)!==period(last[j-1])+1))
   return {state:'NON_CONSECUTIVE_HISTORY',months:last.length};
- const values=last.map(x=>num(x.actual));
+ const values=last.map(x=>x.actual===null||x.actual===undefined||String(x.actual).trim()===''?null:num(x.actual));
  if(values.some(x=>x===null))return {state:'INVALID_VALUES',months:3};
  const unit=norm(r.unit||r.valueUnit||'');
  const isRate=unit==='%'||/rate|율|비율|compliance|achievement/.test(norm(kpiOf(r)));
