@@ -104,7 +104,7 @@ function tryAutoRun(reason){
   }
   lastWaitState='';
   const now=Date.now();
-  if(runningSignature===sig&&now-runningSince<15000)return;
+  if(runningSignature===sig)return; // In-flight work must never be re-clicked by the watchdog.
   runningSignature=sig;
   runningSince=now;
   writeLog(s.masterOnly ? '자동 판정 시작: '+reason+' — 울산 총괄파일 master-only 판정' : '자동 실행 시작: '+reason+' — 업로드 완료 즉시 안전검증/실적반영');
