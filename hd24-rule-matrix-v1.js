@@ -186,23 +186,24 @@ function clusterFindings(rows){
  const has=(r,terms)=>terms.some(t=>norm(kpiOf(r)).includes(t));
  for(const [scope,rs] of byMonth){
   const month=monthOf(rs[0]);
+  const clusterScope={plant:norm(rs[0].plant||rs[0].plantCode||rs[0].factory||rs[0].site),year:Number(rs[0].targetYear??rs[0].year??2026)};
   const inv=rs.filter(r=>has(r,['dio','inventory','turnover','material delivery','inbound material','long-term inventory','long term inventory']));
   if(inv.length>=2){
    const dio=inv.find(r=>/\bdio\b|inventory days/.test(norm(kpiOf(r)))), aging=inv.find(r=>/long.?term inventory|aging inventory/.test(norm(kpiOf(r)))), turn=inv.find(r=>/inventory turnover/.test(norm(kpiOf(r))));
    if(dio&&trend(dio,rows).state==='RECOVERING'&&((aging&&targetState(aging).state==='TARGET_MISS')||(turn&&targetState(turn).state==='TARGET_MISS')))
-    out.push({month,cluster:'INVENTORY / MOH',state:'PARTIAL EFFECT · INVENTORY TRADE-OFF',confidence:'HIGH',kpis:inv.map(kpiOf),statement:'Overall inventory-days gap is recovering, while aging inventory and/or parts turnover remain problematic. Total-flow recovery does not prove inventory structure recovery.',questionRequired:false});
+    out.push({...clusterScope,month,cluster:'INVENTORY / MOH',state:'PARTIAL EFFECT · INVENTORY TRADE-OFF',confidence:'HIGH',kpis:inv.map(kpiOf),statement:'Overall inventory-days gap is recovering, while aging inventory and/or parts turnover remain problematic. Total-flow recovery does not prove inventory structure recovery.',questionRequired:false});
   }
   const fab=rs.filter(r=>/vmc|ndt|weld|fabrication|balancing|wip|input mh|ot mh/.test(textFields(r)+' '+norm(kpiOf(r))));
   const cap=fab.filter(r=>actionMechanism(r)==='CAPACITY_EXPANSION'), qual=fab.filter(r=>actionMechanism(r)==='QUALITY_ROOT_REMOVAL');
-  if(cap.length&&qual.length)out.push({month,cluster:'FABRICATION',state:'SEPARATE ACTION MECHANISMS',confidence:'HIGH',kpis:[...new Set([...cap,...qual].map(kpiOf))],statement:'VMC-related actions are separated by intended mechanism: capacity expansion versus NDT/welding quality-root removal. Shared equipment terminology alone must not merge the issues.',questionRequired:false});
+  if(cap.length&&qual.length)out.push({...clusterScope,month,cluster:'FABRICATION',state:'SEPARATE ACTION MECHANISMS',confidence:'HIGH',kpis:[...new Set([...cap,...qual].map(kpiOf))],statement:'VMC-related actions are separated by intended mechanism: capacity expansion versus NDT/welding quality-root removal. Shared equipment terminology alone must not merge the issues.',questionRequired:false});
   const q=rs.filter(r=>has(r,['process defect','initial quality','production responsibility','production attributable','warranty']));
   const process=q.find(r=>/process defect/.test(norm(kpiOf(r)))), result=q.find(r=>/initial quality|production responsibility|production attributable/.test(norm(kpiOf(r))));
   if(process&&result&&targetState(process).state==='ACHIEVED'&&targetState(result).state==='TARGET_MISS')
-   out.push({month,cluster:'QUALITY / PROCESS',state:'RESULT–PROCESS GAP',confidence:'HIGH',kpis:[kpiOf(process),kpiOf(result)],statement:'Process KPI is achieved while production/customer quality result remains missed; validate denominator, inspection scope and whether process control translates to result quality.',questionRequired:true});
+   out.push({...clusterScope,month,cluster:'QUALITY / PROCESS',state:'RESULT–PROCESS GAP',confidence:'HIGH',kpis:[kpiOf(process),kpiOf(result)],statement:'Process KPI is achieved while production/customer quality result remains missed; validate denominator, inspection scope and whether process control translates to result quality.',questionRequired:true});
   const ps=rs.filter(r=>has(r,['problem-solving personnel','problem solving personnel','coaching problem-solving','coaching problem solving','important problem identification','nva reduction']));
   if(ps.length>=2){
    const achieved=ps.some(r=>targetState(r).state==='ACHIEVED'), missed=ps.some(r=>targetState(r).state==='TARGET_MISS');
-   if(achieved&&missed)out.push({month,cluster:'PROBLEM SOLVING / PDCA',state:'ACTIVITY–RESULT GAP',confidence:'HIGH',kpis:ps.map(kpiOf),statement:'Participation/headcount achievement coexists with weak problem-selection/coaching/NVA execution. Treat this as a problem-solving execution-funnel gap, not a simple participation failure.',questionRequired:true});
+   if(achieved&&missed)out.push({...clusterScope,month,cluster:'PROBLEM SOLVING / PDCA',state:'ACTIVITY–RESULT GAP',confidence:'HIGH',kpis:ps.map(kpiOf),statement:'Participation/headcount achievement coexists with weak problem-selection/coaching/NVA execution. Treat this as a problem-solving execution-funnel gap, not a simple participation failure.',questionRequired:true});
   }
  }
  return out;
@@ -304,9 +305,10 @@ function consolidateIssueFollowups(analyzed,clusters=[]){
   out.push({issueKey:key,kpis:[...new Set(xs.map(x=>kpiOf(x.record)))],question,confidence:xs.some(x=>x.findings.some(f=>f.confidence==='HIGH'))?'HIGH':'MEDIUM'});
  }
  for(const cl of clusters.filter(x=>x.questionRequired)){
-  const covered=out.some(x=>(x.kpis||[]).some(k=>(cl.kpis||[]).includes(k)));
+  const scope=norm(cl.plant||cl.plantCode||cl.factory||cl.site)||'UNSCOPED';
+  const covered=out.some(x=>x.issueKey.startsWith(scope+'::')&&(x.kpis||[]).some(k=>(cl.kpis||[]).includes(k)));
   if(covered)continue;
-  const key='CLUSTER:'+cl.cluster;if(out.some(x=>x.issueKey===key))continue;
+  const key=scope+'::CLUSTER:'+cl.cluster+':'+String(cl.year??'')+':'+String(cl.month??'');if(out.some(x=>x.issueKey===key))continue;
   let question=cl.statement;
   if(cl.cluster==='QUALITY / PROCESS')question='Please clarify whether the achieved process-defect KPI and the missed production/initial-quality KPI use the same defect mechanism, denominator, inspection scope and sampling basis, and how process control is expected to translate to result quality.';
   if(cl.cluster==='PROBLEM SOLVING / PDCA')question='Please confirm how recurring priority problems are selected, projectized, followed through root-cause removal, and verified for effect in daily management.';
