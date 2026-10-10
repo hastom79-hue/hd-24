@@ -98,3 +98,11 @@ assert.equal(followups.length,2,'India and Brazil follow-up questions must not b
 assert.ok(followups.some(x=>x.issueKey.startsWith('india::')),'India follow-up must preserve plant');
 assert.ok(followups.some(x=>x.issueKey.startsWith('brazil::')),'Brazil follow-up must preserve plant');
 console.log('PASS: 33 production rule-matrix regression scenarios');
+
+const clusterIndia={plant:'india',year:2026,month:8,cluster:'QUALITY / PROCESS',kpis:['IQ 200 (Initial Quality)'],questionRequired:true,confidence:'HIGH',statement:'India quality gap'};
+const clusterBrazil={...clusterIndia,plant:'brazil',statement:'Brazil quality gap'};
+const scopedFollowups=api.consolidateIssueFollowups([], [clusterIndia,clusterBrazil]);
+assert.equal(scopedFollowups.length,2,'same cross-KPI cluster in different plants must retain both questions');
+assert.ok(scopedFollowups.some(x=>x.issueKey.startsWith('india::CLUSTER:')),'India cluster follow-up must preserve plant');
+assert.ok(scopedFollowups.some(x=>x.issueKey.startsWith('brazil::CLUSTER:')),'Brazil cluster follow-up must preserve plant');
+console.log('PASS: cross-plant cluster follow-up isolation');
