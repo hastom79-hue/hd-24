@@ -36,3 +36,16 @@ assert.equal(api.clusterFindings([achievedProcess,missedQuality]).filter(x=>x.cl
 assert.equal(api.clusterFindings([achievedProcess,otherPlantQuality]).filter(x=>x.cluster==='QUALITY / PROCESS').length,0,'cross-plant quality contradiction must not be generated');
 assert.equal(api.clusterFindings([achievedProcess,{...missedQuality,targetYear:2025}]).filter(x=>x.cluster==='QUALITY / PROCESS').length,0,'cross-year quality contradiction must not be generated');
 console.log('PASS: 11 plant/year/WIP/target-change/cross-KPI grouping assertions');
+
+const rate=(plant,month,actual,year=2026)=>({plant,targetYear:year,targetMonth:month,kpiEn:'WIP compliance rate (Fabrication)',unit:'%',actual,target:100});
+const p=[rate('india',6,100),rate('india',7,100),rate('india',8,100)];
+assert.equal(api.plateauReview(p[2],p).state,'MEASUREMENT_REVIEW','three consecutive 100% rates require measurement review');
+const z=[rate('india',6,0),rate('india',7,0),rate('india',8,0)];
+assert.equal(api.plateauReview(z[2],z).state,'MEASUREMENT_REVIEW','three consecutive 0% rates require measurement review');
+const gap=[rate('india',5,100),rate('india',7,100),rate('india',8,100)];
+assert.equal(api.plateauReview(gap[2],gap).state,'NON_CONSECUTIVE_HISTORY','missing month must not count as consecutive');
+const blank=[rate('india',6,''),rate('india',7,0),rate('india',8,0)];
+assert.equal(api.plateauReview(blank[2],blank).state,'INVALID_VALUES','blank must not become zero');
+const mixed=[rate('india',6,100),rate('india',7,95),rate('india',8,100)];
+assert.equal(api.plateauReview(mixed[2],mixed).state,'NO_PLATEAU','mixed rates must not trigger plateau');
+console.log('PASS: 16 production rule-matrix regression assertions');
