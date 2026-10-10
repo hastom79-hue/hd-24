@@ -138,6 +138,7 @@ function wire(){
   [reflectBtn,judgeBtn].forEach(btn=>btn&&new MutationObserver(()=>tryAutoRun('readiness enabled')).observe(btn,{attributes:true,attributeFilter:['disabled','data-safe-reflect-ready']}));
   document.addEventListener('hd24-safe-reflect-success',syncSuccess);
   window.addEventListener('hd24-safe-reflect-complete',syncSuccess);
+  window.addEventListener('hd24-safe-reflect-failed',()=>{if(runningSignature===getSignature())writeLog('자동 실적 반영 실패 확인: 동일 파일 자동 재실행 차단 유지 — 원인 확인 후 수동 재실행하세요.');});
   watchdog=setInterval(()=>{const sig=getSignature();if(!sig||sig===completedSignature)return;if(runningSignature===sig)return;tryAutoRun('watchdog')},15000);
   window.addEventListener('beforeunload',()=>watchdog&&clearInterval(watchdog),{once:true});
   resetAndRun('startup');
