@@ -109,6 +109,8 @@ function trend(r,all){
  // Compare only adjacent calendar months; missing months must not be labeled month-on-month recovery.
  const period=x=>Number(x.targetYear??x.year??2026)*12+monthOf(x);
  if(period(r)!==period(s[i-1])+1)return {state:'NON_CONSECUTIVE_HISTORY',deltaGap:null};
+ // Ambiguous prior-month records must not be selected by array order.
+ if(s.filter(x=>period(x)===period(s[i-1])).length!==1)return {state:'NO_TREND',deltaGap:null};
  const prev=targetState(s[i-1]);if(prev.gap===null)return {state:'NO_TREND',deltaGap:null};
  // A target revision changes the gap even when operational performance does not.
  // Keep target achievement for the current month, but withhold a recovery/worsening claim.
