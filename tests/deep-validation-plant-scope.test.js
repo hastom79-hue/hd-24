@@ -257,5 +257,5 @@ const tieRows=[
  {...repeatedPlanRows[2],replySequence:1,replyReceivedAt:'2026-09-01T00:00:00Z'}
 ];
 const tieFlags=sourceContext.flagsFor(tieRows[3],tieRows);
-assert.ok(tieFlags.some(x=>x.includes('3개월 연속 동일 만회계획 반복')),'latest timestamp must win when replySequence is equal');
+assert.ok(tieFlags.some(x=>x[0]==='HIGH'&&x[1].includes('3개월 연속 동일 만회계획 반복')),'latest timestamp must win when replySequence is equal');
 console.log('PASS: equal reply sequence selects latest received timestamp for repeated plans');
