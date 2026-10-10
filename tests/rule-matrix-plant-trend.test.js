@@ -85,3 +85,12 @@ const indiaTimeline=timeline.find(x=>x.issueId.startsWith('india::'));
 assert.equal(indiaTimeline.firstMonth,12,'timeline must start in prior-year December');
 assert.equal(indiaTimeline.latestMonth,1,'timeline must end in following-year January');
 console.log('PASS: 30 production rule-matrix regression scenarios');
+
+const followups=api.consolidateIssueFollowups([
+ {record:{...row('india',2026,8,80),reason:'O-ring recurring'},questions:['India issue'],findings:[]},
+ {record:{...row('brazil',2026,8,80),reason:'O-ring recurring'},questions:['Brazil issue'],findings:[]}
+]);
+assert.equal(followups.length,2,'India and Brazil follow-up questions must not be merged');
+assert.ok(followups.some(x=>x.issueKey.startsWith('india::')),'India follow-up must preserve plant');
+assert.ok(followups.some(x=>x.issueKey.startsWith('brazil::')),'Brazil follow-up must preserve plant');
+console.log('PASS: 33 production rule-matrix regression scenarios');
