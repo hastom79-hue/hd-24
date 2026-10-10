@@ -58,3 +58,11 @@ assert.equal(api.targetState({...lowerKorean,actual:''}).state,'UNKNOWN','blank 
 assert.equal(api.targetState({...lowerKorean,target:''}).state,'UNKNOWN','blank target must not be treated as zero');
 assert.equal(api.direction({...lowerKorean,direction:'ambiguous'}),'UNKNOWN','unknown explicit direction must fail closed');
 console.log('PASS: 22 production rule-matrix regression assertions');
+
+const copyJul=row('india',2026,7,80);
+const copyAug=row('india',2026,8,90);
+assert.equal(api.trend({...copyAug},[copyJul,copyAug]).state,'RECOVERING','copied KPI record must resolve by unique plant KPI year month');
+assert.equal(api.trend(copyAug,[copyJul,copyAug,{...copyAug,actual:75}]).state,'NO_TREND','duplicate same-month records must fail closed');
+const copiedPlateau=[rate('india',6,100),rate('india',7,100),rate('india',8,100)];
+assert.equal(api.plateauReview({...copiedPlateau[2]},copiedPlateau).state,'MEASUREMENT_REVIEW','copied plateau record must resolve correctly');
+console.log('PASS: 25 production rule-matrix regression assertions');
