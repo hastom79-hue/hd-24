@@ -88,14 +88,14 @@ function flagsFor(r,all){
   }
  }
  const same=all.filter(x=>samePlant(x,r)&&sameKpi(x,r)&&periodOf(x)<periodOf(r));
- const consecutiveCount=field=>{const cur=norm(r[field]);if(!cur)return 0;let count=1,p=periodOf(r)-1;while(true){const prev=same.filter(x=>periodOf(x)===p).sort((a,b)=>Number(b.replySequence||0)-Number(a.replySequence||0))[0];if(!prev||norm(prev[field])!==cur)break;count++;p--}return count};
+ const consecutiveCount=field=>{const cur=norm(r[field]);if(!cur)return 0;let count=1,p=periodOf(r)-1;while(true){const prev=same.filter(x=>periodOf(x)===p).sort((a,b)=>Number(b.replySequence||0)-Number(a.replySequence||0)||String(b.replyReceivedAt||'').localeCompare(String(a.replyReceivedAt||'')))[0];if(!prev||norm(prev[field])!==cur)break;count++;p--}return count};
  const reasonRun=consecutiveCount('reason'),rootRun=consecutiveCount('rootCause'),planRun=consecutiveCount('recoveryPlan');
  const substantive=x=>!!x&&!/^(na|n\/a|n\.a\.|not applicable|none|null|-)$/i.test(x);
  if(substantive(reason)&&reasonRun>=3)f.push(['HIGH',reasonRun+'개월 연속 동일 사유 반복 — 원인분석 및 제거대책 재설계 필요']);else if(substantive(reason)&&reasonRun===2)f.push(['MEDIUM','2개월 연속 동일 사유 반복 — 근인 제거 효과 재검증']);
  if(substantive(root)&&rootRun>=3)f.push(['HIGH',rootRun+'개월 연속 동일 근본원인 반복 — 근인 제거 실패 가능성 높음']);else if(substantive(root)&&rootRun===2)f.push(['HIGH','2개월 연속 동일 근본원인 반복']);
  if(substantive(plan)&&planRun>=3){
   const months=[periodOf(r)-2,periodOf(r)-1,periodOf(r)];
-  const series=months.map(p=>[...all].filter(x=>samePlant(x,r)&&sameKpi(x,r)&&periodOf(x)===p).sort((a,b)=>Number(b.replySequence||0)-Number(a.replySequence||0))[0]);
+  const series=months.map(p=>[...all].filter(x=>samePlant(x,r)&&sameKpi(x,r)&&periodOf(x)===p).sort((a,b)=>Number(b.replySequence||0)-Number(a.replySequence||0)||String(b.replyReceivedAt||'').localeCompare(String(a.replyReceivedAt||'')))[0]);
   const dir=directionOf(r),units=series.map(x=>x?norm(effectiveUnit(x)):''),values=series.map(x=>x?(norm(effectiveUnit(x)).includes('%')?comparable(x.actual,x.target,effectiveUnit(x))?.[0]??null:val(x.actual)):null);
   const comparableSeries=series.every(Boolean)&&units.every(u=>u===units[0])&&series.every(x=>directionOf(x)===dir);
   if(comparableSeries&&values.every(Number.isFinite)&&series.every(x=>norm(x.recoveryPlan)===plan)){
