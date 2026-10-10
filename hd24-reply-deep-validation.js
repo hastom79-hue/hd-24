@@ -87,6 +87,12 @@ function flagsFor(r,all){
    else f.push(['MEDIUM','최근 3개 기간 0% 반복 — 낮을수록 좋은 KPI이므로 미달로 단정하지 않고 측정 증빙·분모 유효성 확인']);
   }
  }
+ const recentMisses=[periodOf(r)-2,periodOf(r)-1,periodOf(r)].map(p=>[...all].filter(x=>samePlant(x,r)&&sameKpi(x,r)&&periodOf(x)===p).sort((a,b)=>Number(b.replySequence||0)-Number(a.replySequence||0)||String(b.replyReceivedAt||'').localeCompare(String(a.replyReceivedAt||'')))[0]);
+ if(recentMisses.every(Boolean)&&recentMisses.every(x=>achieved(x)===false)){
+  const curPair=comparable(r.actual,r.target,effectiveUnit(r));
+  const gap=curPair&&norm(effectiveUnit(r)).includes('%')?Math.abs(curPair[0]-curPair[1]).toFixed(1)+'%p':'';
+  f.push(['HIGH','최근 3개월 연속 목표 미달'+(gap?' — 당월 목표 대비 '+gap+' 차이':'')+' (실적 추세 개선 여부와 별개로 회복조치 효과 검증 필요)']);
+ }
  const same=all.filter(x=>samePlant(x,r)&&sameKpi(x,r)&&periodOf(x)<periodOf(r));
  const consecutiveCount=field=>{const cur=norm(r[field]);if(!cur)return 0;let count=1,p=periodOf(r)-1;while(true){const prev=same.filter(x=>periodOf(x)===p).sort((a,b)=>Number(b.replySequence||0)-Number(a.replySequence||0)||String(b.replyReceivedAt||'').localeCompare(String(a.replyReceivedAt||'')))[0];if(!prev||norm(prev[field])!==cur)break;count++;p--}return count};
  const reasonRun=consecutiveCount('reason'),rootRun=consecutiveCount('rootCause'),planRun=consecutiveCount('recoveryPlan');
