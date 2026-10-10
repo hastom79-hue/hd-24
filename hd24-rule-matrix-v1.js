@@ -1,7 +1,7 @@
 (()=>{'use strict';
 const API={version:'2.9.0',frozenAt:'2026-10-03'};
 const norm=s=>String(s??'').toLowerCase().replace(/\s+/g,' ').trim();
-const num=v=>{const n=Number(String(v??'').replace(/[% ,]/g,''));return Number.isFinite(n)?n:null};
+const num=v=>{if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(String(v).replace(/[% ,]/g,''));return Number.isFinite(n)?n:null};
 const pct=(a,b)=>b?((a-b)/Math.abs(b))*100:null;
 const monthOf=r=>Number(r.targetMonth??r.month??0);
 const kpiOf=r=>String(r.kpiEn||r.kpi||'').trim();
@@ -67,7 +67,12 @@ const higherHints=['compliance','efficiency','score','turnover','availability','
 function direction(r){
  const k=norm(kpiOf(r));
  const md=masterDirection(k);if(md)return md;
- if(r.direction)return String(r.direction).toUpperCase().includes('LOW')?'LOWER':'HIGHER';
+ if(r.direction){
+  const explicit=norm(r.direction);
+  if(['lower','low','하향','감소','낮을수록 양호'].includes(explicit))return 'LOWER';
+  if(['higher','high','상향','증가','높을수록 양호'].includes(explicit))return 'HIGHER';
+  return 'UNKNOWN';
+ }
  if(lowerHints.some(x=>k.includes(x)))return 'LOWER';
  if(higherHints.some(x=>k.includes(x)))return 'HIGHER';
  return 'UNKNOWN';
