@@ -78,7 +78,18 @@ function targetState(r){
  const gap=d==='LOWER'?a-t:t-a;
  return {state:gap<=0?'ACHIEVED':'TARGET_MISS',gap};
 }
-function seriesFor(r,all){const k=norm(kpiOf(r));return all.filter(x=>norm(kpiOf(x))===k).sort((a,b)=>monthOf(a)-monthOf(b))}
+function seriesFor(r,all){
+ const k=norm(kpiOf(r));
+ const plant=norm(r.plant||r.plantCode||r.factory||r.site);
+ const yearOf=x=>Number(x.targetYear??x.year??2026);
+ const monthValid=x=>Number.isInteger(monthOf(x))&&monthOf(x)>=1&&monthOf(x)<=12;
+ // Do not infer a history from another plant or from unscoped records.
+ if(!plant||!k)return [r];
+ return all.filter(x=>norm(kpiOf(x))===k
+  &&norm(x.plant||x.plantCode||x.factory||x.site)===plant
+  &&monthValid(x))
+  .sort((a,b)=>(yearOf(a)*12+monthOf(a))-(yearOf(b)*12+monthOf(b)));
+}
 function trend(r,all){
  const s=seriesFor(r,all),i=s.findIndex(x=>x===r),cur=targetState(r);
  if(i<1||cur.gap===null)return {state:'NO_TREND',deltaGap:null};
