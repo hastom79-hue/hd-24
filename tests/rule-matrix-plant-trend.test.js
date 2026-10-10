@@ -1,0 +1,26 @@
+// Regression for production HD24 rule-matrix trend scoping.
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const source = fs.readFileSync('hd24-rule-matrix-v1.js', 'utf8');
+const ctx = {window:{},document:{dispatchEvent(){}},CustomEvent:class CustomEvent {constructor(type,opts){this.type=type;this.detail=opts.detail;}},Date,Number,Map,Set};
+vm.createContext(ctx);
+vm.runInContext(source,ctx);
+const api = ctx.window.HD24_RULE_MATRIX_V1;
+assert.ok(api,'production rule matrix should load');
+const row=(plant,year,month,actual,target=100)=>({plant,targetYear:year,targetMonth:month,kpiEn:'WIP compliance rate (Fabrication)',actual,target});
+const indiaJul=row('india',2026,7,80);
+const brazilAug=row('brazil',2026,8,10);
+const indiaAug=row('india',2026,8,90);
+assert.equal(api.trend(indiaAug,[indiaJul,brazilAug,indiaAug]).state,'RECOVERING','cross-plant history must not override India trend');
+assert.equal(api.trend(brazilAug,[indiaJul,brazilAug]).state,'NO_TREND','Brazil must not inherit India history');
+const indiaDec=row('india',2025,12,70);
+const indiaJan=row('india',2026,1,80);
+assert.equal(api.trend(indiaJan,[indiaJan,indiaDec]).state,'RECOVERING','year boundary must be chronological');
+const unscoped=row('',2026,8,90);
+assert.equal(api.trend(unscoped,[indiaJul,unscoped]).state,'NO_TREND','missing plant must fail closed');
+const next=row('india',2026,9,95);
+assert.equal(api.trend(next,[indiaAug,brazilAug,next]).state,'RECOVERING','WIP compliance increases toward target');
+const regression=row('india',2026,9,70);
+assert.equal(api.trend(regression,[indiaAug,regression]).state,'WORSENING_MISS','WIP compliance decreases away from target');
+console.log('PASS: 6 production rule-matrix plant/year/WIP trend assertions');
