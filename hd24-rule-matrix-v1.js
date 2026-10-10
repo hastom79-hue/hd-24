@@ -290,14 +290,14 @@ function issueTimeline(analyzed){
 }
 function consolidateIssueFollowups(analyzed,clusters=[]){
  const groups=new Map();
- for(const x of analyzed){const key=issueKeyFor(x.record);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(x)}
+ for(const x of analyzed){const plant=norm(x.record.plant||x.record.plantCode||x.record.factory||x.record.site)||'UNSCOPED';const key=plant+'::'+issueKeyFor(x.record);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(x)}
  const out=[];
  for(const [key,xs] of groups){
   const raw=[...new Set(xs.flatMap(x=>x.questions))]; if(!raw.length)continue;
   let question=raw.join(' ');
-  if(key==='QUALITY_O_RING')question='Please confirm the root-cause removal and recurrence-prevention control for the recurring O-ring issue, how effectiveness is verified, and whether the relevant work is included in standard-compliance/recurrence management.';
-  if(key==='QUALITY_ATTACHMENT_TRACEABILITY')question='Please state Root Cause / Action / Owner / Due explicitly in the reply table for the Initial Quality/Warranty issue so that the same issue can be tracked and revalidated next month.';
-  if(key==='PROBLEM_SOLVING_PDCA')question='Please confirm how recurring priority problems are selected, projectized, followed through root-cause removal, and verified for effect in daily management.';
+  if(key.endsWith('::QUALITY_O_RING'))question='Please confirm the root-cause removal and recurrence-prevention control for the recurring O-ring issue, how effectiveness is verified, and whether the relevant work is included in standard-compliance/recurrence management.';
+  if(key.endsWith('::QUALITY_ATTACHMENT_TRACEABILITY'))question='Please state Root Cause / Action / Owner / Due explicitly in the reply table for the Initial Quality/Warranty issue so that the same issue can be tracked and revalidated next month.';
+  if(key.endsWith('::PROBLEM_SOLVING_PDCA'))question='Please confirm how recurring priority problems are selected, projectized, followed through root-cause removal, and verified for effect in daily management.';
   out.push({issueKey:key,kpis:[...new Set(xs.map(x=>kpiOf(x.record)))],question,confidence:xs.some(x=>x.findings.some(f=>f.confidence==='HIGH'))?'HIGH':'MEDIUM'});
  }
  for(const cl of clusters.filter(x=>x.questionRequired)){
