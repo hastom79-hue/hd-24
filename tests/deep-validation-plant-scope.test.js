@@ -225,21 +225,21 @@ const repeatedPlanRows=[6,7,8].map((month,i)=>({...incompleteBase,plant:'india',
 const worseningFlags=sourceContext.flagsFor(repeatedPlanRows[2],repeatedPlanRows);
 assert.ok(worseningFlags.some(x=>x[0]==='HIGH'&&x[1].includes('실적 연속 악화')&&x[1].includes('30.35 → 31.54 → 34.2')),'three-month repeated plan with deteriorating lower-is-better KPI must flag HIGH with trend');
 const reboundRows=repeatedPlanRows.map((r,i)=>({...r,actual:[52,42.74,49.18][i]}));
-assert.ok(sourceContext.flagsFor(reboundRows[2],reboundRows).some(x=>x[0]==='HIGH'&&x[1].includes('최근 실적 재악화')),'repeated plan and relapse after improvement must flag HIGH');
+assert.ok(sourceContext.flagsFor(reboundRows[2],reboundRows).some(x=>x[0]==='HIGH'&&x[1].includes('최근 실적 전월 대비 후퇴')),'repeated plan and relapse after improvement must flag HIGH');
 const improvedRows=repeatedPlanRows.map((r,i)=>({...r,actual:[34.2,31.54,30.35][i]}));
-assert.ok(!sourceContext.flagsFor(improvedRows[2],improvedRows).some(x=>x[1].includes('실적 연속 악화')||x[1].includes('최근 실적 재악화')),'improving KPI must not be mislabeled worsening');
+assert.ok(!sourceContext.flagsFor(improvedRows[2],improvedRows).some(x=>x[1].includes('실적 연속 악화')||x[1].includes('최근 실적 전월 대비 후퇴')),'improving KPI must not be mislabeled worsening');
 console.log('PASS: repeated three-month recovery plan flags continuous deterioration and relapse, not improvement');
 
 const rateRows=repeatedPlanRows.map((r,i)=>({...r,kpi:'Compliance Rate',kpiEn:'Compliance Rate',unit:'Rate',direction:'HIGHER',target:1,actual:[0.85,80,0.75][i]}));
 assert.ok(sourceContext.flagsFor(rateRows[2],rateRows).some(x=>x[0]==='HIGH'&&x[1].includes('실적 연속 악화')&&x[1].includes('85 → 80 → 75')),'rate trends must compare normalized percentage points');
 const mixedUnitRows=repeatedPlanRows.map((r,i)=>({...r,unit:i===1?'hours':'USD'}));
-assert.ok(!sourceContext.flagsFor(mixedUnitRows[2],mixedUnitRows).some(x=>x[1].includes('실적 연속 악화')||x[1].includes('최근 실적 재악화')),'mixed units must not generate deterioration warning');
+assert.ok(!sourceContext.flagsFor(mixedUnitRows[2],mixedUnitRows).some(x=>x[1].includes('실적 연속 악화')||x[1].includes('최근 실적 전월 대비 후퇴')),'mixed units must not generate deterioration warning');
 console.log('PASS: percentage point normalization and mixed-unit protection for repeated plans');
 
 for(const kpi of ['Long-Term Inventory Value (6 month basis)','OT MH per Unit']){
  const rows=repeatedPlanRows.map((r,i)=>({...r,kpi,kpiEn:kpi,unit:kpi.startsWith('OT')?'MH/unit':'INR',actual:kpi.startsWith('OT')?[52,42.74,49.18][i]:[30.35,31.54,34.2][i]}));
  const flags=sourceContext.flagsFor(rows[2],rows);
- assert.ok(flags.some(x=>x[0]==='HIGH'&&(x[1].includes('실적 연속 악화')||x[1].includes('최근 실적 재악화'))),'actual India lower-is-better KPI '+kpi+' must flag deterioration');
+ assert.ok(flags.some(x=>x[0]==='HIGH'&&(x[1].includes('실적 연속 악화')||x[1].includes('최근 실적 전월 대비 후퇴'))),'actual India lower-is-better KPI '+kpi+' must flag deterioration');
 }
 console.log('PASS: actual India long-term inventory and overtime MH directions');
 
