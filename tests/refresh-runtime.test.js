@@ -18,6 +18,7 @@ async function run(failedUrl){
 (async()=>{
  const good=await run(null);
  assert.equal(good.calls.filter(x=>x[0]==='fetch').length,20);
+ assert.deepEqual(good.calls.filter(x=>x[0]==='fetch').map(x=>x[1]),assets.map(x=>'./'+x),'refresh exact canonical URLs without extra cache-busting params');
  assert.equal(good.maxActive,5,'refresh fetch concurrency must be capped at five');
  assert.equal(good.calls.filter(x=>x[0]==='redirect').length,1);
  const bad=await run('mapping_brazil.json');
