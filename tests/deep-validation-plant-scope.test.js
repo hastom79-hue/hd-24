@@ -276,3 +276,9 @@ const assemblyStatusRows=repeatedPlanRows.slice(1).map((r,i)=>({...r,kpi:'WIP Co
 const assemblyFlags=sourceContext.flagsFor(assemblyStatusRows[1],assemblyStatusRows);
 assert.ok(assemblyFlags.some(x=>x[0]==='MEDIUM'&&x[1].includes('Recent decline')),'assembly WIP improvement conflicts with Recent decline status');
 console.log('PASS: India assembly WIP recent-decline text contradicts actual improvement');
+
+const wipGapFlags=sourceContext.flagsFor(wipRows[2],wipRows);
+assert.ok(wipGapFlags.some(x=>x[0]==='HIGH'&&x[1].includes('WIP 준수율 목표 미달 21.7%p')),'fabrication WIP 62.3 versus 84 must show target gap HIGH');
+assert.ok(wipGapFlags.some(x=>x[0]==='MEDIUM'&&x[1].includes('전월 대비 후퇴')),'fabrication WIP monthly pullback remains MEDIUM');
+assert.ok(!sourceContext.flagsFor(assemblyStatusRows[1],assemblyStatusRows).some(x=>x[1].includes('WIP 준수율 목표 미달')),'assembly WIP 68 versus 66 must not be target miss');
+console.log('PASS: fabrication WIP target gap separate from trend; assembly achieved');
