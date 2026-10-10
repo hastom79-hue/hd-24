@@ -271,3 +271,8 @@ assert.ok(wipMissFlags.some(x=>x[0]==='HIGH'&&x[1].includes('최근 3개월 연�
 const assemblyRows=wipRows.map((r,i)=>({...r,kpi:'WIP Compliance (Assembly)',kpiEn:'WIP Compliance (Assembly)',target:[64,65,66][i],actual:[60,64,68][i]}));
 assert.ok(!sourceContext.flagsFor(assemblyRows[2],assemblyRows).some(x=>x[1].includes('최근 3개월 연속 목표 미달')),'assembly WIP achieved in August must not be flagged as three consecutive misses');
 console.log('PASS: fabrication WIP persistent target miss is separate from assembly recovery');
+
+const assemblyRows=repeatedPlanRows.slice(1).map((r,i)=>({...r,kpi:'WIP Compliance (Assembly)',kpiEn:'WIP Compliance (Assembly)',unit:'%',direction:'HIGHER',target:[65,66][i],actual:[64,68][i],statusTrend:i===1?'Recent decline':''}));
+const assemblyFlags=sourceContext.flagsFor(assemblyRows[1],assemblyRows);
+assert.ok(assemblyFlags.some(x=>x[0]==='MEDIUM'&&x[1].includes('Recent decline')),'assembly WIP improvement conflicts with Recent decline status');
+console.log('PASS: India assembly WIP recent-decline text contradicts actual improvement');
