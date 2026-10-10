@@ -249,3 +249,13 @@ assert.ok(placeholderFlags.some(x=>x[1].includes('근본원인 미기재')),'pla
 assert.ok(placeholderFlags.some(x=>x[1].includes('회복계획 미기재')),'placeholder plan must remain missing HIGH');
 assert.ok(!placeholderFlags.some(x=>x[1].includes('연속 동일 근본원인')||x[1].includes('연속 동일 만회계획')||x[1].includes('실적 연속 악화')),'NA and dash placeholders must not count as substantive repeated recovery actions');
 console.log('PASS: repeated NA placeholders are missing data, not repeated substantive actions');
+
+const tieRows=[
+ {...repeatedPlanRows[0],replySequence:1,replyReceivedAt:'2026-07-01T00:00:00Z'},
+ {...repeatedPlanRows[1],replySequence:1,replyReceivedAt:'2026-08-01T00:00:00Z',recoveryPlan:'revised plan'},
+ {...repeatedPlanRows[1],replySequence:1,replyReceivedAt:'2026-08-02T00:00:00Z'},
+ {...repeatedPlanRows[2],replySequence:1,replyReceivedAt:'2026-09-01T00:00:00Z'}
+];
+const tieFlags=sourceContext.flagsFor(tieRows[3],tieRows);
+assert.ok(tieFlags.some(x=>x.includes('3개월 연속 동일 만회계획 반복')),'latest timestamp must win when replySequence is equal');
+console.log('PASS: equal reply sequence selects latest received timestamp for repeated plans');
