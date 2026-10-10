@@ -32,6 +32,7 @@ function dueInfo(r){
 function flagsFor(r,all){
  const f=[], reason=norm(r.reason),root=norm(r.rootCause),plan=norm(r.recoveryPlan),status=norm(r.statusTrend);
  const kpi=norm(r.kpiEn||r.kpi),pair=comparable(r.actual,r.target,effectiveUnit(r));
+ if(/recent decline/i.test(status)&&pair){const prev=all.filter(x=>samePlant(x,r)&&sameKpi(x,r)&&periodOf(x)===periodOf(r)-1).sort((a,b)=>Number(b.replySequence||0)-Number(a.replySequence||0))[0];if(prev){const prior=comparable(prev.actual,prev.target,effectiveUnit(prev));if(prior&&norm(effectiveUnit(prev))===norm(effectiveUnit(r))&&directionOf(prev)===directionOf(r)&&((directionOf(r)==='HIGHER'&&pair[0]>prior[0])||(directionOf(r)==='LOWER'&&pair[0]<prior[0])))f.push(['MEDIUM','회신의 Recent decline 표기와 전월 실적 개선이 불일치 — 비교 기준 확인 필요']);}}
  const orderIntake=/order\s*intake\s*fulfillment/.test(kpi);
  if(orderIntake&&pair&&Math.abs(pair[0]-pair[1])<=1e-6){
   f.push(['MEDIUM','확정오더 이행률 수치상 100% — 추가·취소·수량/납기 변경이 상쇄됐는지 원본 오더 변경이력 및 승인 근거 확인 필요']);
