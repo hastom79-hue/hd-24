@@ -36,4 +36,18 @@ const plants=[{plant:'india',kpiEn:'WIP',kpi:'재공 준수율'},{plant:'brazil'
 assert.equal(riskCount(plants,[],[{plant:'india',kpi:'재공 준수율'},{plant:'brazil',kpi:'재공 준수율'}],[]),2,'same KPI in different plants counts separately');
 assert.equal(riskCount(plants,[],[],[{plant:'india',kpi:'WIP'},{plant:'brazil',kpi:'WIP'}]),2,'cross-KPI findings preserve plant');
 assert.equal(riskCount(plants,[],[{plant:'india',kpi:'재공 준수율'}],[{plant:'india',kpi:'WIP'}]),1,'Korean and English aliases in one plant count once');
+const loopStart=source.indexOf('function closedLoop(all){');
+const loopEnd=source.indexOf('function contradictions(all)',loopStart);
+assert.ok(loopStart>=0&&loopEnd>loopStart,'production closed-loop function exists');
+const closedLoop=new Function('norm','yearOf','samePlant','sameKpi','periodOf','kpiKey','achieved','comparable','effectiveUnit','directionOf',source.slice(loopStart,loopEnd)+';return closedLoop')(
+ norm,r=>Number(r.targetYear)||2026,
+ (a,b)=>norm(a.plant)===norm(b.plant),
+ (a,b)=>norm(a.kpiEn||a.kpi)===norm(b.kpiEn||b.kpi),
+ r=>(Number(r.targetYear)||2026)*12+Number(r.targetMonth)-1,
+ r=>norm(r.kpiEn||r.kpi),r=>r.ok,()=>null,r=>r.unit,()=> 'HIGHER'
+);
+const loopRow=(plant,year,month,seq=1,root='same')=>({plant,targetYear:year,targetMonth:month,kpiEn:'WIP',replySequence:seq,rootCause:root,recoveryPlan:'plan',ok:false});
+assert.equal(closedLoop([loopRow('india',2026,12),loopRow('india',2027,1)]).length,1,'December-to-January follow-up must be continuous');
+assert.equal(closedLoop([loopRow('india',2026,12),loopRow('brazil',2027,1)]).length,0,'closed-loop findings must not mix plants');
+assert.equal(closedLoop([loopRow('india',2026,12),loopRow('india',2027,1,1),loopRow('india',2027,1,2)]).length,1,'older replies must not duplicate closed-loop findings');
 console.log('HD24 deep validation regression: PASS');
