@@ -141,9 +141,17 @@ function actionMechanism(r){
  return 'OTHER';
 }
 function clusterFindings(rows){
- const out=[], byMonth=new Map(); rows.forEach(r=>{const m=monthOf(r);if(!byMonth.has(m))byMonth.set(m,[]);byMonth.get(m).push(r)});
+ const out=[], byMonth=new Map(); rows.forEach(r=>{
+  const plant=norm(r.plant||r.plantCode||r.factory||r.site);
+  const year=Number(r.targetYear??r.year??2026),month=monthOf(r);
+  if(!plant||!Number.isInteger(year)||!Number.isInteger(month)||month<1||month>12)return;
+  const key=plant+'|'+year+'|'+month;
+  if(!byMonth.has(key))byMonth.set(key,[]);
+  byMonth.get(key).push(r);
+ });
  const has=(r,terms)=>terms.some(t=>norm(kpiOf(r)).includes(t));
- for(const [month,rs] of byMonth){
+ for(const [scope,rs] of byMonth){
+  const month=monthOf(rs[0]);
   const inv=rs.filter(r=>has(r,['dio','inventory','turnover','material delivery','inbound material','long-term inventory','long term inventory']));
   if(inv.length>=2){
    const dio=inv.find(r=>/\bdio\b|inventory days/.test(norm(kpiOf(r)))), aging=inv.find(r=>/long.?term inventory|aging inventory/.test(norm(kpiOf(r)))), turn=inv.find(r=>/inventory turnover/.test(norm(kpiOf(r))));
