@@ -90,9 +90,10 @@ function flagsFor(r,all){
  const same=all.filter(x=>samePlant(x,r)&&sameKpi(x,r)&&periodOf(x)<periodOf(r));
  const consecutiveCount=field=>{const cur=norm(r[field]);if(!cur)return 0;let count=1,p=periodOf(r)-1;while(true){const prev=same.filter(x=>periodOf(x)===p).sort((a,b)=>Number(b.replySequence||0)-Number(a.replySequence||0))[0];if(!prev||norm(prev[field])!==cur)break;count++;p--}return count};
  const reasonRun=consecutiveCount('reason'),rootRun=consecutiveCount('rootCause'),planRun=consecutiveCount('recoveryPlan');
- if(reasonRun>=3)f.push(['HIGH',reasonRun+'개월 연속 동일 사유 반복 — 원인분석 및 제거대책 재설계 필요']);else if(reasonRun===2)f.push(['MEDIUM','2개월 연속 동일 사유 반복 — 근인 제거 효과 재검증']);
- if(rootRun>=3)f.push(['HIGH',rootRun+'개월 연속 동일 근본원인 반복 — 근인 제거 실패 가능성 높음']);else if(rootRun===2)f.push(['HIGH','2개월 연속 동일 근본원인 반복']);
- if(planRun>=3){
+ const substantive=x=>!!x&&!/^(na|n\/a|n\.a\.|not applicable|none|null|-)$/i.test(x);
+ if(substantive(reason)&&reasonRun>=3)f.push(['HIGH',reasonRun+'개월 연속 동일 사유 반복 — 원인분석 및 제거대책 재설계 필요']);else if(substantive(reason)&&reasonRun===2)f.push(['MEDIUM','2개월 연속 동일 사유 반복 — 근인 제거 효과 재검증']);
+ if(substantive(root)&&rootRun>=3)f.push(['HIGH',rootRun+'개월 연속 동일 근본원인 반복 — 근인 제거 실패 가능성 높음']);else if(substantive(root)&&rootRun===2)f.push(['HIGH','2개월 연속 동일 근본원인 반복']);
+ if(substantive(plan)&&planRun>=3){
   const months=[periodOf(r)-2,periodOf(r)-1,periodOf(r)];
   const series=months.map(p=>[...all].filter(x=>samePlant(x,r)&&sameKpi(x,r)&&periodOf(x)===p).sort((a,b)=>Number(b.replySequence||0)-Number(a.replySequence||0))[0]);
   const dir=directionOf(r),units=series.map(x=>x?norm(effectiveUnit(x)):''),values=series.map(x=>x?(norm(effectiveUnit(x)).includes('%')?comparable(x.actual,x.target,effectiveUnit(x))?.[0]??null:val(x.actual)):null);
@@ -103,7 +104,7 @@ function flagsFor(r,all){
    else if(bad(values[1],values[2]))f.push(['HIGH','3개월 동일 회복계획 중 최근 실적 재악화 ('+values.join(' → ')+') — 개선 지속성 검증 필요']);
   }
  }
- if(planRun>=3)f.push(['HIGH',planRun+'개월 연속 동일 만회계획 반복 — 기존 대책 효과 미입증, 대책 재설계 필요']);else if(planRun===2)f.push(['MEDIUM','2개월 연속 동일 만회계획 반복 — 실행 효과 확인 필요']);
+ if(substantive(plan)&&planRun>=3)f.push(['HIGH',planRun+'개월 연속 동일 만회계획 반복 — 기존 대책 효과 미입증, 대책 재설계 필요']);else if(substantive(plan)&&planRun===2)f.push(['MEDIUM','2개월 연속 동일 만회계획 반복 — 실행 효과 확인 필요']);
  return f;
 }
 function directionOf(r){try{const matrix=window.HD24_RULE_MATRIX_V1||window.HD24RuleMatrix,d=matrix?.direction?.(r);if(d==='LOWER'||d==='HIGHER')return d}catch(_){}const d=norm(r.direction);if(d.includes('하향')||d==='lower'||d==='down')return'LOWER';if(d.includes('상향')||d==='higher'||d==='up')return'HIGHER';const k=norm(r.kpiEn||r.kpi);return /(dio|days inventory|재고회전일수|long.term inventory value|장기재고|ot mh per unit|overtime mh per unit|defect|ppm|complaint|downtime|lead time|recurrence|variation|loss)/.test(k)?'LOWER':'HIGHER'}
