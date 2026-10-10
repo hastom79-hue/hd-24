@@ -29,7 +29,7 @@ console.log('PASS: 7 cross-KPI same-plant, cross-plant, and missing-plant assert
 // Guard monthly follow-up and repeated root cause against another plant's history.
 const sourceContext={
  norm:context.norm,yearOf:context.yearOf,achieved:context.achieved,
- window:{HD24_RULE_MATRIX_V1:{direction:r=>r.direction==='LOWER'?'LOWER':'HIGHER'}},
+ window:{HD24_RULE_MATRIX_V1:{direction:r=>r.direction==='LOWER'?'LOWER':r.direction==='HIGHER'?'HIGHER':null}},
  document:{},Date,Number,Map,Set
 };
 vm.createContext(sourceContext);
