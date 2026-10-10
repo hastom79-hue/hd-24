@@ -1,0 +1,24 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const source=fs.readFileSync('hd24-reply-feedback.js','utf8');
+const begin=source.indexOf('const safeHeader=');
+const end=source.indexOf('const HD24_CAPTURE_TRANSLATIONS=',begin);
+assert.ok(begin>=0&&end>begin,'production EML builder available');
+const section=source.slice(begin,end);
+const txt=v=>String(v??'').trim();
+const dashboardHtml=(body,images)=>'<p>'+body+'</p>'+images.map(x=>'<img src="cid:'+x.cid+'">').join('');
+const build=new Function('txt','dashboardHtml','btoa','unescape','encodeURIComponent','escape',section+';return feedbackEml')(
+ txt,dashboardHtml,v=>Buffer.from(v,'binary').toString('base64'),unescape,encodeURIComponent,escape);
+const images=[{filename:'summary.png',cid:'summary1',base64:'aGVsbG8='},{filename:'details.png',cid:'detail2',base64:'d29ybGQ='}];
+const attachment={filename:'인도_회신.xlsx',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',base64:'ZGF0YQ=='};
+const eml=build({to:'owner@example.com',cc:'reviewer@example.com',subject:'인도 KPI 검토',body:'결과 확인',attachment,images});
+assert.ok(eml.startsWith('X-Unsent: 1\r\nMIME-Version: 1.0\r\n'));
+assert.ok(eml.includes('To: owner@example.com\r\nCc: reviewer@example.com'));
+assert.ok(eml.includes('Subject: =?UTF-8?B?'));
+assert.ok(eml.includes('Content-Type: multipart/mixed; boundary='));
+assert.ok(eml.includes("filename*=UTF-8''"));
+for(const img of images)assert.ok(eml.includes('Content-ID: <'+img.cid+'>'),'image CID must be embedded');
+assert.ok(eml.includes('Content-Disposition: attachment'));
+assert.ok(eml.includes('ZGF0YQ=='));
+assert.ok(!eml.includes('\nBCC:'));
+console.log('HD24 Outlook EML regression: PASS');
