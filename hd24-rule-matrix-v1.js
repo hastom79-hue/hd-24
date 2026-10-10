@@ -95,8 +95,16 @@ function seriesFor(r,all){
   &&monthValid(x))
   .sort((a,b)=>(yearOf(a)*12+monthOf(a))-(yearOf(b)*12+monthOf(b)));
 }
+function seriesIndex(r,s){
+ const year=x=>Number(x.targetYear??x.year??2026);
+ const m=monthOf(r),y=year(r);
+ if(!Number.isInteger(y)||!Number.isInteger(m)||m<1||m>12)return -1;
+ // A plant/KPI/month must identify exactly one row. Never guess among duplicates.
+ const matches=s.map((x,i)=>({x,i})).filter(({x})=>year(x)===y&&monthOf(x)===m);
+ return matches.length===1?matches[0].i:-1;
+}
 function trend(r,all){
- const s=seriesFor(r,all),i=s.findIndex(x=>x===r),cur=targetState(r);
+ const s=seriesFor(r,all),i=seriesIndex(r,s),cur=targetState(r);
  if(i<1||cur.gap===null)return {state:'NO_TREND',deltaGap:null};
  const prev=targetState(s[i-1]);if(prev.gap===null)return {state:'NO_TREND',deltaGap:null};
  // A target revision changes the gap even when operational performance does not.
@@ -112,7 +120,7 @@ function trend(r,all){
  return {state:'STABLE',deltaGap:dg};
 }
 function plateauReview(r,all){
- const s=seriesFor(r,all),i=s.findIndex(x=>x===r);
+ const s=seriesFor(r,all),i=seriesIndex(r,s);
  if(i<2)return {state:'INSUFFICIENT_HISTORY',months:i+1};
  const last=s.slice(i-2,i+1);
  // A plateau is only meaningful across consecutive calendar months.
@@ -197,7 +205,7 @@ function clusterFindings(rows){
  return out;
 }
 function analyze(r,all){
- const fs=[],ts=targetState(r),tr=trend(r,all),plateau=plateauReview(r,all),act=actionState(r),txt=textFields(r),s=seriesFor(r,all),idx=s.findIndex(x=>x===r),prev=idx>0?s[idx-1]:null; const integrity=sourceIntegrity(r); if(integrity)fs.push(integrity);
+ const fs=[],ts=targetState(r),tr=trend(r,all),plateau=plateauReview(r,all),act=actionState(r),txt=textFields(r),s=seriesFor(r,all),idx=seriesIndex(r,s),prev=idx>0?s[idx-1]:null; const integrity=sourceIntegrity(r); if(integrity)fs.push(integrity);
  fs.push(finding('R01','PERFORMANCE',ts.state,`Target=${r.target??'-'}, Actual=${r.actual??'-'}, Direction=${direction(r)}`,'HIGH'));
  if(tr.state!=='NO_TREND'&&tr.state!=='STABLE')fs.push(finding(tr.state==='RECOVERING'?'R02':tr.state==='RECOVERY_CONFIRMED'?'R04':tr.state==='NEW_REGRESSION'?'R05':'R03','TREND',tr.state,`Target-gap change=${tr.deltaGap??'-'}`,'HIGH',tr.state==='NEW_REGRESSION'));
  if(plateau.state==='MEASUREMENT_REVIEW')fs.push(finding('R29','MEASUREMENT','KPI_PLATEAU_REVIEW',`Consecutive 3 months at ${plateau.value}%; verify measurement validity and target suitability, not automatic achievement/failure.`,'MEDIUM',true));
@@ -324,7 +332,7 @@ function standardControlEligibility(r,all){
  return {eligible:false,state:'STANDARD_CONTROL_NOT_TRIGGERED',reason:'Human/Method/Standard linkage not evidenced'};
 }
 function causeDynamics(r,all){
- const s=seriesFor(r,all),i=s.findIndex(x=>x===r);
+ const s=seriesFor(r,all),i=seriesIndex(r,s);
  const raw=String(r.rootCause||r.reason||'').trim(),cur=norm(raw);
  if(!cur||/^(na|n\/a|-|none|unknown)$/.test(cur))return {state:'CAUSE_UNKNOWN',confidence:'LOW',evidence:'Root cause/reason not established'};
  const parts=raw.split(/;|\n|\+|\/|,|\band\b|&/i).map(x=>x.trim()).filter(x=>x.length>2);
@@ -343,7 +351,7 @@ function causeDynamics(r,all){
  return {state:'CAUSE_SHIFT',confidence:'MEDIUM',evidence:'Prev: '+prevRaw+' / Current: '+raw};
 }
 function actionAttribution(r,all){
- const s=seriesFor(r,all),i=s.findIndex(x=>x===r),tr=trend(r,all),ad=actionDetail(r);
+ const s=seriesFor(r,all),i=seriesIndex(r,s),tr=trend(r,all),ad=actionDetail(r);
  if(!['RECOVERING','RECOVERY_CONFIRMED'].includes(tr.state))return {state:'NO_RECOVERY_SIGNAL',confidence:'LOW',reason:'No KPI recovery signal'};
  if(!ad.action||ad.action==='-')return {state:'RECOVERY OBSERVED · ATTRIBUTION UNCERTAIN',confidence:'LOW',reason:'No attributable action recorded'};
  const curDate=analysisDate(r),due=ad.dueDate;
