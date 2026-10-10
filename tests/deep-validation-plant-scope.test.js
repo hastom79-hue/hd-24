@@ -282,3 +282,9 @@ assert.ok(wipGapFlags.some(x=>x[0]==='HIGH'&&x[1].includes('WIP 준수율 목표
 assert.ok(wipGapFlags.some(x=>x[0]==='MEDIUM'&&x[1].includes('전월 대비 후퇴')),'fabrication WIP monthly pullback remains MEDIUM');
 assert.ok(!sourceContext.flagsFor(assemblyStatusRows[1],assemblyStatusRows).some(x=>x[1].includes('WIP 준수율 목표 미달')),'assembly WIP 68 versus 66 must not be target miss');
 console.log('PASS: fabrication WIP target gap separate from trend; assembly achieved');
+
+const realAssemblyRows=assemblyStatusRows.map((r,i)=>({...r,kpi:'WIP compliance rate(Assy Line On- Line-Out )',kpiEn:'WIP compliance rate(Assy Line On- Line-Out )',target:[0.65,0.66][i],actual:[0.64,0.68][i]}));
+const realAssemblyFlags=sourceContext.flagsFor(realAssemblyRows[1],realAssemblyRows);
+assert.ok(realAssemblyFlags.some(x=>x[0]==='MEDIUM'&&x[1].includes('Recent decline')),'actual India assembly WIP decimal percentages must trigger status contradiction');
+assert.ok(!realAssemblyFlags.some(x=>x[1].includes('WIP 준수율 목표 미달')),'actual India assembly WIP 0.68 vs 0.66 is achieved');
+console.log('PASS: actual India assembly WIP KPI name and decimal percentage values');
