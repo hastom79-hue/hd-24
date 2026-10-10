@@ -8,16 +8,17 @@ assert.equal(assets.length,20,'20 assets in refresh manifest');
 assert.equal(new Set(assets).size,20,'no duplicate assets');
 assert.ok(!script.includes('caches.delete('),'do not delete unrelated caches');
 async function run(failedUrl){
- const status={textContent:''},calls=[],location={replace:url=>calls.push(['redirect',url])};
+ const status={textContent:''},calls=[],location={replace:url=>calls.push(['redirect',url])};let active=0,maxActive=0;
  const document={getElementById:()=>status};
- const fetch=async url=>{calls.push(['fetch',url]);return {ok:!failedUrl||!url.includes(failedUrl),status:404}};
+ const fetch=async url=>{active++;maxActive=Math.max(maxActive,active);calls.push(['fetch',url]);await Promise.resolve();active--;return {ok:!failedUrl||!url.includes(failedUrl),status:404}};
  const setTimeout=fn=>fn();
  await new Function('document','fetch','location','setTimeout','Date','return '+script)(document,fetch,location,setTimeout,Date);
- return {status:status.textContent,calls};
+ return {status:status.textContent,calls,maxActive};
 }
 (async()=>{
  const good=await run(null);
  assert.equal(good.calls.filter(x=>x[0]==='fetch').length,20);
+ assert.equal(good.maxActive,5,'refresh fetch concurrency must be capped at five');
  assert.equal(good.calls.filter(x=>x[0]==='redirect').length,1);
  const bad=await run('mapping_brazil.json');
  assert.equal(bad.calls.filter(x=>x[0]==='redirect').length,0);
