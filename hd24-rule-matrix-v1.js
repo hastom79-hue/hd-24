@@ -351,9 +351,9 @@ function causeDynamics(r,all){
  return {state:'CAUSE_SHIFT',confidence:'MEDIUM',evidence:'Prev: '+prevRaw+' / Current: '+raw};
 }
 function actionAttribution(r,all){
- const s=seriesFor(r,all),i=seriesIndex(r,s),tr=trend(r,all),ad=actionDetail(r);
+ const s=seriesFor(r,all),i=seriesIndex(r,s),tr=trend(r,all),ad=actionState(r),action=String(r.recoveryPlan||r.action||r.countermeasure||r.plan||'').trim();
  if(!['RECOVERING','RECOVERY_CONFIRMED'].includes(tr.state))return {state:'NO_RECOVERY_SIGNAL',confidence:'LOW',reason:'No KPI recovery signal'};
- if(!ad.action||ad.action==='-')return {state:'RECOVERY OBSERVED · ATTRIBUTION UNCERTAIN',confidence:'LOW',reason:'No attributable action recorded'};
+ if(!action||action==='-')return {state:'RECOVERY OBSERVED · ATTRIBUTION UNCERTAIN',confidence:'LOW',reason:'No attributable action recorded'};
  const curDate=analysisDate(r),due=ad.dueDate;
  if(due&&curDate&&due>curDate)return {state:'RECOVERY OBSERVED · ATTRIBUTION UNCERTAIN',confidence:'MEDIUM',reason:'Recovery precedes action due/effect window'};
  const mech=actionMechanism(r),cause=norm(r.rootCause||r.reason||'');
