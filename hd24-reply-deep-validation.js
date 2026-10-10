@@ -101,7 +101,7 @@ function flagsFor(r,all){
   if(comparableSeries&&values.every(Number.isFinite)&&series.every(x=>norm(x.recoveryPlan)===plan)){
    const bad=(a,b)=>dir==='LOWER'?b>a:b<a;
    if(bad(values[0],values[1])&&bad(values[1],values[2]))f.push(['HIGH','3개월 동일 회복계획에도 실적 연속 악화 ('+values.join(' → ')+') — 대책 실효성 재검토 필요']);
-   else if(bad(values[1],values[2]))f.push(['HIGH','3개월 동일 회복계획 중 최근 실적 재악화 ('+values.join(' → ')+') — 개선 지속성 검증 필요']);
+   else if(bad(values[1],values[2]))f.push(['HIGH','3개월 동일 회복계획 중 최근 실적 전월 대비 후퇴 ('+values.join(' → ')+') — 개선 지속성 검증 필요']);
   }
  }
  if(substantive(plan)&&planRun>=3)f.push(['HIGH',planRun+'개월 연속 동일 만회계획 반복 — 기존 대책 효과 미입증, 대책 재설계 필요']);else if(substantive(plan)&&planRun===2)f.push(['MEDIUM','2개월 연속 동일 만회계획 반복 — 실행 효과 확인 필요']);
