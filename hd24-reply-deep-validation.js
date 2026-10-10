@@ -128,6 +128,7 @@ function closedLoop(all){
  return out;
 }
 function contradictions(all){
+ const latest=new Map();all.forEach(r=>{const key=norm(r.plant)+'|'+kpiKey(r)+'|'+yearOf(r)+'|'+Number(r.targetMonth),cur=latest.get(key);if(!cur||Number(r.replySequence||0)>Number(cur.replySequence||0)||(Number(r.replySequence||0)===Number(cur.replySequence||0)&&String(r.replyReceivedAt||'')>String(cur.replyReceivedAt||'')))latest.set(key,r)});all=[...latest.values()];
  const out=[],n=s=>norm(s).replace(/\s/g,''),names=r=>[r.kpiEn,r.kpi].map(n).filter(Boolean),has=(r,arr)=>names(r).some(v=>arr.some(t=>v.includes(n(t))));
  const qualityAliases=['IQ 200 (Initial Quality)','IQ 200 (Production attributable)','IQ 200 Issues with Production responsibility','생산귀책 조립품질','생산귀책조립품질','Production attributable assembly quality','Production attributable quality'];
  const complianceAliases=['Standard Work Compliance','Production Instruction Compliance Rate','Sequence Compliance','표준작업준수율','표준작업 준수율','Standard Work Adherence','Standardized Work Compliance'];
