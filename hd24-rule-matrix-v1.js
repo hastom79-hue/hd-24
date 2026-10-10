@@ -265,11 +265,11 @@ function issueKeyFor(r){
  return 'KPI:'+k;
 }
 function issueIdentity(r){
- const base=issueKeyFor(r),mech=actionMechanism(r);
+ const base=issueKeyFor(r),mech=actionMechanism(r),plant=norm(r.plant||r.plantCode||r.factory||r.site)||'UNSCOPED';
  // Stable identity is problem-family + intended action mechanism. Cause text is metadata:
  // a later verified cause shift must not silently create a brand-new issue and erase history.
  const cd=norm(r.rootCause||r.reason||'').split(' ').filter(x=>x.length>3).slice(0,4).join('_');
- return {issueId:[base,mech].join('::'),base,mechanism:mech,causeSignature:cd||'UNSPECIFIED'};
+ return {issueId:[plant,base,mech].join('::'),plant,base,mechanism:mech,causeSignature:cd||'UNSPECIFIED'};
 }
 function issueTimeline(analyzed){
  const m=new Map();
@@ -279,7 +279,7 @@ function issueTimeline(analyzed){
   m.get(id).push(x);
  }
  return [...m.entries()].map(([issueId,xs])=>{
-  xs.sort((a,b)=>(monthOf(a.record)||0)-(monthOf(b.record)||0));
+  xs.sort((a,b)=>(Number(a.record.targetYear??a.record.year??2026)*12+monthOf(a.record))-(Number(b.record.targetYear??b.record.year??2026)*12+monthOf(b.record)));
   const latest=xs[xs.length-1];
   const causeShift=xs.some((x,i)=>i>0&&x.causeDynamics?.state==='CAUSE_SHIFT');
   const priorClosed=xs.slice(0,-1).some(x=>x.pdcaClosure?.closed===true);
