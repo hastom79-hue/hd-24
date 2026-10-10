@@ -17,6 +17,10 @@ assert.equal(api.trend(brazilAug,[indiaJul,brazilAug]).state,'NO_TREND','Brazil 
 const indiaDec=row('india',2025,12,70);
 const indiaJan=row('india',2026,1,80);
 assert.equal(api.trend(indiaJan,[indiaJan,indiaDec]).state,'RECOVERING','year boundary must be chronological');
+const missingJuly=row('india',2026,6,70);
+const augustAfterGap=row('india',2026,8,90);
+assert.equal(api.trend(augustAfterGap,[missingJuly,augustAfterGap]).state,'NON_CONSECUTIVE_HISTORY','missing July must not be treated as month-on-month recovery');
+assert.equal(api.trend(indiaJan,[indiaDec,indiaJan]).state,'RECOVERING','December to January remains consecutive across years');
 const unscoped=row('',2026,8,90);
 assert.equal(api.trend(unscoped,[indiaJul,unscoped]).state,'NO_TREND','missing plant must fail closed');
 const next=row('india',2026,9,95);
