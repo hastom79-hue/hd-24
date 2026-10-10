@@ -288,3 +288,10 @@ const realAssemblyFlags=sourceContext.flagsFor(realAssemblyRows[1],realAssemblyR
 assert.ok(realAssemblyFlags.some(x=>x[0]==='MEDIUM'&&x[1].includes('Recent decline')),'actual India assembly WIP decimal percentages must trigger status contradiction');
 assert.ok(!realAssemblyFlags.some(x=>x[1].includes('WIP 준수율 목표 미달')),'actual India assembly WIP 0.68 vs 0.66 is achieved');
 console.log('PASS: actual India assembly WIP KPI name and decimal percentage values');
+
+const lowerTrendRows=assemblyStatusRows.map((r,i)=>({...r,kpi:'Long Term Inventory Value',kpiEn:'Long Term Inventory Value',unit:'INR Mn',direction:'LOWER',target:30,actual:[34.2,31.54][i]}));
+assert.ok(sourceContext.flagsFor(lowerTrendRows[1],lowerTrendRows).some(x=>x[1].includes('Recent decline')),'lower-is-better KPI falling from 34.2 to 31.54 is improvement');
+const lowerWorseRows=lowerTrendRows.map((r,i)=>({...r,actual:[31.54,34.2][i]}));
+assert.ok(!sourceContext.flagsFor(lowerWorseRows[1],lowerWorseRows).some(x=>x[1].includes('Recent decline')),'lower-is-better KPI rising is actual deterioration, not status contradiction');
+assert.ok(!sourceContext.flagsFor(assemblyStatusRows[1],[assemblyStatusRows[1]]).some(x=>x[1].includes('Recent decline')),'no preceding month means status contradiction must not be inferred');
+console.log('PASS: status trend comparison respects lower-is-better direction and missing history');
