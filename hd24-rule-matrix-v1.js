@@ -144,14 +144,14 @@ function plateauReview(r,all){
 }
 function textFields(r){return norm([r.reason,r.rootCause,r.recoveryPlan].filter(Boolean).join(' '))}
 function analysisDate(r){
- const y=Number(r.year||2026),m=monthOf(r);return m?new Date(y,m,0,23,59,59):null;
+ const y=Number(r.targetYear??r.year??2026),m=monthOf(r);return Number.isInteger(y)&&Number.isInteger(m)&&m>=1&&m<=12?new Date(y,m,0,23,59,59):null;
 }
 function dueDate(r){
  const raw=String(r.plannedCompletionDate||r.dueDate||'').trim();if(!raw)return null;
  let d=new Date(raw);if(!Number.isNaN(d.getTime()))return d;
  const mon={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
  const m=raw.toLowerCase().match(/w\s*([1-5]).*?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/);
- if(m){const year=Number(r.year||2026),month=mon[m[2]],week=Number(m[1]);return new Date(year,month-1,Math.min(week*7,new Date(year,month,0).getDate()),23,59,59)}
+ if(m){const year=Number(r.targetYear??r.year??2026),month=mon[m[2]],week=Number(m[1]);return new Date(year,month-1,Math.min(week*7,new Date(year,month,0).getDate()),23,59,59)}
  return null;
 }
 function actionState(r){
@@ -159,7 +159,7 @@ function actionState(r){
  const structural=/(robot|vmc|fixture|design|source chang|capacity|equipment|jig|process chang|work method|installation|modify|modification)/.test(txt);
  const activity=/(training|awareness|meeting|tracking|follow.?up|motivation|reward)/.test(txt);
  const attachment=/(find attached|see attached|refer attached)/.test(norm(r.reason));
- const completed=/(completed|complete|implemented|installed|done)/.test(txt);
+ const completed=/(?:^|[.;\n]\s*)(?:action\s+)?(?:completed|complete|implemented|installed|done)\b/.test(txt)&&!/(?:not|never|incomplete|pending|yet to|to be|will be|planned to)\s+(?:\w+\s+){0,2}(?:completed|complete|implemented|installed|done)\b/.test(txt);
  return {structural,activity,attachment,due,dueDate:dueDate(r),completed,owner:String(r.actionOwner||'').trim()};
 }
 function finding(rule,type,statement,evidence,confidence='MEDIUM',question=false){return {rule,type,statement,evidence,confidence,questionRequired:question,evidenceRequired:false}}
