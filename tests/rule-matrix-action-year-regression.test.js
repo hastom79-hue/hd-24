@@ -1,0 +1,15 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const ctx = {window:{},document:{dispatchEvent(){}},CustomEvent:class CustomEvent{constructor(type,opts){this.type=type;this.detail=opts.detail;}},Date,Number,Map,Set};
+vm.createContext(ctx);
+vm.runInContext(fs.readFileSync('hd24-rule-matrix-v1.js','utf8'),ctx);
+const api = ctx.window.HD24_RULE_MATRIX_V1;
+const row={plant:'india',targetYear:2025,targetMonth:8,kpiEn:'WIP compliance rate (Fabrication)',actual:90,target:100};
+assert.equal(api.analysisDate(row).getFullYear(),2025);
+assert.equal(api.dueDate({...row,plannedCompletionDate:'W2 Sep'}).getFullYear(),2025);
+const incomplete={...row,reason:'Robot installation not completed',recoveryPlan:'Installation pending',plannedCompletionDate:'2025-07-15'};
+const findings=api.analyze(incomplete,[incomplete]);
+assert.equal(findings.some(x=>x.statement==='EFFECT VERIFICATION REQUIRED'),false);
+assert.equal(findings.some(x=>x.statement==='DUE CHECK REQUIRED'),true);
+console.log('PASS: reporting year and negated completion');
