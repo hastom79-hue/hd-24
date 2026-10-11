@@ -50,4 +50,5 @@ const loopRow=(plant,year,month,seq=1,root='same')=>({plant,targetYear:year,targ
 assert.equal(closedLoop([loopRow('india',2026,12),loopRow('india',2027,1)]).length,1,'December-to-January follow-up must be continuous');
 assert.equal(closedLoop([loopRow('india',2026,12),loopRow('brazil',2027,1)]).length,0,'closed-loop findings must not mix plants');
 assert.equal(closedLoop([loopRow('india',2026,12),loopRow('india',2027,1,1),loopRow('india',2027,1,2)]).length,1,'older replies must not duplicate closed-loop findings');
+assert.ok(source.includes("if(missingReply(root))")&&source.includes("if(missingReply(plan))"),'missing cause and recovery plan must produce findings');
 console.log('HD24 deep validation regression: PASS');
