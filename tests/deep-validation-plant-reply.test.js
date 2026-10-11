@@ -51,4 +51,6 @@ assert.equal(closedLoop([loopRow('india',2026,12),loopRow('india',2027,1)]).leng
 assert.equal(closedLoop([loopRow('india',2026,12),loopRow('brazil',2027,1)]).length,0,'closed-loop findings must not mix plants');
 assert.equal(closedLoop([loopRow('india',2026,12),loopRow('india',2027,1,1),loopRow('india',2027,1,2)]).length,1,'older replies must not duplicate closed-loop findings');
 assert.ok(source.includes("if(missingReply(root))")&&source.includes("if(missingReply(plan))"),'missing cause and recovery plan must produce findings');
+assert.ok(source.includes('missingReply(norm(r.actionOwner))')&&source.includes('missingReply(norm(r.plannedCompletionDate))'),'missing owner and due date must produce findings');
+assert.ok(source.includes('find attached|see attached|refer attached'),'attachment-only responses must be flagged');
 console.log('HD24 deep validation regression: PASS');
