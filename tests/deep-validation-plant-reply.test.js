@@ -53,4 +53,6 @@ assert.equal(closedLoop([loopRow('india',2026,12),loopRow('india',2027,1,1),loop
 assert.ok(source.includes("if(missingReply(root))")&&source.includes("if(missingReply(plan))"),'missing cause and recovery plan must produce findings');
 assert.ok(source.includes('missingReply(norm(r.actionOwner))')&&source.includes('missingReply(norm(r.plannedCompletionDate))'),'missing owner and due date must produce findings');
 assert.ok(source.includes('find attached|see attached|refer attached'),'attachment-only responses must be flagged');
+assert.ok(source.includes('WIP 준수율 목표 미달'),'WIP compliance warning must remain distinct from WIP volume');
+assert.ok(source.includes('전월 추세와 별개로 목표 미달'),'WIP target attainment must be assessed separately from trend');
 console.log('HD24 deep validation regression: PASS');
